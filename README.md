@@ -1,3 +1,11 @@
-# Server Monitor
+# Server Monitoring App
 
-This is An Android application & server service for monitoring servers in real-time.
+This is an Android application for monitoring servers in real-time.
+
+## Progress
+
+There is a [Kanban board](https://github.com/users/viral32111/projects/7/views/1) for tracking progress on individual steps of the project.
+
+## License
+
+This project is licensed under the Creative Commons Attribution-ShareAlike 4.0 International license, see the [license file](/LICENSE.md) for more information.
