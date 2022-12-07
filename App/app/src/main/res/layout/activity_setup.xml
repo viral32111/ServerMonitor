@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/setupConstraintLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".SetupActivity"
+    android:clipChildren="false">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:elevation="8dp"
+        android:clipChildren="false">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/topAppBar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/white_but_not"
+            android:elevation="8dp"
+            app:menu="@menu/top_app_bar"
+            app:title="Setup"
+            app:titleCentered="true"
+            android:layout_marginBottom="8dp"/>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <TextView
+        android:id="@+id/setupInstructionTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/padding_left"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="@dimen/padding_right"
+        android:text="@string/setup_instruction_textview"
+        android:textAlignment="center"
+        android:textSize="@dimen/text_size"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/appBarLayout" />
+
+    <TextView
+        android:id="@+id/setupNoticeSecureTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/padding_left"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="@dimen/padding_right"
+        android:text="@string/setup_notice_secure_textview"
+        android:textAlignment="center"
+        android:textSize="@dimen/text_size"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/setupInstructionTextView" />
+
+    <TextView
+        android:id="@+id/setupUrlLabelTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/padding_left"
+        android:layout_marginEnd="@dimen/padding_right"
+        android:text="@string/setup_url_label_textview"
+        android:textSize="@dimen/text_size"
+        app:layout_constraintBottom_toTopOf="@+id/setupUrlEditText"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <EditText
+        android:id="@+id/setupUrlEditText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/padding_left"
+        android:layout_marginTop="64dp"
+        android:layout_marginEnd="@dimen/padding_right"
+        android:autofillHints=""
+        android:ems="10"
+        android:hint="@string/setup_url_placeholder_edittext"
+        android:inputType="textUri"
+        android:minHeight="48dp"
+        android:textSize="@dimen/text_size"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/setupNoticeSecureTextView" />
+
+    <TextView
+        android:id="@+id/setupAuthenticationLabelTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/padding_left"
+        android:layout_marginEnd="@dimen/padding_right"
+        android:text="@string/setup_authentication_label_textview"
+        android:textSize="@dimen/text_size"
+        app:layout_constraintBottom_toTopOf="@+id/setupAuthenticationUsernameEditText"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <EditText
+        android:id="@+id/setupAuthenticationUsernameEditText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/padding_left"
+        android:layout_marginTop="64dp"
+        android:layout_marginEnd="@dimen/padding_right"
+        android:autofillHints=""
+        android:ems="10"
+        android:hint="@string/setup_authentication_username_placeholder_edittext"
+        android:inputType="textUri"
+        android:minHeight="48dp"
+        android:textSize="@dimen/text_size"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/setupUrlEditText" />
+
+    <EditText
+        android:id="@+id/setupAuthenticationPasswordEditText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/padding_left"
+        android:layout_marginEnd="@dimen/padding_right"
+        android:autofillHints=""
+        android:ems="10"
+        android:hint="@string/setup_authentication_password_placeholder_edittext"
+        android:inputType="textUri"
+        android:minHeight="48dp"
+        android:textSize="@dimen/text_size"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/setupAuthenticationUsernameEditText" />
+
+    <Button
+        android:id="@+id/setupContinueButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/padding_right"
+        android:layout_marginBottom="@dimen/padding_bottom"
+        android:backgroundTint="@color/blue_400"
+        android:paddingStart="@dimen/button_padding_start"
+        android:paddingEnd="@dimen/button_padding_end"
+        android:text="@string/setup_continue_button"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -7,4 +7,18 @@
 	<color name="teal_700">#FF018786</color>
 	<color name="black">#FF000000</color>
 	<color name="white">#FFFFFFFF</color>
+
+	<!-- https://material.io/design/color/the-color-system.html#tools-for-picking-colors -->
+	<color name="purple_300">#9968ed</color>
+	<color name="purple_400">#7f43e9</color>
+
+	<color name="blue_100">#c2c5f7</color>
+	<color name="blue_200">#979ff2</color>
+	<color name="blue_300">#6879ed</color>
+	<color name="blue_400">#3e5be9</color>
+
+	<color name="success">#4caf50</color>
+	<color name="failure">#f44336</color>
+
+	<color name="white_but_not">#F4F4F4</color>
 </resources>

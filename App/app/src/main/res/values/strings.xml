@@ -1,3 +1,12 @@
 <resources>
-	<string name="app_name">ServerMonitor</string>
+    <string name="app_name">Server Monitor</string>
+
+    <string name="setup_instruction_textview">Enter the publicly-accessible URL to the primary server monitoring instance below, along with your credentials to access it.</string>
+    <string name="setup_notice_secure_textview">The instance must be served over HTTPs.</string>
+    <string name="setup_url_label_textview">Instance URL:</string>
+    <string name="setup_url_placeholder_edittext">https://example.com/my-instance-name…</string>
+    <string name="setup_authentication_label_textview">Authentication Credentials:</string>
+    <string name="setup_authentication_username_placeholder_edittext">john.doe</string>
+    <string name="setup_authentication_password_placeholder_edittext">Sup3r_Go0d_P4ssw0rd!</string>
+    <string name="setup_continue_button">Continue</string>
 </resources>

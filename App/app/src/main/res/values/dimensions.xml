@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="padding_left">24dp</dimen>
+    <dimen name="padding_right">24dp</dimen>
+    <dimen name="padding_top">16dp</dimen>
+    <dimen name="padding_bottom">16dp</dimen>
+
+    <dimen name="text_size">18sp</dimen>
+
+    <dimen name="button_padding_start">48dp</dimen>
+    <dimen name="button_padding_end">48dp</dimen>
+</resources>
