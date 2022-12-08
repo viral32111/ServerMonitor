@@ -20,5 +20,9 @@
 	<color name="success">#4caf50</color>
 	<color name="failure">#f44336</color>
 
-	<color name="white_but_not">#FEFCFD</color>
+	<color name="background_white">#FFFFFF</color>
+	<color name="toolbar_white">#FEFCFD</color>
+
+	<color name="background_dark">#1E1E1E</color>
+	<color name="toolbar_dark">#282828</color>
 </resources>
