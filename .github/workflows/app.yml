@@ -1,0 +1,50 @@
+name: App
+
+on:
+  push:
+    paths:
+      - 'App/**'
+      - '.github/workflows/app.yml'
+    branches:
+      - '**'
+    tags:
+      - '*.*.*'
+  pull_request:
+    branches:
+    - '**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        variant: [ 'Debug', 'Release' ]
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v3
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - name: Set Gradle permissions
+        run: chmod +x ./App/gradlew
+
+      - name: Build using Gradle
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: assemble${{ matrix.variant }}
+          build-root-directory: ./App/
+
+      - name: Upload build
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.variant }}
+          path: |
+            ./App/app/build/outputs/apk/*/*
