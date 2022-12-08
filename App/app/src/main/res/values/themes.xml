@@ -1,7 +1,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
 	<!-- Base application theme. -->
-	<style name="Theme.ServerMonitor" parent="Theme.Material3.DayNight.NoActionBar">
+	<style name="Theme.ServerMonitor" parent="Theme.Material3.DayNight">
 
 		<!-- Primary brand color. -->
 		<item name="colorPrimary">@color/purple_500</item>
@@ -20,8 +20,38 @@
 		<item name="android:statusBarColor">@color/white_but_not</item>
 		<item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
 
-		<item name="android:spotShadowAlpha">0.5</item>
+		<!--<item name="android:spotShadowAlpha">0.5</item>-->
+
+		<!-- Custom action bar themes -->
+		<item name="actionBarTheme">@style/ThemeOverlay.ServerMonitor.ActionBar</item>
+		<item name="actionBarPopupTheme">@style/ThemeOverlay.ServerMonitor.ActionBar.OverflowMenu</item>
 
 	</style>
 
+	<!-- Action bar -->
+	<style name="ThemeOverlay.ServerMonitor.ActionBar" parent="ThemeOverlay.Material3.Light">
+
+		<!-- Background -->
+		<item name="colorPrimary">@color/white_but_not</item>
+		<item name="colorAccent">@color/black</item>
+
+		<!-- Title & subtitle -->
+		<item name="colorOnSurface">@color/black</item>
+		<item name="colorOnSurfaceVariant">@color/black</item>
+
+	</style>
+
+	<!-- Action bar overflow menu -->
+	<style name="ThemeOverlay.ServerMonitor.ActionBar.OverflowMenu" parent="ThemeOverlay.Material3.Light">
+
+		<!-- Icon -->
+		<item name="colorPrimary">@color/white_but_not</item>
+
+	</style>
+
+	<style name="TextAppearance.ServerMonitor.ActionBar.Title" parent="TextAppearance.Material3.ActionBar.Title">
+		<item name="android:textSize">28sp</item>
+	</style>
+
 </resources>
+

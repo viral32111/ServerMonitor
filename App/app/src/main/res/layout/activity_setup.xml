@@ -5,10 +5,9 @@
     android:id="@+id/setupConstraintLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".SetupActivity"
-    android:clipChildren="false">
+    tools:context=".SetupActivity"> <!-- android:clipChildren="false" -->
 
-    <com.google.android.material.appbar.AppBarLayout
+    <!--<com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -29,21 +28,21 @@
             app:titleCentered="true"
             android:layout_marginBottom="8dp"/>
 
-    </com.google.android.material.appbar.AppBarLayout>
+    </com.google.android.material.appbar.AppBarLayout>-->
 
     <TextView
         android:id="@+id/setupInstructionTextView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/padding_left"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="@dimen/padding_top"
         android:layout_marginEnd="@dimen/padding_right"
         android:text="@string/setup_instruction_textview"
         android:textAlignment="center"
         android:textSize="@dimen/text_size"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/appBarLayout" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/setupNoticeSecureTextView"

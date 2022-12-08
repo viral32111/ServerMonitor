@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto">
+
+	<item
+		android:id="@+id/actionBarOptions"
+		android:title="@string/actionbar_menu_options"
+		android:orderInCategory="1"
+		app:showAsAction="never" />
+</menu>
