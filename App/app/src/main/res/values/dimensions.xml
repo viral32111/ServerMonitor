@@ -1,12 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="padding_left">24dp</dimen>
-    <dimen name="padding_right">24dp</dimen>
-    <dimen name="padding_top">16dp</dimen>
-    <dimen name="padding_bottom">16dp</dimen>
 
-    <dimen name="text_size">20sp</dimen>
+    <!-- Edge margin (constraint length) for all controls -->
+    <dimen name="margin_left">24dp</dimen>
+    <dimen name="margin_right">24dp</dimen>
+    <dimen name="margin_top">16dp</dimen>
+    <dimen name="margin_bottom">16dp</dimen>
 
+    <!-- Default text size -->
+    <dimen name="text_size">18sp</dimen>
+
+    <!-- Continue button padding -->
     <dimen name="button_padding_start">48dp</dimen>
     <dimen name="button_padding_end">48dp</dimen>
+
 </resources>
