@@ -1,14 +1,9 @@
 package com.viral32111.servermonitor
 
-import android.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.view.Menu
-import android.view.View
 import android.widget.Button
 import android.widget.EditText
-import android.widget.Toast
-import android.widget.Toolbar
 import androidx.appcompat.app.ActionBar
 import com.google.android.material.snackbar.Snackbar
 
@@ -57,27 +52,14 @@ class SetupActivity : AppCompatActivity() {
 				return@setOnClickListener
 			}
 
-			/*val alertDialogBuilder = AlertDialog.Builder( this )
-			alertDialogBuilder.setTitle( "Error" )
-			alertDialogBuilder.setMessage( "The URL to an instance must be provided." )
-			alertDialogBuilder.setNeutralButton( "OK" ) { _, _ ->
-				Toast.makeText( this, "neutral", Toast.LENGTH_SHORT ).show()
-			}
-			alertDialogBuilder.setOnCancelListener {
-				Toast.makeText( this, "cancelled", Toast.LENGTH_SHORT ).show()
-			}
-			alertDialogBuilder.setOnDismissListener {
-				Toast.makeText( this, "dismissed", Toast.LENGTH_SHORT ).show()
-			}
-			val alertDialog = alertDialogBuilder.create()
-			alertDialog.show()*/
-
+			// For debugging!
 			showBriefMessage( "Everything is good!" )
 
 		}
 
 	}
 
+	// https://developer.android.com/develop/ui/views/notifications/snackbar/showing
 	private fun showBriefMessage( stringId: Int ) {
 		Snackbar.make( findViewById( R.id.setupConstraintLayout ), stringId, Snackbar.LENGTH_SHORT ).show()
 	}
