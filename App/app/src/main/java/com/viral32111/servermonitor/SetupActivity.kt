@@ -79,11 +79,11 @@ class SetupActivity : AppCompatActivity() {
 	}
 
 	private fun showBriefMessage( stringId: Int ) {
-		Toast.makeText( this, getString( stringId ), Toast.LENGTH_SHORT ).show()
+		Snackbar.make( findViewById( R.id.setupConstraintLayout ), stringId, Snackbar.LENGTH_SHORT ).show()
 	}
 
 	private fun showBriefMessage( message: String ) {
-		Toast.makeText( this, message, Toast.LENGTH_SHORT ).show()
+		Snackbar.make( findViewById( R.id.setupConstraintLayout ), message, Snackbar.LENGTH_SHORT ).show()
 	}
 
 }
