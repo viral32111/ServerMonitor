@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="settingsActionBarTitle">Settings</string>
+
+	<string name="settingsTextViewInstanceUrlLabel">Instance URL:</string>
+	<string name="settingsEditTextInstanceUrlHint">https://example.com/my-instance-name…</string>
+
+	<string name="settingsTextViewCredentialsLabel">Credentials:</string>
+	<string name="settingsEditTextCredentialsUsernameHint">john.doe</string>
+	<string name="settingsEditTextCredentialsPasswordHint">Sup3r_Go0d_P4ssw0rd!</string>
+
+	<string name="settingsCheckBoxAutomaticRefresh">Automatic Refresh</string>
+	<string name="settingsTextViewIntervalLabel">Interval</string>
+	<string name="settingsSpinnerInterval">15 seconds</string>
+
+	<string name="settingsTextViewThemeLabel">Theme</string>
+	<string name="settingsSpinnerTheme">Follow System</string>
+
+	<string name="settingsTextViewNotificationsLabel">Notifications</string>
+	<string name="settingsCheckBoxNotificationsAlwaysOngoing">Always ongoing</string>
+	<string name="settingsCheckBoxNotificationsWhenIssueArises">When an issue arises</string>
+
+	<string name="settingsButtonSave">Save</string>
+</resources>
