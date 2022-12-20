@@ -56,7 +56,7 @@
 		android:layout_width="0dp"
 		android:layout_height="wrap_content"
 		android:layout_marginStart="@dimen/margin_left"
-		android:layout_marginTop="64dp"
+		android:layout_marginTop="48dp"
 		android:layout_marginEnd="@dimen/margin_right"
 		android:autofillHints=""
 		android:ems="10"
@@ -86,6 +86,119 @@
 		app:layout_constraintStart_toStartOf="parent"
 		app:layout_constraintTop_toBottomOf="@+id/settingsCredentialsUsernameEditText" />
 
+	<com.google.android.material.materialswitch.MaterialSwitch
+		android:id="@+id/settingsAutomaticRefreshSwitch"
+		android:layout_width="0dp"
+		android:layout_height="wrap_content"
+		android:layout_marginStart="@dimen/margin_left"
+		android:layout_marginTop="18dp"
+		android:layout_marginEnd="@dimen/margin_right"
+		android:minHeight="48dp"
+		android:text="@string/settingsCheckBoxAutomaticRefresh"
+		android:textSize="@dimen/text_size"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toBottomOf="@+id/settingsCredentialsPasswordEditText" />
+
+	<TextView
+		android:id="@+id/settingsAutomaticRefreshIntervalTextView"
+		android:layout_width="0dp"
+		android:layout_height="wrap_content"
+		android:layout_marginStart="32dp"
+		android:layout_marginEnd="@dimen/margin_right"
+		android:text="@string/settingsTextViewIntervalLabel"
+		android:textSize="@dimen/text_size"
+		app:layout_constraintBottom_toTopOf="@+id/settingsAutomaticRefreshIntervalEditText"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintStart_toStartOf="parent" />
+
+	<EditText
+		android:id="@+id/settingsAutomaticRefreshIntervalEditText"
+		android:layout_width="0dp"
+		android:layout_height="wrap_content"
+		android:layout_marginStart="32dp"
+		android:layout_marginTop="16dp"
+		android:layout_marginEnd="@dimen/margin_right"
+		android:autofillHints=""
+		android:ems="10"
+		android:hint="@string/settingsEditTextIntervalHint"
+		android:inputType="number"
+		android:minHeight="48dp"
+		android:textSize="@dimen/text_size"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintHorizontal_bias="1.0"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toBottomOf="@+id/settingsAutomaticRefreshSwitch" />
+
+	<TextView
+		android:id="@+id/settingsThemeTextView"
+		android:layout_width="0dp"
+		android:layout_height="wrap_content"
+		android:layout_marginStart="@dimen/margin_left"
+		android:layout_marginEnd="@dimen/margin_right"
+		android:text="@string/settingsTextViewThemeLabel"
+		android:textSize="@dimen/text_size"
+		app:layout_constraintBottom_toTopOf="@+id/settingsThemeSpinner"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintHorizontal_bias="1.0"
+		app:layout_constraintStart_toStartOf="parent" />
+
+	<Spinner
+		android:id="@+id/settingsThemeSpinner"
+		android:layout_width="0dp"
+		android:layout_height="wrap_content"
+		android:layout_marginStart="@dimen/margin_left"
+		android:layout_marginTop="48dp"
+		android:layout_marginEnd="@dimen/margin_right"
+		android:entries="@array/spinnerThemes"
+		android:minHeight="48dp"
+		android:spinnerMode="dropdown"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toBottomOf="@+id/settingsAutomaticRefreshIntervalEditText" />
+
+	<TextView
+		android:id="@+id/settingsNotificationsTextView"
+		android:layout_width="0dp"
+		android:layout_height="wrap_content"
+		android:layout_marginStart="@dimen/margin_left"
+		android:layout_marginEnd="@dimen/margin_right"
+		android:text="@string/settingsTextViewNotificationsLabel"
+		android:textSize="@dimen/text_size"
+		app:layout_constraintBottom_toTopOf="@+id/settingsNotificationsAlwaysOngoingSwitch"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintHorizontal_bias="0.0"
+		app:layout_constraintStart_toStartOf="parent" />
+
+	<com.google.android.material.materialswitch.MaterialSwitch
+		android:id="@+id/settingsNotificationsAlwaysOngoingSwitch"
+		android:layout_width="0dp"
+		android:layout_height="wrap_content"
+		android:layout_marginStart="@dimen/margin_left"
+		android:layout_marginTop="48dp"
+		android:layout_marginEnd="@dimen/margin_right"
+		android:minHeight="48dp"
+		android:text="@string/settingsCheckBoxNotificationsAlwaysOngoing"
+		android:textSize="@dimen/text_size"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintHorizontal_bias="0.0"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toBottomOf="@+id/settingsThemeSpinner" />
+
+	<com.google.android.material.materialswitch.MaterialSwitch
+		android:id="@+id/settingsNotificationsWhenIssueArisesSwitch"
+		android:layout_width="0dp"
+		android:layout_height="wrap_content"
+		android:layout_marginStart="@dimen/margin_left"
+		android:layout_marginEnd="@dimen/margin_right"
+		android:minHeight="48dp"
+		android:text="@string/settingsCheckBoxNotificationsWhenIssueArises"
+		android:textSize="@dimen/text_size"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintHorizontal_bias="0.0"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toBottomOf="@+id/settingsNotificationsAlwaysOngoingSwitch" />
+
 	<Button
 		android:id="@+id/settingsSaveButton"
 		android:layout_width="wrap_content"
@@ -98,4 +211,5 @@
 		android:text="@string/settingsButtonSave"
 		app:layout_constraintBottom_toBottomOf="parent"
 		app:layout_constraintEnd_toEndOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

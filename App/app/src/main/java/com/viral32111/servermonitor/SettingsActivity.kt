@@ -4,9 +4,11 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
+import android.widget.Spinner
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.content.res.AppCompatResources
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.materialswitch.MaterialSwitch
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -26,6 +28,11 @@ class SettingsActivity : AppCompatActivity() {
 		val instanceUrlEditText = findViewById<EditText>( R.id.settingsInstanceUrlEditText )
 		val credentialsUsernameEditText = findViewById<EditText>( R.id.settingsCredentialsUsernameEditText )
 		val credentialsPasswordEditText = findViewById<EditText>( R.id.settingsCredentialsPasswordEditText )
+		val automaticRefreshSwitch = findViewById<MaterialSwitch>( R.id.settingsAutomaticRefreshSwitch )
+		val automaticRefreshIntervalEditText = findViewById<EditText>( R.id.settingsAutomaticRefreshIntervalEditText )
+		val themeSpinner = findViewById<Spinner>( R.id.settingsThemeSpinner )
+		val notificationsAlwaysOngoingSwitch = findViewById<MaterialSwitch>( R.id.settingsNotificationsAlwaysOngoingSwitch )
+		val notificationsWhenIssueArisesSwitch = findViewById<MaterialSwitch>( R.id.settingsNotificationsWhenIssueArisesSwitch )
 		val saveButton = findViewById<Button>( R.id.settingsSaveButton )
 
 		// Set the title on the toolbar
@@ -45,7 +52,16 @@ class SettingsActivity : AppCompatActivity() {
 		// When the the save button is pressed...
 		saveButton.setOnClickListener {
 
-			// TODO: Get all values from UI inputs
+			// Get all values from UI inputs
+			val instanceUrl = instanceUrlEditText.text.toString()
+			val credentialsUsername = credentialsUsernameEditText.text.toString()
+			val credentialsPassword = credentialsPasswordEditText.text.toString()
+			val automaticRefresh = automaticRefreshSwitch.isChecked
+			val automaticRefreshInterval = automaticRefreshIntervalEditText.text.toString().toIntOrNull()
+			val theme = themeSpinner.selectedItem.toString()
+			val notificationAlwaysOngoing = notificationsAlwaysOngoingSwitch.isChecked
+			val notificationWhenIssueArises = notificationsWhenIssueArisesSwitch.isChecked
+
 			// TODO: Validate all those values
 			// TODO: Save those values to shared preferences
 

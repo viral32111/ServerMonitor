@@ -10,13 +10,13 @@
 	<string name="settingsEditTextCredentialsPasswordHint">Sup3r_Go0d_P4ssw0rd!</string>
 
 	<string name="settingsCheckBoxAutomaticRefresh">Automatic Refresh</string>
-	<string name="settingsTextViewIntervalLabel">Interval</string>
-	<string name="settingsSpinnerInterval">15 seconds</string>
+	<string name="settingsTextViewIntervalLabel">Interval:</string>
+	<string name="settingsEditTextIntervalHint">15</string>
 
-	<string name="settingsTextViewThemeLabel">Theme</string>
+	<string name="settingsTextViewThemeLabel">Theme:</string>
 	<string name="settingsSpinnerTheme">Follow System</string>
 
-	<string name="settingsTextViewNotificationsLabel">Notifications</string>
+	<string name="settingsTextViewNotificationsLabel">Notifications:</string>
 	<string name="settingsCheckBoxNotificationsAlwaysOngoing">Always ongoing</string>
 	<string name="settingsCheckBoxNotificationsWhenIssueArises">When an issue arises</string>
 

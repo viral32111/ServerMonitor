@@ -7,7 +7,6 @@ import android.widget.Button
 import android.widget.EditText
 import androidx.appcompat.app.ActionBar
 import com.google.android.material.appbar.MaterialToolbar
-import com.google.android.material.snackbar.Snackbar
 
 class SetupActivity : AppCompatActivity() {
 
@@ -24,51 +23,62 @@ class SetupActivity : AppCompatActivity() {
 
 		// Get all UI controls
 		val materialToolbar = supportActionBar?.customView?.findViewById<MaterialToolbar>( R.id.actionBarMaterialToolbar )
-		val editTextInstanceUrl = findViewById<EditText>( R.id.settingsInstanceUrlEditText )
-		val editTextAuthenticationUsername = findViewById<EditText>( R.id.setupAuthenticationUsernameEditText )
-		val editTextAuthenticationPassword = findViewById<EditText>( R.id.setupAuthenticationPasswordEditText )
-		val buttonContinue = findViewById<Button>( R.id.settingsSaveButton )
+		val instanceUrlEditText = findViewById<EditText>( R.id.settingsInstanceUrlEditText )
+		val authenticationUsernameEditText = findViewById<EditText>( R.id.setupAuthenticationUsernameEditText )
+		val authenticationPasswordEditText = findViewById<EditText>( R.id.setupAuthenticationPasswordEditText )
+		val continueButton = findViewById<Button>( R.id.settingsSaveButton )
 
 		// Set the title on the toolbar
 		materialToolbar?.title = getString( R.string.setup_action_bar_title )
 		materialToolbar?.isTitleCentered = true
 
 		// When the the continue button is pressed...
-		buttonContinue.setOnClickListener {
+		continueButton.setOnClickListener {
 
 			// Get the values in the text inputs
-			val instanceUrl = editTextInstanceUrl.text
-			val authUsername = editTextAuthenticationUsername.text
-			val authPassword = editTextAuthenticationPassword.text
+			val instanceUrl = instanceUrlEditText.text.toString()
+			val authUsername = authenticationUsernameEditText.text.toString()
+			val authPassword = authenticationPasswordEditText.text.toString()
 
 			// Do not continue if an instance URL wasn't provided
 			if ( instanceUrl.isEmpty() ) {
-				showBriefMessage( R.string.setupToastInstanceUrlEmpty )
+				showBriefMessage( this, R.string.setupToastInstanceUrlEmpty )
 				return@setOnClickListener
 			}
 
 			// Do not continue if a username wasn't provided
 			if ( authUsername.isEmpty() ) {
-				showBriefMessage( R.string.setupToastAuthenticationUsernameEmpty )
+				showBriefMessage( this, R.string.setupToastAuthenticationUsernameEmpty )
 				return@setOnClickListener
 			}
 
 			// Do not continue if a password wasn't provided
 			if ( authPassword.isEmpty() ) {
-				showBriefMessage( R.string.setupToastAuthenticationPasswordEmpty )
+				showBriefMessage( this, R.string.setupToastAuthenticationPasswordEmpty )
 				return@setOnClickListener
 			}
 
-			// TODO: Check if URL is valid
-			// TODO: Check if username is valid (length & character requirements)
-			// TODO: Check if password is valid (strength, length & character requirements)
+			// Do not continue if the URL isn't valid
+			if ( !validateInstanceUrl( instanceUrl ) ) {
+				showBriefMessage( this, R.string.setupToastInstanceUrlInvalid )
+				return@setOnClickListener
+			}
+
+			// Do not continue if the username isn't valid
+			if ( !validateCredentialsUsername( authUsername ) ) {
+				showBriefMessage( this, R.string.setupToastAuthenticationUsernameInvalid )
+				return@setOnClickListener
+			}
+
+			// Do not continue if the password isn't valid
+			if ( !validateCredentialsPassword( authUsername ) ) {
+				showBriefMessage( this, R.string.setupToastAuthenticationPasswordInvalid )
+				return@setOnClickListener
+			}
 
 			// TODO: Attempt connection to URL and validate the connection point service is running on it
 
 			// TODO: Save values to shared preferences
-
-			// For debugging!
-			showBriefMessage( "Everything is good!" )
 
 		}
 
@@ -86,17 +96,6 @@ class SetupActivity : AppCompatActivity() {
 
 		}
 
-	}
-
-	// https://developer.android.com/develop/ui/views/notifications/snackbar/showing
-	// TODO: Move this to a shared class
-	private fun showBriefMessage( stringId: Int ) {
-		Snackbar.make( findViewById( R.id.setupConstraintLayout ), stringId, Snackbar.LENGTH_SHORT ).show()
-	}
-
-	// TODO: This shouldn't be used in the final build, always use string IDs
-	private fun showBriefMessage( message: String ) {
-		Snackbar.make( findViewById( R.id.setupConstraintLayout ), message, Snackbar.LENGTH_SHORT ).show()
 	}
 
 }
