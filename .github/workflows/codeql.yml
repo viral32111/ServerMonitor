@@ -3,21 +3,15 @@ name: CodeQL
 on:
   push:
     paths:
-     - 'App/**'
+     - '**'
     branches:
      - '**'
-    tags:
-      - '*.*.*'
-  pull_request:
-    branches:
-    - '**'
   schedule:
     - cron: '0 0 * * 0'
-  workflow_dispatch:
 
 jobs:
-  codeql:
-    name: CodeQL
+  app:
+    name: App
     runs-on: ubuntu-22.04
     permissions:
       actions: read
@@ -38,6 +32,32 @@ jobs:
         uses: github/codeql-action/autobuild@v2
         with:
           working-directory: ./App/
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@v2
+
+  service:
+    name: Service
+    runs-on: ubuntu-22.04
+    permissions:
+      actions: read
+      contents: read
+      packages: read
+      security-events: write
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v3
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: csharp
+          source-root: ./Service/
+
+      - name: Auto-build
+        uses: github/codeql-action/autobuild@v2
+        with:
+          working-directory: ./Service/
 
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@v2
