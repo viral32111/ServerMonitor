@@ -2,38 +2,40 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"label": "build",
+			"label": "Build (Debug)",
 			"command": "dotnet",
 			"type": "process",
 			"args": [
 				"build",
-				"${workspaceFolder}/ServerMonitor.csproj",
+				"--configuration", "Debug",
+				"--nologo",
 				"/property:GenerateFullPaths=true",
 				"/consoleloggerparameters:NoSummary"
 			],
 			"problemMatcher": "$msCompile"
 		},
 		{
-			"label": "publish",
+			"label": "Build (Release)",
 			"command": "dotnet",
 			"type": "process",
 			"args": [
-				"publish",
-				"${workspaceFolder}/ServerMonitor.csproj",
+				"build",
+				"--configuration", "Release",
+				"--nologo",
 				"/property:GenerateFullPaths=true",
 				"/consoleloggerparameters:NoSummary"
 			],
 			"problemMatcher": "$msCompile"
 		},
 		{
-			"label": "watch",
+			"label": "Test",
 			"command": "dotnet",
 			"type": "process",
 			"args": [
-				"watch",
-				"run",
-				"--project",
-				"${workspaceFolder}/ServerMonitor.csproj"
+				"test",
+				"--nologo",
+				"/property:GenerateFullPaths=true",
+				"/consoleloggerparameters:NoSummary"
 			],
 			"problemMatcher": "$msCompile"
 		}

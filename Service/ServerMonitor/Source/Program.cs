@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Threading.Tasks;
 
 namespace ServerMonitor {
-	public class Program {
-		public async Task Main( string[] arguments ) {
+	public static class Program {
+		public static void Main( string[] arguments ) {
 			Console.WriteLine( "Hello World!" );
 		}
 	}
