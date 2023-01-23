@@ -1,5 +1,7 @@
 # Server Monitoring App
 
+[![App](https://github.com/viral32111/ServerMonitor/actions/workflows/app.yml/badge.svg)](https://github.com/viral32111/ServerMonitor/actions/workflows/app.yml) [![CodeQL](https://github.com/viral32111/ServerMonitor/actions/workflows/codeql.yml/badge.svg)](https://github.com/viral32111/ServerMonitor/actions/workflows/codeql.yml)
+
 This is an Android application for monitoring servers in real-time.
 
 ## Progress
