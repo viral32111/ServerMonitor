@@ -8,9 +8,7 @@
 			"args": [
 				"build",
 				"--configuration", "Debug",
-				"--nologo",
-				"/property:GenerateFullPaths=true",
-				"/consoleloggerparameters:NoSummary"
+				"--nologo"
 			],
 			"problemMatcher": "$msCompile"
 		},
@@ -21,9 +19,7 @@
 			"args": [
 				"build",
 				"--configuration", "Release",
-				"--nologo",
-				"/property:GenerateFullPaths=true",
-				"/consoleloggerparameters:NoSummary"
+				"--nologo"
 			],
 			"problemMatcher": "$msCompile"
 		},
@@ -33,9 +29,17 @@
 			"type": "process",
 			"args": [
 				"test",
-				"--nologo",
-				"/property:GenerateFullPaths=true",
-				"/consoleloggerparameters:NoSummary"
+				"--nologo"
+			],
+			"problemMatcher": "$msCompile"
+		},
+		{
+			"label": "Clean",
+			"command": "dotnet",
+			"type": "process",
+			"args": [
+				"clean",
+				"--nologo"
 			],
 			"problemMatcher": "$msCompile"
 		}
