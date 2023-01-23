@@ -1,0 +1,19 @@
+version: 2
+updates:
+  # Workflows
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+
+  # Android app
+  - package-ecosystem: gradle
+    directory: /App/
+    schedule:
+      interval: weekly
+
+  # .NET service
+  - package-ecosystem: nuget
+    directory: /Service/
+    schedule:
+      interval: weekly
