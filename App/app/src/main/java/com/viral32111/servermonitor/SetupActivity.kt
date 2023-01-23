@@ -1,51 +1,101 @@
 package com.viral32111.servermonitor
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.view.Menu
-import android.widget.Toolbar
+import android.widget.Button
+import android.widget.EditText
 import androidx.appcompat.app.ActionBar
+import com.google.android.material.appbar.MaterialToolbar
 
 class SetupActivity : AppCompatActivity() {
 
+	// Runs when the activity is created...
 	override fun onCreate( savedInstanceState: Bundle? ) {
+
+		// Run default action & display the relevant layout file
 		super.onCreate( savedInstanceState )
 		setContentView( R.layout.activity_setup )
 
-		/* ----------------------------- */
-
-		/*actionBar?.title = "Hello World 1"
-		actionBar?.subtitle = "Hello World 2"
-
-		actionBar?.setDisplayShowTitleEnabled( true )
-		actionBar?.setDisplayShowHomeEnabled( true )
-		actionBar?.setDisplayShowCustomEnabled( true )
-
-		actionBar?.elevation = 12.0f
-
-		actionBar?.show()*/
-
-		/* ----------------------------- */
-
+		// Switch to the custom Material Toolbar
 		supportActionBar?.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
-		supportActionBar?.setCustomView( R.layout.action_bar );
+		supportActionBar?.setCustomView( R.layout.action_bar )
 
+		// Get all UI controls
+		val materialToolbar = supportActionBar?.customView?.findViewById<MaterialToolbar>( R.id.actionBarMaterialToolbar )
+		val instanceUrlEditText = findViewById<EditText>( R.id.settingsInstanceUrlEditText )
+		val authenticationUsernameEditText = findViewById<EditText>( R.id.setupAuthenticationUsernameEditText )
+		val authenticationPasswordEditText = findViewById<EditText>( R.id.setupAuthenticationPasswordEditText )
+		val continueButton = findViewById<Button>( R.id.settingsSaveButton )
 
-		//supportActionBar?.title = getString( R.string.setup_actionbar_title )
-		//supportActionBar?.subtitle = "Hello World 3"
+		// Set the title on the toolbar
+		materialToolbar?.title = getString( R.string.setup_action_bar_title )
+		materialToolbar?.isTitleCentered = true
 
-		//supportActionBar?.setDisplayShowTitleEnabled( true )
-		//supportActionBar?.setDisplayShowHomeEnabled( true )
-		//supportActionBar?.setDisplayShowCustomEnabled( true )
+		// When the the continue button is pressed...
+		continueButton.setOnClickListener {
 
-		//supportActionBar?.elevation = 8.0f
+			// Get the values in the text inputs
+			val instanceUrl = instanceUrlEditText.text.toString()
+			val authUsername = authenticationUsernameEditText.text.toString()
+			val authPassword = authenticationPasswordEditText.text.toString()
+
+			// Do not continue if an instance URL wasn't provided
+			if ( instanceUrl.isEmpty() ) {
+				showBriefMessage( this, R.string.setupToastInstanceUrlEmpty )
+				return@setOnClickListener
+			}
+
+			// Do not continue if a username wasn't provided
+			if ( authUsername.isEmpty() ) {
+				showBriefMessage( this, R.string.setupToastAuthenticationUsernameEmpty )
+				return@setOnClickListener
+			}
+
+			// Do not continue if a password wasn't provided
+			if ( authPassword.isEmpty() ) {
+				showBriefMessage( this, R.string.setupToastAuthenticationPasswordEmpty )
+				return@setOnClickListener
+			}
+
+			// Do not continue if the URL isn't valid
+			if ( !validateInstanceUrl( instanceUrl ) ) {
+				showBriefMessage( this, R.string.setupToastInstanceUrlInvalid )
+				return@setOnClickListener
+			}
+
+			// Do not continue if the username isn't valid
+			if ( !validateCredentialsUsername( authUsername ) ) {
+				showBriefMessage( this, R.string.setupToastAuthenticationUsernameInvalid )
+				return@setOnClickListener
+			}
+
+			// Do not continue if the password isn't valid
+			if ( !validateCredentialsPassword( authUsername ) ) {
+				showBriefMessage( this, R.string.setupToastAuthenticationPasswordInvalid )
+				return@setOnClickListener
+			}
+
+			// TODO: Attempt connection to URL and validate the connection point service is running on it
+
+			// TODO: Save values to shared preferences
+
+		}
+
+		// When a menu item on the action bar is pressed...
+		materialToolbar?.setOnMenuItemClickListener { menuItem ->
+
+			// Settings
+			if ( menuItem.title?.equals( getString( R.string.action_bar_menu_settings ) ) == true ) {
+				startActivity( Intent( this, SettingsActivity::class.java ) )
+				overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
+			}
+
+			// Always successful
+			return@setOnMenuItemClickListener true
+
+		}
 
 	}
-
-	/*override fun onCreateOptionsMenu( menu: Menu? ): Boolean {
-		//return super.onCreateOptionsMenu( menu )
-		menuInflater.inflate( R.menu.actionbar_menu, menu )
-		return true
-	}*/
 
 }

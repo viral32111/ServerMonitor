@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+	<!-- Action bar options menu -->
+	<string name="action_bar_menu_settings">Settings</string>
+
+</resources>

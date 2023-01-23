@@ -4,7 +4,7 @@
 
 	<item
 		android:id="@+id/actionBarOptions"
-		android:title="@string/actionbar_menu_options"
+		android:title="@string/action_bar_menu_settings"
 		android:orderInCategory="1"
 		app:showAsAction="never" />
 </menu>

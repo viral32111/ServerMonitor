@@ -15,10 +15,8 @@
 			android:layout_width="match_parent"
 			android:layout_height="?attr/actionBarSize"
 			android:background="@color/toolbar_white"
-			app:menu="@menu/actionbar_menu"
-			app:title="@string/setup_actionbar_title"
-			app:titleCentered="true"
-			app:titleTextAppearance="@style/TextAppearance.ServerMonitor.ActionBar.Title" />
+			app:menu="@menu/action_bar_menu"/>
+			<!-- app:titleTextAppearance="@style/TextAppearance.ServerMonitor.ActionBar.Title" -->
 
 	</com.google.android.material.appbar.AppBarLayout>
 
