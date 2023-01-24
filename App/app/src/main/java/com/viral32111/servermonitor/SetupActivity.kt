@@ -1,5 +1,6 @@
 package com.viral32111.servermonitor
 
+import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -46,21 +47,15 @@ class SetupActivity : AppCompatActivity() {
 				return@setOnClickListener
 			}
 
-			// Do not continue if a username wasn't provided
-			if ( authUsername.isEmpty() ) {
-				showBriefMessage( this, R.string.setupToastAuthenticationUsernameEmpty )
-				return@setOnClickListener
-			}
-
-			// Do not continue if a password wasn't provided
-			if ( authPassword.isEmpty() ) {
-				showBriefMessage( this, R.string.setupToastAuthenticationPasswordEmpty )
-				return@setOnClickListener
-			}
-
 			// Do not continue if the URL isn't valid
 			if ( !validateInstanceUrl( instanceUrl ) ) {
 				showBriefMessage( this, R.string.setupToastInstanceUrlInvalid )
+				return@setOnClickListener
+			}
+
+			// Do not continue if a username wasn't provided
+			if ( authUsername.isEmpty() ) {
+				showBriefMessage( this, R.string.setupToastAuthenticationUsernameEmpty )
 				return@setOnClickListener
 			}
 
@@ -70,15 +65,28 @@ class SetupActivity : AppCompatActivity() {
 				return@setOnClickListener
 			}
 
+			// Do not continue if a password wasn't provided
+			if ( authPassword.isEmpty() ) {
+				showBriefMessage( this, R.string.setupToastAuthenticationPasswordEmpty )
+				return@setOnClickListener
+			}
+
 			// Do not continue if the password isn't valid
-			if ( !validateCredentialsPassword( authUsername ) ) {
+			if ( !validateCredentialsPassword( authPassword ) ) {
 				showBriefMessage( this, R.string.setupToastAuthenticationPasswordInvalid )
 				return@setOnClickListener
 			}
 
 			// TODO: Attempt connection to URL and validate the connection point service is running on it
 
-			// TODO: Save values to shared preferences
+			// Save values to shared preferences - https://developer.android.com/training/data-storage/shared-preferences#WriteSharedPreference
+			val sharedPreferences = getSharedPreferences( "com.viral32111.ServerMonitor.Settings", Context.MODE_PRIVATE )
+			with ( sharedPreferences.edit() ) {
+				putString( "instanceUrl", instanceUrl )
+				putString( "credentialsUsername", authUsername )
+				putString( "credentialsPassword", authPassword )
+				apply()
+			}
 
 		}
 

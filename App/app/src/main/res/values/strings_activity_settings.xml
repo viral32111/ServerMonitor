@@ -1,24 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
+	<!-- Title on the action bar -->
 	<string name="settingsActionBarTitle">Settings</string>
 
+	<!-- Instance URL input -->
 	<string name="settingsTextViewInstanceUrlLabel">Instance URL:</string>
 	<string name="settingsEditTextInstanceUrlHint">https://example.com/my-instance-name…</string>
+	<string name="settingsToastInstanceUrlEmpty">Provide an instance URL.</string>
+	<string name="settingsToastInstanceUrlInvalid">The provided instance URL is invalid.</string>
 
+	<!-- Label for credentials section -->
 	<string name="settingsTextViewCredentialsLabel">Credentials:</string>
+
+	<!-- Username input for credentials -->
 	<string name="settingsEditTextCredentialsUsernameHint">john.doe</string>
+	<string name="settingsToastCredentialsUsernameEmpty">Provide a username.</string>
+	<string name="settingsToastCredentialsUsernameInvalid">The provided username is invalid.</string>
+
+	<!-- Password input for credentials -->
 	<string name="settingsEditTextCredentialsPasswordHint">Sup3r_Go0d_P4ssw0rd!</string>
+	<string name="settingsToastCredentialsPasswordEmpty">Provide a password.</string>
+	<string name="settingsToastCredentialsPasswordInvalid">The provided password is invalid.</string>
 
+	<!-- Label for automatic refresh section -->
 	<string name="settingsCheckBoxAutomaticRefresh">Automatic Refresh</string>
-	<string name="settingsTextViewIntervalLabel">Interval (Seconds):</string>
-	<string name="settingsEditTextIntervalHint">15</string>
 
+	<!-- Interval input for automatic refresh -->
+	<string name="settingsTextViewIntervalLabel">Interval:</string>
+	<string name="settingsEditTextIntervalHint">Seconds…</string>
+	<string name="settingsToastIntervalEmpty">Provide a refresh interval.</string>
+	<string name="settingsToastIntervalInvalid">The provided refresh interval is invalid.</string>
+
+	<!-- Label & input for theme -->
 	<string name="settingsTextViewThemeLabel">Theme:</string>
 	<string name="settingsSpinnerTheme">Follow System</string>
 
+	<!-- Label & input for notifications -->
 	<string name="settingsTextViewNotificationsLabel">Notifications:</string>
 	<string name="settingsCheckBoxNotificationsAlwaysOngoing">Always ongoing</string>
 	<string name="settingsCheckBoxNotificationsWhenIssueArises">When an issue arises</string>
 
+	<!-- Label for instance url & credentials inputs when app not yet setup -->
+	<string name="settingsEditTextSetupHint">Return to Setup…</string>
+
+	<!-- Save button -->
 	<string name="settingsButtonSave">Save</string>
+
 </resources>
