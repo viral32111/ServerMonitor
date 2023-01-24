@@ -5,7 +5,7 @@ on:
     paths:
       - 'App/**'
       - 'Service/**'
-      - '.github/workflows/app.yml'
+      - '.github/workflows/ci.yml'
     branches:
       - '**'
     tags:
@@ -87,5 +87,5 @@ jobs:
         with:
           name: viral32111.InternetRelayChat.Message
           path: |
-            ./ServerMonitor/bin/Release/net7.0/ServerMonitor.dll
-            ./ServerMonitor/bin/Release/net7.0/ServerMonitor.deps.json
+            ./Service/ServerMonitor/bin/Release/net7.0/ServerMonitor.dll
+            ./Service/ServerMonitor/bin/Release/net7.0/ServerMonitor.deps.json
