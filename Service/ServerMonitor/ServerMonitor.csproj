@@ -4,7 +4,21 @@
 		<TargetFramework>net7.0</TargetFramework>
 		<ImplicitUsings>disable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+
+		<Title>ServerMonitor</Title>
+		<Authors>viral32111</Authors>
+		<Description>A mobile app for monitoring servers in real-time. </Description>
+		<Copyright>Copyright (C) 2022 viral32111</Copyright>
+		<RepositoryUrl>https://github.com/viral32111/ServerMonitor</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<AssemblyVersion>$(FileVersion)</AssemblyVersion>
+		<FileVersion>0.1.0</FileVersion>
+		<NeutralLanguage>en-GB</NeutralLanguage>
+		<Version>$(FileVersion)</Version>
+		<RootNamespace>ServerMonitor</RootNamespace>
+		<AssemblyName>$(MSBuildProjectName)</AssemblyName>
 	</PropertyGroup>
+
 	<ItemGroup>
 		<PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
 	</ItemGroup>
