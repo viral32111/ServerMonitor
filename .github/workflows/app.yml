@@ -1,9 +1,10 @@
-name: App
+name: CI
 
 on:
   push:
     paths:
       - 'App/**'
+      - 'Service/**'
       - '.github/workflows/app.yml'
     branches:
       - '**'
@@ -15,11 +16,14 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    name: Build
+  app:
+    name: App
     runs-on: ubuntu-22.04
     permissions:
       contents: read
+    defaults:
+      run:
+        working-directory: ./App/
     strategy:
       matrix:
         variant: [ 'Debug', 'Release' ]
@@ -34,17 +38,20 @@ jobs:
           distribution: temurin
 
       - name: Set Gradle permissions
-        run: chmod +x ./App/gradlew
+        run: chmod +x ./gradlew
 
-      - name: Build using Gradle
+      - name: Build project
         uses: gradle/gradle-build-action@v2
         with:
           arguments: assemble${{ matrix.variant }}
           build-root-directory: ./App/
 
+      - name: Run tests
+        run: ./gradlew test
+
       - name: Upload build
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.variant }}
+          name: ServerMonitor-${{ matrix.variant }}
           path: |
             ./App/app/build/outputs/apk/*/*
