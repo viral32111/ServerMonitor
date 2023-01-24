@@ -10,7 +10,7 @@
 	<string name="settingsEditTextCredentialsPasswordHint">Sup3r_Go0d_P4ssw0rd!</string>
 
 	<string name="settingsCheckBoxAutomaticRefresh">Automatic Refresh</string>
-	<string name="settingsTextViewIntervalLabel">Interval:</string>
+	<string name="settingsTextViewIntervalLabel">Interval (Seconds):</string>
 	<string name="settingsEditTextIntervalHint">15</string>
 
 	<string name="settingsTextViewThemeLabel">Theme:</string>

@@ -71,6 +71,11 @@ class SettingsActivity : AppCompatActivity() {
 
 		}
 
+		// Disable interval input when switched off
+		automaticRefreshSwitch.setOnCheckedChangeListener { _, isChecked ->
+			automaticRefreshIntervalEditText.isEnabled = isChecked;
+		}
+
 	}
 
 }
