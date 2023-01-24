@@ -52,7 +52,7 @@ jobs:
       - name: Upload build
         uses: actions/upload-artifact@v3
         with:
-          name: ServerMonitor-${{ matrix.variant }}
+          name: ServerMonitor-App-${{ matrix.variant }}
           path: |
             ./App/app/build/outputs/apk/*/*
 
@@ -85,7 +85,7 @@ jobs:
       - name: Upload build
         uses: actions/upload-artifact@v3
         with:
-          name: viral32111.InternetRelayChat.Message
+          name: ServerMonitor-Service
           path: |
             ./Service/ServerMonitor/bin/Release/net7.0/ServerMonitor.dll
             ./Service/ServerMonitor/bin/Release/net7.0/ServerMonitor.deps.json
