@@ -2,12 +2,14 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "Launch (Debug)",
+			"name": "Launch Collector (Debug)",
 			"type": "coreclr",
 			"request": "launch",
 			"preLaunchTask": "Build (Debug)",
 			"program": "${workspaceFolder}/ServerMonitor/bin/Debug/net7.0/ServerMonitor.dll",
-			"args": [],
+			"args": [
+				"collector"
+			],
 			"cwd": "${workspaceFolder}",
 			"console": "internalConsole",
 			"stopAtEntry": false,
@@ -16,12 +18,46 @@
 			}
 		},
 		{
-			"name": "Launch (Release)",
+			"name": "Launch Collector (Release)",
 			"type": "coreclr",
 			"request": "launch",
 			"preLaunchTask": "Build (Release)",
 			"program": "${workspaceFolder}/ServerMonitor/bin/Release/net7.0/ServerMonitor.dll",
-			"args": [],
+			"args": [
+				"collector"
+			],
+			"cwd": "${workspaceFolder}",
+			"console": "internalConsole",
+			"stopAtEntry": false,
+			"logging": {
+				"moduleLoad": false,
+			}
+		},
+		{
+			"name": "Launch Connector (Debug)",
+			"type": "coreclr",
+			"request": "launch",
+			"preLaunchTask": "Build (Debug)",
+			"program": "${workspaceFolder}/ServerMonitor/bin/Debug/net7.0/ServerMonitor.dll",
+			"args": [
+				"connector"
+			],
+			"cwd": "${workspaceFolder}",
+			"console": "internalConsole",
+			"stopAtEntry": false,
+			"logging": {
+				"moduleLoad": false
+			}
+		},
+		{
+			"name": "Launch Connector (Release)",
+			"type": "coreclr",
+			"request": "launch",
+			"preLaunchTask": "Build (Release)",
+			"program": "${workspaceFolder}/ServerMonitor/bin/Release/net7.0/ServerMonitor.dll",
+			"args": [
+				"connector"
+			],
 			"cwd": "${workspaceFolder}",
 			"console": "internalConsole",
 			"stopAtEntry": false,
