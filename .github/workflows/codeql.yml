@@ -13,6 +13,9 @@ jobs:
   app:
     name: App
     runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: ./App/
     permissions:
       actions: read
       contents: read
@@ -28,10 +31,20 @@ jobs:
           languages: java
           source-root: ./App/
 
-      - name: Auto-build
-        uses: github/codeql-action/autobuild@v2
+      - name: Setup Java
+        uses: actions/setup-java@v3
         with:
-          working-directory: ./App/
+          java-version: 17
+          distribution: temurin
+
+      - name: Set Gradle permissions
+        run: chmod +x ./gradlew
+
+      - name: Build project
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: assemble${{ matrix.variant }}
+          build-root-directory: ./App/
 
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@v2
