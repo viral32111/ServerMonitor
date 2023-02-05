@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Spinner
@@ -61,8 +62,13 @@ class SettingsActivity : AppCompatActivity() {
 		// Disable the menu on the toolbar
 		materialToolbar?.menu?.clear()
 
+		// Force theme selection by disabling interaction - This will be removed once dark theme is properly implemented
+		themeSpinner.setSelection( 2 ) // Light
+		themeSpinner.isEnabled = false
+		//themeSpinner.isClickable = false
+
 		// Get the persistent settings - https://developer.android.com/training/data-storage/shared-preferences
-		val sharedPreferences = getSharedPreferences( "com.viral32111.ServerMonitor.Settings", Context.MODE_PRIVATE )
+		val sharedPreferences = getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE )
 
 		// Update UI with settings & save in case it used defaults
 		readSettings( sharedPreferences )
@@ -98,14 +104,14 @@ class SettingsActivity : AppCompatActivity() {
 		val credentialsPassword = sharedPreferences.getString( "credentialsPassword", credentialsPasswordEditText.text.toString() )
 		val automaticRefresh = sharedPreferences.getBoolean( "automaticRefresh", automaticRefreshSwitch.isChecked )
 		val automaticRefreshInterval = sharedPreferences.getInt( "automaticRefreshInterval", 15 ) // Default to 15 seconds
-		//val theme = sharedPreferences.getString( "theme", themeSpinner.selectedItem.toString() )
+		val theme = sharedPreferences.getInt( "theme", themeSpinner.selectedItemPosition ) // Not ideal to use position but we'll never have more than 3 themes anyway (system, light & dark)
 		val notificationAlwaysOngoing = sharedPreferences.getBoolean( "notificationAlwaysOngoing", notificationsAlwaysOngoingSwitch.isChecked )
 		val notificationWhenIssueArises = sharedPreferences.getBoolean( "notificationWhenIssueArises", notificationsWhenIssueArisesSwitch.isChecked )
 
 		// Update the UI
 		automaticRefreshSwitch.isChecked = automaticRefresh
 		automaticRefreshIntervalEditText.setText( automaticRefreshInterval.toString() )
-		//themeSpinner.setSelection( 0 )
+		themeSpinner.setSelection( theme )
 		notificationsAlwaysOngoingSwitch.isChecked = notificationAlwaysOngoing
 		notificationsWhenIssueArisesSwitch.isChecked = notificationWhenIssueArises
 
@@ -140,7 +146,7 @@ class SettingsActivity : AppCompatActivity() {
 		val credentialsPassword = credentialsPasswordEditText.text.toString()
 		val automaticRefresh = automaticRefreshSwitch.isChecked
 		val automaticRefreshInterval = automaticRefreshIntervalEditText.text.toString().toInt()
-		//val theme = themeSpinner.selectedItem.toString()
+		val theme = themeSpinner.selectedItemPosition
 		val notificationAlwaysOngoing = notificationsAlwaysOngoingSwitch.isChecked
 		val notificationWhenIssueArises = notificationsWhenIssueArisesSwitch.isChecked
 
@@ -153,7 +159,7 @@ class SettingsActivity : AppCompatActivity() {
 			putString( "credentialsPassword", credentialsPassword )
 			putBoolean( "automaticRefresh", automaticRefresh )
 			putInt( "automaticRefreshInterval", automaticRefreshInterval )
-			//putString( "theme", theme )
+			putInt( "theme", theme )
 			putBoolean( "notificationAlwaysOngoing", notificationAlwaysOngoing )
 			putBoolean( "notificationWhenIssueArises", notificationWhenIssueArises )
 			apply()
