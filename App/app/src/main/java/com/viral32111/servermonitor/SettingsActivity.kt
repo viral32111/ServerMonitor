@@ -31,10 +31,12 @@ class SettingsActivity : AppCompatActivity() {
 		// Run default action & display the relevant layout file
 		super.onCreate( savedInstanceState )
 		setContentView( R.layout.activity_settings )
+		Log.d( Shared.logTag, "Creating activity..." )
 
 		// Switch to the custom Material Toolbar
 		supportActionBar?.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
 		supportActionBar?.setCustomView( R.layout.action_bar )
+		Log.d( Shared.logTag, "Switched to Material Toolbar" )
 
 		// Get all the UI controls
 		val materialToolbar = supportActionBar?.customView?.findViewById<MaterialToolbar>( R.id.actionBarMaterialToolbar )
@@ -47,28 +49,33 @@ class SettingsActivity : AppCompatActivity() {
 		themeSpinner = findViewById( R.id.settingsThemeSpinner )
 		notificationsAlwaysOngoingSwitch = findViewById( R.id.settingsNotificationsAlwaysOngoingSwitch )
 		notificationsWhenIssueArisesSwitch = findViewById( R.id.settingsNotificationsWhenIssueArisesSwitch )
+		Log.d( Shared.logTag, "Got UI controls" )
 
 		// Set the title on the toolbar
 		materialToolbar?.title = getString( R.string.settingsActionBarTitle )
 		materialToolbar?.isTitleCentered = true
+		Log.d( Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered } )" )
 
 		// Enable the back button on the toolbar
 		materialToolbar?.navigationIcon = AppCompatResources.getDrawable( this, R.drawable.ic_baseline_arrow_back_24 )
 		materialToolbar?.setNavigationOnClickListener {
+			Log.d( Shared.logTag, "Going back to previous activity" )
 			finish()
 			overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
 		}
 
 		// Disable the menu on the toolbar
 		materialToolbar?.menu?.clear()
+		Log.d( Shared.logTag, "Disabled menu items on Material Toolbar" )
 
 		// Force theme selection by disabling interaction - This will be removed once dark theme is properly implemented
 		themeSpinner.setSelection( 2 ) // Light
 		themeSpinner.isEnabled = false
-		//themeSpinner.isClickable = false
+		Log.d( Shared.logTag, "Forced theme selection" )
 
 		// Get the persistent settings - https://developer.android.com/training/data-storage/shared-preferences
 		val sharedPreferences = getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE )
+		Log.d( Shared.logTag, "Got shared preferences for '${ Shared.sharedPreferencesName }'" )
 
 		// Update UI with settings & save in case it used defaults
 		readSettings( sharedPreferences )
@@ -79,6 +86,7 @@ class SettingsActivity : AppCompatActivity() {
 			saveSettings( sharedPreferences ).let {
 				if ( it != null ) {
 					showBriefMessage( this, it )
+					Log.w( Shared.logTag, "Error '${ getString( it ) }' saving settings" )
 					return@setOnClickListener
 				}
 			}
@@ -97,6 +105,7 @@ class SettingsActivity : AppCompatActivity() {
 
 	// Updates the UI with the values from the persistent settings
 	private fun readSettings( sharedPreferences: SharedPreferences ) {
+		Log.d( Shared.logTag, "Populating UI with values from shared preferences..." )
 
 		// Get stored settings or default to current UI - https://developer.android.com/training/data-storage/shared-preferences#ReadSharedPreference
 		val instanceUrl = sharedPreferences.getString( "instanceUrl", instanceUrlEditText.text.toString() )
@@ -139,6 +148,7 @@ class SettingsActivity : AppCompatActivity() {
 
 	// Saves the values in the UI to the persistent settings
 	private fun saveSettings( sharedPreferences: SharedPreferences ): Int? {
+		Log.d( Shared.logTag, "Saving UI values to shared preferences..." )
 
 		// Get the values from all the UI inputs
 		val instanceUrl = instanceUrlEditText.text.toString()
