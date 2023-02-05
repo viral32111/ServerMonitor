@@ -30,6 +30,7 @@ jobs:
         with:
           languages: java
           source-root: ./App/
+          tools: latest
 
       - name: Setup Java
         uses: actions/setup-java@v3
