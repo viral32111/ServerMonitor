@@ -51,8 +51,10 @@ jobs:
         with:
           name: ${{ env.ARTIFACT_NAME }}
           path: |
-            ./Service/ServerMonitor/bin/Release/net7.0/ServerMonitor.dll
+            ./Service/ServerMonitor/bin/Release/net7.0/*.dll
             ./Service/ServerMonitor/bin/Release/net7.0/ServerMonitor.deps.json
+            ./Service/ServerMonitor/bin/Release/net7.0/ServerMonitor.runtimeconfig.json
+            ./Service/ServerMonitor/bin/Release/net7.0/appsettings.json
 
   deploy:
     name: Deploy
