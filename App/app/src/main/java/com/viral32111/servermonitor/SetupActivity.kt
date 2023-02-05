@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import androidx.appcompat.app.ActionBar
@@ -32,6 +33,9 @@ class SetupActivity : AppCompatActivity() {
 		// Set the title on the toolbar
 		materialToolbar?.title = getString( R.string.setupActionBarTitle )
 		materialToolbar?.isTitleCentered = true
+
+		// Get the persistent settings - https://developer.android.com/training/data-storage/shared-preferences
+		val sharedPreferences = getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE )
 
 		// When the the continue button is pressed...
 		continueButton.setOnClickListener {
@@ -77,10 +81,12 @@ class SetupActivity : AppCompatActivity() {
 				return@setOnClickListener
 			}
 
-			// TODO: Attempt connection to URL and validate the connection point service is running on it
+			if ( !testInstance( instanceUrl ) ) {
+				showBriefMessage( this, R.string.setupToastCredentialsPasswordInvalid )
+				return@setOnClickListener
+			}
 
 			// Save values to shared preferences - https://developer.android.com/training/data-storage/shared-preferences#WriteSharedPreference
-			val sharedPreferences = getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE )
 			with ( sharedPreferences.edit() ) {
 				putString( "instanceUrl", instanceUrl )
 				putString( "credentialsUsername", credentialsUsername )
@@ -88,22 +94,45 @@ class SetupActivity : AppCompatActivity() {
 				apply()
 			}
 
+			// Change to the next activity, whatever it may be
+			Log.d( Shared.logTag, "Setup is complete! ('${ instanceUrl }', '${ credentialsUsername }', '${ credentialsPassword }')" )
+			switchActivity()
+
 		}
 
-		// When a menu item on the action bar is pressed...
+		// Open settings when its action bar menu item is clicked
 		materialToolbar?.setOnMenuItemClickListener { menuItem ->
-
-			// Settings
 			if ( menuItem.title?.equals( getString( R.string.action_bar_menu_settings ) ) == true ) {
 				startActivity( Intent( this, SettingsActivity::class.java ) )
 				overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
 			}
 
-			// Always successful
 			return@setOnMenuItemClickListener true
-
 		}
 
+		// Change to the next activity if we have already gone through the setup
+		val instanceUrl = sharedPreferences.getString( "instanceUrl", null )
+		val credentialsUsername = sharedPreferences.getString( "credentialsUsername", null )
+		val credentialsPassword = sharedPreferences.getString( "credentialsPassword", null )
+		if ( !instanceUrl.isNullOrEmpty() && !credentialsUsername.isNullOrEmpty() && !credentialsPassword.isNullOrEmpty() ) {
+			Log.d( Shared.logTag, "We're already setup! ('${ instanceUrl }', '${ credentialsUsername }', '${ credentialsPassword }')" )
+			switchActivity()
+		} else {
+			Log.d( Shared.logTag, "We're not setup yet! ('${ instanceUrl }', '${ credentialsUsername }', '${ credentialsPassword }')" )
+		}
+
+	}
+
+	// TODO: Attempt connection to URL and validate the connection point service is running on it
+	private fun testInstance( instanceUrl: String ): Boolean {
+		return true
+	}
+
+	// TODO: Is there multiple servers? If so, switch to Servers activity. If not, switch to Server activity.
+	private fun switchActivity() {
+		startActivity( Intent( this, ServersActivity::class.java ) )
+		overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
+		finish()
 	}
 
 }

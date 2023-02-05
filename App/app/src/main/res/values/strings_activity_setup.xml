@@ -13,6 +13,7 @@
 	<string name="setupEditTextInstanceUrlHint">https://example.com/my-instance-name…</string>
 	<string name="setupToastInstanceUrlEmpty">Provide an instance URL.</string>
 	<string name="setupToastInstanceUrlInvalid">The provided instance URL is invalid.</string>
+	<string name="setupToastInstanceUnavailable">There is not an instance running at the provided URL.</string>
 
 	<!-- Label for credentials section -->
 	<string name="setupTextViewCredentialsLabel">Authentication Credentials:</string>
