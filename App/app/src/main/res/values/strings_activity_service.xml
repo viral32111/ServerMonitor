@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+	<!-- Title on the action bar -->
+	<!-- TODO: Will eventually be service name! -->
+	<string name="serviceActionBarTitle">Service</string>
+
+</resources>
