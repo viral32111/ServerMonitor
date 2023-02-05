@@ -74,7 +74,7 @@ class SettingsActivity : AppCompatActivity() {
 		readSettings( sharedPreferences )
 		saveSettings( sharedPreferences )
 
-		// Validate & save settings when the save button is pressed
+		// Validate & save settings when the save button is pressed, will show toast if there was an issue
 		saveButton.setOnClickListener {
 			saveSettings( sharedPreferences ).let {
 				if ( it != null ) {
@@ -150,7 +150,17 @@ class SettingsActivity : AppCompatActivity() {
 		val notificationAlwaysOngoing = notificationsAlwaysOngoingSwitch.isChecked
 		val notificationWhenIssueArises = notificationsWhenIssueArisesSwitch.isChecked
 
-		// TODO: Validate all those values
+		// Do not continue if an instance URL wasn't provided/isn't valid
+		if ( instanceUrl.isEmpty() ) return R.string.settingsToastInstanceUrlEmpty
+		if ( !validateInstanceUrl( instanceUrl ) ) return R.string.settingsToastInstanceUrlInvalid
+
+		// Do not continue if a username wasn't provided/isn't valid
+		if ( credentialsUsername.isEmpty() ) return R.string.settingsToastCredentialsUsernameEmpty
+		if ( !validateCredentialsUsername( credentialsUsername ) ) return R.string.settingsToastCredentialsUsernameInvalid
+
+		// Do not continue if a password wasn't provided/isn't valid
+		if ( credentialsPassword.isEmpty() ) return R.string.settingsToastCredentialsPasswordEmpty
+		if ( !validateCredentialsPassword( credentialsPassword ) ) return R.string.settingsToastCredentialsPasswordInvalid
 
 		// Save those values to shared preferences - https://developer.android.com/training/data-storage/shared-preferences#WriteSharedPreference
 		with ( sharedPreferences.edit() ) {

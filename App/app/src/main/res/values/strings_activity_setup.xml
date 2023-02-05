@@ -10,7 +10,7 @@
 
 	<!-- Instance URL input -->
 	<string name="setupTextViewInstanceUrlLabel">Instance URL:</string>
-	<string name="setupEditViewInstanceUrlHint">https://example.com/my-instance-name…</string>
+	<string name="setupEditTextInstanceUrlHint">https://example.com/my-instance-name…</string>
 	<string name="setupToastInstanceUrlEmpty">Provide an instance URL.</string>
 	<string name="setupToastInstanceUrlInvalid">The provided instance URL is invalid.</string>
 
@@ -18,7 +18,7 @@
 	<string name="setupTextViewCredentialsLabel">Authentication Credentials:</string>
 
 	<!-- Username input for authentication -->
-	<string name="setupEditTextCredentialsUsernameHint">john.doe</string>
+	<string name="setupEditTextCredentialsUsernameHint">JohnDoe</string>
 	<string name="setupToastCredentialsUsernameEmpty">Provide a username for authentication.</string>
 	<string name="setupToastCredentialsUsernameInvalid">The provided username is invalid.</string>
 

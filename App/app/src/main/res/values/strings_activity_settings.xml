@@ -14,7 +14,7 @@
 	<string name="settingsTextViewCredentialsLabel">Authentication Credentials:</string>
 
 	<!-- Username input for authentication -->
-	<string name="settingsEditTextCredentialsUsernameHint">john.doe</string>
+	<string name="settingsEditTextCredentialsUsernameHint">JohnDoe</string>
 	<string name="settingsToastCredentialsUsernameEmpty">Provide a username for authentication.</string>
 	<string name="settingsToastCredentialsUsernameInvalid">The provided username is invalid.</string>
 

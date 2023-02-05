@@ -56,7 +56,7 @@
         android:layout_marginEnd="@dimen/margin_right"
         android:autofillHints=""
         android:ems="10"
-        android:hint="@string/setupEditViewInstanceUrlHint"
+        android:hint="@string/setupEditTextInstanceUrlHint"
         android:inputType="textUri"
         android:minHeight="48dp"
         android:textSize="@dimen/text_size"

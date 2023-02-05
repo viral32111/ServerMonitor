@@ -25,8 +25,8 @@ class SetupActivity : AppCompatActivity() {
 		// Get all UI controls
 		val materialToolbar = supportActionBar?.customView?.findViewById<MaterialToolbar>( R.id.actionBarMaterialToolbar )
 		val instanceUrlEditText = findViewById<EditText>( R.id.settingsInstanceUrlEditText )
-		val authenticationUsernameEditText = findViewById<EditText>( R.id.setupCredentialsUsernameEditText )
-		val authenticationPasswordEditText = findViewById<EditText>( R.id.setupCredentialsPasswordEditText )
+		val credentialsUsernameEditText = findViewById<EditText>( R.id.setupCredentialsUsernameEditText )
+		val credentialsPasswordEditText = findViewById<EditText>( R.id.setupCredentialsPasswordEditText )
 		val continueButton = findViewById<Button>( R.id.settingsSaveButton )
 
 		// Set the title on the toolbar
@@ -38,8 +38,8 @@ class SetupActivity : AppCompatActivity() {
 
 			// Get the values in the text inputs
 			val instanceUrl = instanceUrlEditText.text.toString()
-			val authUsername = authenticationUsernameEditText.text.toString()
-			val authPassword = authenticationPasswordEditText.text.toString()
+			val credentialsUsername = credentialsUsernameEditText.text.toString()
+			val credentialsPassword = credentialsPasswordEditText.text.toString()
 
 			// Do not continue if an instance URL wasn't provided
 			if ( instanceUrl.isEmpty() ) {
@@ -54,25 +54,25 @@ class SetupActivity : AppCompatActivity() {
 			}
 
 			// Do not continue if a username wasn't provided
-			if ( authUsername.isEmpty() ) {
+			if ( credentialsUsername.isEmpty() ) {
 				showBriefMessage( this, R.string.setupToastCredentialsUsernameEmpty )
 				return@setOnClickListener
 			}
 
 			// Do not continue if the username isn't valid
-			if ( !validateCredentialsUsername( authUsername ) ) {
+			if ( !validateCredentialsUsername( credentialsUsername ) ) {
 				showBriefMessage( this, R.string.setupToastCredentialsUsernameInvalid )
 				return@setOnClickListener
 			}
 
 			// Do not continue if a password wasn't provided
-			if ( authPassword.isEmpty() ) {
+			if ( credentialsPassword.isEmpty() ) {
 				showBriefMessage( this, R.string.setupToastCredentialsPasswordEmpty )
 				return@setOnClickListener
 			}
 
 			// Do not continue if the password isn't valid
-			if ( !validateCredentialsPassword( authPassword ) ) {
+			if ( !validateCredentialsPassword( credentialsPassword ) ) {
 				showBriefMessage( this, R.string.setupToastCredentialsPasswordInvalid )
 				return@setOnClickListener
 			}
@@ -83,8 +83,8 @@ class SetupActivity : AppCompatActivity() {
 			val sharedPreferences = getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE )
 			with ( sharedPreferences.edit() ) {
 				putString( "instanceUrl", instanceUrl )
-				putString( "credentialsUsername", authUsername )
-				putString( "credentialsPassword", authPassword )
+				putString( "credentialsUsername", credentialsUsername )
+				putString( "credentialsPassword", credentialsPassword )
 				apply()
 			}
 
