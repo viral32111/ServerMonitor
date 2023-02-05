@@ -2,30 +2,30 @@
 <resources>
 
 	<!-- Title on the action bar -->
-	<string name="setup_action_bar_title">Setup</string>
+	<string name="setupActionBarTitle">Setup</string>
 
 	<!-- Instructions -->
-	<string name="setup_textview_instruction">Enter the publicly-accessible URL to the primary server monitoring instance below, along with your credentials to access it.</string>
-	<string name="setup_textview_secure_notice">The instance must be served over HTTPs.</string>
+	<string name="setupTextViewInstruction">Enter the publicly-accessible URL to the primary server monitoring instance below, along with your credentials to access it.</string>
+	<string name="SetupTextViewSecureNotice">The instance must be served over HTTPs.</string>
 
 	<!-- Instance URL input -->
-	<string name="setup_textview_instance_url_label">Instance URL:</string>
-	<string name="setup_edittext_instance_url_hint">https://example.com/my-instance-name…</string>
+	<string name="setupTextViewInstanceUrlLabel">Instance URL:</string>
+	<string name="setupEditViewInstanceUrlHint">https://example.com/my-instance-name…</string>
 	<string name="setupToastInstanceUrlEmpty">Provide an instance URL.</string>
 	<string name="setupToastInstanceUrlInvalid">The provided instance URL is invalid.</string>
 
-	<!-- Label for authentication section -->
-	<string name="setup_textview_authentication_label">Authentication Credentials:</string>
+	<!-- Label for credentials section -->
+	<string name="setupTextViewCredentialsLabel">Authentication Credentials:</string>
 
 	<!-- Username input for authentication -->
-	<string name="setup_edittext_authentication_username_hint">john.doe</string>
-	<string name="setupToastAuthenticationUsernameEmpty">Provide a username for authentication.</string>
-	<string name="setupToastAuthenticationUsernameInvalid">The provided username is invalid.</string>
+	<string name="setupEditTextCredentialsUsernameHint">john.doe</string>
+	<string name="setupToastCredentialsUsernameEmpty">Provide a username for authentication.</string>
+	<string name="setupToastCredentialsUsernameInvalid">The provided username is invalid.</string>
 
 	<!-- Password input for authentication -->
-	<string name="setup_edittext_authentication_password_hint">Sup3r_Go0d_P4ssw0rd!</string>
-	<string name="setupToastAuthenticationPasswordEmpty">Provide a password for authentication.</string>
-	<string name="setupToastAuthenticationPasswordInvalid">The provided password is invalid.</string>
+	<string name="setupEditTextCredentialsPasswordHint">Sup3r_Go0d_P4ssw0rd!</string>
+	<string name="setupToastCredentialsPasswordEmpty">Provide a password for authentication.</string>
+	<string name="setupToastCredentialsPasswordInvalid">The provided password is invalid.</string>
 
 	<!-- Continue button -->
 	<string name="setup_button_continue">Continue</string>

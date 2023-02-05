@@ -25,12 +25,12 @@ class SetupActivity : AppCompatActivity() {
 		// Get all UI controls
 		val materialToolbar = supportActionBar?.customView?.findViewById<MaterialToolbar>( R.id.actionBarMaterialToolbar )
 		val instanceUrlEditText = findViewById<EditText>( R.id.settingsInstanceUrlEditText )
-		val authenticationUsernameEditText = findViewById<EditText>( R.id.setupAuthenticationUsernameEditText )
-		val authenticationPasswordEditText = findViewById<EditText>( R.id.setupAuthenticationPasswordEditText )
+		val authenticationUsernameEditText = findViewById<EditText>( R.id.setupCredentialsUsernameEditText )
+		val authenticationPasswordEditText = findViewById<EditText>( R.id.setupCredentialsPasswordEditText )
 		val continueButton = findViewById<Button>( R.id.settingsSaveButton )
 
 		// Set the title on the toolbar
-		materialToolbar?.title = getString( R.string.setup_action_bar_title )
+		materialToolbar?.title = getString( R.string.setupActionBarTitle )
 		materialToolbar?.isTitleCentered = true
 
 		// When the the continue button is pressed...
@@ -55,32 +55,32 @@ class SetupActivity : AppCompatActivity() {
 
 			// Do not continue if a username wasn't provided
 			if ( authUsername.isEmpty() ) {
-				showBriefMessage( this, R.string.setupToastAuthenticationUsernameEmpty )
+				showBriefMessage( this, R.string.setupToastCredentialsUsernameEmpty )
 				return@setOnClickListener
 			}
 
 			// Do not continue if the username isn't valid
 			if ( !validateCredentialsUsername( authUsername ) ) {
-				showBriefMessage( this, R.string.setupToastAuthenticationUsernameInvalid )
+				showBriefMessage( this, R.string.setupToastCredentialsUsernameInvalid )
 				return@setOnClickListener
 			}
 
 			// Do not continue if a password wasn't provided
 			if ( authPassword.isEmpty() ) {
-				showBriefMessage( this, R.string.setupToastAuthenticationPasswordEmpty )
+				showBriefMessage( this, R.string.setupToastCredentialsPasswordEmpty )
 				return@setOnClickListener
 			}
 
 			// Do not continue if the password isn't valid
 			if ( !validateCredentialsPassword( authPassword ) ) {
-				showBriefMessage( this, R.string.setupToastAuthenticationPasswordInvalid )
+				showBriefMessage( this, R.string.setupToastCredentialsPasswordInvalid )
 				return@setOnClickListener
 			}
 
 			// TODO: Attempt connection to URL and validate the connection point service is running on it
 
 			// Save values to shared preferences - https://developer.android.com/training/data-storage/shared-preferences#WriteSharedPreference
-			val sharedPreferences = getSharedPreferences( "com.viral32111.ServerMonitor.Settings", Context.MODE_PRIVATE )
+			val sharedPreferences = getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE )
 			with ( sharedPreferences.edit() ) {
 				putString( "instanceUrl", instanceUrl )
 				putString( "credentialsUsername", authUsername )

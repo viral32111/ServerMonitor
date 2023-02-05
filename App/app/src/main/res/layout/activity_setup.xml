@@ -14,7 +14,7 @@
         android:layout_marginStart="@dimen/margin_left"
         android:layout_marginTop="@dimen/margin_top"
         android:layout_marginEnd="@dimen/margin_top"
-        android:text="@string/setup_textview_instruction"
+        android:text="@string/setupTextViewInstruction"
         android:textAlignment="center"
         android:textSize="@dimen/text_size"
         app:layout_constraintEnd_toEndOf="parent"
@@ -28,7 +28,7 @@
         android:layout_marginStart="@dimen/margin_left"
         android:layout_marginTop="12dp"
         android:layout_marginEnd="@dimen/margin_right"
-        android:text="@string/setup_textview_secure_notice"
+        android:text="@string/SetupTextViewSecureNotice"
         android:textAlignment="center"
         android:textSize="@dimen/text_size"
         app:layout_constraintEnd_toEndOf="parent"
@@ -41,7 +41,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/margin_left"
         android:layout_marginEnd="@dimen/margin_right"
-        android:text="@string/setup_textview_instance_url_label"
+        android:text="@string/setupTextViewInstanceUrlLabel"
         android:textSize="@dimen/text_size"
         app:layout_constraintBottom_toTopOf="@+id/settingsInstanceUrlEditText"
         app:layout_constraintEnd_toEndOf="parent"
@@ -56,7 +56,7 @@
         android:layout_marginEnd="@dimen/margin_right"
         android:autofillHints=""
         android:ems="10"
-        android:hint="@string/setup_edittext_instance_url_hint"
+        android:hint="@string/setupEditViewInstanceUrlHint"
         android:inputType="textUri"
         android:minHeight="48dp"
         android:textSize="@dimen/text_size"
@@ -65,19 +65,19 @@
         app:layout_constraintTop_toBottomOf="@+id/setupNoticeSecureTextView" />
 
     <TextView
-        android:id="@+id/setupAuthenticationLabelTextView"
+        android:id="@+id/setupCredentialsLabelTextView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/margin_left"
         android:layout_marginEnd="@dimen/margin_right"
-        android:text="@string/setup_textview_authentication_label"
+        android:text="@string/setupTextViewCredentialsLabel"
         android:textSize="@dimen/text_size"
-        app:layout_constraintBottom_toTopOf="@+id/setupAuthenticationUsernameEditText"
+        app:layout_constraintBottom_toTopOf="@+id/setupCredentialsUsernameEditText"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
     <EditText
-        android:id="@+id/setupAuthenticationUsernameEditText"
+        android:id="@+id/setupCredentialsUsernameEditText"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/margin_left"
@@ -85,7 +85,7 @@
         android:layout_marginEnd="@dimen/margin_right"
         android:autofillHints=""
         android:ems="10"
-        android:hint="@string/setup_edittext_authentication_username_hint"
+        android:hint="@string/setupEditTextCredentialsUsernameHint"
         android:inputType="textPersonName"
         android:minHeight="48dp"
         android:textSize="@dimen/text_size"
@@ -94,20 +94,20 @@
         app:layout_constraintTop_toBottomOf="@+id/settingsInstanceUrlEditText" />
 
     <EditText
-        android:id="@+id/setupAuthenticationPasswordEditText"
+        android:id="@+id/setupCredentialsPasswordEditText"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/margin_left"
         android:layout_marginEnd="@dimen/margin_right"
         android:autofillHints=""
         android:ems="10"
-        android:hint="@string/setup_edittext_authentication_password_hint"
+        android:hint="@string/setupEditTextCredentialsPasswordHint"
         android:inputType="textPassword"
         android:minHeight="48dp"
         android:textSize="@dimen/text_size"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/setupAuthenticationUsernameEditText" />
+        app:layout_constraintTop_toBottomOf="@+id/setupCredentialsUsernameEditText" />
 
     <Button
         android:id="@+id/settingsSaveButton"

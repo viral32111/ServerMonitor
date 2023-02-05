@@ -11,16 +11,16 @@
 	<string name="settingsToastInstanceUrlInvalid">The provided instance URL is invalid.</string>
 
 	<!-- Label for credentials section -->
-	<string name="settingsTextViewCredentialsLabel">Credentials:</string>
+	<string name="settingsTextViewCredentialsLabel">Authentication Credentials:</string>
 
-	<!-- Username input for credentials -->
+	<!-- Username input for authentication -->
 	<string name="settingsEditTextCredentialsUsernameHint">john.doe</string>
-	<string name="settingsToastCredentialsUsernameEmpty">Provide a username.</string>
+	<string name="settingsToastCredentialsUsernameEmpty">Provide a username for authentication.</string>
 	<string name="settingsToastCredentialsUsernameInvalid">The provided username is invalid.</string>
 
-	<!-- Password input for credentials -->
+	<!-- Password input for authentication -->
 	<string name="settingsEditTextCredentialsPasswordHint">Sup3r_Go0d_P4ssw0rd!</string>
-	<string name="settingsToastCredentialsPasswordEmpty">Provide a password.</string>
+	<string name="settingsToastCredentialsPasswordEmpty">Provide a password for authentication.</string>
 	<string name="settingsToastCredentialsPasswordInvalid">The provided password is invalid.</string>
 
 	<!-- Label for automatic refresh section -->
