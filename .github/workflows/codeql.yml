@@ -32,20 +32,10 @@ jobs:
           source-root: ./App/
           tools: latest
 
-      - name: Setup Java
-        uses: actions/setup-java@v3
+      - name: Auto-build
+        uses: github/codeql-action/autobuild@v2
         with:
-          java-version: 17
-          distribution: temurin
-
-      - name: Set Gradle permissions
-        run: chmod +x ./gradlew
-
-      - name: Build project
-        uses: gradle/gradle-build-action@v2
-        with:
-          arguments: assembleRelease
-          build-root-directory: ./App/
+          working-directory: ./App/
 
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@v2
@@ -53,6 +43,9 @@ jobs:
   service:
     name: Service
     runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: ./Service/
     permissions:
       actions: read
       contents: read
