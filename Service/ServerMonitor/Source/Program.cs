@@ -23,12 +23,12 @@ namespace ServerMonitor {
 			rootCommand.AddOption( extraConfigurationFilePathOption );
 
 			// Sub-command to start in "collector" mode
-			Command collectorCommand = new( "collector", "Collect metrics from configured sources." );
+			Command collectorCommand = new( "collector", "Expose metrics to Prometheus from configured sources." );
 			collectorCommand.SetHandler( Collector.Collector.HandleCommand, extraConfigurationFilePathOption );
 			rootCommand.AddCommand( collectorCommand );
 
 			// Sub-command to start in "connection point" mode
-			Command connectorCommand = new( "connector", "Send metrics from Prometheus to incoming app connections." );
+			Command connectorCommand = new( "connector", "Serve metrics from Prometheus to the mobile app." );
 			connectorCommand.SetHandler( Connector.Connector.HandleCommand, extraConfigurationFilePathOption );
 			rootCommand.AddCommand( connectorCommand );
 
