@@ -9,7 +9,9 @@ ARG SERVERMONITOR_DIRECTORY=/usr/local/server-monitor \
 COPY --chown=${USER_ID}:${USER_ID} ./ ${SERVERMONITOR_DIRECTORY}
 
 # Move the configuration file to the system-wide configuration directory
-RUN mv --verbose ${SERVERMONITOR_DIRECTORY}/config.json ${SERVERMONITOR_CONFIG_DIRECTORY}/config.json
+RUN mkdir --verbose --parents ${SERVERMONITOR_CONFIG_DIRECTORY} && \
+	mv --verbose ${SERVERMONITOR_DIRECTORY}/config.json ${SERVERMONITOR_CONFIG_DIRECTORY}/config.json && \
+	chown --changes --recursive ${USER_ID}:${USER_ID} ${SERVERMONITOR_CONFIG_DIRECTORY}
 
 # Switch to the regular user, in the install directory
 USER ${USER_ID}:${USER_ID}
