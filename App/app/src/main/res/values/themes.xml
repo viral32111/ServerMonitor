@@ -3,6 +3,11 @@
 	<!-- Base -->
 	<style name="Theme.ServerMonitor" parent="Theme.Material3.Light">
 
+		<!-- Text color -->
+		<item name="android:textColor">@color/black</item>-->
+
+		<!-- https://m3.material.io/styles/color/the-color-system/key-colors-tones -->
+
 		<!-- Primary colors -->
 		<item name="colorPrimary">@color/blue_400</item>
 		<item name="colorPrimaryVariant">@color/blue_400</item>
@@ -12,6 +17,10 @@
 		<item name="colorSecondary">@color/blue_400</item>
 		<item name="colorSecondaryVariant">@color/blue_400</item>
 		<item name="colorOnSecondary">@color/white</item>
+
+		<!-- Tertiary colors -->
+		<item name="colorTertiary">@color/blue_400</item>
+		<item name="colorOnTertiary">@color/white</item>
 
 		<!-- Status bar -->
 		<item name="android:statusBarColor">@color/toolbar_white</item>
@@ -24,7 +33,7 @@
 	</style>
 
 	<!-- Action bar -->
-	<style name="ThemeOverlay.ServerMonitor.ActionBar" parent="ThemeOverlay.Material3.Light">
+	<style name="ThemeOverlay.ServerMonitor.ActionBar" parent="ThemeOverlay.Material3.DynamicColors.DayNight">
 
 		<!-- Background -->
 		<item name="colorPrimary">@color/toolbar_white</item>
@@ -37,7 +46,7 @@
 	</style>
 
 	<!-- Action bar - Overflow menu -->
-	<style name="ThemeOverlay.ServerMonitor.ActionBar.OverflowMenu" parent="ThemeOverlay.Material3.Light">
+	<style name="ThemeOverlay.ServerMonitor.ActionBar.OverflowMenu" parent="ThemeOverlay.Material3.DynamicColors.DayNight">
 
 		<!-- Icon -->
 		<item name="colorPrimary">@color/toolbar_white</item>
@@ -50,4 +59,3 @@
 	</style>
 
 </resources>
-

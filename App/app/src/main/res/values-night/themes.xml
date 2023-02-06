@@ -1,55 +1,53 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
-<!-- Base application theme. -->
-<style name="Theme.ServerMonitor.Dark" parent="Theme.Material3.DayNight">
+	<!-- Overrides for dark theme -->
+	<style name="Theme.ServerMonitor" parent="Theme.Material3.Dark">
 
-	<!-- Primary brand color. -->
-	<item name="colorPrimary">@color/toolbar_white</item>
-	<item name="colorPrimaryVariant">@color/toolbar_white</item>
-	<item name="colorOnPrimary">@color/black</item>
+		<!-- Text color -->
+		<item name="android:textColor">@color/white</item>
+		<item name="android:textColorPrimary">@color/white</item>-->
 
-	<!-- Secondary brand color. -->
-	<item name="colorSecondary">@color/teal_200</item>
-	<item name="colorSecondaryVariant">@color/teal_700</item>
-	<item name="colorOnSecondary">@color/black</item>
+		<!-- Status bar -->
+		<item name="android:statusBarColor">@color/toolbar_dark</item>
+		<item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
 
-	<!-- Status bar color. -->
-	<!--<item name="android:statusBarColor">?attr/colorPrimaryVariant</item>-->
+		<!-- Action bar -->
+		<item name="actionBarTheme">@style/ThemeOverlay.ServerMonitor.Dark.ActionBar</item>
+		<item name="actionBarPopupTheme">@style/ThemeOverlay.ServerMonitor.Dark.ActionBar.OverflowMenu</item>
 
-	<!-- Transparent status bar -->
-	<item name="android:statusBarColor">@color/toolbar_white</item>
-	<item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+		<!-- Button text color -->
+		<item name="materialButtonStyle">@style/Theme.ServerMonitor.Dark.ButtonAppearance</item>
 
-	<!-- Custom action bar themes -->
-	<item name="actionBarTheme">@style/ThemeOverlay.ServerMonitor.ActionBar.Dark</item>
-	<item name="actionBarPopupTheme">@style/ThemeOverlay.ServerMonitor.ActionBar.OverflowMenu.Dark</item>
+	</style>
 
-</style>
+	<!-- Action bar -->
+	<style name="ThemeOverlay.ServerMonitor.Dark.ActionBar" parent="ThemeOverlay.Material3.DynamicColors.Dark">
 
-<!-- Action bar -->
-<style name="ThemeOverlay.ServerMonitor.ActionBar.Dark" parent="ThemeOverlay.Material3.Dark">
+		<!-- Background -->
+		<item name="android:background">@color/toolbar_dark</item>
+		<item name="colorPrimary">@color/toolbar_dark</item>
+		<item name="colorSecondary">@color/toolbar_dark</item>
+		<item name="colorTertiary">@color/toolbar_dark</item>
+		<item name="colorAccent">@color/toolbar_dark</item>
 
-	<!-- Background -->
-	<item name="colorPrimary">@color/toolbar_dark</item>
-	<item name="colorAccent">@color/white</item>
+		<!-- Title & subtitle -->
+		<item name="colorOnSurface">@color/white</item>
+		<item name="colorOnSurfaceVariant">@color/white</item>
 
-	<!-- Title & subtitle -->
-	<item name="colorOnSurface">@color/white</item>
-	<item name="colorOnSurfaceVariant">@color/white</item>
+	</style>
 
-</style>
+	<!-- Action bar - Overflow menu -->
+	<style name="ThemeOverlay.ServerMonitor.Dark.ActionBar.OverflowMenu" parent="ThemeOverlay.Material3.DynamicColors.Dark">
 
-<!-- Action bar overflow menu -->
-<style name="ThemeOverlay.ServerMonitor.ActionBar.OverflowMenu.Dark" parent="ThemeOverlay.Material3.Dark">
+		<!-- Icon -->
+		<item name="colorPrimary">@color/toolbar_dark</item>
 
-	<!-- Icon -->
-	<item name="colorPrimary">@color/toolbar_dark</item>
+	</style>
 
-</style>
-
-<style name="TextAppearance.ServerMonitor.ActionBar.Title.Dark" parent="TextAppearance.Material3.ActionBar.Title">
-	<item name="android:textSize">28sp</item>
-</style>
+	<!-- Button text color -->
+	<style name="Theme.ServerMonitor.Dark.ButtonAppearance" parent="Widget.Material3.Button">
+		<item name="android:textColor">@color/white</item>
+		<item name="android:textColorPrimary">@color/white</item>
+	</style>
 
 </resources>
-
