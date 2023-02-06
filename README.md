@@ -19,6 +19,28 @@ A [Prometheus time-series database](https://prometheus.io/) is required for stor
 3. Configure the service appropriately using the JSON configuration file or environment variables.
 4. Install the mobile app on your Android device & connect to the *"connection point"* service URL using any configured credentials.
 
+Alternatively, use the [premade Docker image](https://github.com/users/viral32111/packages/container/package/server-monitor) by running `docker pull ghcr.io/viral32111/server-monitor:latest`. The configuration file is located at `/etc/server-monitor/config.json`.
+
+## Configuration
+
+The JSON configuration file is searched for at the following paths:
+ * Windows
+   * System: `C:\ProgramData\ServerMonitor\config.json`
+   * User: `C:\Users\USERNAME\AppData\Local\ServerMonitor\config.json`
+ * Linux
+   * System: `/etc/server-monitor/config.json`
+   * User: `/home/USERNAME/.config/server-monitor/config.json`
+
+Alternatively, a path to a configuration file in a non-standard location can be specified with the `--config <path>` option (use `--help` for more information).
+
+Configuration properties can also be set via environment variables prefixed with `SERVER_MONITOR_`.
+
+The configuration priority is as follows (higher entries will override previously configured properties):
+1. Environment variables.
+2. Non-standard configuration file (`--config <path>` option).
+3. User-specific configuration file.
+4. System-wide configuration file.
+
 ## Building
 
 Build the mobile app with Gradle using `./gradlew assembleRelease` and optionally run tests using `./gradlew test` in the [`App`](/App) directory. The resulting APK file will be created at `App/app/build/outputs/apk/release/app-release.apk`.

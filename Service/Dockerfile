@@ -2,10 +2,14 @@
 FROM ghcr.io/viral32111/dotnet:7.0
 
 # Configure directories & files
-ARG SERVERMONITOR_DIRECTORY=/usr/local/server-monitor
+ARG SERVERMONITOR_DIRECTORY=/usr/local/server-monitor \
+	SERVERMONITOR_CONFIG_DIRECTORY=/etc/server-monitor
 
 # Add artifacts from build
 COPY --chown=${USER_ID}:${USER_ID} ./ ${SERVERMONITOR_DIRECTORY}
+
+# Move the configuration file to the system-wide configuration directory
+RUN mv --verbose ${SERVERMONITOR_DIRECTORY}/config.json ${SERVERMONITOR_CONFIG_DIRECTORY}/config.json
 
 # Switch to the regular user, in the install directory
 USER ${USER_ID}:${USER_ID}

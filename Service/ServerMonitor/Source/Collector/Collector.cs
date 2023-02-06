@@ -7,7 +7,7 @@ namespace ServerMonitor.Collector {
 
 		// Create the logger for this file
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Collector" );
-		
+
 		public static void HandleCommand( string extraConfigurationFilePath ) {
 			logger.LogInformation( "Collector mode!" );
 
