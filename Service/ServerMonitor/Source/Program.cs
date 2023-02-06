@@ -1,46 +1,38 @@
 ﻿using System;
 using System.Threading.Tasks;
-
-// https://learn.microsoft.com/en-us/dotnet/standard/commandline/get-started-tutorial
-using System.CommandLine;
-
-// https://learn.microsoft.com/en-us/dotnet/core/extensions/configuration
-using Microsoft.Extensions.Configuration;
+using System.IO;
+using System.Reflection;
+using System.CommandLine; // https://learn.microsoft.com/en-us/dotnet/standard/commandline/get-started-tutorial
 
 namespace ServerMonitor {
 
 	public static class Program {
 
 		public static async Task<int> Main( string[] arguments ) {
-			// Load settings
-			Settings settings = LoadSettings();
-			Console.WriteLine( $"Test = { settings.Test }" );
+			Assembly? executable = Assembly.GetEntryAssembly() ?? throw new Exception( "Failed to get this executable" );
+			string executableDirectory = Path.GetDirectoryName( executable.Location ) ?? throw new Exception( "Failed to get this executable's directory" );
 
-			// Create commands for the different modes
 			RootCommand rootCommand = new( "Server Monitor" );
 
+			// Option to let the user specify an extra configuration file in a non-standard location
+			Option<string> extraConfigurationFilePathOption = new(
+				name: "--config",
+				description: "Path to an additional configuration file.",
+				getDefaultValue: () => Path.Combine( executableDirectory, Configuration.FileName ) // Defaults to the same directory as the executable, makes development easier
+			);
+			rootCommand.AddOption( extraConfigurationFilePathOption );
+
+			// Sub-command to start in "collector" mode
 			Command collectorCommand = new( "collector", "Collect metrics from configured sources." );
-			collectorCommand.SetHandler( Collector.Collector.HandleCommand );
+			collectorCommand.SetHandler( Collector.Collector.HandleCommand, extraConfigurationFilePathOption );
 			rootCommand.AddCommand( collectorCommand );
 
+			// Sub-command to start in "connection point" mode
 			Command connectorCommand = new( "connector", "Send metrics from Prometheus to incoming app connections." );
-			connectorCommand.SetHandler( Connector.Connector.HandleCommand );
+			connectorCommand.SetHandler( Connector.Connector.HandleCommand, extraConfigurationFilePathOption );
 			rootCommand.AddCommand( connectorCommand );
 
 			return await rootCommand.InvokeAsync( arguments );
-		}
-
-		// Loads our settings from JSON file & environment variables
-		private static Settings LoadSettings() {
-			IConfiguration configuration = new ConfigurationBuilder()
-				.AddJsonFile( "appsettings.json" )
-				.AddEnvironmentVariables()
-				.Build();
-
-			Settings? settings = configuration.GetRequiredSection( "Settings" ).Get<Settings>();
-			if ( settings == null ) throw new Exception( "Settings is null (could be malformed or invalid)." );
-
-			return settings;
 		}
 
 	}
