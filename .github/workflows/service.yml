@@ -41,7 +41,7 @@ jobs:
         run: dotnet restore
 
       - name: Build project
-        run: dotnet build --nologo --configuration Release --no-restore
+        run: dotnet build --nologo --configuration Release --no-restore --no-self-contained
 
       - name: Run tests
         run: dotnet test --nologo --configuration Release --no-build
