@@ -2,10 +2,17 @@ using System;
 using System.Runtime.InteropServices;
 using System.IO;
 using Microsoft.Extensions.Configuration; // https://learn.microsoft.com/en-us/dotnet/core/extensions/configuration
+using Microsoft.Extensions.Logging; // https://learn.microsoft.com/en-us/dotnet/core/extensions/console-log-formatter
+
+// https://stackoverflow.com/a/38790956
+// https://developers.redhat.com/blog/2018/11/07/dotnet-special-folder-api-linux#environment_getfolderpath
 
 namespace ServerMonitor {
 
 	public static class Configuration {
+
+		// Create the logger for this file
+		private static readonly ILogger logger = Logging.CreateLogger( "Configuration" );
 
 		// Name of the configuration file
 		public static readonly string FileName = "config.json";
@@ -40,9 +47,9 @@ namespace ServerMonitor {
 
 		// Loads the configuration from JSON files & environment variables
 		public static Config Load( string extraFilePath ) {
-			Console.WriteLine( "System-wide configuration file: '{0}' (exists: {1})", GetSystemFilePath(), File.Exists( GetSystemFilePath() ) );
-			Console.WriteLine( "User configuration file: '{0}' (exists: {1})", GetUserFilePath(), File.Exists( GetUserFilePath() ) );
-			Console.WriteLine( "Extra configuration file: '{0}' (exists: {1})", extraFilePath, File.Exists( extraFilePath ) );
+			logger.LogDebug( "System-wide configuration file: '{0}' (Exists: {1})", GetSystemFilePath(), File.Exists( GetSystemFilePath() ) );
+			logger.LogDebug( "User configuration file: '{0}' (Exists: {1})", GetUserFilePath(), File.Exists( GetUserFilePath() ) );
+			logger.LogDebug( "Extra configuration file: '{0}' (Exists: {1})", extraFilePath, File.Exists( extraFilePath ) );
 
 			ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
 

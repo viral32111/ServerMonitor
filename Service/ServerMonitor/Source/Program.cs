@@ -3,14 +3,21 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Reflection;
 using System.CommandLine; // https://learn.microsoft.com/en-us/dotnet/standard/commandline/get-started-tutorial
+using Microsoft.Extensions.Logging; // https://learn.microsoft.com/en-us/dotnet/core/extensions/console-log-formatter
 
 namespace ServerMonitor {
 
 	public static class Program {
 
+		// Create the logger for this file
+		private static readonly ILogger logger = Logging.CreateLogger( "Program" );
+
 		public static async Task<int> Main( string[] arguments ) {
+
+			// https://stackoverflow.com/a/66023223
 			Assembly? executable = Assembly.GetEntryAssembly() ?? throw new Exception( "Failed to get this executable" );
 			string executableDirectory = Path.GetDirectoryName( executable.Location ) ?? throw new Exception( "Failed to get this executable's directory" );
+			logger.LogDebug( $"Executable directory: '{ executableDirectory }'" );
 
 			RootCommand rootCommand = new( "The backend API/service for the server monitoring mobile app." );
 
@@ -33,6 +40,7 @@ namespace ServerMonitor {
 			rootCommand.AddCommand( connectorCommand );
 
 			return await rootCommand.InvokeAsync( arguments );
+
 		}
 
 	}

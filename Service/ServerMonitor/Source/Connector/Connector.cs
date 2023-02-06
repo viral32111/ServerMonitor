@@ -1,14 +1,18 @@
 using System;
+using Microsoft.Extensions.Logging; // https://learn.microsoft.com/en-us/dotnet/core/extensions/console-log-formatter
 
 namespace ServerMonitor.Connector {
 
 	public static class Connector {
+
+		// Create the logger for this file
+		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Collector" );
 		
 		public static void HandleCommand( string extraConfigurationFilePath ) {
-			Console.WriteLine( "Connector!" );
+			logger.LogInformation( "Connection point mode!" );
 
 			Config configuration = Configuration.Load( extraConfigurationFilePath );
-			Console.WriteLine( "Loaded configuration. Test = {0}", configuration.Test );
+			logger.LogInformation( "Loaded configuration. Test = {0}", configuration.Test );
 		}
 
 	}
