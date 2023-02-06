@@ -12,7 +12,7 @@ namespace ServerMonitor {
 			Assembly? executable = Assembly.GetEntryAssembly() ?? throw new Exception( "Failed to get this executable" );
 			string executableDirectory = Path.GetDirectoryName( executable.Location ) ?? throw new Exception( "Failed to get this executable's directory" );
 
-			RootCommand rootCommand = new( "Server Monitor" );
+			RootCommand rootCommand = new( "The backend API/service for the server monitoring mobile app." );
 
 			// Option to let the user specify an extra configuration file in a non-standard location
 			Option<string> extraConfigurationFilePathOption = new(

@@ -3,13 +3,6 @@ using System.Runtime.InteropServices;
 using System.IO;
 using Microsoft.Extensions.Configuration; // https://learn.microsoft.com/en-us/dotnet/core/extensions/configuration
 
-/* Paths for the standard configuration files:
- Windows (System): C:\ProgramData\ServerMonitor\config.json
- Windows (User): %USERPROFILE%\AppData\Local\ServerMonitor\config.json
- Linux (System): /etc/server-monitor/config.json
- Linux (User): ~/.config/server-monitor/config.json
-*/
-
 namespace ServerMonitor {
 
 	public static class Configuration {
@@ -19,11 +12,11 @@ namespace ServerMonitor {
 
 		// Gets the path to the user's configuration file
 		public static string GetUserFilePath() {
-			// Windows: %USERPROFILE%\AppData\Local\ServerMonitor\config.json
+			// Windows: C:\Users\USERNAME\AppData\Local\ServerMonitor\config.json
 			if ( RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) {
 				return Path.Combine( Environment.GetFolderPath( Environment.SpecialFolder.LocalApplicationData ), "ServerMonitor", FileName );
 
-			// Linux: ~/.config/server-monitor/config.json
+			// Linux: /home/USERNAME/.config/server-monitor/config.json
 			} else if ( RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) {
 				return Path.Combine( Environment.GetFolderPath( Environment.SpecialFolder.UserProfile ), ".config", "server-monitor", FileName );
 
