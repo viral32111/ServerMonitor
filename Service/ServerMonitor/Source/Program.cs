@@ -13,6 +13,7 @@ namespace ServerMonitor {
 		private static readonly ILogger logger = Logging.CreateLogger( "Program" );
 
 		public static async Task<int> Main( string[] arguments ) {
+			logger.LogInformation( "Well, hello there." );
 
 			// https://stackoverflow.com/a/66023223
 			Assembly? executable = Assembly.GetEntryAssembly() ?? throw new Exception( "Failed to get this executable" );
@@ -29,6 +30,8 @@ namespace ServerMonitor {
 			);
 			rootCommand.AddOption( extraConfigurationFilePathOption );
 
+			// TODO: Load configuration here instead of in each sub-command handler...
+
 			// Sub-command to start in "collector" mode
 			Command collectorCommand = new( "collector", "Expose metrics to Prometheus from configured sources." );
 			collectorCommand.SetHandler( Collector.Collector.HandleCommand, extraConfigurationFilePathOption );
@@ -39,8 +42,18 @@ namespace ServerMonitor {
 			connectorCommand.SetHandler( Connector.Connector.HandleCommand, extraConfigurationFilePathOption );
 			rootCommand.AddCommand( connectorCommand );
 
-			return await rootCommand.InvokeAsync( arguments );
+			// Sub-command to start then immediately exit just to test launching the executable
+			Command testCommand = new( "test", "Test launching the executable." );
+			testCommand.SetHandler( ( string extraConfigurationFilePath ) => {
+				Configuration.Load( extraConfigurationFilePath );
+				logger.LogInformation( "Loaded configuration." );
 
+				logger.LogInformation( "Exiting..." );
+				Environment.Exit( 0 );
+			}, extraConfigurationFilePathOption );
+			rootCommand.AddCommand( testCommand );
+
+			return await rootCommand.InvokeAsync( arguments );
 		}
 
 	}
