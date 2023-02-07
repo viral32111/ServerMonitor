@@ -29,7 +29,15 @@ namespace ServerMonitor {
 				} );
 
 				builder.AddConsole( options => options.FormatterName = "Custom" ); // Use the custom console formatter
-				builder.AddFilter( level => level >= LogLevel.Trace ); // Show all log levels
+
+				// Show all log levels in debug mode, otherwise only show information and above
+				builder.AddFilter( level => {
+					#if DEBUG
+						return level >= LogLevel.Trace;
+					#else
+						return level >= LogLevel.Information;
+					#endif
+				} );
 
 			} ).CreateLogger( categoryName );
 
