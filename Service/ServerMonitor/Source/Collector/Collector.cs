@@ -3,6 +3,8 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Collections.Generic;
 
 using Microsoft.Extensions.Logging; // https://learn.microsoft.com/en-us/dotnet/core/extensions/console-log-formatter
@@ -37,7 +39,13 @@ namespace ServerMonitor.Collector {
 			logger.LogInformation( "Memory: {0} MB", memoryCounter.NextValue() );*/
 
 			while ( true ) {
-				GetSystemResourceUsageLinux();
+				if ( RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) {
+					logger.LogCritical( "No memory usage detection on Windows yet" );
+					break;
+				} else if ( RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) {
+					GetSystemResourceUsageLinux();
+				}
+
 				Thread.Sleep( 1000 );
 			}
 		}
