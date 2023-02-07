@@ -60,7 +60,7 @@ namespace ServerMonitor {
 			// Load non-standard configuration file, if provided
 			if ( extraFilePath != null ) configurationBuilder.AddJsonFile( extraFilePath, optional: true, reloadOnChange: false );
 
-			// Load environment variables
+			// Load environment variables (e.g., SERVER_MONITOR_TEST=4)
 			configurationBuilder.AddEnvironmentVariables( "SERVER_MONITOR_" );
 
 			// Build the configuration
