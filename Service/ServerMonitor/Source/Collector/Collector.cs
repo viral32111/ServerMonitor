@@ -65,6 +65,7 @@ namespace ServerMonitor.Collector {
 						if ( valueParts.Length == 2 ) {
 							string valueType = valueParts[ 1 ].Trim();
 
+							// https://superuser.com/q/1737654
 							if ( valueType == "kB" ) {
 								float valueInMegabytes = valueRaw / 1024;
 								//int valueInGigabytes = valueInMegabytes / 1024;
@@ -75,16 +76,16 @@ namespace ServerMonitor.Collector {
 						} else {
 							memoryInformation.Add( key, valueRaw );
 						}
-						
+
 					} while ( !streamReader.EndOfStream );
 
 					// https://stackoverflow.com/a/41251290
 					float totalMemory = memoryInformation[ "MemTotal" ];
 					float freeMemory = memoryInformation[ "MemFree" ];
-					float cachedMemory = memoryInformation[ "Cached" ] + memoryInformation[ "SReclaimable" ] - memoryInformation[ "Shmem" ];
+					float cachedMemory = memoryInformation[ "Cached" ];// + memoryInformation[ "SReclaimable" ] - memoryInformation[ "Shmem" ];
 					float bufferedMemory = memoryInformation[ "Buffers" ];
 
-					float usedMemory = totalMemory - freeMemory - ( cachedMemory + bufferedMemory );
+					float usedMemory = totalMemory - freeMemory - cachedMemory - bufferedMemory;
 					float usedMemoryPercentage = ( usedMemory / totalMemory ) * 100;
 
 					float totalSwap = memoryInformation[ "SwapTotal" ];
