@@ -43,6 +43,9 @@ jobs:
       - name: Build project
         run: dotnet build --nologo --configuration Release --no-restore --no-self-contained
 
+      - name: Test launch
+        run: dotnet run --configuration Release --no-build --project ./ServerMonitor/ test
+
       - name: Run tests
         run: dotnet test --nologo --configuration Release --no-build
 
