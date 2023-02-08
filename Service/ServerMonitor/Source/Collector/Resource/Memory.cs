@@ -57,22 +57,20 @@ namespace ServerMonitor.Collector.Resource {
 						if ( string.IsNullOrWhiteSpace( fileLine ) ) break;
 
 						// Split the line into the name & data (e.g., "MemTotal:       123456 kB")
-						string[] lineParts = fileLine.Split( ":", 2 );
+						string[] lineParts = fileLine.Split( ":", 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries );
 						if ( lineParts.Length != 2 ) throw new Exception( "Unexpected number of parts on file line" );
-
-						// Remove any whitespace in the name & data
-						string name = lineParts[ 0 ].Trim(), data = lineParts[ 1 ].Trim();
+						string name = lineParts[ 0 ], data = lineParts[ 1 ];
 
 						// Split the data into value & suffix
-						string[] dataParts = data.Split( " ", 2 );
-						if ( double.TryParse( dataParts[ 0 ].Trim(), out double value ) != true ) throw new Exception( "Data value is invalid (cannot be cast to double)" );
+						string[] dataParts = data.Split( " ", 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries );
+						if ( double.TryParse( dataParts[ 0 ], out double value ) != true ) throw new Exception( "Data value is invalid (cannot be cast to double)" );
 
 						// If there is a suffix, convert the value down to bytes
 						if ( dataParts.Length == 2 ) {
-							string suffix = dataParts[ 1 ].Trim();
-
-							if ( suffix == "kB" ) memoryInformation.Add( name, value * 1024 ); // https://superuser.com/q/1737654
-							else throw new Exception( "Unrecognised suffix" );
+							memoryInformation.Add( name, dataParts[ 1 ] switch {
+								"kB" => value * 1024, // https://superuser.com/q/1737654
+								_ => throw new Exception( "Unrecognised suffix" )
+							} );
 
 						// No suffix so just add the value as-is
 						} else {
