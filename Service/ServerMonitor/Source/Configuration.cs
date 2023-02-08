@@ -17,6 +17,9 @@ namespace ServerMonitor {
 		// Name of the configuration file
 		public static readonly string FileName = "config.json";
 
+		// The loaded configuration
+		public static Config? Config { get; private set; } = null;
+
 		// Gets the path to the user's configuration file
 		public static string GetUserFilePath() {
 			// Windows: C:\Users\USERNAME\AppData\Local\ServerMonitor\config.json
@@ -46,7 +49,7 @@ namespace ServerMonitor {
 		}
 
 		// Loads the configuration from JSON files & environment variables
-		public static Config Load( string extraFilePath ) {
+		public static void Load( string extraFilePath ) {
 			logger.LogDebug( "System-wide configuration file: '{0}' (Exists: {1})", GetSystemFilePath(), File.Exists( GetSystemFilePath() ) );
 			logger.LogDebug( "User configuration file: '{0}' (Exists: {1})", GetUserFilePath(), File.Exists( GetUserFilePath() ) );
 			logger.LogDebug( "Extra configuration file: '{0}' (Exists: {1})", extraFilePath, File.Exists( extraFilePath ) );
@@ -64,19 +67,15 @@ namespace ServerMonitor {
 			configurationBuilder.AddEnvironmentVariables( "SERVER_MONITOR_" );
 
 			// Build the configuration
-			Config? config = configurationBuilder.Build().Get<Config>();
-			if ( config == null ) throw new Exception( "Failed to load configuration (malformed or missing properties?)" );
-
-			return config;
+			Config = configurationBuilder.Build().Get<Config>();
+			if ( Config == null ) throw new Exception( "Failed to load configuration (malformed or missing properties?)" );
 		}
 
 	}
 
 	// Structure of the configuration file
 	public sealed class Config {
-
 		public required int Test { get; set; }
-
 	}
 
 }

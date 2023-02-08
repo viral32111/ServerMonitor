@@ -8,11 +8,8 @@ namespace ServerMonitor.Connector {
 		// Create the logger for this file
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Collector" );
 		
-		public static void HandleCommand( string extraConfigurationFilePath ) {
+		public static void HandleCommand( Config configuration ) {
 			logger.LogInformation( "Connection point mode!" );
-
-			Config configuration = Configuration.Load( extraConfigurationFilePath );
-			logger.LogInformation( "Loaded configuration. Test = {0}", configuration.Test );
 		}
 
 	}

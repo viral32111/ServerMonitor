@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading.Tasks;
 using System.IO;
 using System.Reflection;
 using System.CommandLine; // https://learn.microsoft.com/en-us/dotnet/standard/commandline/get-started-tutorial
@@ -12,14 +11,15 @@ namespace ServerMonitor {
 		// Create the logger for this file
 		private static readonly ILogger logger = Logging.CreateLogger( "Program" );
 
-		public static async Task<int> Main( string[] arguments ) {
+		public static int Main( string[] arguments ) {
 			logger.LogInformation( "Well, hello there." );
 
-			// https://stackoverflow.com/a/66023223
+			// Get the directory that the executable DLL/binary is in - https://stackoverflow.com/a/66023223
 			Assembly? executable = Assembly.GetEntryAssembly() ?? throw new Exception( "Failed to get this executable" );
 			string executableDirectory = Path.GetDirectoryName( executable.Location ) ?? throw new Exception( "Failed to get this executable's directory" );
 			logger.LogDebug( $"Executable directory: '{ executableDirectory }'" );
 
+			// Create the root command, no handler though as only sub-commands are allowed
 			RootCommand rootCommand = new( "The backend API/service for the server monitoring mobile app." );
 
 			// Option to let the user specify an extra configuration file in a non-standard location
@@ -30,30 +30,37 @@ namespace ServerMonitor {
 			);
 			rootCommand.AddOption( extraConfigurationFilePathOption );
 
-			// TODO: Load configuration here instead of in each sub-command handler...
-
 			// Sub-command to start in "collector" mode
 			Command collectorCommand = new( "collector", "Expose metrics to Prometheus from configured sources." );
-			collectorCommand.SetHandler( Collector.Collector.HandleCommand, extraConfigurationFilePathOption );
+			collectorCommand.SetHandler( ( string extraConfigurationFilePath ) => HandleSubCommand( Collector.Collector.HandleCommand, extraConfigurationFilePath ), extraConfigurationFilePathOption );
 			rootCommand.AddCommand( collectorCommand );
 
 			// Sub-command to start in "connection point" mode
 			Command connectorCommand = new( "connector", "Serve metrics from Prometheus to the mobile app." );
-			connectorCommand.SetHandler( Connector.Connector.HandleCommand, extraConfigurationFilePathOption );
+			connectorCommand.SetHandler( ( string extraConfigurationFilePath ) => HandleSubCommand( Connector.Connector.HandleCommand, extraConfigurationFilePath ), extraConfigurationFilePathOption );
 			rootCommand.AddCommand( connectorCommand );
 
 			// Sub-command to start then immediately exit just to test launching the executable
 			Command testCommand = new( "test", "Test launching the executable." );
-			testCommand.SetHandler( ( string extraConfigurationFilePath ) => {
-				Configuration.Load( extraConfigurationFilePath );
-				logger.LogInformation( "Loaded configuration." );
-
-				logger.LogInformation( "Exiting..." );
+			testCommand.SetHandler( ( string extraConfigurationFilePath ) => HandleSubCommand( ( Config _ ) => {
+				logger.LogInformation( "Launch test complete. Exiting..." );
 				Environment.Exit( 0 );
-			}, extraConfigurationFilePathOption );
+			}, extraConfigurationFilePath ), extraConfigurationFilePathOption );
 			rootCommand.AddCommand( testCommand );
 
-			return await rootCommand.InvokeAsync( arguments );
+			return rootCommand.Invoke( arguments );
+		}
+
+		// Intermediary handler for all sub-commands, loads the configuration & then calls real sub-command handler
+		private static void HandleSubCommand( Action<Config> subCommandHandler, string extraConfigurationFilePath ) {
+
+			// Load the configuration
+			Configuration.Load( extraConfigurationFilePath );
+			logger.LogInformation( "Loaded the configuration." );
+
+			// Call the sub-command handler
+			subCommandHandler.Invoke( Configuration.Config! );
+
 		}
 
 	}
