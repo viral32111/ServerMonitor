@@ -2,33 +2,26 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
-using Microsoft.Extensions.Logging; // https://learn.microsoft.com/en-us/dotnet/core/extensions/console-log-formatter
+using Microsoft.Extensions.Logging;
 
 namespace ServerMonitor.Collector.Resource {
 
 	// Encapsulates collecting system memory metrics
-	public class Memory {
+	public class Memory : Resource {
 
 		// Create the logger for this file
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Resource/Memory" );
 
 		// Holds the metrics from the latest update
-		public double TotalBytes { get; private set; }
-		public double FreeBytes { get; private set; }
+		public double TotalBytes { get; private set; } = 0;
+		public double FreeBytes { get; private set; } = 0;
 
-		// Simply returns the memory utilization
+		// Simply returns the utilization
 		public double GetUsedBytes() => TotalBytes - FreeBytes;
 		public double GetUsedPercentage() => ( GetUsedBytes() / TotalBytes ) * 100;
 
-		// Calls the appropriate update function depending on the operating system...
-		public void Update() {
-			if ( RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) UpdateOnWindows();
-			else if ( RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) UpdateOnLinux();
-			else throw new Exception( "Unsupported operating system" );
-		}
-
 		// Updates the metrics for Windows...
-		private void UpdateOnWindows() {
+		public override void UpdateOnWindows() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
 
 			// Call the Windows API function to populate the structure with raw data - https://stackoverflow.com/a/105109
@@ -41,7 +34,7 @@ namespace ServerMonitor.Collector.Resource {
 		}
 
 		// Updates the metrics for Linux...
-		private void UpdateOnLinux() {
+		public override void UpdateOnLinux() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
 
 			// Read the psuedo-file to get the current memory information

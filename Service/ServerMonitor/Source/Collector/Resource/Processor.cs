@@ -3,28 +3,23 @@ using System.IO;
 using System.Threading;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using Microsoft.Extensions.Logging; // https://learn.microsoft.com/en-us/dotnet/core/extensions/console-log-formatter
+using Microsoft.Extensions.Logging;
 
 namespace ServerMonitor.Collector.Resource {
 
 	// Encapsulates collecting system processor metrics
-	public class Processor {
+	public class Processor : Resource {
 
 		// Create the logger for this file
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Resource/Processor" );
 
 		// Holds the metrics from the latest update
-		public double Usage { get; private set; }
-
-		// Calls the appropriate update function depending on the operating system...
-		public void Update() {
-			if ( RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) UpdateOnWindows();
-			else if ( RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) UpdateOnLinux();
-			else throw new Exception( "Unsupported operating system" );
-		}
+		public double Usage { get; private set; } = 0;
+		public double Temperature { get; private set; } = 0; // TODO
+		public double Frequency { get; private set; } = 0; // TODO
 
 		// Updates the metrics for Windows...
-		private void UpdateOnWindows() {
+		public override void UpdateOnWindows() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
 
 			// Get processor usage from the Performance Monitor interface - https://stackoverflow.com/a/278088
@@ -36,7 +31,7 @@ namespace ServerMonitor.Collector.Resource {
 		}
 
 		// Updates the metrics for Linux...
-		private void UpdateOnLinux() {
+		public override void UpdateOnLinux() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
 
 			int previousTotal = 0;
