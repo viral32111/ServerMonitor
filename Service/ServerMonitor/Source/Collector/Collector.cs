@@ -23,7 +23,12 @@ namespace ServerMonitor.Collector {
 				double freeMemory = Math.Round( memory.FreeBytes / 1024 / 1024, 2 );
 				double usedMemory = Math.Round( memory.GetUsedBytes() / 1024 / 1024, 2 );
 				double usedMemoryPercentage = Math.Round( memory.GetUsedPercentage() );
+				double totalSwap = Math.Round( memory.SwapTotalBytes / 1024 / 1024, 2 );
+				double freeSwap = Math.Round( memory.SwapFreeBytes / 1024 / 1024, 2 );
+				double usedSwap = Math.Round( memory.GetSwapUsedBytes() / 1024 / 1024, 2 );
+				double usedSwapPercentage = Math.Round( memory.GetSwapUsedPercentage() );
 				logger.LogInformation( "Memory: {0} MiB / {1} MiB ({2} MiB free, {2}% usage)", usedMemory, totalMemory, freeMemory, usedMemoryPercentage );
+				logger.LogInformation( "Swap/Page: {0} MiB / {1} MiB ({2} MiB free, {2}% usage)", usedSwap, totalSwap, freeSwap, usedSwapPercentage );
 
 				processor.Update();
 				double processorUsage = Math.Round( processor.Usage, 1 );
