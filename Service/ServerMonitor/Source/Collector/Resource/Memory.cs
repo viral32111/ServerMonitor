@@ -42,7 +42,7 @@ namespace ServerMonitor.Collector.Resource {
 
 		// Updates the metrics for Linux...
 		private void UpdateOnLinux() {
-			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Linux" );
+			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
 
 			// Read the psuedo-file to get the current memory information
 			using ( FileStream fileStream = new( "/proc/meminfo", FileMode.Open, FileAccess.Read ) ) {
