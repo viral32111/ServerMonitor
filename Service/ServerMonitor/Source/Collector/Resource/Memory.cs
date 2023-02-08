@@ -56,7 +56,7 @@ namespace ServerMonitor.Collector.Resource {
 
 						// Split the data into value & suffix
 						string[] dataParts = data.Split( " ", 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries );
-						if ( double.TryParse( dataParts[ 0 ], out double value ) != true ) throw new Exception( "Data value is invalid (cannot be cast to double)" );
+						if ( double.TryParse( dataParts[ 0 ], out double value ) != true ) throw new Exception( "Failed to parse data value as double" );
 
 						// If there is a suffix, convert the value down to bytes
 						if ( dataParts.Length == 2 ) {

@@ -27,7 +27,7 @@ namespace ServerMonitor.Collector.Resource {
 			throw new NotImplementedException();
 		}
 
-			// Updates the metrics for Windows...
+		// Updates the metrics for Linux...
 		public override void UpdateOnLinux() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
 

@@ -13,8 +13,10 @@ namespace ServerMonitor.Collector {
 		public static void HandleCommand( Config configuration ) {
 			logger.LogInformation( "Collector mode!" );
 
-			Processor processor = new();
+			// This is all just for debugging
 			Memory memory = new();
+			Processor processor = new();
+			Uptime uptime = new();
 			while ( true ) {
 				memory.Update();
 				double totalMemory = Math.Round( memory.TotalBytes / 1024 / 1024, 2 );
@@ -26,6 +28,9 @@ namespace ServerMonitor.Collector {
 				processor.Update();
 				double processorUsage = Math.Round( processor.Usage, 1 );
 				logger.LogInformation( "Processor: {0}%", processorUsage );
+
+				uptime.Update();
+				logger.LogInformation( "Uptime: {0} seconds", uptime.UptimeSeconds );
 
 				Thread.Sleep( 1000 );
 				Console.Write( "\n" );

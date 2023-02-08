@@ -34,6 +34,7 @@ namespace ServerMonitor.Collector.Resource {
 		public override void UpdateOnLinux() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
 
+			// Will hold the values for the first iteration
 			int previousTotal = 0;
 			int previousIdle = 0;
 
@@ -46,7 +47,7 @@ namespace ServerMonitor.Collector.Resource {
 
 						// Get the first line of the file
 						string? fileLine = streamReader.ReadLine();
-						if ( string.IsNullOrWhiteSpace( fileLine ) ) break;
+						if ( string.IsNullOrWhiteSpace( fileLine ) ) throw new Exception( "First line of file is empty or whitespace" );
 
 						// Ensure this is the relevant line
 						if ( !fileLine.StartsWith( "cpu " ) ) throw new Exception( "Unrecognised file line" );
