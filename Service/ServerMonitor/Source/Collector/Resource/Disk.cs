@@ -48,7 +48,11 @@ namespace ServerMonitor.Collector.Resource {
 				.Where( driveInfo => driveInfo.IsReady == true ) // Skip unmounted drives
 				.Where( driveInfo => driveInfo.DriveFormat != "9P" && driveInfo.DriveFormat != "v9fs" ) // Skip WSL-related filesystems
 				.Where( driveInfo => driveInfo.DriveFormat != "overlay" ) // Skip Docker-related filesystems
-				.ToArray();
+				.Where( driveInfo => // Skips psuedo-file systems
+					!driveInfo.RootDirectory.FullName.StartsWith( "/sys" ) ||
+					!driveInfo.RootDirectory.FullName.StartsWith( "/proc" ) ||
+					!driveInfo.RootDirectory.FullName.StartsWith( "/dev" )
+				).ToArray();
 
 			// Update the metrics for each drive
 			foreach ( DriveInfo driveInfo in driveInformation ) {
