@@ -1,8 +1,8 @@
 using System;
 using System.IO;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
+using Prometheus;
 
 namespace ServerMonitor.Collector.Resource {
 
@@ -12,15 +12,23 @@ namespace ServerMonitor.Collector.Resource {
 		// Create the logger for this file
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Resource/Uptime" );
 
-		public double UptimeSeconds { get; private set; } = 0;
+		// Holds the exported Prometheus metrics
+		public readonly Gauge UptimeSeconds;
+
+		// Initialise the exported Prometheus metrics
+		public Uptime( Config configuration ) {
+			UptimeSeconds = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_uptime_seconds", "System uptime, in seconds." );
+			logger.LogInformation( "Initalised Prometheus metrics" );
+		}
 
 		// Updates the metrics for Windows...
 		public override void UpdateOnWindows() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
 
-			// Get the uptime & store as seconds in the property
+			// Get the uptime & set the value for the exported Prometheus metric
 			TimeSpan uptime = TimeSpan.FromMilliseconds( GetTickCount64() );
-			UptimeSeconds = uptime.TotalSeconds;
+			UptimeSeconds.Set( uptime.TotalSeconds );
+			logger.LogDebug( "Updated Prometheus metrics" );
 		}
 
 		// Updates the metrics for Linux...
@@ -38,9 +46,10 @@ namespace ServerMonitor.Collector.Resource {
 					string[] lineParts = fileLine.Split( " ", 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries );
 					if ( lineParts.Length != 2 ) throw new Exception( "File line has incorrect number of parts" );
 
-					// Get the uptime & store as seconds in the property
+					// Get the uptime & set the value for the exported Prometheus metric
 					if ( double.TryParse( lineParts[ 0 ], out double uptime ) != true ) throw new Exception( "Failed to parse uptime as double" );
-					UptimeSeconds = uptime;
+					UptimeSeconds.Set( uptime );
+					logger.LogDebug( "Updated Prometheus metrics" );
 
 				}
 			}

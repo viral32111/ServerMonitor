@@ -39,6 +39,14 @@ namespace ServerMonitor.Tests {
 			// No upper limit for future proofing, but it should be in the range of 1GHz to 10GHz
 		}
 
+		[ Fact ]
+		public void TestUptimeMetrics() {
+			ServerMonitor.Collector.Resource.Uptime uptime = new( mockConfiguration );
+			uptime.Update();
+
+			Assert.True( uptime.UptimeSeconds.Value > 0 );
+		}
+
 	}
 
 }

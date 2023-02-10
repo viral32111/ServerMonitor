@@ -28,7 +28,7 @@ namespace ServerMonitor.Collector {
 			// Create instances of each resource collector
 			Memory memory = new( configuration );
 			Processor processor = new( configuration );
-			Uptime uptime = new();
+			Uptime uptime = new( configuration );
 
 			// This is all just for debugging
 			while ( true ) {
@@ -51,7 +51,7 @@ namespace ServerMonitor.Collector {
 				logger.LogInformation( "Processor: {0}%", processorUsage );
 
 				uptime.Update();
-				logger.LogInformation( "Uptime: {0} seconds", uptime.UptimeSeconds );
+				logger.LogInformation( "Uptime: {0} seconds", uptime.UptimeSeconds.Value );
 
 				Thread.Sleep( 5000 ); // 5s
 			}
