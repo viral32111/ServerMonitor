@@ -4,17 +4,23 @@ namespace ServerMonitor.Tests {
 
 	public class MetricsCollectionUnitTests {
 
+		// Create a mock configuration
+		private static readonly Config mockConfiguration = new() {
+			PrometheusListenAddress = "127.0.0.1",
+			PrometheusListenPort = 5000,
+			PrometheusListenPath = "metrics",
+			PrometheusMetricsPrefix = "server_monitor"
+		};
+
 		[ Fact ]
 		public void TestMemoryMetrics() {
-			ServerMonitor.Collector.Resource.Memory memory = new();
+			ServerMonitor.Collector.Resource.Memory memory = new( mockConfiguration );
 			memory.Update();
 
-			Assert.True( memory.TotalBytes > 0 );
-			Assert.True( memory.FreeBytes > 0 );
-			Assert.True( memory.GetUsedBytes() > 0 );
-
-			Assert.True( memory.GetUsedPercentage() >= 0 );
-			Assert.True( memory.GetUsedPercentage() <= 100 );
+			Assert.True( memory.TotalBytes.Value > 0 );
+			Assert.True( memory.FreeBytes.Value > 0 );
+			Assert.True( memory.SwapTotalBytes.Value > 0 );
+			Assert.True( memory.SwapFreeBytes.Value > 0 );
 		}
 
 		[ Fact ]

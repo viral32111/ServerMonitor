@@ -75,7 +75,13 @@ namespace ServerMonitor {
 
 	// Structure of the configuration file
 	public sealed class Config {
-		public required int Test { get; set; }
+
+		// Prometheus metrics server
+		public required string PrometheusListenAddress { get; set; } = "127.0.0.1";
+		public required int PrometheusListenPort { get; set; } = 5000;
+		public required string PrometheusListenPath { get; set; } = "/metrics";
+		public required string PrometheusMetricsPrefix { get; set; } = "server_monitor";
+
 	}
 
 }

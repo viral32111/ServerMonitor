@@ -3,6 +3,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
+using Prometheus;
 
 namespace ServerMonitor.Collector.Resource {
 
@@ -12,49 +13,35 @@ namespace ServerMonitor.Collector.Resource {
 		// Create the logger for this file
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Resource/Memory" );
 
-		// Holds the metrics from the latest update
-		public double TotalBytes { get; private set; } = 0;
-		public double FreeBytes { get; private set; } = 0;
-		public double SwapTotalBytes { get; private set; } = 0;
-		public double SwapFreeBytes { get; private set; } = 0;
+		// Holds the exported Prometheus metrics
+		public readonly Gauge TotalBytes;
+		public readonly Gauge FreeBytes;
+		public readonly Gauge SwapTotalBytes;
+		public readonly Gauge SwapFreeBytes;
 
-		// Simply returns the utilization
-		public double GetUsedBytes() => TotalBytes - FreeBytes;
-		public double GetUsedPercentage() => ( GetUsedBytes() / TotalBytes ) * 100;
-		public double GetSwapUsedBytes() => SwapTotalBytes - SwapFreeBytes;
-		public double GetSwapUsedPercentage() => ( GetSwapUsedBytes() / SwapTotalBytes ) * 100;
+		// Initialise the exported Prometheus metrics
+		public Memory( Config configuration ) {
+			TotalBytes = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_memory_total_bytes", "Total system memory, in bytes." );
+			FreeBytes = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_memory_free_bytes", "Free system memory, in bytes." );
+			SwapTotalBytes = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_memory_swap_total_bytes", "Total swap/page-file, in bytes." );
+			SwapFreeBytes = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_memory_swap_free_bytes", "Free swap/page-file, in bytes." );
+			logger.LogInformation( "Initalised Prometheus metrics" );
+		}
 
 		// Updates the metrics for Windows...
 		public override void UpdateOnWindows() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
 
-			// Call the Windows API functions to populate the structures with raw data - https://stackoverflow.com/a/105109
+			// Call the Windows API function to populate the structure with raw data - https://stackoverflow.com/a/105109
 			MEMORYSTATUSEX memoryStatus = new();
-			//PERFORMANCE_INFORMATION performanceInformation = new();
 			if ( !GlobalMemoryStatusEx( memoryStatus ) ) throw new Exception( "Failed to get system memory status" );
-			//if ( !K32GetPerformanceInfo( performanceInformation, performanceInformation.cb ) ) throw new Exception( "Failed to get system performance information" );
 
-			// Cast the raw data to the appropriate types & store it in the properties
-			TotalBytes = ( double ) memoryStatus.ullTotalPhys;
-			FreeBytes = ( double ) memoryStatus.ullAvailPhys;
-			//SwapTotalBytes = ( double ) performanceInformation.CommitLimit - performanceInformation.CommitTotal;
-			//SwapFreeBytes = ( double ) performanceInformation.PageSize;
-			SwapTotalBytes = ( double ) memoryStatus.ullTotalPageFile - memoryStatus.ullTotalPhys;
-			SwapFreeBytes = ( double ) memoryStatus.ullAvailPageFile - memoryStatus.ullAvailPhys;
-
-			/*logger.LogDebug( "CommitTotal: {0}", performanceInformation.CommitTotal );
-			logger.LogDebug( "CommitLimit: {0}", performanceInformation.CommitLimit );
-			logger.LogDebug( "CommitPeak: {0}", performanceInformation.CommitPeak );
-			logger.LogDebug( "PhysicalTotal: {0}", performanceInformation.PhysicalTotal );
-			logger.LogDebug( "PhysicalAvailable: {0}", performanceInformation.PhysicalAvailable );
-			logger.LogDebug( "SystemCache: {0}", performanceInformation.SystemCache );
-			logger.LogDebug( "KernelTotal: {0}", performanceInformation.KernelTotal );
-			logger.LogDebug( "KernelPaged: {0}", performanceInformation.KernelPaged );
-			logger.LogDebug( "KernelNonpaged: {0}", performanceInformation.KernelNonpaged );
-			logger.LogDebug( "PageSize: {0}", performanceInformation.PageSize );
-			logger.LogDebug( "HandleCount: {0}", performanceInformation.HandleCount );
-			logger.LogDebug( "ProcessCount: {0}", performanceInformation.ProcessCount );
-			logger.LogDebug( "ThreadCount: {0}", performanceInformation.ThreadCount );*/
+			// Set the values for the exported Prometheus metrics
+			TotalBytes.Set( memoryStatus.ullTotalPhys );
+			FreeBytes.Set( memoryStatus.ullAvailPhys );
+			SwapTotalBytes.Set( memoryStatus.ullTotalPageFile - memoryStatus.ullTotalPhys );
+			SwapFreeBytes.Set( memoryStatus.ullAvailPageFile - memoryStatus.ullAvailPhys );
+			logger.LogDebug( "Updated Prometheus metrics" );
 
 		}
 
@@ -96,11 +83,13 @@ namespace ServerMonitor.Collector.Resource {
 						}
 					} while ( !streamReader.EndOfStream );
 
-					// Update the properties with the final memory information
-					TotalBytes = memoryInformation[ "MemTotal" ];
-					FreeBytes = memoryInformation[ "MemFree" ] - memoryInformation[ "Cached" ] - memoryInformation[ "Buffers" ];
-					SwapTotalBytes = memoryInformation[ "SwapTotal" ];
-					SwapFreeBytes = memoryInformation[ "SwapFree" ];
+					// Set the values for the exported Prometheus metrics
+					TotalBytes.Set( memoryInformation[ "MemTotal" ] );
+					FreeBytes.Set( memoryInformation[ "MemFree" ] - memoryInformation[ "Cached" ] - memoryInformation[ "Buffers" ] );
+					SwapTotalBytes.Set( memoryInformation[ "SwapTotal" ] );
+					SwapFreeBytes.Set( memoryInformation[ "SwapFree" ] );
+					logger.LogDebug( "Updated Prometheus metrics" );
+
 				}
 			}
 		}
@@ -119,35 +108,11 @@ namespace ServerMonitor.Collector.Resource {
 			public ulong ullAvailExtendedVirtual;
 		}
 
-		// C++ Windows API structure for GetPerformanceInfo() - https://learn.microsoft.com/en-us/windows/win32/api/psapi/ns-psapi-performance_information
-		[ StructLayout( LayoutKind.Sequential, CharSet = CharSet.Auto ) ]
-		private class PERFORMANCE_INFORMATION {
-			public uint cb = ( uint ) Marshal.SizeOf( typeof( PERFORMANCE_INFORMATION ) );
-			public ulong CommitTotal;
-			public ulong CommitLimit;
-			public ulong CommitPeak;
-			public ulong PhysicalTotal;
-			public ulong PhysicalAvailable;
-			public ulong SystemCache;
-			public ulong KernelTotal;
-			public ulong KernelPaged;
-			public ulong KernelNonpaged;
-			public ulong PageSize;
-			public uint HandleCount;
-			public uint ProcessCount;
-			public uint ThreadCount;
-		}
-
 		// C++ Windows API function to get information about system memory - https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-globalmemorystatusex
 		// The PerformanceCounter class is not good enough, it does not return enough detail...
 		[ return: MarshalAs( UnmanagedType.Bool ) ]
 		[ DllImport( "kernel32.dll", CharSet = CharSet.Auto, SetLastError = true ) ]
 		private static extern bool GlobalMemoryStatusEx( [ In, Out ] MEMORYSTATUSEX lpBuffer );
-
-		// The C++ Windows API function to get information about system performance - https://learn.microsoft.com/en-us/windows/win32/api/psapi/nf-psapi-getperformanceinfo
-		[ return: MarshalAs( UnmanagedType.Bool ) ]
-		[ DllImport( "kernel32.dll", CharSet = CharSet.Auto, SetLastError = true ) ]
-		private static extern bool K32GetPerformanceInfo( [ In, Out ] PERFORMANCE_INFORMATION pPerformanceInformation, [ In ] uint cb );
 
 	}
 }

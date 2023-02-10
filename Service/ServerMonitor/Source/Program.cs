@@ -56,7 +56,7 @@ namespace ServerMonitor {
 
 			// Load the configuration
 			Configuration.Load( extraConfigurationFilePath );
-			logger.LogInformation( "Loaded the configuration." );
+			logger.LogInformation( "Loaded the configuration" );
 
 			// Call the sub-command handler
 			subCommandHandler.Invoke( Configuration.Config! );

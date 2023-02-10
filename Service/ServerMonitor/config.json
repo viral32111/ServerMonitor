@@ -1,3 +1,5 @@
 {
-	"Test": 3
+	"PrometheusListenAddress": "127.0.0.1",
+	"PrometheusListenPort": 5000,
+	"PrometheusListenPath": "metrics/"
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using Microsoft.Extensions.Logging; // https://learn.microsoft.com/en-us/dotnet/core/extensions/console-log-formatter
+using Prometheus; // https://github.com/prometheus-net/prometheus-net
 using ServerMonitor.Collector.Resource;
 
 namespace ServerMonitor.Collector {
@@ -10,23 +11,36 @@ namespace ServerMonitor.Collector {
 		// Create the logger for this file
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Collector" );
 
+		// Entry-point for the "collector" sub-command...
 		public static void HandleCommand( Config configuration ) {
-			logger.LogInformation( "Collector mode!" );
+			logger.LogInformation( "Launched in collector mode" );
 
-			// This is all just for debugging
-			Memory memory = new();
+			// Start the Prometheus metrics server
+			MetricServer server = new(
+				hostname: configuration.PrometheusListenAddress,
+				port: configuration.PrometheusListenPort,
+				url: configuration.PrometheusListenPath,
+				useHttps: false
+			);
+			server.Start();
+			logger.LogInformation( "Prometheus Metrics server listening on http://{0}:{1}/{2}", configuration.PrometheusListenAddress, configuration.PrometheusListenPort, configuration.PrometheusListenPath );
+
+			// Create instances of each resource collector
+			Memory memory = new( configuration );
 			Processor processor = new();
 			Uptime uptime = new();
+
+			// This is all just for debugging
 			while ( true ) {
 				memory.Update();
-				double totalMemory = Math.Round( memory.TotalBytes / 1024 / 1024, 2 );
-				double freeMemory = Math.Round( memory.FreeBytes / 1024 / 1024, 2 );
-				double usedMemory = Math.Round( memory.GetUsedBytes() / 1024 / 1024, 2 );
-				double usedMemoryPercentage = Math.Round( memory.GetUsedPercentage() );
-				double totalSwap = Math.Round( memory.SwapTotalBytes / 1024 / 1024, 2 );
-				double freeSwap = Math.Round( memory.SwapFreeBytes / 1024 / 1024, 2 );
-				double usedSwap = Math.Round( memory.GetSwapUsedBytes() / 1024 / 1024, 2 );
-				double usedSwapPercentage = Math.Round( memory.GetSwapUsedPercentage() );
+				double totalMemory = Math.Round( memory.TotalBytes.Value / 1024 / 1024, 2 );
+				double freeMemory = Math.Round( memory.FreeBytes.Value / 1024 / 1024, 2 );
+				double usedMemory = Math.Round( ( memory.TotalBytes.Value - memory.FreeBytes.Value ) / 1024 / 1024, 2 );
+				double usedMemoryPercentage = Math.Round( ( memory.TotalBytes.Value - memory.FreeBytes.Value ) / memory.TotalBytes.Value * 100, 0 );
+				double totalSwap = Math.Round( memory.SwapTotalBytes.Value / 1024 / 1024, 2 );
+				double freeSwap = Math.Round( memory.SwapFreeBytes.Value / 1024 / 1024, 2 );
+				double usedSwap = Math.Round( ( memory.SwapTotalBytes.Value - memory.SwapFreeBytes.Value ) / 1024 / 1024, 2 );
+				double usedSwapPercentage = Math.Round( ( memory.SwapTotalBytes.Value - memory.SwapFreeBytes.Value ) / memory.SwapTotalBytes.Value * 100, 0 );
 				logger.LogInformation( "Memory: {0} MiB / {1} MiB ({2} MiB free, {2}% usage)", usedMemory, totalMemory, freeMemory, usedMemoryPercentage );
 				logger.LogInformation( "Swap/Page: {0} MiB / {1} MiB ({2} MiB free, {2}% usage)", usedSwap, totalSwap, freeSwap, usedSwapPercentage );
 
