@@ -42,7 +42,7 @@ namespace ServerMonitor.Collector.Resource {
 		// NOTE: This functionality is natively cross-platform as we're only using .NET Core APIs
 		public override void Update() {
 
-			// Get the relevant drive information
+			// Get the relevant drive information - https://learn.microsoft.com/en-us/dotnet/api/system.io.driveinfo.availablefreespace?view=net-7.0#examples
 			DriveInfo[] driveInformation = DriveInfo.GetDrives()
 				.Where( driveInfo => driveInfo.DriveType == DriveType.Fixed ) // Skip network shares, ramfs, etc.
 				.Where( driveInfo => driveInfo.IsReady == true ) // Skip unmounted drives

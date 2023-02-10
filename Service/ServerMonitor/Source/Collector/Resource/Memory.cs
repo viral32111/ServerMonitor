@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.PerformanceData;
 using Microsoft.Extensions.Logging;
 using Prometheus;
 
@@ -36,15 +38,26 @@ namespace ServerMonitor.Collector.Resource {
 		public override void UpdateOnWindows() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
 
-			// Call the Windows API function to populate the structure with raw data - https://stackoverflow.com/a/105109
+			// Call the Windows API functions to populate the structures with raw data - https://stackoverflow.com/a/105109
 			MEMORYSTATUSEX memoryStatus = new();
+			PERFORMANCE_INFORMATION performanceInformation = new();
 			if ( !GlobalMemoryStatusEx( memoryStatus ) ) throw new Exception( "Failed to get system memory status" );
+			if ( !K32GetPerformanceInfo( performanceInformation, performanceInformation.cb ) ) throw new Exception( "Failed to get system performance information" );
 
-			// Set the values for the exported Prometheus metrics
+			// Set the values for the exported Prometheus memory metrics
 			TotalBytes.Set( memoryStatus.ullTotalPhys );
 			FreeBytes.Set( memoryStatus.ullAvailPhys );
-			SwapTotalBytes.Set( memoryStatus.ullTotalPageFile - memoryStatus.ullTotalPhys );
-			SwapFreeBytes.Set( memoryStatus.ullAvailPageFile - memoryStatus.ullAvailPhys );
+
+			// Get page file usage % from Performance Monitor counter - https://serverfault.com/a/399880
+			using ( PerformanceCounter performanceCounter = new( "Paging File", "% Usage", "_Total" ) ) {
+				float pageFileUsagePercentage = performanceCounter.NextValue();
+				logger.LogDebug( $"Page file usage: { pageFileUsagePercentage }%" );
+
+				// Set the values for the exported Prometheus page-file metrics
+				SwapTotalBytes.Set( ( double ) memoryStatus.ullTotalPageFile - memoryStatus.ullTotalPhys );
+				SwapFreeBytes.Set( SwapTotalBytes.Value * ( 1 - ( pageFileUsagePercentage / 100 ) ) );
+			}
+
 			logger.LogDebug( "Updated Prometheus metrics" );
 
 		}
@@ -112,11 +125,35 @@ namespace ServerMonitor.Collector.Resource {
 			public ulong ullAvailExtendedVirtual;
 		}
 
+		// C++ Windows API structure for GetPerformanceInfo() - https://learn.microsoft.com/en-us/windows/win32/api/psapi/ns-psapi-performance_information
+		[ StructLayout( LayoutKind.Sequential, CharSet = CharSet.Auto ) ]
+		private class PERFORMANCE_INFORMATION {
+			public uint cb = ( uint ) Marshal.SizeOf( typeof( PERFORMANCE_INFORMATION ) );
+			public ulong CommitTotal;
+			public ulong CommitLimit;
+			public ulong CommitPeak;
+			public ulong PhysicalTotal;
+			public ulong PhysicalAvailable;
+			public ulong SystemCache;
+			public ulong KernelTotal;
+			public ulong KernelPaged;
+			public ulong KernelNonpaged;
+			public ulong PageSize;
+			public uint HandleCount;
+			public uint ProcessCount;
+			public uint ThreadCount;
+		}
+
 		// C++ Windows API function to get information about system memory - https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-globalmemorystatusex
 		// The PerformanceCounter class is not good enough, it does not return enough detail...
 		[ return: MarshalAs( UnmanagedType.Bool ) ]
 		[ DllImport( "kernel32.dll", CharSet = CharSet.Auto, SetLastError = true ) ]
 		private static extern bool GlobalMemoryStatusEx( [ In, Out ] MEMORYSTATUSEX lpBuffer );
+
+		// The C++ Windows API function to get information about system performance - https://learn.microsoft.com/en-us/windows/win32/api/psapi/nf-psapi-getperformanceinfo
+		[ return: MarshalAs( UnmanagedType.Bool ) ]
+		[ DllImport( "kernel32.dll", CharSet = CharSet.Auto, SetLastError = true ) ]
+		private static extern bool K32GetPerformanceInfo( [ In, Out ] PERFORMANCE_INFORMATION pPerformanceInformation, [ In ] uint cb );
 
 	}
 
