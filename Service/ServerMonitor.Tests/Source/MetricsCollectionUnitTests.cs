@@ -47,6 +47,21 @@ namespace ServerMonitor.Tests {
 			Assert.True( uptime.UptimeSeconds.Value > 0, "Uptime is below 0 seconds" );
 		}
 
+		[ Fact ]
+		public void TestDiskMetrics() {
+			ServerMonitor.Collector.Resource.Disk disk = new( mockConfiguration );
+			disk.Update();
+
+			Assert.True( disk.TotalBytes.Value > 0, "Total disk space is below 0 bytes" );
+			Assert.True( disk.FreeBytes.Value >= 0, "Free disk space is below 0 bytes" );
+
+			Assert.True( disk.WriteBytesPerSecond.Value >= 0, "Disk read speed is below 0 bytes per second" );
+			Assert.True( disk.ReadBytesPerSecond.Value >= 0, "Disk read speed is below 0 bytes per second" );
+
+			Assert.True( disk.Health.Value > 0, "Disk S.M.A.R.T health is below 0%" );
+			Assert.True( disk.Health.Value < 100, "Disk S.M.A.R.T health is above 100%" );
+		}
+
 	}
 
 }

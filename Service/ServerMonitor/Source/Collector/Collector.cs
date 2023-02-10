@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading;
 using Microsoft.Extensions.Logging; // https://learn.microsoft.com/en-us/dotnet/core/extensions/console-log-formatter
 using Prometheus; // https://github.com/prometheus-net/prometheus-net
@@ -29,6 +30,7 @@ namespace ServerMonitor.Collector {
 			Memory memory = new( configuration );
 			Processor processor = new( configuration );
 			Uptime uptime = new( configuration );
+			Disk disk = new( configuration );
 
 			// This is all just for debugging
 			while ( true ) {
@@ -52,6 +54,19 @@ namespace ServerMonitor.Collector {
 
 				uptime.Update();
 				logger.LogInformation( "Uptime: {0} seconds", uptime.UptimeSeconds.Value );
+
+				disk.Update();
+				foreach ( string[] labelValues in disk.TotalBytes.GetAllLabelValues() ) {
+					string driveLabel = labelValues[ 0 ];
+					string driveFilesystem = labelValues[ 1 ];
+					string driveMountpoint = labelValues[ 2 ];
+
+					double totalDisk = Math.Round( disk.TotalBytes.WithLabels( driveLabel, driveFilesystem, driveMountpoint ).Value / 1024 / 1024 / 1024, 2 );
+					double freeDisk = Math.Round( disk.FreeBytes.WithLabels( driveLabel, driveFilesystem, driveMountpoint ).Value / 1024 / 1024 / 1024, 2 );
+					double usedDisk = Math.Round( ( disk.TotalBytes.WithLabels( driveLabel, driveFilesystem, driveMountpoint ).Value - disk.FreeBytes.WithLabels( driveLabel, driveFilesystem, driveMountpoint ).Value ) / 1024 / 1024 / 1024, 2 );
+					double usedDiskPercentage = Math.Round( ( disk.TotalBytes.WithLabels( driveLabel, driveFilesystem, driveMountpoint ).Value - disk.FreeBytes.WithLabels( driveLabel, driveFilesystem, driveMountpoint ).Value ) / disk.TotalBytes.WithLabels( driveLabel, driveFilesystem, driveMountpoint ).Value * 100, 0 );
+					logger.LogInformation( "Disk ({0}, {1}, {2}): {3} GiB / {4} GiB ({5} GiB free, {6}% usage)", driveLabel, driveFilesystem, driveMountpoint, usedDisk, totalDisk, freeDisk, usedDiskPercentage );
+				}
 
 				Thread.Sleep( 5000 ); // 5s
 			}

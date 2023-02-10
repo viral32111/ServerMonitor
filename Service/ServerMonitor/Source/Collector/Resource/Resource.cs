@@ -9,15 +9,15 @@ namespace ServerMonitor.Collector.Resource {
 	public abstract class Resource {
 
 		// Calls the appropriate update function depending on the operating system...
-		public void Update() {
+		public virtual void Update() {
 			if ( RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) UpdateOnWindows();
 			else if ( RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) UpdateOnLinux();
 			else throw new Exception( "Unsupported operating system" );
 		}
 
 		// Override with code for updating for Windows & Linux respectively...
-		public abstract void UpdateOnWindows();
-		public abstract void UpdateOnLinux();
+		public virtual void UpdateOnWindows() => throw new Exception( "Windows-specific updating is not supported" );
+		public virtual void UpdateOnLinux() => throw new Exception( "Linux-specific updating is not supported" );
 
 	}
 

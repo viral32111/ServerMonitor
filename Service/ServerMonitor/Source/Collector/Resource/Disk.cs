@@ -1,9 +1,8 @@
 using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
+using System.IO;
+using System.Linq;
 using Microsoft.Extensions.Logging;
-
-// TODO
+using Prometheus;
 
 namespace ServerMonitor.Collector.Resource {
 
@@ -13,34 +12,59 @@ namespace ServerMonitor.Collector.Resource {
 		// Create the logger for this file
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Resource/Disk" );
 
-		// Holds the metrics for each disk
-		public List<Disk> Disks { get; private set; } = new();
+		// Holds the exported Prometheus metrics
+		public readonly Gauge TotalBytes;
+		public readonly Gauge FreeBytes;
+		public readonly Gauge Health;
+		public readonly Gauge WriteBytesPerSecond;
+		public readonly Gauge ReadBytesPerSecond;
 
-		// Holds the total metrics for all disks
-		public double CurrentWriteBytes { get; private set; } = 0;
-		public double CurrentReadBytes { get; private set; } = 0;
-		public string Name { get; private set; } = string.Empty;
-		public string Mountpoint { get; private set; } = string.Empty;
-		public double TotalBytes { get; private set; } = 0;
-		public double FreeBytes { get; private set; } = 0;
-		public int SmartHealth { get; private set; } = 0;
+		// Initialise the exported Prometheus metrics
+		public Disk( Config configuration ) {
+			string[] labelNames = new[] { "label", "filesystem", "mountpoint" };
 
-		// Simply returns the utilization
-		public double GetUsedBytes() => TotalBytes - FreeBytes;
-		public double GetUsedPercentage() => ( GetUsedBytes() / TotalBytes ) * 100;
+			TotalBytes = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_disk_total_bytes", "Total disk space, in bytes.", new GaugeConfiguration { LabelNames = labelNames } );
+			FreeBytes = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_disk_free_bytes", "Free disk space, in bytes.", new GaugeConfiguration { LabelNames = labelNames } );
+			Health = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_disk_health", "S.M.A.R.T disk health", new GaugeConfiguration { LabelNames = labelNames } );
+			WriteBytesPerSecond = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_disk_current_write_speed_bytes", "Current write speed, in bytes per second.", new GaugeConfiguration { LabelNames = labelNames } );
+			ReadBytesPerSecond = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_disk_current_read_speed_bytes", "Current read speed, in bytes per second.", new GaugeConfiguration { LabelNames = labelNames } );
 
-		// Updates the metrics for Windows...
-		public override void UpdateOnWindows() {
-			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
+			TotalBytes.Set( 0 );
+			FreeBytes.Set( 0 );
+			Health.Set( -1 ); // -1 if not supported
+			WriteBytesPerSecond.Set( 0 );
+			ReadBytesPerSecond.Set( 0 );
 
-			throw new NotImplementedException();
+			logger.LogInformation( "Initalised Prometheus metrics" );
 		}
 
-		// Updates the metrics for Linux...
-		public override void UpdateOnLinux() {
-			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
+		// Updates the metrics for Windows & Linux...
+		// NOTE: This functionality is natively cross-platform as we're only using .NET Core APIs
+		public override void Update() {
 
-			throw new NotImplementedException();
+			// Get the relevant drive information
+			DriveInfo[] driveInformation = DriveInfo.GetDrives()
+				.Where( driveInfo => driveInfo.DriveType == DriveType.Fixed ) // Skip network shares, ramfs, etc.
+				.Where( driveInfo => driveInfo.IsReady == true ) // Skip unmounted drives
+				.Where( driveInfo => driveInfo.DriveFormat != "9P" && driveInfo.DriveFormat != "v9fs" ) // Skip WSL-related filesystems
+				.Where( driveInfo => driveInfo.DriveFormat != "overlay" ) // Skip Docker-related filesystems
+				.ToArray();
+
+			// Update the metrics for each drive
+			foreach ( DriveInfo driveInfo in driveInformation ) {
+				string driveLabel = driveInfo.VolumeLabel;
+				string driveFileSystem = driveInfo.DriveFormat;
+				string driveMountpoint = driveInfo.RootDirectory.FullName;
+
+				TotalBytes.WithLabels( driveLabel, driveFileSystem, driveMountpoint ).Set( driveInfo.TotalSize );
+				FreeBytes.WithLabels( driveLabel, driveFileSystem, driveMountpoint ).Set( driveInfo.TotalFreeSpace );
+
+				// TODO
+				Health.WithLabels( driveLabel, driveFileSystem, driveMountpoint ).Set( -1 );
+				WriteBytesPerSecond.WithLabels( driveLabel, driveFileSystem, driveMountpoint ).Set( 0 );
+				ReadBytesPerSecond.WithLabels( driveLabel, driveFileSystem, driveMountpoint ).Set( 0 );
+			}
+
 		}
 
 	}
