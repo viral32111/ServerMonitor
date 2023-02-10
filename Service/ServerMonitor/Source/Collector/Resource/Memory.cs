@@ -25,6 +25,10 @@ namespace ServerMonitor.Collector.Resource {
 			FreeBytes = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_memory_free_bytes", "Free system memory, in bytes." );
 			SwapTotalBytes = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_memory_swap_total_bytes", "Total swap/page-file, in bytes." );
 			SwapFreeBytes = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_memory_swap_free_bytes", "Free swap/page-file, in bytes." );
+			TotalBytes.Set( 0 );
+			FreeBytes.Set( 0 );
+			SwapTotalBytes.Set( 0 );
+			SwapFreeBytes.Set( 0 );
 			logger.LogInformation( "Initalised Prometheus metrics" );
 		}
 

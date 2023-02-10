@@ -24,6 +24,9 @@ namespace ServerMonitor.Collector.Resource {
 			Usage = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_processor_usage", "Processor usage, as percentage." );
 			Temperature = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_processor_temperature", "Processor temperature, in degrees Celsius." );
 			Frequency = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_processor_frequency", "Processor frequency, in hertz." );
+			Usage.Set( 0 );
+			Temperature.Set( 0 );
+			Frequency.Set( 0 );
 			logger.LogInformation( "Initalised Prometheus metrics" );
 		}
 

@@ -17,11 +17,11 @@ namespace ServerMonitor.Tests {
 			ServerMonitor.Collector.Resource.Memory memory = new( mockConfiguration );
 			memory.Update();
 
-			Assert.True( memory.TotalBytes.Value > 0 );
-			Assert.True( memory.FreeBytes.Value > 0 );
+			Assert.True( memory.TotalBytes.Value > 0, "Total memory is below 0 bytes" );
+			Assert.True( memory.FreeBytes.Value > 0, "Free memory is below 0 bytes" );
 
-			Assert.True( memory.SwapTotalBytes.Value > 0 );
-			Assert.True( memory.SwapFreeBytes.Value > 0 );
+			Assert.True( memory.SwapTotalBytes.Value > 0, "Total swap/page-file is below 0 bytes" );
+			Assert.True( memory.SwapFreeBytes.Value > 0, "Free swap/page-file is below 0 bytes" );
 		}
 
 		[ Fact ]
@@ -29,14 +29,14 @@ namespace ServerMonitor.Tests {
 			ServerMonitor.Collector.Resource.Processor processor = new( mockConfiguration );
 			processor.Update();
 
-			Assert.True( processor.Usage.Value >= 0 );
-			Assert.True( processor.Usage.Value <= 100 );
+			Assert.True( processor.Usage.Value >= 0, "Processor usage is below 0%" );
+			Assert.True( processor.Usage.Value <= 100, "Processor usage is above 100%" );
 			
-			Assert.True( processor.Temperature.Value >= 0 );
-			Assert.True( processor.Temperature.Value >= 150 );
+			Assert.True( processor.Temperature.Value >= 0, "Processor temperature is below 0C" );
+			Assert.True( processor.Temperature.Value <= 150, "Processor temperature is above 150C" );
 
-			Assert.True( processor.Frequency.Value >= 0 );
-			// No upper limit for future proofing, but it should be in the range of 1GHz to 10GHz
+			Assert.True( processor.Frequency.Value >= 0, "Processor frequency is below 0Hz" );
+			// No upper limit for future proofing, but as of today it should be about 6GHz
 		}
 
 		[ Fact ]
@@ -44,7 +44,7 @@ namespace ServerMonitor.Tests {
 			ServerMonitor.Collector.Resource.Uptime uptime = new( mockConfiguration );
 			uptime.Update();
 
-			Assert.True( uptime.UptimeSeconds.Value > 0 );
+			Assert.True( uptime.UptimeSeconds.Value > 0, "Uptime is below 0 seconds" );
 		}
 
 	}
