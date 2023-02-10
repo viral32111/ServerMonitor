@@ -27,11 +27,13 @@ namespace ServerMonitor.Collector {
 
 			// Create instances of each resource collector
 			Memory memory = new( configuration );
-			Processor processor = new();
+			Processor processor = new( configuration );
 			Uptime uptime = new();
 
 			// This is all just for debugging
 			while ( true ) {
+				Console.WriteLine( new string( '-', 100 ) );
+
 				memory.Update();
 				double totalMemory = Math.Round( memory.TotalBytes.Value / 1024 / 1024, 2 );
 				double freeMemory = Math.Round( memory.FreeBytes.Value / 1024 / 1024, 2 );
@@ -45,14 +47,13 @@ namespace ServerMonitor.Collector {
 				logger.LogInformation( "Swap/Page: {0} MiB / {1} MiB ({2} MiB free, {2}% usage)", usedSwap, totalSwap, freeSwap, usedSwapPercentage );
 
 				processor.Update();
-				double processorUsage = Math.Round( processor.Usage, 1 );
+				double processorUsage = Math.Round( processor.Usage.Value, 1 );
 				logger.LogInformation( "Processor: {0}%", processorUsage );
 
 				uptime.Update();
 				logger.LogInformation( "Uptime: {0} seconds", uptime.UptimeSeconds );
 
-				Thread.Sleep( 1000 );
-				Console.Write( "\n" );
+				Thread.Sleep( 5000 ); // 5s
 			}
 		}
 

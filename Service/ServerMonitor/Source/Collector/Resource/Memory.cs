@@ -115,4 +115,5 @@ namespace ServerMonitor.Collector.Resource {
 		private static extern bool GlobalMemoryStatusEx( [ In, Out ] MEMORYSTATUSEX lpBuffer );
 
 	}
+
 }

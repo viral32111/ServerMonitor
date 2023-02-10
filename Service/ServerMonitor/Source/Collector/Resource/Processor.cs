@@ -4,6 +4,7 @@ using System.Threading;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
+using Prometheus;
 
 namespace ServerMonitor.Collector.Resource {
 
@@ -13,10 +14,18 @@ namespace ServerMonitor.Collector.Resource {
 		// Create the logger for this file
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Resource/Processor" );
 
-		// Holds the metrics from the latest update
-		public double Usage { get; private set; } = 0;
-		public double Temperature { get; private set; } = 0; // TODO
-		public double Frequency { get; private set; } = 0; // TODO
+		// Holds the exported Prometheus metrics
+		public readonly Gauge Usage;
+		public readonly Gauge Temperature; // TODO
+		public readonly Gauge Frequency; // TODO
+
+		// Initialise the exported Prometheus metrics
+		public Processor( Config configuration ) {
+			Usage = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_processor_usage", "Processor usage, as percentage." );
+			Temperature = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_processor_temperature", "Processor temperature, in degrees Celsius." );
+			Frequency = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_processor_frequency", "Processor frequency, in hertz." );
+			logger.LogInformation( "Initalised Prometheus metrics" );
+		}
 
 		// Updates the metrics for Windows...
 		public override void UpdateOnWindows() {
@@ -27,7 +36,12 @@ namespace ServerMonitor.Collector.Resource {
 			PerformanceCounter cpuCounter = new( "Processor", "% Processor Time", "_Total" );
 			cpuCounter.NextValue();
 			Thread.Sleep( 1000 );
-			Usage = cpuCounter.NextValue();
+			float processorUsage = cpuCounter.NextValue();
+
+			// Set the values for the exported Prometheus metrics
+			Usage.Set( processorUsage );
+			logger.LogDebug( "Updated Prometheus metrics" );
+
 		}
 
 		// Updates the metrics for Linux...
@@ -64,10 +78,14 @@ namespace ServerMonitor.Collector.Resource {
 						if ( int.TryParse( lineParts[ 3 ], out int idleTime ) != true ) throw new Exception( "Failed to parse idle time as integer" );
 						int totalTime = userTime + niceTime + systemTime + idleTime;
 
-						// https://askubuntu.com/a/450136
+						// Convert the above times to percentage usage - https://askubuntu.com/a/450136
 						int idleTimeDelta = idleTime - previousIdle;
 						int totalTimeDelta = totalTime - previousTotal;
-						Usage = ( float ) ( 1000 * ( totalTimeDelta - idleTimeDelta ) / ( float ) totalTimeDelta + 5 ) / 10;
+						float processorUsage = ( float ) ( 1000 * ( totalTimeDelta - idleTimeDelta ) / ( float ) totalTimeDelta + 5 ) / 10;
+
+						// Set the values for the exported Prometheus metrics
+						Usage.Set( processorUsage );
+						logger.LogDebug( "Updated Prometheus metrics" );
 
 						// Update previous values
 						previousIdle = idleTime;
@@ -84,4 +102,5 @@ namespace ServerMonitor.Collector.Resource {
 		}
 
 	}
+
 }
