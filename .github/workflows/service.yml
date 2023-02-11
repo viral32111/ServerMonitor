@@ -57,6 +57,7 @@ jobs:
   launch:
     name: Launch Test
     runs-on: ${{ matrix.os }}
+    needs: build-test
     defaults:
       run:
         working-directory: ./Service/
@@ -86,7 +87,7 @@ jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-22.04
-    needs: build-test
+    needs: launch
     defaults:
       run:
         working-directory: ./Service/
@@ -165,7 +166,7 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-22.04
-    needs: build-test
+    needs: launch
     defaults:
       run:
         working-directory: ./Service/
