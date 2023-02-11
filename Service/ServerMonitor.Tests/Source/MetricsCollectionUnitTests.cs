@@ -1,3 +1,4 @@
+using System;
 using Xunit;
 
 namespace ServerMonitor.Tests {
@@ -17,8 +18,12 @@ namespace ServerMonitor.Tests {
 			ServerMonitor.Collector.Resource.Memory memory = new( mockConfiguration );
 			memory.Update();
 
+			Console.WriteLine( $"Total memory: { memory.TotalBytes.Value }" );
+			Console.WriteLine( $"Free memory: { memory.FreeBytes.Value }" );
+
 			Assert.True( memory.TotalBytes.Value > 0, "Total memory is below 0 bytes" );
-			Assert.True( memory.FreeBytes.Value > 0, "Free memory is below 0 bytes" );
+			Assert.True( memory.FreeBytes.Value >= 0, "Free memory is below 0 bytes" );
+			Assert.True( memory.FreeBytes.Value <= memory.TotalBytes.Value, "Free memory is greater than total memory" );
 
 			Assert.True( memory.SwapTotalBytes.Value > 0, "Total swap/page-file is below 0 bytes" );
 			Assert.True( memory.SwapFreeBytes.Value > 0, "Free swap/page-file is below 0 bytes" );
@@ -59,6 +64,7 @@ namespace ServerMonitor.Tests {
 
 				Assert.True( disk.TotalBytes.WithLabels( driveLabel, driveFilesystem, driveMountpoint ).Value > 0, $"Total disk space is below 0 bytes ({ driveMountpoint })" );
 				Assert.True( disk.FreeBytes.WithLabels( driveLabel, driveFilesystem, driveMountpoint ).Value >= 0, $"Free disk space is below 0 bytes ({ driveMountpoint })" );
+				Assert.True( disk.FreeBytes.WithLabels( driveLabel, driveFilesystem, driveMountpoint ).Value <= disk.TotalBytes.WithLabels( driveLabel, driveFilesystem, driveMountpoint ).Value, $"Free disk space is greater than total disk space ({ driveMountpoint })" );
 
 				Assert.True( disk.WriteBytesPerSecond.WithLabels( driveLabel, driveFilesystem, driveMountpoint ).Value >= 0, $"Disk write speed is below 0 bytes per second ({ driveMountpoint })" );
 				Assert.True( disk.ReadBytesPerSecond.WithLabels( driveLabel, driveFilesystem, driveMountpoint ).Value >= 0, $"Disk read speed is below 0 bytes per second ({ driveMountpoint })" );
