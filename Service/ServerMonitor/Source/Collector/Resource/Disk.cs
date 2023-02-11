@@ -1,6 +1,8 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
@@ -42,7 +44,7 @@ namespace ServerMonitor.Collector.Resource {
 
 		// Updates the metrics for Windows & Linux...
 		// NOTE: This functionality is natively cross-platform as we're only using .NET Core APIs
-		public override void UpdateOnWindows() {
+		/*public override void UpdateOnWindows() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
 
 			// Get the relevant drive information - https://learn.microsoft.com/en-us/dotnet/api/system.io.driveinfo.availablefreespace?view=net-7.0#examples
@@ -75,11 +77,223 @@ namespace ServerMonitor.Collector.Resource {
 				ReadBytesPerSecond.WithLabels( driveLabel, driveFileSystem, driveMountpoint ).Set( 0 );
 			}
 
+		}*/
+
+		public override void UpdateOnLinux() {
+			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
+
+			DriveInfo[] drives = DriveInfo.GetDrives()
+				.Where( driveInfo => driveInfo.DriveType == DriveType.Fixed ) // Only internal drives (no network shares, swap, etc.)
+				.Where( driveInfo => driveInfo.IsReady == true ) // Skip unmounted drives
+				.Where( driveInfo => // Skip WSL & Docker filesystems
+					driveInfo.DriveFormat != "9P" &&
+					driveInfo.DriveFormat != "v9fs" &&
+					driveInfo.DriveFormat != "drivefs" &&
+					driveInfo.DriveFormat != "overlay"
+				)
+				.Where( driveInfo => // Skip pseudo filesystems
+					!driveInfo.RootDirectory.FullName.StartsWith( "/sys" ) &&
+					!driveInfo.RootDirectory.FullName.StartsWith( "/proc" ) &&
+					!driveInfo.RootDirectory.FullName.StartsWith( "/dev" ) &&
+					driveInfo.TotalSize != 0
+				)
+				.ToArray();
+
+			foreach ( DriveInfo driveInformation in drives ) {
+				MountInfo mountInformation = GetMountInformation( driveInformation.RootDirectory.FullName );
+				string deviceName = Path.GetFileNameWithoutExtension( mountInformation.DevicePath );
+				string deviceMountPath = driveInformation.RootDirectory.FullName;
+				string deviceFileSystem = driveInformation.DriveFormat;
+				long totalBytes = driveInformation.TotalSize;
+				long freeBytes = driveInformation.TotalFreeSpace;
+				logger.LogDebug( "{0} ({1}, {2}): {3}, {4}", deviceName, deviceMountPath, deviceFileSystem, totalBytes, freeBytes );
+
+				PartitionStats partitionStatistics = GetPartitionStatistics( deviceName );
+				logger.LogDebug( "\t{0}, {1}, {2}, {3}", partitionStatistics.ReadsCompleted, partitionStatistics.WritesCompleted, partitionStatistics.SectorsRead, partitionStatistics.SectorsWritten );
+			}
+
+			/*Partition[] partitions = GetPartitions();
+			logger.LogDebug( $"Found { partitions.Length } partitions" );
+			foreach ( Partition partition in partitions ) {
+				logger.LogDebug( $"Disk { partitionStatistics.Name }, partition { partitionStatistics.Name }, mountpoint { partitionStatistics.Mountpoint }" );
+			}*/
 		}
 
-		// Structure of the /proc/diskstats file - https://www.kernel.org/doc/Documentation/ABI/testing/procfs-diskstats
-		struct DiskStats {
-			public string DeviceName;
+		struct MountInfo {
+			public string DevicePath;
+			public string MountPath;
+			public string FileSystem;
+			public string Options;
+			public int Dump;
+			public int Pass;
+		}
+
+		private MountInfo GetMountInformation( string mountPath ) {
+			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
+
+			// Read the pseudo-file containing information on mounted filesystems - https://linux.die.net/man/5/proc
+			using ( FileStream fileStream = new( "/proc/mounts", FileMode.Open, FileAccess.Read ) ) {
+				using ( StreamReader streamReader = new( fileStream ) ) {
+
+					// Read each line until we reach the end...
+					do {
+						string? fileLine = streamReader.ReadLine();
+						if ( string.IsNullOrWhiteSpace( fileLine ) ) break;
+
+						// Split into individual parts
+						string[] lineParts = fileLine.Split( " ", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries );
+						if ( lineParts.Length < 6 ) throw new Exception( "Mount information file contains an invalid line (too few parts)" );
+
+						// Create a structure with initial mount information
+						MountInfo mountInformation = new() {
+							DevicePath = lineParts[ 0 ],
+							MountPath = lineParts[ 1 ],
+							FileSystem = lineParts[ 2 ],
+							Options = lineParts[ 3 ]
+						};
+
+						// Parse the dump & pass values as integers
+						if ( !int.TryParse( lineParts[ 4 ], out mountInformation.Dump ) ) throw new Exception( "Failed to parse mount information dump value as an integer" );
+						if ( !int.TryParse( lineParts[ 5 ], out mountInformation.Pass ) ) throw new Exception( "Failed to parse mount information pass value as an integer" );
+
+						// Return if this is the mount we're looking for
+						if ( mountInformation.MountPath == mountPath ) return mountInformation;
+
+					} while ( !streamReader.EndOfStream );
+
+				}
+			}
+
+			throw new Exception( $"Unable to find information about mount" );
+		}
+
+		// Get the mountpoint for a given disk's partition on Linux
+		/*private string GetPartitionMountpoint( string partitionName ) {
+			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
+
+			// Read the pseudo-file containing information on mounted partitions - https://linux.die.net/man/5/proc
+			using ( FileStream fileStream = new( "/proc/mounts", FileMode.Open, FileAccess.Read ) ) {
+				using ( StreamReader streamReader = new( fileStream ) ) {
+
+					// Read each line until we reach the end...
+					do {
+						string? fileLine = streamReader.ReadLine();
+						if ( string.IsNullOrWhiteSpace( fileLine ) ) break;
+
+						// Split into individual parts
+						string[] lineParts = fileLine.Split( " ", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries );
+						if ( lineParts.Length < 2 ) throw new Exception( "Mount information file contains an invalid line (too few parts)" );
+						string path = lineParts[ 0 ];
+						string mountpoint = lineParts[ 1 ];
+
+						// Return the mountpoint if this is the device we're looking for
+						if ( path == $"/dev/{ partitionName }" ) return mountpoint;
+
+					} while ( !streamReader.EndOfStream );
+
+				}
+			}
+
+			throw new Exception( $"Unable to find mountpoint for partition { partitionName }" );
+		}*/
+
+		// Get a list of partitions for a given disk on Linux
+		/*private PartitionInfo[] GetDiskPartitions( string diskName ) {
+			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
+
+			// Read the pseudo-file containing information on disk partitions - https://linux.die.net/man/5/proc
+			using ( FileStream fileStream = new( "/proc/partitions", FileMode.Open, FileAccess.Read ) ) {
+				using ( StreamReader streamReader = new( fileStream ) ) {
+
+					// Will hold the information for each disk partition
+					List<PartitionInfo> partitions = new();
+
+					// Read each line until we reach the end...
+					do {
+						string? fileLine = streamReader.ReadLine();
+						if ( string.IsNullOrWhiteSpace( fileLine ) ) break;
+
+						// Split into individual parts
+						string[] lineParts = fileLine.Split( " ", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries );
+						if ( lineParts.Length < 4 ) throw new Exception( "Partition information file contains an invalid line (too few parts)" );
+
+						// Create a structure with the name
+						PartitionInfo partitionInfo;
+						partitionInfo.Name = lineParts[ 3 ];
+
+						// Skip partitions that aren't on this disk
+						if ( partitionInfo.Name.StartsWith( diskName ) == false ) continue;
+
+						// Parse & convert number of blocks into bytes
+						if ( int.TryParse( lineParts[ 2 ], out int blockCount ) != true ) throw new Exception( "Failed to parse partition block count as integer" );
+						partitionInfo.TotalBytes = blockCount * 512;
+
+						
+						// Add it to the list
+						partitions.Add( partitionInfo );
+
+					} while ( !streamReader.EndOfStream );
+
+					// Convert to a fixed array before returning
+					return partitions.ToArray();
+
+				}
+			}
+
+			throw new Exception( "Unable to find partitions for disk" );
+		}*/
+
+		// Gets the statistics of a disk's partition on Linux
+		private PartitionStats GetPartitionStatistics( string partitionName ) {
+			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
+
+			// Read the pseudo-file containing disk I/O statistics - https://linux.die.net/man/5/proc
+			using ( FileStream fileStream = new( "/proc/diskstats", FileMode.Open, FileAccess.Read ) ) {
+				using ( StreamReader streamReader = new( fileStream ) ) {
+
+					// Read each line until we reach the end...
+					do {
+						string? fileLine = streamReader.ReadLine();
+						if ( string.IsNullOrWhiteSpace( fileLine ) ) break;
+
+						// Split into individual parts
+						string[] lineParts = fileLine.Split( " ", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries );
+						if ( lineParts.Length < 20 ) throw new Exception( "Disk statistics file contains an invalid line (too few parts)" );
+
+						// Parse all the individual statistics into a structure - https://www.kernel.org/doc/Documentation/ABI/testing/procfs-diskstats
+						PartitionStats partitionStatistics = new();
+						if ( int.TryParse( lineParts[ 3 ], out partitionStatistics.ReadsCompleted ) != true ) throw new Exception( "Failed to parse reads completed as an integer" );
+						if ( int.TryParse( lineParts[ 4 ], out partitionStatistics.ReadsMerged ) != true ) throw new Exception( "Failed to parse reads merged as an integer" );
+						if ( int.TryParse( lineParts[ 5 ], out partitionStatistics.SectorsRead ) != true ) throw new Exception( "Failed to parse sectors read as an integer" );
+						if ( int.TryParse( lineParts[ 6 ], out partitionStatistics.MillisecondsSpentReading ) != true ) throw new Exception( "Failed to parse time spent reading as an integer" );
+						if ( int.TryParse( lineParts[ 7 ], out partitionStatistics.WritesCompleted ) != true ) throw new Exception( "Failed to parse writes completed as an integer" );
+						if ( int.TryParse( lineParts[ 8 ], out partitionStatistics.WritesMerged ) != true ) throw new Exception( "Failed to parse writes merged as an integer" );
+						if ( int.TryParse( lineParts[ 9 ], out partitionStatistics.SectorsWritten ) != true ) throw new Exception( "Failed to parse sectors written as an integer" );
+						if ( int.TryParse( lineParts[ 10 ], out partitionStatistics.MillisecondsSpentWriting ) != true ) throw new Exception( "Failed to parse time spent writing as an integer" );
+						if ( int.TryParse( lineParts[ 11 ], out partitionStatistics.IOsInProgress ) != true ) throw new Exception( "Failed to parse I/Os in progress as an integer" );
+						if ( int.TryParse( lineParts[ 12 ], out partitionStatistics.MillisecondsSpentDoingIO ) != true ) throw new Exception( "Failed to parse time spent doing I/O as an integer" );
+						if ( int.TryParse( lineParts[ 13 ], out partitionStatistics.WeightedMillisecondsSpentDoingIO ) != true ) throw new Exception( "Failed to parse weighted time spent doing I/O as an integer" );
+						if ( int.TryParse( lineParts[ 14 ], out partitionStatistics.DisardsCompleted ) != true ) throw new Exception( "Failed to parse discards completed as an integer" );
+						if ( int.TryParse( lineParts[ 15 ], out partitionStatistics.DisardsMerged ) != true ) throw new Exception( "Failed to parse discards merged as an integer" );
+						if ( int.TryParse( lineParts[ 16 ], out partitionStatistics.SectorsDisarded ) != true ) throw new Exception( "Failed to parse sectors discarded as an integer" );
+						if ( int.TryParse( lineParts[ 17 ], out partitionStatistics.MillisecondsSpentDisarding ) != true ) throw new Exception( "Failed to disk time spent discarding as an integer" );
+						if ( int.TryParse( lineParts[ 18 ], out partitionStatistics.FlushRequestsCompleted ) != true ) throw new Exception( "Failed to parse flush requests completed as an integer" );
+						if ( int.TryParse( lineParts[ 19 ], out partitionStatistics.MillisecondsSpentFlushing ) != true ) throw new Exception( "Failed to parse time spent flushing as an integer" );
+
+						// Return if this is the partition we're looking for
+						if ( lineParts[ 2 ] == partitionName ) return partitionStatistics;
+
+					} while ( !streamReader.EndOfStream );
+
+				}
+			}
+
+			// If we get here, the partition wasn't found
+			throw new Exception( "Failed to find any statistics for partition" );
+		}
+
+		// The structure of the /proc/diskstats file - https://www.kernel.org/doc/Documentation/ABI/testing/procfs-diskstats
+		struct PartitionStats {
 			public int ReadsCompleted;
 			public int ReadsMerged;
 			public int SectorsRead;
@@ -97,107 +311,6 @@ namespace ServerMonitor.Collector.Resource {
 			public int MillisecondsSpentDisarding;
 			public int FlushRequestsCompleted;
 			public int MillisecondsSpentFlushing;
-		}
-
-		public override void UpdateOnLinux() {
-			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
-			
-			DiskStats[] diskStatistics = GetDiskStatistics();
-			foreach ( DiskStats diskStats in diskStatistics ) {
-				string mountpoint = GetDiskMountpoint( diskStats.DeviceName );
-				logger.LogDebug( $"Disk { diskStats.DeviceName } mounted at { mountpoint }" );
-			}
-		}
-
-		// Get the mountpoint for a given disk on Linux
-		private string GetDiskMountpoint( string deviceName ) {
-			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
-
-			// Read the pseudo-file containing information on mounted disks - https://linux.die.net/man/5/proc
-			using ( FileStream fileStream = new( "/proc/mounts", FileMode.Open, FileAccess.Read ) ) {
-				using ( StreamReader streamReader = new( fileStream ) ) {
-
-					// Read each line until we reach the end...
-					do {
-						string? fileLine = streamReader.ReadLine();
-						if ( string.IsNullOrWhiteSpace( fileLine ) ) break;
-
-						// Split into individual parts
-						string[] lineParts = fileLine.Split( " ", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries );
-						if ( lineParts.Length < 2 ) throw new Exception( "Mount information file contains an invalid line (too few parts)" );
-						string devicePath = lineParts[ 0 ];
-						string mountpoint = lineParts[ 1 ];
-
-						// Return the mountpoint if this is the device we're looking for
-						if ( devicePath == $"/dev/{ deviceName }" ) return mountpoint;
-
-					} while ( !streamReader.EndOfStream );
-
-				}
-			}
-
-			throw new Exception( $"Unable to find mountpoint for device { deviceName }" );
-		}
-
-		// Gets the current disk statistics on Linux
-		private DiskStats[] GetDiskStatistics() {
-			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
-
-			// Read the pseudo-file containing disk I/O statistics - https://linux.die.net/man/5/proc
-			using ( FileStream fileStream = new( "/proc/diskstats", FileMode.Open, FileAccess.Read ) ) {
-				using ( StreamReader streamReader = new( fileStream ) ) {
-
-					// List to hold the statistics for each disk
-					List<DiskStats> diskStatistics = new();
-
-					// Read each line until we reach the end...
-					do {
-						string? fileLine = streamReader.ReadLine();
-						if ( string.IsNullOrWhiteSpace( fileLine ) ) break;
-
-						// Split into individual parts
-						string[] lineParts = fileLine.Split( " ", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries );
-						if ( lineParts.Length < 20 ) throw new Exception( "Disk statistics file contains an invalid line (too few parts)" );
-
-						// Create the disk statistics structure with the device name
-						DiskStats diskStats;
-						diskStats.DeviceName = lineParts[ 2 ];
-
-						// Skip non-disk devices
-						if ( !diskStats.DeviceName.StartsWith( "sda" ) && !diskStats.DeviceName.StartsWith( "nvme" ) ) continue;
-
-						// Parse all the individual statistics - https://www.kernel.org/doc/Documentation/ABI/testing/procfs-diskstats
-						if ( int.TryParse( lineParts[ 3 ], out diskStats.ReadsCompleted ) != true ) throw new Exception( "Failed to parse disk reads completed as an integer" );
-						if ( int.TryParse( lineParts[ 4 ], out diskStats.ReadsMerged ) != true ) throw new Exception( "Failed to parse disk reads merged as an integer" );
-						if ( int.TryParse( lineParts[ 5 ], out diskStats.SectorsRead ) != true ) throw new Exception( "Failed to parse disk sectors read as an integer" );
-						if ( int.TryParse( lineParts[ 6 ], out diskStats.MillisecondsSpentReading ) != true ) throw new Exception( "Failed to parse disk time spent reading as an integer" );
-						if ( int.TryParse( lineParts[ 7 ], out diskStats.WritesCompleted ) != true ) throw new Exception( "Failed to parse disk writes completed as an integer" );
-						if ( int.TryParse( lineParts[ 8 ], out diskStats.WritesMerged ) != true ) throw new Exception( "Failed to parse disk writes merged as an integer" );
-						if ( int.TryParse( lineParts[ 9 ], out diskStats.SectorsWritten ) != true ) throw new Exception( "Failed to parse disk sectors written as an integer" );
-						if ( int.TryParse( lineParts[ 10 ], out diskStats.MillisecondsSpentWriting ) != true ) throw new Exception( "Failed to parse disk time spent writing as an integer" );
-						if ( int.TryParse( lineParts[ 11 ], out diskStats.IOsInProgress ) != true ) throw new Exception( "Failed to parse disk I/Os in progress as an integer" );
-						if ( int.TryParse( lineParts[ 12 ], out diskStats.MillisecondsSpentDoingIO ) != true ) throw new Exception( "Failed to parse disk time spent doing I/O as an integer" );
-						if ( int.TryParse( lineParts[ 13 ], out diskStats.WeightedMillisecondsSpentDoingIO ) != true ) throw new Exception( "Failed to parse disk weighted time spent doing I/O as an integer" );
-						if ( int.TryParse( lineParts[ 14 ], out diskStats.DisardsCompleted ) != true ) throw new Exception( "Failed to parse disk discards completed as an integer" );
-						if ( int.TryParse( lineParts[ 15 ], out diskStats.DisardsMerged ) != true ) throw new Exception( "Failed to parse disk discards merged as an integer" );
-						if ( int.TryParse( lineParts[ 16 ], out diskStats.SectorsDisarded ) != true ) throw new Exception( "Failed to parse disk sectors discarded as an integer" );
-						if ( int.TryParse( lineParts[ 17 ], out diskStats.MillisecondsSpentDisarding ) != true ) throw new Exception( "Failed to parse disk time spent discarding as an integer" );
-						if ( int.TryParse( lineParts[ 18 ], out diskStats.FlushRequestsCompleted ) != true ) throw new Exception( "Failed to parse disk flush requests completed as an integer" );
-						if ( int.TryParse( lineParts[ 19 ], out diskStats.MillisecondsSpentFlushing ) != true ) throw new Exception( "Failed to parse disk time spent flushing as an integer" );
-
-						// Add this disk's statistics to the list
-						diskStatistics.Add( diskStats );
-
-					} while ( !streamReader.EndOfStream );
-
-					// We're done, return the statistics of each disk as an array
-					return diskStatistics.ToArray();
-
-				}
-			}
-
-			// If we get here, there were no disk statistics to read
-			throw new Exception( "Failed to find any disks" );
 		}
 
 	}
