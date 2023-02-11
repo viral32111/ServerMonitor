@@ -18,9 +18,6 @@ namespace ServerMonitor.Tests {
 			ServerMonitor.Collector.Resource.Memory memory = new( mockConfiguration );
 			memory.Update();
 
-			Console.WriteLine( $"Total memory: { memory.TotalBytes.Value }" );
-			Console.WriteLine( $"Free memory: { memory.FreeBytes.Value }" );
-
 			Assert.True( memory.TotalBytes.Value > 0, "Total memory is below 0 bytes" );
 			Assert.True( memory.FreeBytes.Value >= 0, "Free memory is below 0 bytes" );
 			Assert.True( memory.FreeBytes.Value <= memory.TotalBytes.Value, "Free memory is greater than total memory" );

@@ -45,8 +45,8 @@ namespace ServerMonitor.Collector {
 				double freeSwap = Math.Round( memory.SwapFreeBytes.Value / 1024 / 1024, 2 );
 				double usedSwap = Math.Round( ( memory.SwapTotalBytes.Value - memory.SwapFreeBytes.Value ) / 1024 / 1024, 2 );
 				double usedSwapPercentage = Math.Round( ( memory.SwapTotalBytes.Value - memory.SwapFreeBytes.Value ) / memory.SwapTotalBytes.Value * 100, 0 );
-				logger.LogInformation( "Memory: {0} MiB / {1} MiB ({2} MiB free, {2}% usage)", usedMemory, totalMemory, freeMemory, usedMemoryPercentage );
-				logger.LogInformation( "Swap/Page: {0} MiB / {1} MiB ({2} MiB free, {2}% usage)", usedSwap, totalSwap, freeSwap, usedSwapPercentage );
+				logger.LogInformation( "Memory: {0} MiB / {1} MiB ({2} MiB free, {3}% usage)", usedMemory, totalMemory, freeMemory, usedMemoryPercentage );
+				logger.LogInformation( "Swap/Page: {0} MiB / {1} MiB ({2} MiB free, {3}% usage)", usedSwap, totalSwap, freeSwap, usedSwapPercentage );
 
 				processor.Update();
 				double processorUsage = Math.Round( processor.Usage.Value, 1 );

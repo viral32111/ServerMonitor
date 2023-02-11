@@ -102,7 +102,7 @@ namespace ServerMonitor.Collector.Resource {
 
 					// Set the values for the exported Prometheus metrics
 					TotalBytes.Set( memoryInformation[ "MemTotal" ] );
-					FreeBytes.Set( memoryInformation[ "MemFree" ] - memoryInformation[ "Cached" ] - memoryInformation[ "Buffers" ] );
+					FreeBytes.Set( memoryInformation[ "MemFree" ] + memoryInformation[ "Cached" ] + memoryInformation[ "Buffers" ] ); // Ignore cached & buffered memory as its instantly reclaimable - https://stackoverflow.com/a/41251290
 					SwapTotalBytes.Set( memoryInformation[ "SwapTotal" ] );
 					SwapFreeBytes.Set( memoryInformation[ "SwapFree" ] );
 					logger.LogDebug( "Updated Prometheus metrics" );
