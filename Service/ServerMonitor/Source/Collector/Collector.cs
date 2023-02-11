@@ -55,8 +55,7 @@ namespace ServerMonitor.Collector {
 				uptime.Update();
 				logger.LogInformation( "Uptime: {0} seconds", uptime.UptimeSeconds.Value );
 
-				//disk.Update();
-				disk.UpdateOnLinux();
+				disk.Update();
 				/*foreach ( string[] labelValues in disk.TotalBytes.GetAllLabelValues() ) {
 					string driveLabel = labelValues[ 0 ];
 					string driveFilesystem = labelValues[ 1 ];

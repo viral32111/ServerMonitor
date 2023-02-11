@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Management;
 using Microsoft.Extensions.Logging;
 using Prometheus;
 
@@ -44,27 +45,35 @@ namespace ServerMonitor.Collector.Resource {
 
 		// Updates the metrics for Windows & Linux...
 		// NOTE: This functionality is natively cross-platform as we're only using .NET Core APIs
-		/*public override void UpdateOnWindows() {
+		public override void UpdateOnWindows() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
 
 			// Get the relevant drive information - https://learn.microsoft.com/en-us/dotnet/api/system.io.driveinfo.availablefreespace?view=net-7.0#examples
-			DriveInfo[] driveInformation = DriveInfo.GetDrives()
-				.Where( driveInfo => driveInfo.DriveType == DriveType.Fixed ) // Skip network shares, ramfs, etc.
+			DriveInfo[] drives = DriveInfo.GetDrives()
+				.Where( driveInfo => driveInfo.DriveType == DriveType.Fixed ) // Only internal drives (no network shares, swap, etc.)
 				.Where( driveInfo => driveInfo.IsReady == true ) // Skip unmounted drives
 				.Where( driveInfo => // Skip WSL & Docker filesystems
-					driveInfo.DriveFormat != "9P" && driveInfo.DriveFormat != "v9fs" &&
+					driveInfo.DriveFormat != "9P" &&
+					driveInfo.DriveFormat != "v9fs" &&
+					driveInfo.DriveFormat != "drivefs" &&
 					driveInfo.DriveFormat != "overlay"
 				)
-				.Where( driveInfo => // Skip psuedo file systems
+				.Where( driveInfo => // Skip pseudo filesystems
 					!driveInfo.RootDirectory.FullName.StartsWith( "/sys" ) &&
 					!driveInfo.RootDirectory.FullName.StartsWith( "/proc" ) &&
 					!driveInfo.RootDirectory.FullName.StartsWith( "/dev" ) &&
 					driveInfo.TotalSize != 0
-				).ToArray();
+				)
+				.ToArray();
 
 			// Update the metrics for each drive
-			foreach ( DriveInfo driveInfo in driveInformation ) {
-				string driveLabel = driveInfo.VolumeLabel;
+			foreach ( DriveInfo driveInformation in drives ) {
+				SMART( driveInformation );
+
+
+
+
+				/*string driveLabel = driveInfo.VolumeLabel;
 				string driveFileSystem = driveInfo.DriveFormat;
 				string driveMountpoint = driveInfo.RootDirectory.FullName;
 
@@ -74,10 +83,51 @@ namespace ServerMonitor.Collector.Resource {
 				// TODO - https://stackoverflow.com/questions/36977903/how-can-we-get-disk-performance-info-in-c-sharp
 				Health.WithLabels( driveLabel, driveFileSystem, driveMountpoint ).Set( -1 );
 				WriteBytesPerSecond.WithLabels( driveLabel, driveFileSystem, driveMountpoint ).Set( 0 );
-				ReadBytesPerSecond.WithLabels( driveLabel, driveFileSystem, driveMountpoint ).Set( 0 );
+				ReadBytesPerSecond.WithLabels( driveLabel, driveFileSystem, driveMountpoint ).Set( 0 );*/
 			}
 
-		}*/
+		}
+
+		private void SMART( DriveInfo driveInformation ) {
+			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
+
+			/*foreach ( ManagementObject managementObject in new ManagementObjectSearcher( "SELECT * FROM Win32_DiskDrive" ).Get() ) {
+				logger.LogDebug( "Name: '{0}'", managementObject[ "Name" ] );
+				logger.LogDebug( "System Name: '{0}'", managementObject[ "SystemName" ] );
+				logger.LogDebug( "Model: '{0}'", managementObject[ "Model" ] );
+				logger.LogDebug( "Manufacturer: '{0}'", managementObject[ "Manufacturer" ] );
+				logger.LogDebug( "Needs Cleaning: '{0}'", managementObject[ "NeedsCleaning" ] );
+				logger.LogDebug( "Install Date: '{0}'", managementObject[ "InstallDate" ] );
+				logger.LogDebug( "DeviceID: '{0}'", managementObject[ "DeviceID" ] );
+				logger.LogDebug( "Description: '{0}'", managementObject[ "Description" ] );
+				logger.LogDebug( "Status: '{0}'", managementObject[ "Status" ] );
+				logger.LogDebug( "StatusInfo: '{0}'", managementObject[ "StatusInfo" ] );
+				logger.LogDebug( "MediaType: '{0}'", managementObject[ "MediaType" ] );
+				logger.LogDebug( "SerialNumber: '{0}'", managementObject[ "SerialNumber" ] );
+				logger.LogDebug( "Size: '{0}'", managementObject[ "Size" ] );
+				logger.LogDebug( "TotalSectors: {0}*512 = {1}", managementObject[ "TotalSectors" ], long.Parse( managementObject[ "TotalSectors" ].ToString() ?? "0" ) * 512 );
+			}
+
+			foreach ( ManagementObject managementObject in new ManagementObjectSearcher( "SELECT * FROM Win32_PhysicalMemory" ).Get() ) {
+				logger.LogDebug( "Name: '{0}'", managementObject[ "Name" ] );
+				logger.LogDebug( "Model: '{0}'", managementObject[ "Model" ] );
+				logger.LogDebug( "Manufacturer: '{0}'", managementObject[ "Manufacturer" ] );
+				logger.LogDebug( "SerialNumber: '{0}'", managementObject[ "SerialNumber" ] );
+				logger.LogDebug( "Capacity: '{0}'", managementObject[ "Capacity" ] );
+				logger.LogDebug( "Speed: '{0}'", managementObject[ "Speed" ] );
+				logger.LogDebug( "Status: '{0}'", managementObject[ "Status" ] );
+			}*/
+
+			foreach ( ManagementObject managementObject in new ManagementObjectSearcher( @"root\WMI", "SELECT * FROM MSStorageDriver_ATAPISmartData" ).Get() ) {
+				logger.LogDebug( "Active: '{0}'", managementObject[ "Active" ] );
+				logger.LogDebug( "SelfTestStatus: '{0}'", managementObject[ "SelfTestStatus" ] );
+				logger.LogDebug( "Checksum: '{0}'", managementObject[ "Checksum" ] );
+				logger.LogDebug( "Length: '{0}'", managementObject[ "Length" ] );
+				logger.LogDebug( "InstanceName: '{0}'", managementObject[ "InstanceName" ] );
+				logger.LogDebug( "TotalTime: '{0}'", managementObject[ "TotalTime" ] );
+				logger.LogDebug( "VendorSpecific: '{0}'", managementObject[ "VendorSpecific" ] );
+			}
+		}
 
 		public override void UpdateOnLinux() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
