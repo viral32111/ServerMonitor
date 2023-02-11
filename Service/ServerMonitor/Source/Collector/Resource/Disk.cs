@@ -46,12 +46,15 @@ namespace ServerMonitor.Collector.Resource {
 			DriveInfo[] driveInformation = DriveInfo.GetDrives()
 				.Where( driveInfo => driveInfo.DriveType == DriveType.Fixed ) // Skip network shares, ramfs, etc.
 				.Where( driveInfo => driveInfo.IsReady == true ) // Skip unmounted drives
-				.Where( driveInfo => driveInfo.DriveFormat != "9P" && driveInfo.DriveFormat != "v9fs" ) // Skip WSL-related filesystems
-				.Where( driveInfo => driveInfo.DriveFormat != "overlay" ) // Skip Docker-related filesystems
-				.Where( driveInfo => // Skips psuedo-file systems
-					!driveInfo.RootDirectory.FullName.StartsWith( "/sys" ) ||
-					!driveInfo.RootDirectory.FullName.StartsWith( "/proc" ) ||
-					!driveInfo.RootDirectory.FullName.StartsWith( "/dev" )
+				.Where( driveInfo => // Skip WSL & Docker filesystems
+					driveInfo.DriveFormat != "9P" && driveInfo.DriveFormat != "v9fs" &&
+					driveInfo.DriveFormat != "overlay"
+				)
+				.Where( driveInfo => // Skip psuedo file systems
+					!driveInfo.RootDirectory.FullName.StartsWith( "/sys" ) &&
+					!driveInfo.RootDirectory.FullName.StartsWith( "/proc" ) &&
+					!driveInfo.RootDirectory.FullName.StartsWith( "/dev" ) &&
+					!driveInfo.TotalSize.Equals( 0 )
 				).ToArray();
 
 			// Update the metrics for each drive
