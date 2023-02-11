@@ -43,9 +43,6 @@ jobs:
       - name: Build project
         run: dotnet build --nologo --configuration Release --no-restore --no-self-contained
 
-      - name: Test launch
-        run: dotnet run --configuration Release --no-build --project ./ServerMonitor/ test
-
       - name: Run tests
         run: dotnet test --nologo --configuration Release --no-build
 
@@ -56,6 +53,35 @@ jobs:
           path: |
             ./Service/ServerMonitor/bin/Release/net7.0/*.dll
             ./Service/ServerMonitor/bin/Release/net7.0/*.json
+
+  launch:
+    name: Launch Test
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: ./Service/
+    strategy:
+      matrix:
+        os: [ ubuntu-22.04, windows-2022 ]
+    permissions:
+      contents: read
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v3
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 7.0.x
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: ./Service/Artifact/
+
+      - name: Launch build
+        run: dotnet ./Artifact/ServerMonitor.dll test
 
   deploy:
     name: Deploy
