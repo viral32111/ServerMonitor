@@ -51,8 +51,7 @@ jobs:
         with:
           name: ${{ env.ARTIFACT_NAME }}
           path: |
-            ./Service/ServerMonitor/bin/Release/net7.0/*.dll
-            ./Service/ServerMonitor/bin/Release/net7.0/*.json
+            ./Service/ServerMonitor/bin/Release/net7.0/*
 
   launch:
     name: Launch Test
