@@ -30,36 +30,42 @@ namespace ServerMonitor {
 			);
 			rootCommand.AddOption( extraConfigurationFilePathOption );
 
+			// Option to run everything once instead of repeatedly, for testing
+			Option<bool> singleRunOption = new(
+				name: "--once",
+				description: "Run everything once then exit, for testing.",
+				getDefaultValue: () => false
+			);
+			rootCommand.AddOption( singleRunOption );
+
 			// Sub-command to start in "collector" mode
 			Command collectorCommand = new( "collector", "Expose metrics to Prometheus from configured sources." );
-			collectorCommand.SetHandler( ( string extraConfigurationFilePath ) => HandleSubCommand( Collector.Collector.HandleCommand, extraConfigurationFilePath ), extraConfigurationFilePathOption );
+			collectorCommand.SetHandler( ( string extraConfigurationFilePath, bool singleRun ) =>
+				HandleSubCommand( Collector.Collector.HandleCommand, extraConfigurationFilePath, singleRun ),
+				extraConfigurationFilePathOption, singleRunOption
+			);
 			rootCommand.AddCommand( collectorCommand );
-
+	
 			// Sub-command to start in "connection point" mode
 			Command connectorCommand = new( "connector", "Serve metrics from Prometheus to the mobile app." );
-			connectorCommand.SetHandler( ( string extraConfigurationFilePath ) => HandleSubCommand( Connector.Connector.HandleCommand, extraConfigurationFilePath ), extraConfigurationFilePathOption );
+			connectorCommand.SetHandler( ( string extraConfigurationFilePath, bool singleRun ) =>
+				HandleSubCommand( Connector.Connector.HandleCommand, extraConfigurationFilePath, singleRun ),
+				extraConfigurationFilePathOption, singleRunOption
+			);
 			rootCommand.AddCommand( connectorCommand );
-
-			// Sub-command to start then immediately exit just to test launching the executable
-			Command testCommand = new( "test", "Test launching the executable." );
-			testCommand.SetHandler( ( string extraConfigurationFilePath ) => HandleSubCommand( ( Config _ ) => {
-				logger.LogInformation( "Launch test complete. Exiting..." );
-				Environment.Exit( 0 );
-			}, extraConfigurationFilePath ), extraConfigurationFilePathOption );
-			rootCommand.AddCommand( testCommand );
 
 			return rootCommand.Invoke( arguments );
 		}
 
 		// Intermediary handler for all sub-commands, loads the configuration & then calls real sub-command handler
-		private static void HandleSubCommand( Action<Config> subCommandHandler, string extraConfigurationFilePath ) {
+		private static void HandleSubCommand( Action<Config, bool> subCommandHandler, string extraConfigurationFilePath, bool singleRun ) {
 
 			// Load the configuration
 			Configuration.Load( extraConfigurationFilePath );
 			logger.LogInformation( "Loaded the configuration" );
 
 			// Call the sub-command handler
-			subCommandHandler.Invoke( Configuration.Config! );
+			subCommandHandler.Invoke( Configuration.Config!, singleRun );
 
 		}
 

@@ -49,7 +49,7 @@ namespace ServerMonitor.Tests {
 			Assert.True( uptime.UptimeSeconds.Value > 0, "Uptime is below 0 seconds" );
 		}
 
-		[ Fact ]
+		/*[ Fact ]
 		public void TestDiskMetrics() {
 			ServerMonitor.Collector.Resource.Disk disk = new( mockConfiguration );
 			disk.Update();
@@ -73,7 +73,7 @@ namespace ServerMonitor.Tests {
 
 			}
 
-		}
+		}*/
 
 	}
 

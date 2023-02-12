@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Threading;
 using Microsoft.Extensions.Logging; // https://learn.microsoft.com/en-us/dotnet/core/extensions/console-log-formatter
 using Prometheus; // https://github.com/prometheus-net/prometheus-net
@@ -13,7 +12,7 @@ namespace ServerMonitor.Collector {
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Collector" );
 
 		// Entry-point for the "collector" sub-command...
-		public static void HandleCommand( Config configuration ) {
+		public static void HandleCommand( Config configuration, bool singleRun ) {
 			logger.LogInformation( "Launched in collector mode" );
 
 			// Start the Prometheus metrics server
@@ -33,7 +32,7 @@ namespace ServerMonitor.Collector {
 			Disk disk = new( configuration );
 
 			// This is all just for debugging
-			while ( true ) {
+			do {
 				Console.WriteLine( new string( '-', 100 ) );
 
 				memory.Update();
@@ -68,8 +67,8 @@ namespace ServerMonitor.Collector {
 					logger.LogInformation( "Disk ({0}, {1}, {2}): {3} GiB / {4} GiB ({5} GiB free, {6}% usage)", driveLabel, driveFilesystem, driveMountpoint, usedDisk, totalDisk, freeDisk, usedDiskPercentage );
 				}*/
 
-				Thread.Sleep( 5000 ); // 5s
-			}
+				if ( singleRun == false ) Thread.Sleep( 5000 ); // 5s
+			} while ( singleRun == false );
 		}
 
 	}

@@ -8,7 +8,7 @@ namespace ServerMonitor.Connector {
 		// Create the logger for this file
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Collector" );
 		
-		public static void HandleCommand( Config configuration ) {
+		public static void HandleCommand( Config configuration, bool singleRun ) {
 			logger.LogInformation( "Connection point mode!" );
 		}
 

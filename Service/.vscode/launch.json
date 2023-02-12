@@ -8,6 +8,7 @@
 			"preLaunchTask": "Build (Debug)",
 			"program": "${workspaceFolder}/ServerMonitor/bin/Debug/net7.0/ServerMonitor.dll",
 			"args": [
+				"--once",
 				"collector"
 			],
 			"cwd": "${workspaceFolder}",
@@ -24,6 +25,7 @@
 			"preLaunchTask": "Build (Release)",
 			"program": "${workspaceFolder}/ServerMonitor/bin/Release/net7.0/ServerMonitor.dll",
 			"args": [
+				"--once",
 				"collector"
 			],
 			"cwd": "${workspaceFolder}",
@@ -40,6 +42,7 @@
 			"preLaunchTask": "Build (Debug)",
 			"program": "${workspaceFolder}/ServerMonitor/bin/Debug/net7.0/ServerMonitor.dll",
 			"args": [
+				"--once",
 				"connector"
 			],
 			"cwd": "${workspaceFolder}",
@@ -56,6 +59,7 @@
 			"preLaunchTask": "Build (Release)",
 			"program": "${workspaceFolder}/ServerMonitor/bin/Release/net7.0/ServerMonitor.dll",
 			"args": [
+				"--once",
 				"connector"
 			],
 			"cwd": "${workspaceFolder}",

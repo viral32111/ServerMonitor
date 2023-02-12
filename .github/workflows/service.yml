@@ -81,8 +81,11 @@ jobs:
           name: ${{ env.ARTIFACT_NAME }}
           path: ./Service/Artifact/
 
-      - name: Launch build
-        run: dotnet ./Artifact/ServerMonitor.dll test
+      - name: Launch collector mode
+        run: dotnet ./Artifact/ServerMonitor.dll --once collector
+
+      - name: Launch connection-point mode
+        run: dotnet ./Artifact/ServerMonitor.dll --once connector
 
   deploy:
     name: Deploy
