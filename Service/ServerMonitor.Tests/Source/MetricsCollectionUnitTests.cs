@@ -75,6 +75,22 @@ namespace ServerMonitor.Tests {
 
 		}*/
 
+		[ Fact ]
+		public void TestNetworkMetrics() {
+			ServerMonitor.Collector.Resource.Network network = new( mockConfiguration );
+			network.Update();
+
+			foreach ( string[] labelValues in network.SentBytes.GetAllLabelValues() ) {
+				string interfaceName = labelValues[ 0 ];
+				Assert.True( network.SentBytes.WithLabels( interfaceName ).Value >= 0, $"Network bytes sent is below 0 bytes ({ interfaceName })" );
+			}
+
+			foreach ( string[] labelValues in network.ReceivedBytes.GetAllLabelValues() ) {
+				string interfaceName = labelValues[ 0 ];
+				Assert.True( network.ReceivedBytes.WithLabels( interfaceName ).Value >= 0, $"Network bytes received is below 0 bytes ({ interfaceName })" );
+			}
+		}
+
 	}
 
 }

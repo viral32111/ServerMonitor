@@ -30,6 +30,7 @@ namespace ServerMonitor.Collector {
 			Processor processor = new( configuration );
 			Uptime uptime = new( configuration );
 			Disk disk = new( configuration );
+			Network network = new( configuration );
 
 			// This is all just for debugging
 			do {
@@ -66,6 +67,14 @@ namespace ServerMonitor.Collector {
 					double usedDiskPercentage = Math.Round( ( disk.TotalBytes.WithLabels( driveLabel, driveFilesystem, driveMountpoint ).Value - disk.FreeBytes.WithLabels( driveLabel, driveFilesystem, driveMountpoint ).Value ) / disk.TotalBytes.WithLabels( driveLabel, driveFilesystem, driveMountpoint ).Value * 100, 0 );
 					logger.LogInformation( "Disk ({0}, {1}, {2}): {3} GiB / {4} GiB ({5} GiB free, {6}% usage)", driveLabel, driveFilesystem, driveMountpoint, usedDisk, totalDisk, freeDisk, usedDiskPercentage );
 				}*/
+
+				network.Update();
+				foreach ( string[] labelValues in network.SentBytes.GetAllLabelValues() ) {
+					string networkInterface = labelValues[ 0 ];
+					double bytesSent = Math.Round( network.SentBytes.WithLabels( networkInterface ).Value / 1024, 2 );
+					double bytesReceived = Math.Round( network.ReceivedBytes.WithLabels( networkInterface ).Value / 1024, 2 );
+					logger.LogInformation( "Network ({0}): {1} KiB sent, {2} KiB received", networkInterface, bytesSent, bytesReceived );
+				}
 
 				if ( singleRun == false ) Thread.Sleep( 5000 ); // 5s
 			} while ( singleRun == false );
