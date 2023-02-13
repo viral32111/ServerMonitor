@@ -49,31 +49,34 @@ namespace ServerMonitor.Tests {
 			Assert.True( uptime.UptimeSeconds.Value > 0, "Uptime is below 0 seconds" );
 		}
 
-		/*[ Fact ]
+		[ Fact ]
 		public void TestDiskMetrics() {
 			ServerMonitor.Collector.Resource.Disk disk = new( mockConfiguration );
 			disk.Update();
 
-			foreach ( string[] labelValues in disk.TotalBytes.GetAllLabelValues() ) {
-				string driveLabel = labelValues[ 0 ];
-				string driveFilesystem = labelValues[ 1 ];
-				string driveMountpoint = labelValues[ 2 ];
+			foreach ( string[] labelValues in disk.ReadBytes.GetAllLabelValues() ) {
+				string driveName = labelValues[ 0 ];
 
-				Assert.True( disk.TotalBytes.WithLabels( driveLabel, driveFilesystem, driveMountpoint ).Value > 0, $"Total disk space is below 0 bytes ({ driveMountpoint })" );
-				Assert.True( disk.FreeBytes.WithLabels( driveLabel, driveFilesystem, driveMountpoint ).Value >= 0, $"Free disk space is below 0 bytes ({ driveMountpoint })" );
-				Assert.True( disk.FreeBytes.WithLabels( driveLabel, driveFilesystem, driveMountpoint ).Value <= disk.TotalBytes.WithLabels( driveLabel, driveFilesystem, driveMountpoint ).Value, $"Free disk space is greater than total disk space ({ driveMountpoint })" );
+				Assert.True( disk.ReadBytes.WithLabels( driveName ).Value >= 0, $"Total bytes read is below 0 bytes ({ driveName })" );
+				Assert.True( disk.WriteBytes.WithLabels( driveName ).Value >= 0, $"Total bytes written is below 0 bytes ({ driveName })" );
 
-				Assert.True( disk.WriteBytesPerSecond.WithLabels( driveLabel, driveFilesystem, driveMountpoint ).Value >= 0, $"Disk write speed is below 0 bytes per second ({ driveMountpoint })" );
-				Assert.True( disk.ReadBytesPerSecond.WithLabels( driveLabel, driveFilesystem, driveMountpoint ).Value >= 0, $"Disk read speed is below 0 bytes per second ({ driveMountpoint })" );
-
-				if ( disk.Health.WithLabels( driveLabel, driveFilesystem, driveMountpoint ).Value != -1 ) {
-					Assert.True( disk.Health.WithLabels( driveLabel, driveFilesystem, driveMountpoint ).Value > 0, $"Disk S.M.A.R.T health is below 0% ({ driveMountpoint })" );
-					Assert.True( disk.Health.WithLabels( driveLabel, driveFilesystem, driveMountpoint ).Value < 100, $"Disk S.M.A.R.T health is above 100% ({ driveMountpoint })" );
+				if ( disk.Health.WithLabels( driveName ).Value != -1 ) {
+					Assert.True( disk.Health.WithLabels( driveName ).Value >= 0, $"Disk S.M.A.R.T health is below 0% ({ driveName })" );
+					Assert.True( disk.Health.WithLabels( driveName ).Value <= 100, $"Disk S.M.A.R.T health is above 100% ({ driveName })" );
 				}
-
 			}
 
-		}*/
+			foreach ( string[] labelValues in disk.TotalBytes.GetAllLabelValues() ) {
+				string partitionName = labelValues[ 0 ];
+				string partitionMountPath = labelValues[ 1 ];
+
+				Assert.True( disk.TotalBytes.WithLabels( partitionName, partitionMountPath ).Value > 0, $"Total partition space is below 0 bytes ({ partitionName }, { partitionMountPath })" );
+				Assert.True( disk.FreeBytes.WithLabels( partitionName, partitionMountPath ).Value >= 0, $"Free partition space is below 0 bytes ({ partitionName }, { partitionMountPath })" );
+
+				Assert.True( disk.FreeBytes.WithLabels( partitionName, partitionMountPath ).Value <= disk.TotalBytes.WithLabels( partitionName, partitionMountPath ).Value, $"Free partition space is greater than total partition space ({ partitionName }, { partitionMountPath })" );
+			}
+
+		}
 
 		[ Fact ]
 		public void TestNetworkMetrics() {
