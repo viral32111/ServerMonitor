@@ -129,11 +129,63 @@ namespace ServerMonitor.Collector.Resource {
 			}
 		}
 
-		// TODO: PInvoke for statvfs() on Linux? - https://developers.redhat.com/blog/2019/03/25/using-net-pinvoke-for-linux-system-functions#pinvoking_linux
+		// POSIX C structure for statvfs()
+		[ StructLayout( LayoutKind.Sequential, CharSet = CharSet.Auto ) ]
+		public struct statvfs_struct {
+			public ulong f_bsize;
+			public ulong f_frsize;
+			public ulong f_blocks;
+			public ulong f_bfree;
+			public ulong f_bavail;
+			public ulong f_files;
+			public ulong f_ffree;
+			public ulong f_favail;
+			public ulong f_fsid;
+			public ulong f_flag;
+			public ulong f_namemax;
+		}
+
+		// POSIX C function to get information about a filesystem on Linux - https://www.man7.org/linux/man-pages/man3/statvfs.3.html
+		[ return: MarshalAs( UnmanagedType.I4 ) ]
+		[ DllImport( "libc", CharSet = CharSet.Auto, SetLastError = true ) ]
+		private static extern int statvfs( string path, out statvfs_struct buf );
+
+		/*
+		1. Read /proc/partitions to get the list of partitions, filter anything that doesn't match sdXX or nvmeXnXpX
+		2. Loop through each partition...
+		 2.1. Read /sys/class/block/<partition>/stat to get read & write statistics
+		 2.2. Read /sys/class/block/<partition>/size to get the size of the partition?
+		 2.3. Check for symlinks in /sys/class/block/<partition>/holders/, if so...
+		  2.3.1. Check if /sys/class/block/<partition>/holders/<symlink>/dm/name exists, if it does then its an encrypted volume, use /dev/mapper/<name> as the device name
+		 2.4. If not, use /dev/<partition> as the device name
+		 2.5. Read /proc/mounts to get the mount path for the partition
+		 2.6. Call statvfs() on that mount path to get total & free space
+		*/
+
 		public override void UpdateOnLinux() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
 
-			DriveInfo[] drives = DriveInfo.GetDrives()
+			statvfs_struct statvfs_struc = new();
+			int result = statvfs( "/", out statvfs_struc );
+			if ( result != 0 ) {
+				logger.LogError( "statvfs() failed with error code: {0}", result );
+				return;
+			}
+			logger.LogDebug( "Block size: {0}", statvfs_struc.f_bsize );
+			logger.LogDebug( "Total blocks: {0}", statvfs_struc.f_blocks );
+			logger.LogDebug( "Free blocks for unprivileged users: {0}", statvfs_struc.f_bfree );
+			logger.LogDebug( "Free blocks for privileged users: {0}", statvfs_struc.f_bavail );
+			logger.LogDebug( "Total inodes: {0}", statvfs_struc.f_files );
+			logger.LogDebug( "Free inodes for unprivileged users: {0}", statvfs_struc.f_ffree );
+			logger.LogDebug( "Free inodes for privileged users: {0}", statvfs_struc.f_favail );
+			logger.LogDebug( "File system ID: {0}", statvfs_struc.f_fsid );
+			logger.LogDebug( "Mount flags: {0}", statvfs_struc.f_flag );
+			logger.LogDebug( "Maximum filename length: {0}", statvfs_struc.f_namemax );
+
+			logger.LogInformation( "Total disk space: {0} GiB", Math.Round( ( double ) ( statvfs_struc.f_blocks * statvfs_struc.f_bsize ) / 1024 / 1024 / 1024, 2 ) );
+			logger.LogInformation( "Free disk space: {0} GiB", Math.Round( ( double ) ( statvfs_struc.f_bavail * statvfs_struc.f_bsize ) / 1024 / 1024 / 1024, 2 ) );
+
+			/*DriveInfo[] drives = DriveInfo.GetDrives()
 				.Where( driveInfo => driveInfo.DriveType == DriveType.Fixed ) // Only internal drives (no network shares, swap, etc.)
 				.Where( driveInfo => driveInfo.IsReady == true ) // Skip unmounted drives
 				.Where( driveInfo => // Skip WSL & Docker filesystems
@@ -161,7 +213,7 @@ namespace ServerMonitor.Collector.Resource {
 
 				PartitionStats partitionStatistics = GetPartitionStatistics( deviceName );
 				logger.LogDebug( "\t{0}, {1}, {2}, {3}", partitionStatistics.ReadsCompleted, partitionStatistics.WritesCompleted, partitionStatistics.SectorsRead, partitionStatistics.SectorsWritten );
-			}
+			}*/
 
 			/*Partition[] partitions = GetPartitions();
 			logger.LogDebug( $"Found { partitions.Length } partitions" );
@@ -279,7 +331,6 @@ namespace ServerMonitor.Collector.Resource {
 						if ( int.TryParse( lineParts[ 2 ], out int blockCount ) != true ) throw new Exception( "Failed to parse partition block count as integer" );
 						partitionInfo.TotalBytes = blockCount * 512;
 
-						
 						// Add it to the list
 						partitions.Add( partitionInfo );
 
