@@ -56,17 +56,24 @@ namespace ServerMonitor.Collector {
 				logger.LogInformation( "Uptime: {0} seconds", uptime.UptimeSeconds.Value );
 
 				disk.Update();
-				/*foreach ( string[] labelValues in disk.TotalBytes.GetAllLabelValues() ) {
-					string driveLabel = labelValues[ 0 ];
-					string driveFilesystem = labelValues[ 1 ];
-					string driveMountpoint = labelValues[ 2 ];
+				foreach ( string[] labelValues in disk.ReadBytes.GetAllLabelValues() ) {
+					string driveName = labelValues[ 0 ];
 
-					double totalDisk = Math.Round( disk.TotalBytes.WithLabels( driveLabel, driveFilesystem, driveMountpoint ).Value / 1024 / 1024 / 1024, 2 );
-					double freeDisk = Math.Round( disk.FreeBytes.WithLabels( driveLabel, driveFilesystem, driveMountpoint ).Value / 1024 / 1024 / 1024, 2 );
-					double usedDisk = Math.Round( ( disk.TotalBytes.WithLabels( driveLabel, driveFilesystem, driveMountpoint ).Value - disk.FreeBytes.WithLabels( driveLabel, driveFilesystem, driveMountpoint ).Value ) / 1024 / 1024 / 1024, 2 );
-					double usedDiskPercentage = Math.Round( ( disk.TotalBytes.WithLabels( driveLabel, driveFilesystem, driveMountpoint ).Value - disk.FreeBytes.WithLabels( driveLabel, driveFilesystem, driveMountpoint ).Value ) / disk.TotalBytes.WithLabels( driveLabel, driveFilesystem, driveMountpoint ).Value * 100, 0 );
-					logger.LogInformation( "Disk ({0}, {1}, {2}): {3} GiB / {4} GiB ({5} GiB free, {6}% usage)", driveLabel, driveFilesystem, driveMountpoint, usedDisk, totalDisk, freeDisk, usedDiskPercentage );
-				}*/
+					double bytesRead = Math.Round( disk.ReadBytes.WithLabels( driveName ).Value / 1024 / 1024, 2 );
+					double bytesWritten = Math.Round( disk.WriteBytes.WithLabels( driveName ).Value / 1024 / 1024, 2 );
+					int healthPercentage = ( int ) disk.Health.WithLabels( driveName ).Value;
+					logger.LogInformation( "Drive ({0}): {1} MiB read, {2} MiB written, {3}% health", driveName, bytesRead, bytesWritten, healthPercentage );
+				}
+				foreach ( string[] labelValues in disk.TotalBytes.GetAllLabelValues() ) {
+					string partitionName = labelValues[ 0 ];
+					string partitionMountPath = labelValues[ 1 ];
+
+					double totalSpace = Math.Round( disk.TotalBytes.WithLabels( partitionName, partitionMountPath ).Value / 1024 / 1024 / 1024, 2 );
+					double freeSpace = Math.Round( disk.FreeBytes.WithLabels( partitionName, partitionMountPath ).Value / 1024 / 1024 / 1024, 2 );
+					double usedSpace = Math.Round( ( disk.TotalBytes.WithLabels( partitionName, partitionMountPath ).Value - disk.FreeBytes.WithLabels( partitionName, partitionMountPath ).Value ) / 1024 / 1024 / 1024, 2 );
+					double usedSpacePercentage = Math.Round( ( disk.TotalBytes.WithLabels( partitionName, partitionMountPath ).Value - disk.FreeBytes.WithLabels( partitionName, partitionMountPath ).Value ) / disk.TotalBytes.WithLabels( partitionName, partitionMountPath ).Value * 100, 0 );
+					logger.LogInformation( "Partition ({0}, {1}): {2} GiB / {3} GiB ({4} GiB free, {5}% usage)", partitionName, partitionMountPath, usedSpace, totalSpace, freeSpace, usedSpacePercentage );
+				}
 
 				network.Update();
 				foreach ( string[] labelValues in network.SentBytes.GetAllLabelValues() ) {
