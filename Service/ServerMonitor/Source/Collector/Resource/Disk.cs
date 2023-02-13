@@ -131,7 +131,7 @@ namespace ServerMonitor.Collector.Resource {
 
 		// POSIX C structure for statvfs()
 		[ StructLayout( LayoutKind.Sequential, CharSet = CharSet.Auto ) ]
-		public struct statvfs_struct {
+		private struct statvfs_struct {
 			public ulong f_bsize;
 			public ulong f_frsize;
 			public ulong f_blocks;
@@ -165,6 +165,98 @@ namespace ServerMonitor.Collector.Resource {
 		public override void UpdateOnLinux() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
 
+			string[] driveNames = GetDrives();
+			logger.LogDebug( "Found {0} drives", driveNames.Length );
+			foreach ( string driveName in driveNames ) {
+				DriveStatistics driveStatistics = GetDriveStatistics( driveName );
+				logger.LogDebug( "Drive: '{0}', Read: {1} bytes, Write: {2} bytes", driveName, driveStatistics.ReadBytes, driveStatistics.WriteBytes );
+
+				string[] partitionNames = GetPartitions( driveName );
+				logger.LogDebug( "Found {0} partitions", partitionNames.Length );
+				foreach ( string partitionName in partitionNames ) {
+					string partitionPath = Path.Combine( "/dev", partitionName );
+
+					string? mappedName = GetMappedName( partitionName );
+					if ( mappedName != null ) partitionPath = Path.Combine( "/dev/mapper", mappedName );
+					
+					string? mountPath = GetMountPath( partitionPath );
+					if ( mountPath == null ) continue; // Skip partitions that aren't mounted
+
+					logger.LogDebug( "Partition: '{0}', Mapped: '{1}', Path: '{2}', Mount: '{3}'", partitionName, mappedName, partitionPath, mountPath );
+
+					statvfs_struct statvfs_struc = new();
+					if ( statvfs( mountPath, out statvfs_struc ) != 0 ) throw new Exception( "statvfs() failed" );
+					logger.LogDebug( "  Total space: {0} GiB", Math.Round( ( double ) ( statvfs_struc.f_blocks * statvfs_struc.f_bsize ) / 1024 / 1024 / 1024, 2 ) );
+					logger.LogDebug( "  Free space: {0} GiB", Math.Round( ( double ) ( statvfs_struc.f_bavail * statvfs_struc.f_bsize ) / 1024 / 1024 / 1024, 2 ) );
+				}
+			}
+
+			/*logger.LogDebug( string.Join( ", ", Directory.GetDirectories( "/sys/block/" ) ) );
+			logger.LogDebug( string.Join( ", ", Directory.GetDirectories( "/sys/block/" ).Where( drivePath => Regex.IsMatch( Path.GetFileName( drivePath ), @"^sd[a-z]+$|^nvme\d+n\d+$" ) ).Where( drivePath => {
+				logger.LogDebug( Path.Combine( drivePath, "stat" ) );
+				logger.LogDebug( File.Exists( Path.Combine( drivePath, "stat" ) ).ToString() );
+				return File.Exists( Path.Combine( drivePath, "stat" ) );
+			} ).Where( drivePath => {
+				logger.LogDebug( File.ReadAllText( Path.Combine( drivePath, "removable" ) ) );
+				logger.LogDebug( ( File.ReadAllText( Path.Combine( drivePath, "removable" ) ) == "0" ).ToString() );
+				logger.LogDebug( File.ReadAllLines( Path.Combine( drivePath, "removable" ) )[ 0 ] );
+				logger.LogDebug( ( File.ReadAllLines( Path.Combine( drivePath, "removable" ) )[ 0 ] == "0" ).ToString() );
+				return File.ReadAllText( Path.Combine( drivePath, "removable" ) ) == "0";
+			} ).ToArray() ) );*/
+		}
+
+		// Gets a list of drives (for Linux)
+		private string[] GetDrives() => Directory.GetDirectories( "/sys/block/" )
+			.Where( drivePath => Regex.IsMatch( Path.GetFileName( drivePath ), @"^sd[a-z]+$|^nvme\d+n\d+$" ) ) // Name must be a regular or NVMe drive
+			.Where( drivePath => File.Exists( Path.Combine( drivePath, "stat" ) ) ) // Must have I/O statistics
+			.Where( drivePath => File.ReadAllLines( Path.Combine( drivePath, "removable" ) )[ 0 ] == "0" ) // Must not be removable
+			.Select( drivePath => Path.GetFileName( drivePath ) ) // Only return the drive name
+			.ToArray();
+
+		private struct DriveStatistics {
+			public long ReadBytes;
+			public long WriteBytes;
+		}
+
+		// https://www.kernel.org/doc/Documentation/ABI/testing/procfs-diskstats
+		// https://unix.stackexchange.com/a/111993
+		private DriveStatistics GetDriveStatistics( string driveName ) {
+			string statisticsLine = File.ReadAllLines( Path.Combine( "/sys/block", driveName, "stat" ) )[ 0 ];
+			string[] statistics = statisticsLine.Split( " ", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries );
+			return new() {
+				ReadBytes = long.Parse( statistics[ 2 ] ) * 512,
+				WriteBytes = long.Parse( statistics[ 6 ] ) * 512
+			};
+		}
+
+		// Gets a list of partitions for a drive (for Linux)
+		private string[] GetPartitions( string driveName ) => Directory.GetDirectories( Path.Combine( "/sys/block", driveName ) ) // List pseudo-directory containing block devices
+			.Where( partitionPath => Regex.IsMatch( Path.GetFileName( partitionPath ), @"^sd[a-z]\d+$|^nvme\d+n\d+p\d+$" ) ) // Name must be a regular or NVMe partition
+			.Where( partitionPath => File.Exists( Path.Combine( partitionPath, "partition" ) ) ) // Must be a partition
+			.Where( partitionPath => int.Parse( File.ReadAllLines( Path.Combine( partitionPath, "partition" ) )[ 0 ] ) > 0 ) // Must have a partition number
+			.Select( drivePath => Path.GetFileName( drivePath ) ) // Only return the partition name
+			.ToArray();
+
+		// Gets the mapped device name for a partition, if LUKS encrypted (for Linux)
+		private string? GetMappedName( string partitionName ) => Directory.GetDirectories( Path.Combine( "/sys/class/block", partitionName, "holders" ) ) // List pseudo-directory containing holder symlinks
+			.Where( holderPath => Directory.Exists( Path.Combine( holderPath, "slaves", partitionName ) ) ) // Must be a slave to this partition
+			.Where( holderPath => Regex.IsMatch( Path.GetFileName( holderPath ), @"^dm-\d+$" ) ) // Name must be a device mapper
+			.Where( holderPath => Directory.Exists( Path.Combine( holderPath, "dm" ) ) ) // Must be a device mapper
+			.Where( holderPath => File.Exists( Path.Combine( holderPath, "dm", "name" ) ) ) // Must have a name
+			.Where( hodlerPath => File.Exists( Path.Combine( "/dev/mapper", File.ReadAllLines( Path.Combine( hodlerPath, "dm", "name" ) )[ 0 ] ) ) ) // Must be mapped
+			.Select( holderPath => File.ReadAllLines( Path.Combine( holderPath, "dm", "name" ) )[ 0 ] ) // Only return the mapped name
+			.FirstOrDefault(); // Return the first item, or null if none
+
+		// Gets the mount path for a partition, if mounted (for Linux)
+		private string? GetMountPath( string partitionPath ) => File.ReadAllLines( "/proc/mounts" ) // Read pseudo-file containing mount information
+			.Select( line => line.Split( " ", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries ) ) // Split each line into parts
+			.Where( parts => parts[ 0 ] == partitionPath ) // Only keep lines related to this partition
+			.Select( parts => parts[ 1 ] ) // Only return the mount path
+			.FirstOrDefault(); // Return the first item, or null if none
+
+		/*public override void UpdateOnLinux() {
+			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
+
 			statvfs_struct statvfs_struc = new();
 			int result = statvfs( "/", out statvfs_struc );
 			if ( result != 0 ) {
@@ -183,7 +275,7 @@ namespace ServerMonitor.Collector.Resource {
 			logger.LogDebug( "Maximum filename length: {0}", statvfs_struc.f_namemax );
 
 			logger.LogInformation( "Total disk space: {0} GiB", Math.Round( ( double ) ( statvfs_struc.f_blocks * statvfs_struc.f_bsize ) / 1024 / 1024 / 1024, 2 ) );
-			logger.LogInformation( "Free disk space: {0} GiB", Math.Round( ( double ) ( statvfs_struc.f_bavail * statvfs_struc.f_bsize ) / 1024 / 1024 / 1024, 2 ) );
+			logger.LogInformation( "Free disk space: {0} GiB", Math.Round( ( double ) ( statvfs_struc.f_bavail * statvfs_struc.f_bsize ) / 1024 / 1024 / 1024, 2 ) );*/
 
 			/*DriveInfo[] drives = DriveInfo.GetDrives()
 				.Where( driveInfo => driveInfo.DriveType == DriveType.Fixed ) // Only internal drives (no network shares, swap, etc.)
@@ -219,8 +311,8 @@ namespace ServerMonitor.Collector.Resource {
 			logger.LogDebug( $"Found { partitions.Length } partitions" );
 			foreach ( Partition partition in partitions ) {
 				logger.LogDebug( $"Disk { partitionStatistics.Name }, partition { partitionStatistics.Name }, mountpoint { partitionStatistics.Mountpoint }" );
-			}*/
-		}
+			}
+		}*/
 
 		struct MountInfo {
 			public string DevicePath;
@@ -301,7 +393,7 @@ namespace ServerMonitor.Collector.Resource {
 		}*/
 
 		// Get a list of partitions for a given disk on Linux
-		/*private PartitionInfo[] GetDiskPartitions( string diskName ) {
+		/*private PartitionInfo[] GetPartitions( string diskName ) {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
 
 			// Read the pseudo-file containing information on disk partitions - https://linux.die.net/man/5/proc
@@ -343,7 +435,7 @@ namespace ServerMonitor.Collector.Resource {
 			}
 
 			throw new Exception( "Unable to find partitions for disk" );
-		}*/
+		}
 
 		// Gets the statistics of a disk's partition on Linux
 		private PartitionStats GetPartitionStatistics( string partitionName ) {
@@ -413,7 +505,7 @@ namespace ServerMonitor.Collector.Resource {
 			public int MillisecondsSpentDisarding;
 			public int FlushRequestsCompleted;
 			public int MillisecondsSpentFlushing;
-		}
+		}*/
 
 	}
 }

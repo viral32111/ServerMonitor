@@ -16,8 +16,8 @@ namespace ServerMonitor.Collector.Resource {
 		}
 
 		// Override with code for updating for Windows & Linux respectively...
-		public virtual void UpdateOnWindows() => throw new Exception( "Windows-specific updating is not supported" );
-		public virtual void UpdateOnLinux() => throw new Exception( "Linux-specific updating is not supported" );
+		public virtual void UpdateOnWindows() => throw new InvalidOperationException( "Windows-specific updating is not supported" );
+		public virtual void UpdateOnLinux() => throw new InvalidOperationException( "Linux-specific updating is not supported" );
 
 	}
 
