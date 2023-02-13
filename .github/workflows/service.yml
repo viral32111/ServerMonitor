@@ -20,8 +20,8 @@ env:
   DOCKER_REGISTRY_DOMAIN: ghcr.io
 
 jobs:
-  build-test:
-    name: Build & Test
+  build:
+    name: Build
     runs-on: ubuntu-22.04
     defaults:
       run:
@@ -38,13 +38,10 @@ jobs:
           dotnet-version: 7.0.x
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore ./ServerMonitor/ServerMonitor.csproj
 
       - name: Build project
-        run: dotnet build --nologo --configuration Release --no-restore --no-self-contained
-
-      - name: Run tests
-        run: dotnet test --nologo --configuration Release --no-build
+        run: dotnet build --nologo --configuration Release --no-restore --no-self-contained ./ServerMonitor/ServerMonitor.csproj
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v3
@@ -53,10 +50,38 @@ jobs:
           path: |
             ./Service/ServerMonitor/bin/Release/net7.0/*
 
-  launch:
-    name: Launch Test
+  test:
+    name: Test
     runs-on: ${{ matrix.os }}
-    needs: build-test
+    needs: build
+    defaults:
+      run:
+        working-directory: ./Service/
+    strategy:
+      matrix:
+        os: [ ubuntu-22.04, windows-2022 ]
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v3
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 7.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore ./ServerMonitor.Tests/ServerMonitor.Tests.csproj
+
+      - name: Build project
+        run: dotnet build --nologo --configuration Release --no-restore --no-self-contained ./ServerMonitor.Tests/ServerMonitor.Tests.csproj
+
+      - name: Run unit tests
+        run: dotnet test --nologo --configuration Release --no-build ./ServerMonitor.Tests/ServerMonitor.Tests.csproj
+
+  launch:
+    name: Launch
+    runs-on: ${{ matrix.os }}
+    needs: test
     defaults:
       run:
         working-directory: ./Service/
@@ -80,10 +105,10 @@ jobs:
           name: ${{ env.ARTIFACT_NAME }}
           path: ./Service/Artifact/
 
-      - name: Launch collector mode
+      - name: Launch in "collector" mode
         run: dotnet ./Artifact/ServerMonitor.dll --once collector
 
-      - name: Launch connection-point mode
+      - name: Launch in "connection-point" mode
         run: dotnet ./Artifact/ServerMonitor.dll --once connector
 
   deploy:
