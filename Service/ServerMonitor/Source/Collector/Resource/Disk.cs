@@ -70,11 +70,12 @@ namespace ServerMonitor.Collector.Resource {
 					driveInfo.DriveFormat != "overlay"
 				).ToArray();
 
-			// Update the metrics for each drive
+			// Loop through each drive...
 			foreach ( DriveInfo driveInformation in drives ) {
 				string driveName = driveInformation.VolumeLabel;
 				string driveMountPath = driveInformation.RootDirectory.FullName;
 
+				// Set the values for the exported Prometheus metrics
 				TotalBytes.WithLabels( driveName, driveMountPath ).Set( driveInformation.TotalSize );
 				FreeBytes.WithLabels( driveName, driveMountPath ).Set( driveInformation.TotalFreeSpace );
 
@@ -84,6 +85,8 @@ namespace ServerMonitor.Collector.Resource {
 
 				// TODO: S.M.A.R.T health
 				Health.WithLabels( driveName ).Set( -1 );
+
+				logger.LogDebug( "Updated Prometheus metrics" );
 			}
 
 		}
@@ -136,7 +139,7 @@ namespace ServerMonitor.Collector.Resource {
 			// Loop through each drive...
 			foreach ( string driveName in GetDrives() ) {
 
-				// Update the read & write metrics for the drive
+				// Set the values for the exported Prometheus metrics
 				long[] driveStatistics = GetDriveStatistics( driveName );
 				ReadBytes.WithLabels( driveName ).IncTo( driveStatistics[ 0 ] );
 				WriteBytes.WithLabels( driveName ).IncTo( driveStatistics[ 1 ] );
@@ -165,9 +168,10 @@ namespace ServerMonitor.Collector.Resource {
 					ulong[] filesystemStatistics = GetFilesystemStatistics( partitionPath );
 					logger.LogDebug( "Partition: {0}, {1}, {2}, {3}, {4}, {5}", partitionName, mappedName, partitionPath, mountPath, filesystemStatistics[ 0 ], filesystemStatistics[ 1 ] );
 
-					// Update the metrics for the partition
+					// Set the values for the exported Prometheus metrics
 					totalBytes.Set( filesystemStatistics[ 0 ] );
 					freeBytes.Set( filesystemStatistics[ 1 ] );
+					logger.LogDebug( "Updated Prometheus metrics" );
 
 				}
 

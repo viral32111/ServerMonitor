@@ -12,7 +12,6 @@ namespace ServerMonitor {
 		private static readonly ILogger logger = Logging.CreateLogger( "Program" );
 
 		public static int Main( string[] arguments ) {
-			logger.LogInformation( "Well, hello there." );
 
 			// Get the directory that the executable DLL/binary is in - https://stackoverflow.com/a/66023223
 			Assembly? executable = Assembly.GetEntryAssembly() ?? throw new Exception( "Failed to get this executable" );

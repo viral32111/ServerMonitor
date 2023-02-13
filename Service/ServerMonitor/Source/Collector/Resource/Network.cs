@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Net.NetworkInformation;
 using Microsoft.Extensions.Logging;
 using Prometheus;
 
@@ -13,32 +14,42 @@ namespace ServerMonitor.Collector.Resource {
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Resource/Network" );
 
 		// Holds the exported Prometheus metrics
-		public readonly Gauge SentBytes;
-		public readonly Gauge ReceivedBytes;
+		public readonly Counter SentBytes;
+		public readonly Counter ReceivedBytes;
 
 		// Initialise the exported Prometheus metrics
 		public Network( Config configuration ) {
-			SentBytes = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_network_sent_bytes", "Total bytes sent over the network, in bytes.", new GaugeConfiguration() {
+			SentBytes = Metrics.CreateCounter( $"{ configuration.PrometheusMetricsPrefix }_resource_network_sent_bytes", "Total bytes sent over the network, in bytes.", new CounterConfiguration() {
 				LabelNames = new[] { "interface" }
 			} );
-			ReceivedBytes = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_network_received_bytes", "Total bytes received over the network, in bytes.", new GaugeConfiguration() {
+			ReceivedBytes = Metrics.CreateCounter( $"{ configuration.PrometheusMetricsPrefix }_resource_network_received_bytes", "Total bytes received over the network, in bytes.", new CounterConfiguration() {
 				LabelNames = new[] { "interface" }
 			} );
 
-			SentBytes.Set( 0 );
-			ReceivedBytes.Set( 0 );
+			SentBytes.IncTo( 0 );
+			ReceivedBytes.IncTo( 0 );
 
 			logger.LogInformation( "Initalised Prometheus metrics" );
 		}
 
-		// Updates the metrics for Windows...
+		// Updates the exported Prometheus metrics (for Windows)
 		public override void UpdateOnWindows() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
 
-			throw new NotImplementedException();
+			// Loop through each network interface's statistics - https://learn.microsoft.com/en-us/dotnet/api/system.net.networkinformation.networkinterface.getallnetworkinterfaces
+			foreach ( NetworkInterface networkInterface in NetworkInterface.GetAllNetworkInterfaces() ) {
+				IPInterfaceStatistics ipStatistics = networkInterface.GetIPStatistics();
+
+				// Set the values for the exported Prometheus metrics
+				ReceivedBytes.WithLabels( networkInterface.Name ).IncTo( ipStatistics.BytesReceived );
+				SentBytes.WithLabels( networkInterface.Name ).IncTo( ipStatistics.BytesSent );
+				logger.LogDebug( "Updated Prometheus metrics" );
+
+			}
+
 		}
 
-		// Updates the metrics for Linux...
+		// Updates the exported Prometheus metrics (for Linux)
 		public override void UpdateOnLinux() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
 
@@ -64,9 +75,10 @@ namespace ServerMonitor.Collector.Resource {
 						if ( long.TryParse( lineParts[ 1 ], out long receivedBytes ) != true ) throw new Exception( "Failed to parse received bytes as long" );
 						if ( long.TryParse( lineParts[ 9 ], out long sentBytes ) != true ) throw new Exception( "Failed to parse sent bytes as long" );
 
-						// Update the metrics
-						ReceivedBytes.WithLabels( interfaceName ).Set( receivedBytes );
-						SentBytes.WithLabels( interfaceName ).Set( sentBytes );
+						// Set the values for the exported Prometheus metrics
+						ReceivedBytes.WithLabels( interfaceName ).IncTo( receivedBytes );
+						SentBytes.WithLabels( interfaceName ).IncTo( sentBytes );
+						logger.LogDebug( "Updated Prometheus metrics" );
 
 					} while ( !streamReader.EndOfStream );
 

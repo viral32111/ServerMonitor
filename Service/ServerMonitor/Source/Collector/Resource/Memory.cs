@@ -48,10 +48,9 @@ namespace ServerMonitor.Collector.Resource {
 			TotalBytes.Set( memoryStatus.ullTotalPhys );
 			FreeBytes.Set( memoryStatus.ullAvailPhys );
 
-			// Get page file usage % from Performance Monitor counter - https://serverfault.com/a/399880
+			// Get page file usage percentage from Performance Monitor counter - https://serverfault.com/a/399880
 			using ( PerformanceCounter performanceCounter = new( "Paging File", "% Usage", "_Total" ) ) {
 				float pageFileUsagePercentage = performanceCounter.NextValue();
-				logger.LogDebug( $"Page file usage: { pageFileUsagePercentage }%" );
 
 				// Set the values for the exported Prometheus page-file metrics
 				SwapTotalBytes.Set( ( double ) memoryStatus.ullTotalPageFile - memoryStatus.ullTotalPhys );
