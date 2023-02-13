@@ -1,13 +1,16 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using System.Management;
 using Microsoft.Extensions.Logging;
 using Prometheus;
+
+/*
+using System.Text;
+using System.Management;
+using System.Collections.Generic;
+*/
 
 namespace ServerMonitor.Collector.Resource {
 
@@ -51,55 +54,44 @@ namespace ServerMonitor.Collector.Resource {
 			logger.LogInformation( "Initalised Prometheus metrics" );
 		}
 
-		// Updates the metrics for Windows & Linux...
-		// NOTE: This functionality is natively cross-platform as we're only using .NET Core APIs
+		// Updates the exported Prometheus metrics (for Windows)
 		public override void UpdateOnWindows() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
 
-			// Get the relevant drive information - https://learn.microsoft.com/en-us/dotnet/api/system.io.driveinfo.availablefreespace?view=net-7.0#examples
+			// Get information about drives - https://learn.microsoft.com/en-us/dotnet/api/system.io.driveinfo.availablefreespace?view=net-7.0#examples
 			DriveInfo[] drives = DriveInfo.GetDrives()
-				.Where( driveInfo => driveInfo.DriveType == DriveType.Fixed ) // Only internal drives (no network shares, swap, etc.)
+				.Where( driveInfo => driveInfo.DriveType == DriveType.Fixed ) // Skip network shares, etc.
 				.Where( driveInfo => driveInfo.IsReady == true ) // Skip unmounted drives
+				.Where( driveInfo => driveInfo.TotalSize != 0 ) // Skip pseudo filesystems
 				.Where( driveInfo => // Skip WSL & Docker filesystems
 					driveInfo.DriveFormat != "9P" &&
 					driveInfo.DriveFormat != "v9fs" &&
 					driveInfo.DriveFormat != "drivefs" &&
 					driveInfo.DriveFormat != "overlay"
-				)
-				.Where( driveInfo => // Skip pseudo filesystems
-					!driveInfo.RootDirectory.FullName.StartsWith( "/sys" ) &&
-					!driveInfo.RootDirectory.FullName.StartsWith( "/proc" ) &&
-					!driveInfo.RootDirectory.FullName.StartsWith( "/dev" ) &&
-					driveInfo.TotalSize != 0
-				)
-				.ToArray();
+				).ToArray();
 
 			// Update the metrics for each drive
 			foreach ( DriveInfo driveInformation in drives ) {
-				SMART( driveInformation );
+				string driveName = driveInformation.VolumeLabel;
+				string driveMountPath = driveInformation.RootDirectory.FullName;
 
+				TotalBytes.WithLabels( driveName, driveMountPath ).Set( driveInformation.TotalSize );
+				FreeBytes.WithLabels( driveName, driveMountPath ).Set( driveInformation.TotalFreeSpace );
 
+				// TODO: Total bytes read & written since system startup - https://stackoverflow.com/questions/36977903/how-can-we-get-disk-performance-info-in-c-sharp
+				ReadBytes.WithLabels( driveName ).IncTo( 0 );
+				WriteBytes.WithLabels( driveName ).IncTo( 0 );
 
-
-				/*string driveLabel = driveInfo.VolumeLabel;
-				string driveFileSystem = driveInfo.DriveFormat;
-				string driveMountpoint = driveInfo.RootDirectory.FullName;
-
-				TotalBytes.WithLabels( driveLabel, driveFileSystem, driveMountpoint ).Set( driveInfo.TotalSize );
-				FreeBytes.WithLabels( driveLabel, driveFileSystem, driveMountpoint ).Set( driveInfo.TotalFreeSpace );
-
-				// TODO - https://stackoverflow.com/questions/36977903/how-can-we-get-disk-performance-info-in-c-sharp
-				Health.WithLabels( driveLabel, driveFileSystem, driveMountpoint ).Set( -1 );
-				WriteBytesPerSecond.WithLabels( driveLabel, driveFileSystem, driveMountpoint ).Set( 0 );
-				ReadBytesPerSecond.WithLabels( driveLabel, driveFileSystem, driveMountpoint ).Set( 0 );*/
+				// TODO: S.M.A.R.T health
+				Health.WithLabels( driveName ).Set( -1 );
 			}
 
 		}
 
-		private void SMART( DriveInfo driveInformation ) {
+		/*private void SMART( DriveInfo driveInformation ) {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
 
-			/*foreach ( ManagementObject managementObject in new ManagementObjectSearcher( "SELECT * FROM Win32_DiskDrive" ).Get() ) {
+			foreach ( ManagementObject managementObject in new ManagementObjectSearcher( "SELECT * FROM Win32_DiskDrive" ).Get() ) {
 				logger.LogDebug( "Name: '{0}'", managementObject[ "Name" ] );
 				logger.LogDebug( "System Name: '{0}'", managementObject[ "SystemName" ] );
 				logger.LogDebug( "Model: '{0}'", managementObject[ "Model" ] );
@@ -124,7 +116,7 @@ namespace ServerMonitor.Collector.Resource {
 				logger.LogDebug( "Capacity: '{0}'", managementObject[ "Capacity" ] );
 				logger.LogDebug( "Speed: '{0}'", managementObject[ "Speed" ] );
 				logger.LogDebug( "Status: '{0}'", managementObject[ "Status" ] );
-			}*/
+			}
 
 			foreach ( ManagementObject managementObject in new ManagementObjectSearcher( @"root\WMI", "SELECT * FROM MSStorageDriver_ATAPISmartData" ).Get() ) {
 				logger.LogDebug( "Active: '{0}'", managementObject[ "Active" ] );
@@ -135,7 +127,7 @@ namespace ServerMonitor.Collector.Resource {
 				logger.LogDebug( "TotalTime: '{0}'", managementObject[ "TotalTime" ] );
 				logger.LogDebug( "VendorSpecific: '{0}'", managementObject[ "VendorSpecific" ] );
 			}
-		}
+		}*/
 
 		// Updates the exported Prometheus metrics (for Linux)
 		public override void UpdateOnLinux() {
