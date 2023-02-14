@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
 using Prometheus;
+using Mono.Unix.Native;
 
 /*
 using System.Text;
@@ -149,28 +150,20 @@ namespace ServerMonitor.Collector.Resource {
 
 					// Get the device path for the partition
 					string? mappedName = GetMappedName( partitionName );
-					logger.LogDebug( "Partition {0}: {1}", partitionName, mappedName );
 					string partitionPath = mappedName != null ? Path.Combine( "/dev/mapper", mappedName ) : Path.Combine( "/dev", partitionName );
-					logger.LogDebug( "Partition {0}: {1}", partitionName, partitionPath );
 
 					// Get the mount path for the partition, skip if not mounted
 					string? mountPath = GetMountPath( partitionPath );
-					logger.LogDebug( "Partition {0}: {1}", partitionName, mountPath );
 					if ( mountPath == null ) continue;
 
-					logger.LogDebug( "Partition: {0}, {1}, {2}, {3}", partitionName, mappedName, partitionPath, mountPath );
-
-					Gauge.Child totalBytes = TotalBytes.WithLabels( partitionName, mountPath );
-					Gauge.Child freeBytes = FreeBytes.WithLabels( partitionName, mountPath );
-					logger.LogDebug( "Total: {0}, Free: {0}", totalBytes.Value, freeBytes.Value );
-
-					// Get filesystem statistics for the partition
-					ulong[] filesystemStatistics = GetFilesystemStatistics( partitionPath );
-					logger.LogDebug( "Partition: {0}, {1}, {2}, {3}, {4}, {5}", partitionName, mappedName, partitionPath, mountPath, filesystemStatistics[ 0 ], filesystemStatistics[ 1 ] );
+					// Get filesystem statistics for the partition using the Linux C statvfs() function
+					Statvfs filesystemStatistics = new();
+					int status = Syscall.statvfs( mountPath, out filesystemStatistics );
+					if ( status != 0 ) throw new Exception( "statvfs() call failed" );
 
 					// Set the values for the exported Prometheus metrics
-					totalBytes.Set( filesystemStatistics[ 0 ] );
-					freeBytes.Set( filesystemStatistics[ 1 ] );
+					TotalBytes.WithLabels( partitionName, mountPath ).Set( filesystemStatistics.f_blocks * filesystemStatistics.f_bsize );
+					FreeBytes.WithLabels( partitionName, mountPath ).Set( filesystemStatistics.f_bavail * filesystemStatistics.f_bsize );
 					logger.LogDebug( "Updated Prometheus metrics" );
 
 				}
@@ -221,44 +214,6 @@ namespace ServerMonitor.Collector.Resource {
 			.Where( parts => parts[ 0 ] == partitionPath ) // Only keep lines related to this partition
 			.Select( parts => parts[ 1 ] ) // Only return the mount path
 			.FirstOrDefault(); // Return the first item, or null if none
-
-		// https://stackoverflow.com/questions/28950380/a-call-to-pinvoke-function-has-unbalanced-the-stack-in-debug-mode
-		// https://stackoverflow.com/questions/69581944/c-sharp-p-invoke-corrupt-memory
-
-		// Linux POSIX C structure for statvfs() - https://www.man7.org/linux/man-pages/man3/statvfs.3.html
-		[ StructLayout( LayoutKind.Sequential, CharSet = CharSet.Auto ) ]
-		private struct statvfs_struct {
-			public ulong f_bsize;
-			public ulong f_frsize;
-			public uint f_blocks;
-			public uint f_bfree;
-			public uint f_bavail;
-			public uint f_files;
-			public uint f_ffree;
-			public uint f_favail;
-			public ulong f_fsid;
-			public ulong f_flag;
-			public ulong f_namemax;
-		}
-
-		// Linux POSIX C function to get information about a filesystem (on Linux) - https://www.man7.org/linux/man-pages/man3/statvfs.3.html
-		[ return: MarshalAs( UnmanagedType.I4 ) ]
-		[ DllImport( "libc", CharSet = CharSet.Auto, SetLastError = true, CallingConvention = CallingConvention.Cdecl ) ]
-		private static extern int statvfs( string path, out statvfs_struct buf );
-
-		// Gets the total & free bytes for a filesystem (on Linux)
-		// NOTE: This has to be done in its own function because calling statvfs() seems to corrupt stack memory? I'm probably using it wrong...
-		private ulong[] GetFilesystemStatistics( string mountPath ) {
-			logger.LogTrace( "a" );
-			statvfs_struct statvfs_struct = new();
-			logger.LogTrace( "b" );
-			if ( statvfs( mountPath, out statvfs_struct ) != 0 ) throw new Exception( "Failed to call Linux POSIX C function statvfs()" );
-			logger.LogTrace( "c" );
-			return new ulong[] {
-				statvfs_struct.f_blocks * statvfs_struct.f_bsize, // Multiply by block size to get bytes
-				statvfs_struct.f_bavail * statvfs_struct.f_bsize
-			};
-		}
 
 	}
 
