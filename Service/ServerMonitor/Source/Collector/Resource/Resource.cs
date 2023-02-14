@@ -1,8 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
 
-// TODO
-
 namespace ServerMonitor.Collector.Resource {
 
 	// Base class for other resource classes

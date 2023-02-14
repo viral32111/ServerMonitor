@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
 using Prometheus;
 using Mono.Unix.Native;
+using Microsoft.Win32.SafeHandles;
 
 /*
 using System.Text;
@@ -80,7 +81,7 @@ namespace ServerMonitor.Collector.Resource {
 				TotalBytes.WithLabels( driveName, driveMountPath ).Set( driveInformation.TotalSize );
 				FreeBytes.WithLabels( driveName, driveMountPath ).Set( driveInformation.TotalFreeSpace );
 
-				// TODO: Total bytes read & written since system startup - https://stackoverflow.com/questions/36977903/how-can-we-get-disk-performance-info-in-c-sharp
+				// TODO: Total bytes read & written since system startup - https://stackoverflow.com/questions/36977903/how-can-we-get-disk-performance-info-in-c-sharp, https://stackoverflow.com/a/30451751
 				ReadBytes.WithLabels( driveName ).IncTo( 0 );
 				WriteBytes.WithLabels( driveName ).IncTo( 0 );
 
@@ -91,6 +92,44 @@ namespace ServerMonitor.Collector.Resource {
 			}
 
 		}
+
+
+
+
+
+		// https://learn.microsoft.com/en-us/windows/win32/api/winioctl/ns-winioctl-disk_performance
+		[ StructLayout( LayoutKind.Sequential, CharSet = CharSet.Auto ) ]
+		private struct DISK_PERFORMANCE {
+			long BytesRead;
+			long BytesWritten;
+			long ReadTime;
+			long WriteTime;
+			long IdleTime;
+			int ReadCount;
+			int WriteCount;
+			int QueueDepth;
+			int SplitCount;
+			long QueryTime;
+			int StorageDeviceNumber;
+			char[] StorageManagerName;
+		}
+
+		// https://stackoverflow.com/a/17354960, https://learn.microsoft.com/en-us/windows/win32/api/ioapiset/nf-ioapiset-deviceiocontrol
+		[ return: MarshalAs( UnmanagedType.Bool ) ]
+		[ DllImport( "kernel32.dll", CharSet = CharSet.Auto, SetLastError = true ) ]
+		private static extern bool DeviceIoControl(
+			[ In ] SafeFileHandle hDevice,
+			[ In ] int dwIoControlCode,
+			[ In, Optional ] byte[] lpInBuffer,
+			[ In ] int nInBufferSize,
+			[ Out, Optional ] DISK_PERFORMANCE lpOutBuffer,
+			[ In ] int nOutBufferSize,
+			[ Out, Optional ] out int lpBytesReturned,
+			[ In, Out, Optional ] IntPtr lpOverlapped
+		);
+
+
+
 
 		/*private void SMART( DriveInfo driveInformation ) {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );

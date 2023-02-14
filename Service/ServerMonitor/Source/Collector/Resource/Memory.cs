@@ -3,7 +3,6 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.PerformanceData;
 using Microsoft.Extensions.Logging;
 using Prometheus;
 
