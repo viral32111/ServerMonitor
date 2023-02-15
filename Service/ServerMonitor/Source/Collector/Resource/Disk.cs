@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Prometheus;
 using Mono.Unix.Native;
 using Microsoft.Win32.SafeHandles;
+using System.ComponentModel;
 
 /*
 using System.Text;
@@ -81,7 +82,8 @@ namespace ServerMonitor.Collector.Resource {
 				TotalBytes.WithLabels( driveName, driveMountPath ).Set( driveInformation.TotalSize );
 				FreeBytes.WithLabels( driveName, driveMountPath ).Set( driveInformation.TotalFreeSpace );
 
-				// TODO: Total bytes read & written since system startup - https://stackoverflow.com/questions/36977903/how-can-we-get-disk-performance-info-in-c-sharp, https://stackoverflow.com/a/30451751
+				// TODO: Total bytes read & written since system startup - https://stackoverflow.com/questions/36977903/how-can-we-get-disk-performance-info-in-c-sharp
+				GetWindowsDrivePerformanceStatistics();
 				ReadBytes.WithLabels( driveName ).IncTo( 0 );
 				WriteBytes.WithLabels( driveName ).IncTo( 0 );
 
@@ -93,41 +95,186 @@ namespace ServerMonitor.Collector.Resource {
 
 		}
 
-
-
-
+		// https://learn.microsoft.com/en-us/windows/win32/winprog/windows-data-types
+		// https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-large_integer-r1
 
 		// https://learn.microsoft.com/en-us/windows/win32/api/winioctl/ns-winioctl-disk_performance
 		[ StructLayout( LayoutKind.Sequential, CharSet = CharSet.Auto ) ]
 		private struct DISK_PERFORMANCE {
-			long BytesRead;
-			long BytesWritten;
-			long ReadTime;
-			long WriteTime;
-			long IdleTime;
-			int ReadCount;
-			int WriteCount;
-			int QueueDepth;
-			int SplitCount;
-			long QueryTime;
-			int StorageDeviceNumber;
-			char[] StorageManagerName;
+			public Int64 BytesRead; // LARGE_INTEGER
+			public Int64 BytesWritten; // LARGE_INTEGER
+			public Int64 ReadTime; // LARGE_INTEGER
+			public Int64 WriteTime; // LARGE_INTEGER
+			public Int64 IdleTime; // LARGE_INTEGER
+			public UInt32 ReadCount; // DWORD
+			public UInt32 WriteCount; // DWORD
+			public UInt32 QueueDepth; // DWORD
+			public UInt32 SplitCount; // DWORD
+			public Int64 QueryTime; // LARGE_INTEGER
+			public UInt32 StorageDeviceNumber; // DWORD
+			public char[] StorageManagerName; // WCHAR
 		}
 
-		// https://stackoverflow.com/a/17354960, https://learn.microsoft.com/en-us/windows/win32/api/ioapiset/nf-ioapiset-deviceiocontrol
+		// https://learn.microsoft.com/en-us/windows/win32/api/ioapiset/nf-ioapiset-deviceiocontrol, https://www.pinvoke.net/default.aspx/kernel32.deviceiocontrol, https://stackoverflow.com/a/17354960
 		[ return: MarshalAs( UnmanagedType.Bool ) ]
 		[ DllImport( "kernel32.dll", CharSet = CharSet.Auto, SetLastError = true ) ]
 		private static extern bool DeviceIoControl(
-			[ In ] SafeFileHandle hDevice,
-			[ In ] int dwIoControlCode,
-			[ In, Optional ] byte[] lpInBuffer,
-			[ In ] int nInBufferSize,
-			[ Out, Optional ] DISK_PERFORMANCE lpOutBuffer,
-			[ In ] int nOutBufferSize,
-			[ Out, Optional ] out int lpBytesReturned,
-			[ In, Out, Optional ] IntPtr lpOverlapped
+			/*
+			[ In ] SafeFileHandle hDevice, // HANDLE
+			[ In ] UInt32 dwIoControlCode, // DWORD
+			[ In, Optional ] IntPtr lpInBuffer, // LPVOID, IntPtr.Zero for NULL
+			[ In ] UInt32 nInBufferSize, // DWORD
+			[ Out, Optional ] DISK_PERFORMANCE lpOutBuffer, // LPVOID
+			[ In ] UInt32 nOutBufferSize, // DWORD
+			[ Out, Optional ] UInt32 lpBytesReturned, // LPDVOID
+			[ In, Out, Optional ] IntPtr lpOverlapped // LPOVERLAPPED, IntPtr.Zero for NULL
+			*/
+
+			// https://www.pinvoke.net/default.aspx/kernel32.deviceiocontrol
+			/*
+			static extern bool DeviceIoControl(
+			IntPtr hDevice,
+			uint dwIoControlCode,
+			IntPtr lpInBuffer,
+			uint nInBufferSize,
+			IntPtr lpOutBuffer,
+			uint nOutBufferSize,
+			out uint lpBytesReturned,
+			IntPtr lpOverlapped
+			*/
+
+			// https://stackoverflow.com/a/17354960
+			SafeFileHandle hDevice,
+			int IoControlCode,
+			byte[] InBuffer,
+			int nInBufferSize,
+			//byte[] OutBuffer,
+			//out byte[] OutBuffer,
+			IntPtr OutBuffer,
+			int nOutBufferSize,
+			out int pBytesReturned,
+			IntPtr Overlapped
 		);
 
+		// https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew, https://www.pinvoke.net/default.aspx/kernel32.CreateFile
+		[ DllImport( "kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true ) ]
+		private static extern SafeFileHandle CreateFileW(
+			[ In, MarshalAs( UnmanagedType.LPWStr ) ] string lpFileName, // LPCWSTR
+			[ In ] UInt32 dwDesiredAccess, // DWORD
+			[ In ] UInt32 dwShareMode, // DWORD
+			[ In, Optional ] IntPtr lpSecurityAttributes, // LPSECURITY_ATTRIBUTES, IntPtr.Zero for NULL
+			[ In ] UInt32 dwCreationDisposition, // DWORD
+			[ In ] UInt32 dwFlagsAndAttributes, // DWORD
+			[ In, Optional ] SafeFileHandle hTemplateFile // HANDLE
+		);
+
+		private readonly SafeFileHandle INVALID_HANDLE_VALUE = new( new IntPtr( -1 ), true );
+
+		// Nobody knows...
+		private readonly UInt32 GENERIC_READ = 0x80000000;
+
+		// https://learn.microsoft.com/en-us/windows/win32/fileio/file-access-rights-constants
+		private readonly UInt32 FILE_READ_ATTRIBUTES = 0x80;
+
+		// https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew (dwShareMode)
+		private readonly UInt32 FILE_SHARE_READ = 0x1;
+		private readonly UInt32 FILE_SHARE_WRITE = 0x2;
+
+		// https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew (dwCreationDisposition)
+		private readonly UInt32 OPEN_EXISTING = 3;
+
+		// http://www.ioctls.net/
+		private readonly UInt32 IOCTL_DISK_PERFORMANCE = 0x70020;
+
+		// https://stackoverflow.com/a/30451751
+		private void GetWindowsDrivePerformanceStatistics() {
+			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
+
+			SafeFileHandle deviceHandle = CreateFileW(
+				@"\\.\C:",
+				FILE_READ_ATTRIBUTES,
+				FILE_SHARE_READ | FILE_SHARE_WRITE,
+				IntPtr.Zero,
+				OPEN_EXISTING,
+				0,
+				INVALID_HANDLE_VALUE
+			);
+
+			// https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes
+			if ( deviceHandle.IsInvalid ) throw new Win32Exception( Marshal.GetLastWin32Error() );
+
+			//DISK_PERFORMANCE diskPerformance = new();
+			/*bool ioSuccess = DeviceIoControl(
+				deviceHandle,
+				IOCTL_DISK_PERFORMANCE,
+				IntPtr.Zero,
+				0,
+				diskPerformance,
+				( UInt32 ) Marshal.SizeOf( diskPerformance ),
+				bytesReturned,
+				IntPtr.Zero
+			);*/
+
+			// https://www.pinvoke.net/default.aspx/kernel32.deviceiocontrol
+			//IntPtr diskPerformancePointer = Marshal.AllocHGlobal( Marshal.SizeOf<DISK_PERFORMANCE>() );
+			/*bool ioSuccess = DeviceIoControl(
+				deviceHandle.DangerousGetHandle(),
+				IOCTL_DISK_PERFORMANCE,
+				IntPtr.Zero,
+				0,
+				diskPerformancePointer,
+				( UInt32 ) Marshal.SizeOf<DISK_PERFORMANCE>(),
+				out uint bytesReturned,
+				IntPtr.Zero
+			);*/
+			//DISK_PERFORMANCE diskPerformance = Marshal.PtrToStructure<DISK_PERFORMANCE>( diskPerformancePointer );
+
+			// https://stackoverflow.com/a/17354960
+			const int outBufferSize = 65536; //80;
+			//byte[] outBuffer = new byte[ outBufferSize ];
+			IntPtr outBufferPointer = Marshal.AllocHGlobal( outBufferSize );
+			logger.LogTrace( "declared outBuffer size, about to call DeviceIoControl()" );
+
+			//logger.LogTrace( "Marshal.SizeOf<DISK_PERFORMANCE>() = {0}", Marshal.SizeOf<DISK_PERFORMANCE>() );
+
+			//IntPtr diskPerformancePointer = Marshal.AllocHGlobal( Marshal.SizeOf<DISK_PERFORMANCE>() );
+			//logger.LogTrace( "allocated memory for DISK_PERFORMANCE, about to call DeviceIoControl()" );
+
+			bool ioSuccess = DeviceIoControl(
+				deviceHandle,
+				0x70020, // IOCTL_DISK_PERFORMANCE
+				Array.Empty<byte>(),
+				0,
+				outBufferPointer,//diskPerformancePointer
+				outBufferSize, //Marshal.SizeOf<DISK_PERFORMANCE>(), // Marshal.SizeOf( outBuffer )
+				out int bytesReturned,
+				IntPtr.Zero
+			);
+			logger.LogTrace( "finished with DeviceIoControl(), about to marshal pointer to structure" );
+			byte[] outBuffer = new byte[ bytesReturned ];
+			Marshal.Copy( outBufferPointer, outBuffer, 0, bytesReturned );
+			//DISK_PERFORMANCE diskPerformance = Marshal.PtrToStructure<DISK_PERFORMANCE>( outBufferPointer ); // diskPerformancePointer
+			logger.LogTrace( "finished marshalling pointer to structure, lets print" );
+
+			logger.LogDebug( "DeviceIoControl() bytesReturned: {0}", bytesReturned );
+			if ( !ioSuccess ) throw new Win32Exception( Marshal.GetLastWin32Error() );
+			logger.LogDebug( "outBuffer: {0}", Convert.ToHexString( outBuffer ) );
+
+			/*logger.LogDebug( "Bytes Read: {0}", diskPerformance.BytesRead );
+			logger.LogDebug( "Bytes Written: {0}", diskPerformance.BytesWritten );
+			logger.LogDebug( "Read Time: {0}", diskPerformance.ReadTime );
+			logger.LogDebug( "Write Time: {0}", diskPerformance.WriteTime );
+			logger.LogDebug( "Idle Time: {0}", diskPerformance.IdleTime );
+			logger.LogDebug( "Read Count: {0}", diskPerformance.ReadCount );
+			logger.LogDebug( "Write Count: {0}", diskPerformance.WriteCount );
+			logger.LogDebug( "Queue Depth: {0}", diskPerformance.QueueDepth );
+			logger.LogDebug( "Split Count: {0}", diskPerformance.SplitCount );
+			logger.LogDebug( "Query Time: {0}", diskPerformance.QueryTime );
+			logger.LogDebug( "Storage Device Number: {0}", diskPerformance.StorageDeviceNumber );
+			logger.LogDebug( "Storage Manager Name: {0}", diskPerformance.StorageManagerName );*/
+
+			Marshal.FreeHGlobal( outBufferPointer ); // diskPerformancePointer
+		}
 
 
 
