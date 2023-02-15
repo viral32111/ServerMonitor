@@ -99,20 +99,22 @@ namespace ServerMonitor.Collector.Resource {
 		// https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-large_integer-r1
 
 		// https://learn.microsoft.com/en-us/windows/win32/api/winioctl/ns-winioctl-disk_performance
-		[ StructLayout( LayoutKind.Sequential, CharSet = CharSet.Auto ) ]
+		// 64-bit signed integer is 8 bytes, 32-bit unsigned integer is 4 bytes, WCHAR (16-bit unsigned integer) is 2 bytes
+		[ StructLayout( LayoutKind.Sequential, CharSet = CharSet.Unicode ) ]
 		private struct DISK_PERFORMANCE {
-			public Int64 BytesRead; // LARGE_INTEGER
-			public Int64 BytesWritten; // LARGE_INTEGER
-			public Int64 ReadTime; // LARGE_INTEGER
-			public Int64 WriteTime; // LARGE_INTEGER
-			public Int64 IdleTime; // LARGE_INTEGER
-			public UInt32 ReadCount; // DWORD
-			public UInt32 WriteCount; // DWORD
-			public UInt32 QueueDepth; // DWORD
-			public UInt32 SplitCount; // DWORD
-			public Int64 QueryTime; // LARGE_INTEGER
-			public UInt32 StorageDeviceNumber; // DWORD
-			public char[] StorageManagerName; // WCHAR
+			public Int64 BytesRead; // LARGE_INTEGER, 8 bytes
+			public Int64 BytesWritten; // LARGE_INTEGER, 8 bytes = 16 bytes
+			public Int64 ReadTime; // LARGE_INTEGER, 8 bytes = 24 bytes
+			public Int64 WriteTime; // LARGE_INTEGER, 8 bytes = 32 bytes
+			public Int64 IdleTime; // LARGE_INTEGER, 8 bytes = 40 bytes
+			public UInt32 ReadCount; // DWORD, 4 bytes = 44 bytes
+			public UInt32 WriteCount; // DWORD, 4 bytes = 48 bytes
+			public UInt32 QueueDepth; // DWORD, 4 bytes = 52 bytes
+			public UInt32 SplitCount; // DWORD, 4 bytes = 56 bytes
+			public Int64 QueryTime; // LARGE_INTEGER, 8 bytes = 64 bytes
+			public UInt32 StorageDeviceNumber; // DWORD, 4 bytes = 68 bytes
+			//public char[] StorageManagerName; // WCHAR[8], 16 bytes = 84 bytes
+			public UInt16[] StorageManagerName; // WCHAR[8], 16 bytes = 84 bytes
 		}
 
 		// https://learn.microsoft.com/en-us/windows/win32/api/ioapiset/nf-ioapiset-deviceiocontrol, https://www.pinvoke.net/default.aspx/kernel32.deviceiocontrol, https://stackoverflow.com/a/17354960
@@ -230,7 +232,7 @@ namespace ServerMonitor.Collector.Resource {
 			//DISK_PERFORMANCE diskPerformance = Marshal.PtrToStructure<DISK_PERFORMANCE>( diskPerformancePointer );
 
 			// https://stackoverflow.com/a/17354960
-			const int outBufferSize = 65536; //80;
+			const int outBufferSize = 88; //80; //65536;
 			//byte[] outBuffer = new byte[ outBufferSize ];
 			IntPtr outBufferPointer = Marshal.AllocHGlobal( outBufferSize );
 			logger.LogTrace( "declared outBuffer size, about to call DeviceIoControl()" );
@@ -257,8 +259,16 @@ namespace ServerMonitor.Collector.Resource {
 			logger.LogTrace( "finished marshalling pointer to structure, lets print" );
 
 			logger.LogDebug( "DeviceIoControl() bytesReturned: {0}", bytesReturned );
-			if ( !ioSuccess ) throw new Win32Exception( Marshal.GetLastWin32Error() );
+			if ( !ioSuccess ) throw new Win32Exception( Marshal.GetLastWin32Error() ); // outBufferSize will cause Parameter is incorrect (code 87) exception if too small
 			logger.LogDebug( "outBuffer: {0}", Convert.ToHexString( outBuffer ) );
+
+			byte[] bytesReadBytes = new byte[ 8 ]; // 64 bit integer / LARGE_INTEGER
+			Array.Copy( outBuffer, 0, bytesReadBytes, 0, bytesReadBytes.Length );
+			logger.LogDebug( "Bytes Read: {0}", BitConverter.ToUInt64( bytesReadBytes ) );
+
+			byte[] writtenReadBytes = new byte[ 8 ]; // 64 bit integer / LARGE_INTEGER
+			Array.Copy( outBuffer, 8, writtenReadBytes, 0, writtenReadBytes.Length );
+			logger.LogDebug( "Bytes Written: {0}", BitConverter.ToUInt64( writtenReadBytes ) );
 
 			/*logger.LogDebug( "Bytes Read: {0}", diskPerformance.BytesRead );
 			logger.LogDebug( "Bytes Written: {0}", diskPerformance.BytesWritten );
