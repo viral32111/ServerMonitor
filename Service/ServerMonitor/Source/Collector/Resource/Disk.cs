@@ -83,9 +83,9 @@ namespace ServerMonitor.Collector.Resource {
 				FreeBytes.WithLabels( driveName, driveMountPath ).Set( driveInformation.TotalFreeSpace );
 
 				// TODO: Total bytes read & written since system startup - https://stackoverflow.com/questions/36977903/how-can-we-get-disk-performance-info-in-c-sharp
-				GetWindowsDrivePerformanceStatistics();
-				ReadBytes.WithLabels( driveName ).IncTo( 0 );
-				WriteBytes.WithLabels( driveName ).IncTo( 0 );
+				ulong[] stats = GetWindowsDrivePerformanceStatistics();
+				ReadBytes.WithLabels( driveName ).IncTo( stats[ 0 ] );
+				WriteBytes.WithLabels( driveName ).IncTo( stats[ 1 ] );
 
 				// TODO: S.M.A.R.T health
 				Health.WithLabels( driveName ).Set( -1 );
@@ -189,7 +189,7 @@ namespace ServerMonitor.Collector.Resource {
 		private readonly UInt32 IOCTL_DISK_PERFORMANCE = 0x70020;
 
 		// https://stackoverflow.com/a/30451751
-		private void GetWindowsDrivePerformanceStatistics() {
+		private ulong[] GetWindowsDrivePerformanceStatistics() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
 
 			SafeFileHandle deviceHandle = CreateFileW(
@@ -264,11 +264,17 @@ namespace ServerMonitor.Collector.Resource {
 
 			byte[] bytesReadBytes = new byte[ 8 ]; // 64 bit integer / LARGE_INTEGER
 			Array.Copy( outBuffer, 0, bytesReadBytes, 0, bytesReadBytes.Length );
-			logger.LogDebug( "Bytes Read: {0}", BitConverter.ToUInt64( bytesReadBytes ) );
+			UInt64 bytesRead = BitConverter.ToUInt64( bytesReadBytes );
+			logger.LogDebug( "Bytes Read: {0}", bytesRead );
 
 			byte[] writtenReadBytes = new byte[ 8 ]; // 64 bit integer / LARGE_INTEGER
 			Array.Copy( outBuffer, 8, writtenReadBytes, 0, writtenReadBytes.Length );
-			logger.LogDebug( "Bytes Written: {0}", BitConverter.ToUInt64( writtenReadBytes ) );
+			UInt64 bytesWritten = BitConverter.ToUInt64( writtenReadBytes );
+			logger.LogDebug( "Bytes Written: {0}", bytesWritten );
+
+			Marshal.FreeHGlobal( outBufferPointer ); // diskPerformancePointer
+
+			return new ulong[] { bytesRead, bytesWritten };
 
 			/*logger.LogDebug( "Bytes Read: {0}", diskPerformance.BytesRead );
 			logger.LogDebug( "Bytes Written: {0}", diskPerformance.BytesWritten );
@@ -283,7 +289,6 @@ namespace ServerMonitor.Collector.Resource {
 			logger.LogDebug( "Storage Device Number: {0}", diskPerformance.StorageDeviceNumber );
 			logger.LogDebug( "Storage Manager Name: {0}", diskPerformance.StorageManagerName );*/
 
-			Marshal.FreeHGlobal( outBufferPointer ); // diskPerformancePointer
 		}
 
 
