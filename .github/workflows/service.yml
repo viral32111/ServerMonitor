@@ -201,7 +201,6 @@ jobs:
         working-directory: ./Service/
     if: github.ref_type == 'tag' && github.event_name != 'pull_request'
     permissions:
-      contents: read
       contents: write
     steps:
       - name: Clone repository
