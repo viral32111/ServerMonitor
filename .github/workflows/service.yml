@@ -202,6 +202,7 @@ jobs:
     if: github.ref_type == 'tag' && github.event_name != 'pull_request'
     permissions:
       contents: read
+      contents: write
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
@@ -215,7 +216,7 @@ jobs:
       - name: Bundle build artifacts
         run: |
           cd ./Artifact/
-          zip -r ./ServerMonitor-Service.zip $(find ./)
+          zip -r ../${{ env.ARTIFACT_NAME }}.zip $(find ./)
 
       - name: Create draft release
         uses: softprops/action-gh-release@v1
@@ -223,5 +224,5 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: ${{ github.ref_name }}
           draft: true
-          files: ./Service/ServerMonitor-Service.zip
+          files: ./Service/${{ env.ARTIFACT_NAME }}.zip
           body: ${{ github.ref_name }}
