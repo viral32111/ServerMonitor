@@ -7,6 +7,7 @@ using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.ServiceProcess;
+using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
 using Prometheus;
 namespace ServerMonitor.Collector {
@@ -15,6 +16,8 @@ namespace ServerMonitor.Collector {
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Resource/Processor" );
 
 		public static void ListServices() {
+			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
+
 			string[] systemServiceFileNames = Directory.GetFiles( "/usr/lib/systemd/system", "*.service" )
 				.Select( servicePath => Path.GetFileNameWithoutExtension( servicePath ) )
 				.ToArray();
@@ -37,6 +40,8 @@ namespace ServerMonitor.Collector {
 		}
 
 		private static Dictionary<string, Dictionary<string, string>> ParseServiceFile( string filePath ) {
+			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
+
 			string[] fileLines = File.ReadAllLines( filePath )
 				.Where( line => !string.IsNullOrWhiteSpace( line ) ) // Skip empty lines
 				.Where( line => !line.StartsWith( "#" ) ) // Skip comments
