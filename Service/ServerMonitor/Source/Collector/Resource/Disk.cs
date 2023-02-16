@@ -173,7 +173,7 @@ namespace ServerMonitor.Collector.Resource {
 		private readonly SafeFileHandle INVALID_HANDLE_VALUE = new( new IntPtr( -1 ), true );
 
 		// Nobody knows...
-		private readonly UInt32 GENERIC_READ = 0x80000000;
+		//private readonly UInt32 GENERIC_READ = 0x80000000;
 
 		// https://learn.microsoft.com/en-us/windows/win32/fileio/file-access-rights-constants
 		private readonly UInt32 FILE_READ_ATTRIBUTES = 0x80;
@@ -186,7 +186,7 @@ namespace ServerMonitor.Collector.Resource {
 		private readonly UInt32 OPEN_EXISTING = 3;
 
 		// http://www.ioctls.net/
-		private readonly UInt32 IOCTL_DISK_PERFORMANCE = 0x70020;
+		//private readonly UInt32 IOCTL_DISK_PERFORMANCE = 0x70020;
 
 		// https://stackoverflow.com/a/30451751
 		private ulong[] GetWindowsDrivePerformanceStatistics() {
