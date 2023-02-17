@@ -1,9 +1,11 @@
 using System;
 using System.IO;
 using System.Threading;
+using System.Management;
 using System.Diagnostics;
 using System.Runtime.Versioning;
 using System.Runtime.InteropServices;
+using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using Prometheus;
 
@@ -18,7 +20,7 @@ namespace ServerMonitor.Collector.Resource {
 		// Holds the exported Prometheus metrics
 		public readonly Gauge Usage;
 		public readonly Gauge Temperature; // TODO
-		public readonly Gauge Frequency; // TODO
+		public readonly Gauge Frequency;
 
 		// Initialise the exported Prometheus metrics
 		public Processor( Config configuration ) {
@@ -43,11 +45,33 @@ namespace ServerMonitor.Collector.Resource {
 			Thread.Sleep( 1000 );
 			float processorUsage = cpuCounter.NextValue();
 
+			// Get processor frequency from the WMI interface - https://stackoverflow.com/a/6923927
+			uint currentFrequency = 0;
+			foreach ( ManagementObject managementObject in new ManagementObjectSearcher( "SELECT * FROM Win32_Processor" ).Get() ) {
+				currentFrequency = Convert.ToUInt32( managementObject[ "CurrentClockSpeed" ].ToString() );
+			}
+
+			// TODO: Temperature
+
 			// Set the values for the exported Prometheus metrics
 			Usage.Set( processorUsage );
+			Frequency.Set( currentFrequency );
+			Temperature.Set( 0 );
 			logger.LogDebug( "Updated Prometheus metrics" );
-
 		}
+
+		// https://stackoverflow.com/a/3114251
+		/*[ SupportedOSPlatform( "windows" ) ]
+		private void GetTemperature() {
+			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
+
+			foreach ( ManagementObject managementObject in new ManagementObjectSearcher( @"root\WMI", "SELECT * FROM MSAcpi_ThermalZoneTemperature" ).Get() ) {
+				double currentTemperature = Convert.ToDouble( managementObject[ "CurrentTemperature" ].ToString() );
+				double temperatureSelsius = ( currentTemperature - 2732 ) / 10.0;
+
+				logger.LogDebug( "Temperature of '{0}': {1} C ({2})", managementObject[ "InstanceName" ].ToString(), temperatureSelsius, currentTemperature );
+			}
+		}*/
 
 		// Updates the exported Prometheus metrics (for Linux)
 		[ SupportedOSPlatform( "linux" ) ]
@@ -104,6 +128,12 @@ namespace ServerMonitor.Collector.Resource {
 				}
 
 			}
+
+			// TODO: Temperature
+			Temperature.Set( 0 );
+
+			// TODO: Frequency
+			Frequency.Set( 0 );
 
 		}
 

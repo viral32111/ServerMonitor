@@ -53,7 +53,9 @@ namespace ServerMonitor.Collector {
 
 				processor.Update();
 				double processorUsage = Math.Round( processor.Usage.Value, 1 );
-				logger.LogInformation( "Processor: {0}%", processorUsage );
+				double processorFrequency = Math.Round( processor.Frequency.Value, 1 );
+				double processorTemperature = Math.Round( processor.Temperature.Value, 1 );
+				logger.LogInformation( "Processor: {0}% @ {1} MHz ({2} C)", processorUsage, processorFrequency, processorTemperature );
 
 				uptime.Update();
 				logger.LogInformation( "Uptime: {0} seconds", uptime.UptimeSeconds.Value );
