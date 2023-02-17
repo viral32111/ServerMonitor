@@ -8,14 +8,30 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.ServiceProcess;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using Microsoft.Extensions.Logging;
 using Prometheus;
+
 namespace ServerMonitor.Collector {
-	public class Services {
+	public static class Services {
 
-		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Resource/Processor" );
+		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Services" );
 
-		public static void ListServices() {
+		public static void List() {
+			if ( RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) ListOnWindows();
+			else if ( RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) ListOnLinux();
+			else throw new Exception( "Unsupported operating system" );
+		}
+
+		[ SupportedOSPlatform( "windows" ) ]
+		public static void ListOnWindows() {
+			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
+
+			throw new NotImplementedException();
+		}
+
+		[ SupportedOSPlatform( "linux" ) ]
+		public static void ListOnLinux() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
 
 			string[] systemServiceFileNames = Directory.GetFiles( "/usr/lib/systemd/system", "*.service" )

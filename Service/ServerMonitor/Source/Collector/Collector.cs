@@ -25,7 +25,7 @@ namespace ServerMonitor.Collector {
 			server.Start();
 			logger.LogInformation( "Prometheus Metrics server listening on http://{0}:{1}/{2}", configuration.PrometheusListenAddress, configuration.PrometheusListenPort, configuration.PrometheusListenPath );
 
-			Services.ListServices();
+			Services.List();
 
 			// Create instances of each resource collector
 			/*Memory memory = new( configuration );
