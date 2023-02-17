@@ -32,8 +32,8 @@ namespace ServerMonitor.Collector {
 			Disk disk = new( configuration );
 			Network network = new( configuration );
 
-			Services services = new( configuration );
-			//services.Update();
+			/*Services services = new( configuration );
+			services.Update();*/
 
 			// This is all just for debugging
 			do {

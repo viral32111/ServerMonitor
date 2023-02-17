@@ -4,11 +4,11 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
-using Microsoft.Extensions.Logging;
-using Prometheus;
-using Mono.Unix.Native;
-using Microsoft.Win32.SafeHandles;
 using System.ComponentModel;
+using Microsoft.Extensions.Logging;
+using Microsoft.Win32.SafeHandles;
+using Mono.Unix.Native;
+using Prometheus;
 
 namespace ServerMonitor.Collector.Resource {
 
@@ -52,6 +52,8 @@ namespace ServerMonitor.Collector.Resource {
 			logger.LogInformation( "Initalised Prometheus metrics" );
 		}
 
+		/*********************************************************************************************************************/
+
 		// Updates the exported Prometheus metrics (for Windows)
 		[ SupportedOSPlatform( "windows" ) ]
 		public override void UpdateOnWindows() {
@@ -78,8 +80,8 @@ namespace ServerMonitor.Collector.Resource {
 				TotalBytes.WithLabels( driveName, driveMountPath ).Set( driveInformation.TotalSize );
 				FreeBytes.WithLabels( driveName, driveMountPath ).Set( driveInformation.TotalFreeSpace );
 
-				// TODO: Total bytes read & written since system startup - https://stackoverflow.com/questions/36977903/how-can-we-get-disk-performance-info-in-c-sharp
-				ulong[] stats = GetWindowsDrivePerformanceStatistics();
+				// Get total bytes read & written since system startup
+				long[] stats = GetDriveStatisticsForWindows( driveMountPath );
 				ReadBytes.WithLabels( driveName ).IncTo( stats[ 0 ] );
 				WriteBytes.WithLabels( driveName ).IncTo( stats[ 1 ] );
 
@@ -91,203 +93,45 @@ namespace ServerMonitor.Collector.Resource {
 
 		}
 
-		// https://learn.microsoft.com/en-us/windows/win32/winprog/windows-data-types
-		// https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-large_integer-r1
-
-		// https://learn.microsoft.com/en-us/windows/win32/api/winioctl/ns-winioctl-disk_performance
-		// 64-bit signed integer is 8 bytes, 32-bit unsigned integer is 4 bytes, WCHAR (16-bit unsigned integer) is 2 bytes
+		// Get read & write statistics for a drive (for Windows) - https://stackoverflow.com/a/30451751
 		[ SupportedOSPlatform( "windows" ) ]
-		[ StructLayout( LayoutKind.Sequential, CharSet = CharSet.Unicode ) ]
-		private struct DISK_PERFORMANCE {
-			public Int64 BytesRead; // LARGE_INTEGER, 8 bytes
-			public Int64 BytesWritten; // LARGE_INTEGER, 8 bytes = 16 bytes
-			public Int64 ReadTime; // LARGE_INTEGER, 8 bytes = 24 bytes
-			public Int64 WriteTime; // LARGE_INTEGER, 8 bytes = 32 bytes
-			public Int64 IdleTime; // LARGE_INTEGER, 8 bytes = 40 bytes
-			public UInt32 ReadCount; // DWORD, 4 bytes = 44 bytes
-			public UInt32 WriteCount; // DWORD, 4 bytes = 48 bytes
-			public UInt32 QueueDepth; // DWORD, 4 bytes = 52 bytes
-			public UInt32 SplitCount; // DWORD, 4 bytes = 56 bytes
-			public Int64 QueryTime; // LARGE_INTEGER, 8 bytes = 64 bytes
-			public UInt32 StorageDeviceNumber; // DWORD, 4 bytes = 68 bytes
-			//public char[] StorageManagerName; // WCHAR[8], 16 bytes = 84 bytes
-			public UInt16[] StorageManagerName; // WCHAR[8], 16 bytes = 84 bytes
-		}
-
-		// https://learn.microsoft.com/en-us/windows/win32/api/ioapiset/nf-ioapiset-deviceiocontrol, https://www.pinvoke.net/default.aspx/kernel32.deviceiocontrol, https://stackoverflow.com/a/17354960
-		[ return: MarshalAs( UnmanagedType.Bool ) ]
-		[ SupportedOSPlatform( "windows" ) ]
-		[ DllImport( "kernel32.dll", CharSet = CharSet.Auto, SetLastError = true ) ]
-		private static extern bool DeviceIoControl(
-			/*
-			[ In ] SafeFileHandle hDevice, // HANDLE
-			[ In ] UInt32 dwIoControlCode, // DWORD
-			[ In, Optional ] IntPtr lpInBuffer, // LPVOID, IntPtr.Zero for NULL
-			[ In ] UInt32 nInBufferSize, // DWORD
-			[ Out, Optional ] DISK_PERFORMANCE lpOutBuffer, // LPVOID
-			[ In ] UInt32 nOutBufferSize, // DWORD
-			[ Out, Optional ] UInt32 lpBytesReturned, // LPDVOID
-			[ In, Out, Optional ] IntPtr lpOverlapped // LPOVERLAPPED, IntPtr.Zero for NULL
-			*/
-
-			// https://www.pinvoke.net/default.aspx/kernel32.deviceiocontrol
-			/*
-			static extern bool DeviceIoControl(
-			IntPtr hDevice,
-			uint dwIoControlCode,
-			IntPtr lpInBuffer,
-			uint nInBufferSize,
-			IntPtr lpOutBuffer,
-			uint nOutBufferSize,
-			out uint lpBytesReturned,
-			IntPtr lpOverlapped
-			*/
-
-			// https://stackoverflow.com/a/17354960
-			SafeFileHandle hDevice,
-			int IoControlCode,
-			byte[] InBuffer,
-			int nInBufferSize,
-			//byte[] OutBuffer,
-			//out byte[] OutBuffer,
-			IntPtr OutBuffer,
-			int nOutBufferSize,
-			out int pBytesReturned,
-			IntPtr Overlapped
-		);
-
-		// https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew, https://www.pinvoke.net/default.aspx/kernel32.CreateFile
-		[ DllImport( "kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true ) ]
-		[ SupportedOSPlatform( "windows" ) ]
-		private static extern SafeFileHandle CreateFileW(
-			[ In, MarshalAs( UnmanagedType.LPWStr ) ] string lpFileName, // LPCWSTR
-			[ In ] UInt32 dwDesiredAccess, // DWORD
-			[ In ] UInt32 dwShareMode, // DWORD
-			[ In, Optional ] IntPtr lpSecurityAttributes, // LPSECURITY_ATTRIBUTES, IntPtr.Zero for NULL
-			[ In ] UInt32 dwCreationDisposition, // DWORD
-			[ In ] UInt32 dwFlagsAndAttributes, // DWORD
-			[ In, Optional ] SafeFileHandle hTemplateFile // HANDLE
-		);
-
-		private readonly SafeFileHandle INVALID_HANDLE_VALUE = new( new IntPtr( -1 ), true );
-
-		// Nobody knows...
-		//private readonly UInt32 GENERIC_READ = 0x80000000;
-
-		// https://learn.microsoft.com/en-us/windows/win32/fileio/file-access-rights-constants
-		private readonly UInt32 FILE_READ_ATTRIBUTES = 0x80;
-
-		// https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew (dwShareMode)
-		private readonly UInt32 FILE_SHARE_READ = 0x1;
-		private readonly UInt32 FILE_SHARE_WRITE = 0x2;
-
-		// https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew (dwCreationDisposition)
-		private readonly UInt32 OPEN_EXISTING = 3;
-
-		// http://www.ioctls.net/
-		//private readonly UInt32 IOCTL_DISK_PERFORMANCE = 0x70020;
-
-		// https://stackoverflow.com/a/30451751
-		[ SupportedOSPlatform( "windows" ) ]
-		private ulong[] GetWindowsDrivePerformanceStatistics() {
+		private long[] GetDriveStatisticsForWindows( string driveLetter ) {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
 
-			SafeFileHandle deviceHandle = CreateFileW(
-				@"\\.\C:",
-				FILE_READ_ATTRIBUTES,
-				FILE_SHARE_READ | FILE_SHARE_WRITE,
-				IntPtr.Zero,
-				OPEN_EXISTING,
-				0,
-				INVALID_HANDLE_VALUE
-			);
+			// File & I/O control code constants - https://learn.microsoft.com/en-us/windows/win32/fileio/file-access-rights-constants, http://www.ioctls.net
+			const UInt32 FILE_READ_ATTRIBUTES = 0x80;
+			const UInt32 FILE_SHARE_READ = 0x1;
+			const UInt32 FILE_SHARE_WRITE = 0x2;
+			const UInt32 OPEN_EXISTING = 3;
+			const UInt32 IOCTL_DISK_PERFORMANCE = 0x70020;
 
-			// https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes
-			if ( deviceHandle.IsInvalid ) throw new Win32Exception( Marshal.GetLastWin32Error() );
+			// Create the volume path & remove any trailing backslashes from the drive letter (e.g., \\.\C:)
+			string volumePath = string.Concat( @"\\.\", driveLetter.TrimEnd( '\\' ) );
 
-			//DISK_PERFORMANCE diskPerformance = new();
-			/*bool ioSuccess = DeviceIoControl(
-				deviceHandle,
-				IOCTL_DISK_PERFORMANCE,
-				IntPtr.Zero,
-				0,
-				diskPerformance,
-				( UInt32 ) Marshal.SizeOf( diskPerformance ),
-				bytesReturned,
-				IntPtr.Zero
-			);*/
+			// Reference to an invalid Windows handle, required as we're not passing a template
+			SafeFileHandle INVALID_HANDLE_VALUE = new( new IntPtr( -1 ), true );
 
-			// https://www.pinvoke.net/default.aspx/kernel32.deviceiocontrol
-			//IntPtr diskPerformancePointer = Marshal.AllocHGlobal( Marshal.SizeOf<DISK_PERFORMANCE>() );
-			/*bool ioSuccess = DeviceIoControl(
-				deviceHandle.DangerousGetHandle(),
-				IOCTL_DISK_PERFORMANCE,
-				IntPtr.Zero,
-				0,
-				diskPerformancePointer,
-				( UInt32 ) Marshal.SizeOf<DISK_PERFORMANCE>(),
-				out uint bytesReturned,
-				IntPtr.Zero
-			);*/
-			//DISK_PERFORMANCE diskPerformance = Marshal.PtrToStructure<DISK_PERFORMANCE>( diskPerformancePointer );
+			// Try to open the volume
+			SafeFileHandle deviceHandle = CreateFileW( volumePath, FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE, IntPtr.Zero, OPEN_EXISTING, 0, INVALID_HANDLE_VALUE );
+			if ( deviceHandle.IsInvalid ) throw new Win32Exception( Marshal.GetLastWin32Error() ); // https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes
 
-			// https://stackoverflow.com/a/17354960
-			const int outBufferSize = 88; //80; //65536;
-			//byte[] outBuffer = new byte[ outBufferSize ];
+			// Allocate memory for the output buffer
+			const int outBufferSize = 88; // Cannot be any lower otherwise DeviceIoControl() fails with code 87 (parameter incorrect)
 			IntPtr outBufferPointer = Marshal.AllocHGlobal( outBufferSize );
-			logger.LogTrace( "declared outBuffer size, about to call DeviceIoControl()" );
 
-			//logger.LogTrace( "Marshal.SizeOf<DISK_PERFORMANCE>() = {0}", Marshal.SizeOf<DISK_PERFORMANCE>() );
+			// Get disk performance information for this volume
+			bool ioSuccess = DeviceIoControl( deviceHandle, IOCTL_DISK_PERFORMANCE, Array.Empty<byte>(), 0, outBufferPointer, outBufferSize, out UInt32 bytesReturned, IntPtr.Zero );
+			if ( !ioSuccess ) throw new Win32Exception( Marshal.GetLastWin32Error() );
+			if ( bytesReturned != outBufferSize ) throw new Exception( $"DeviceIoControl() returned { bytesReturned } bytes, expected { outBufferSize } bytes" );
 
-			//IntPtr diskPerformancePointer = Marshal.AllocHGlobal( Marshal.SizeOf<DISK_PERFORMANCE>() );
-			//logger.LogTrace( "allocated memory for DISK_PERFORMANCE, about to call DeviceIoControl()" );
+			// Marshal the output buffer into the relevant structure
+			DISK_PERFORMANCE diskPerformance = Marshal.PtrToStructure<DISK_PERFORMANCE>( outBufferPointer );
 
-			bool ioSuccess = DeviceIoControl(
-				deviceHandle,
-				0x70020, // IOCTL_DISK_PERFORMANCE
-				Array.Empty<byte>(),
-				0,
-				outBufferPointer,//diskPerformancePointer
-				outBufferSize, //Marshal.SizeOf<DISK_PERFORMANCE>(), // Marshal.SizeOf( outBuffer )
-				out int bytesReturned,
-				IntPtr.Zero
-			);
-			logger.LogTrace( "finished with DeviceIoControl(), about to marshal pointer to structure" );
-			byte[] outBuffer = new byte[ bytesReturned ];
-			Marshal.Copy( outBufferPointer, outBuffer, 0, bytesReturned );
-			//DISK_PERFORMANCE diskPerformance = Marshal.PtrToStructure<DISK_PERFORMANCE>( outBufferPointer ); // diskPerformancePointer
-			logger.LogTrace( "finished marshalling pointer to structure, lets print" );
-
-			logger.LogDebug( "DeviceIoControl() bytesReturned: {0}", bytesReturned );
-			if ( !ioSuccess ) throw new Win32Exception( Marshal.GetLastWin32Error() ); // outBufferSize will cause Parameter is incorrect (code 87) exception if too small
-			logger.LogDebug( "outBuffer: {0}", Convert.ToHexString( outBuffer ) );
-
-			byte[] bytesReadBytes = new byte[ 8 ]; // 64 bit integer / LARGE_INTEGER
-			Array.Copy( outBuffer, 0, bytesReadBytes, 0, bytesReadBytes.Length );
-			UInt64 bytesRead = BitConverter.ToUInt64( bytesReadBytes );
-			logger.LogDebug( "Bytes Read: {0}", bytesRead );
-
-			byte[] writtenReadBytes = new byte[ 8 ]; // 64 bit integer / LARGE_INTEGER
-			Array.Copy( outBuffer, 8, writtenReadBytes, 0, writtenReadBytes.Length );
-			UInt64 bytesWritten = BitConverter.ToUInt64( writtenReadBytes );
-			logger.LogDebug( "Bytes Written: {0}", bytesWritten );
-
-			Marshal.FreeHGlobal( outBufferPointer ); // diskPerformancePointer
-
-			return new ulong[] { bytesRead, bytesWritten };
-
-			/*logger.LogDebug( "Bytes Read: {0}", diskPerformance.BytesRead );
-			logger.LogDebug( "Bytes Written: {0}", diskPerformance.BytesWritten );
-			logger.LogDebug( "Read Time: {0}", diskPerformance.ReadTime );
-			logger.LogDebug( "Write Time: {0}", diskPerformance.WriteTime );
-			logger.LogDebug( "Idle Time: {0}", diskPerformance.IdleTime );
-			logger.LogDebug( "Read Count: {0}", diskPerformance.ReadCount );
-			logger.LogDebug( "Write Count: {0}", diskPerformance.WriteCount );
-			logger.LogDebug( "Queue Depth: {0}", diskPerformance.QueueDepth );
-			logger.LogDebug( "Split Count: {0}", diskPerformance.SplitCount );
-			logger.LogDebug( "Query Time: {0}", diskPerformance.QueryTime );
-			logger.LogDebug( "Storage Device Number: {0}", diskPerformance.StorageDeviceNumber );
-			logger.LogDebug( "Storage Manager Name: {0}", diskPerformance.StorageManagerName );*/
+			// Free the previously allocated memory
+			Marshal.FreeHGlobal( outBufferPointer );
+			
+			// Return the total bytes read & written
+			return new[] { diskPerformance.BytesRead, diskPerformance.BytesWritten };
 
 		}
 
@@ -333,6 +177,8 @@ namespace ServerMonitor.Collector.Resource {
 			}
 		}*/
 
+		/*********************************************************************************************************************/
+
 		// Updates the exported Prometheus metrics (for Linux)
 		[ SupportedOSPlatform( "linux" ) ]
 		public override void UpdateOnLinux() {
@@ -342,7 +188,7 @@ namespace ServerMonitor.Collector.Resource {
 			foreach ( string driveName in GetDrives() ) {
 
 				// Set the values for the exported Prometheus metrics
-				long[] driveStatistics = GetDriveStatistics( driveName );
+				long[] driveStatistics = GetDriveStatisticsForLinux( driveName );
 				ReadBytes.WithLabels( driveName ).IncTo( driveStatistics[ 0 ] );
 				WriteBytes.WithLabels( driveName ).IncTo( driveStatistics[ 1 ] );
 
@@ -385,15 +231,15 @@ namespace ServerMonitor.Collector.Resource {
 			.Select( drivePath => Path.GetFileName( drivePath ) ) // Only return the drive name
 			.ToArray();
 
-		// Get read & write statistics for a drive (on Linux) - https://www.kernel.org/doc/Documentation/ABI/testing/procfs-diskstats, https://unix.stackexchange.com/a/111993
+		// Get read & write statistics for a drive (for Linux) - https://www.kernel.org/doc/Documentation/ABI/testing/procfs-diskstats, https://unix.stackexchange.com/a/111993
 		[ SupportedOSPlatform( "linux" ) ]
-		private long[] GetDriveStatistics( string driveName ) => File.ReadAllLines( Path.Combine( "/sys/block", driveName, "stat" ) )
+		private long[] GetDriveStatisticsForLinux( string driveName ) => File.ReadAllLines( Path.Combine( "/sys/block", driveName, "stat" ) )
 			.Select( line => line.Split( " ", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries ) ) // Split each line into parts
 			.Select( parts => parts.Select( part => long.Parse( part ) ).ToArray() ) // Convert each part to a number
 			.Select( parts => new long[] { parts[ 2 ] * 512, parts[ 6 ] * 512 } ) // Only return total read & written, as bytes by multiplying sector count by 512
 			.First();
 
-		// Gets a list of partitions for a drive (on Linux)
+		// Gets a list of partitions for a drive (for Linux)
 		[ SupportedOSPlatform( "linux" ) ]
 		private string[] GetPartitions( string driveName ) => Directory.GetDirectories( Path.Combine( "/sys/block", driveName ) ) // List pseudo-directory containing block devices
 			.Where( partitionPath => Regex.IsMatch( Path.GetFileName( partitionPath ), @"^sd[a-z]\d+$|^nvme\d+n\d+p\d+$" ) ) // Name must be a regular or NVMe partition
@@ -402,7 +248,7 @@ namespace ServerMonitor.Collector.Resource {
 			.Select( drivePath => Path.GetFileName( drivePath ) ) // Only return the partition name
 			.ToArray();
 
-		// Gets the mapped device name for a partition, if LUKS encrypted (on Linux)
+		// Gets the mapped device name for a partition, if LUKS encrypted (for Linux)
 		[ SupportedOSPlatform( "linux" ) ]
 		private string? GetMappedName( string partitionName ) => Directory.GetDirectories( Path.Combine( "/sys/class/block", partitionName, "holders" ) ) // List pseudo-directory containing holder symlinks
 			.Where( holderPath => Directory.Exists( Path.Combine( holderPath, "slaves", partitionName ) ) ) // Must be a slave to this partition
@@ -413,13 +259,62 @@ namespace ServerMonitor.Collector.Resource {
 			.Select( holderPath => File.ReadAllLines( Path.Combine( holderPath, "dm", "name" ) )[ 0 ] ) // Only return the mapped name
 			.FirstOrDefault(); // Return the first item, or null if none
 
-		// Gets the mount path for a partition, if mounted (on Linux) - https://linux.die.net/man/5/proc
+		// Gets the mount path for a partition, if mounted (for Linux) - https://linux.die.net/man/5/proc
 		[ SupportedOSPlatform( "linux" ) ]
 		private string? GetMountPath( string partitionPath ) => File.ReadAllLines( "/proc/mounts" ) // Read pseudo-file containing mount information
 			.Select( line => line.Split( " ", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries ) ) // Split each line into parts
 			.Where( parts => parts[ 0 ] == partitionPath ) // Only keep lines related to this partition
 			.Select( parts => parts[ 1 ] ) // Only return the mount path
 			.FirstOrDefault(); // Return the first item, or null if none
+
+		/*********************************************************************************************************************/
+
+		// C++ Windows API structure for DeviceIoControl() - https://learn.microsoft.com/en-us/windows/win32/api/winioctl/ns-winioctl-disk_performance
+		// 64-bit signed integer is 8 bytes, 32-bit unsigned integer is 4 bytes, WCHAR (16-bit unsigned integer) is 2 bytes
+		[ SupportedOSPlatform( "windows" ) ]
+		[ StructLayout( LayoutKind.Sequential, CharSet = CharSet.Unicode ) ]
+		private struct DISK_PERFORMANCE {
+			[ MarshalAs( UnmanagedType.I8 ) ] public Int64 BytesRead; // LARGE_INTEGER
+			[ MarshalAs( UnmanagedType.I8 ) ] public Int64 BytesWritten; // LARGE_INTEGER
+			[ MarshalAs( UnmanagedType.I8 ) ] public Int64 ReadTime; // LARGE_INTEGER
+			[ MarshalAs( UnmanagedType.I8 ) ] public Int64 WriteTime; // LARGE_INTEGER
+			[ MarshalAs( UnmanagedType.I8 ) ] public Int64 IdleTime; // LARGE_INTEGER
+			[ MarshalAs( UnmanagedType.U4 ) ] public UInt32 ReadCount; // DWORD
+			[ MarshalAs( UnmanagedType.U4 ) ] public UInt32 WriteCount; // DWORD
+			[ MarshalAs( UnmanagedType.U4 ) ] public UInt32 QueueDepth; // DWORD
+			[ MarshalAs( UnmanagedType.U4 ) ] public UInt32 SplitCount; // DWORD
+			[ MarshalAs( UnmanagedType.I8 ) ] public Int64 QueryTime; // LARGE_INTEGER
+			[ MarshalAs( UnmanagedType.U4 ) ] public UInt32 StorageDeviceNumber; // DWORD
+			public IntPtr StorageManagerName; // WCHAR[8], Attempting to Marshal this as a string causes an access violation exception...
+		}
+
+		// C++ Windows API function for creating/opening a device file - https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew, https://www.pinvoke.net/default.aspx/kernel32.CreateFile
+		[ DllImport( "kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true ) ]
+		[ SupportedOSPlatform( "windows" ) ]
+		private static extern SafeFileHandle CreateFileW(
+			[ In, MarshalAs( UnmanagedType.LPWStr ) ] string lpFileName, // LPCWSTR
+			[ In ] UInt32 dwDesiredAccess, // DWORD
+			[ In ] UInt32 dwShareMode, // DWORD
+			[ In, Optional ] IntPtr lpSecurityAttributes, // LPSECURITY_ATTRIBUTES
+			[ In ] UInt32 dwCreationDisposition, // DWORD
+			[ In ] UInt32 dwFlagsAndAttributes, // DWORD
+			[ In, Optional ] SafeFileHandle hTemplateFile // HANDLE
+		);
+
+		// C++ Windows API function for exchanging I/O control commands to devices - https://learn.microsoft.com/en-us/windows/win32/api/ioapiset/nf-ioapiset-deviceiocontrol, https://www.pinvoke.net/default.aspx/kernel32.deviceiocontrol, https://stackoverflow.com/a/17354960
+		[ return: MarshalAs( UnmanagedType.Bool ) ]
+		[ SupportedOSPlatform( "windows" ) ]
+		[ DllImport( "kernel32.dll", CharSet = CharSet.Auto, SetLastError = true ) ]
+		private static extern bool DeviceIoControl(
+			[ In ] SafeFileHandle hDevice, // HANDLE
+			[ In ] UInt32 IoControlCode, // DWORD
+			[ In, Optional ] byte[] InBuffer, // LPVOID
+			[ In ] UInt32 nInBufferSize, // DWORD
+			[ Out, Optional ] IntPtr OutBuffer, // LPVOID
+			[ In ] UInt32 nOutBufferSize, // DWORD
+			[ Out, Optional ] out UInt32 pBytesReturned, // LPDVOID
+			[ In, Out, Optional ] IntPtr Overlapped // LPOVERLAPPED
+		);
 
 	}
 

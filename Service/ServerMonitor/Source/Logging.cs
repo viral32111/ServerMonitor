@@ -7,9 +7,14 @@ using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
+//using System.Diagnostics;
+//using System.Runtime.CompilerServices;
+
 namespace ServerMonitor {
 
 	public static class Logging {
+
+		//private static ILogger logger = CreateLogger();
 
 		// Creates a logger that writes to the console
 		// https://learn.microsoft.com/en-us/dotnet/core/extensions/logging?tabs=command-line#non-host-console-app
@@ -40,6 +45,17 @@ namespace ServerMonitor {
 				} );
 
 			} ).CreateLogger( categoryName );
+
+		/*public static void LogInfo(
+			string message,
+			params object[]? arguments = null,
+			[ CallerFilePath ] string filePath = "",
+			[ CallerMemberName ] string functionName = "",
+			[ CallerLineNumber ] int lineNumber = 0,
+			params object[] arguments
+		) {
+			Console.WriteLine( "({0}:{1} -> {2}) {3}", Path.GetFileName( filePath ), lineNumber, functionName, string.Format( message, arguments ) );
+		}*/
 
 	}
 

@@ -13,6 +13,9 @@ namespace ServerMonitor {
 
 		public static int Main( string[] arguments ) {
 
+			//Logging.LogInfo( "This is an example message" );
+			//Environment.Exit( 1 );
+
 			// Get the directory that the executable DLL/binary is in - https://stackoverflow.com/a/66023223
 			Assembly? executable = Assembly.GetEntryAssembly() ?? throw new Exception( "Failed to get this executable" );
 			string executableDirectory = Path.GetDirectoryName( executable.Location ) ?? throw new Exception( "Failed to get this executable's directory" );
