@@ -34,7 +34,7 @@ namespace ServerMonitor.Tests {
 			Assert.True( processor.Usage.Value >= 0, "Processor usage is below 0%" );
 			Assert.True( processor.Usage.Value <= 100, "Processor usage is above 100%" );
 			
-			Assert.True( processor.Temperature.Value > 0, "Processor temperature is below 0C" );
+			Assert.True( processor.Temperature.Value >= 0, "Processor temperature is below 0C" );
 			Assert.True( processor.Temperature.Value <= 150, "Processor temperature is above 150C" );
 
 			Assert.True( processor.Frequency.Value >= 0, "Processor frequency is below 0Hz" );

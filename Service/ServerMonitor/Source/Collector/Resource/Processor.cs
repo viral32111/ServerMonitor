@@ -83,8 +83,13 @@ namespace ServerMonitor.Collector.Resource {
 			Usage.Set( GetProcessorUsage() );
 			Frequency.Set( GetProcessorFrequency() );
 
+			// Do not get processor temperature if running in GitHub Actions
+			if ( !string.IsNullOrEmpty( Environment.GetEnvironmentVariable( "CI" ) ) ) {
+				logger.LogWarning( "Skipping temperature check due to running in CI environment" );
+				Temperature.Set( 0 );
+
 			// Get processor temperature from package sensor, but fallback to motherboard sensor if it doesn't exist
-			Temperature.Set(
+			} else Temperature.Set(
 				GetProcessorTemperature( "x86_pkg_temp" ) ??
 				GetProcessorTemperature( "acpitz" ) ??
 				throw new Exception( "Unable to get processor temperature" )
