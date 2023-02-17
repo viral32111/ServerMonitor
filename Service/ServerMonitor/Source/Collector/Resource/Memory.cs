@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
@@ -9,7 +10,7 @@ using Prometheus;
 namespace ServerMonitor.Collector.Resource {
 
 	// Encapsulates collecting system memory metrics
-	public class Memory : Resource {
+	public class Memory : Base {
 
 		// Create the logger for this file
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Resource/Memory" );
@@ -33,7 +34,8 @@ namespace ServerMonitor.Collector.Resource {
 			logger.LogInformation( "Initalised Prometheus metrics" );
 		}
 
-		// Updates the metrics for Windows...
+		// Updates the exported Prometheus metrics (for Windows)
+		[ SupportedOSPlatform( "windows" ) ]
 		public override void UpdateOnWindows() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
 
@@ -60,7 +62,8 @@ namespace ServerMonitor.Collector.Resource {
 
 		}
 
-		// Updates the metrics for Linux...
+		// Updates the exported Prometheus metrics (for Linux)
+		[ SupportedOSPlatform( "linux" ) ]
 		public override void UpdateOnLinux() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
 
@@ -110,6 +113,7 @@ namespace ServerMonitor.Collector.Resource {
 		}
 
 		// C++ Windows API structure for GlobalMemoryStatusEx() - https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/ns-sysinfoapi-memorystatusex
+		[ SupportedOSPlatform( "windows" ) ]
 		[ StructLayout( LayoutKind.Sequential, CharSet = CharSet.Auto ) ]
 		private class MEMORYSTATUSEX {
 			public uint dwLength = ( uint ) Marshal.SizeOf( typeof( MEMORYSTATUSEX ) );
@@ -124,6 +128,7 @@ namespace ServerMonitor.Collector.Resource {
 		}
 
 		// C++ Windows API structure for GetPerformanceInfo() - https://learn.microsoft.com/en-us/windows/win32/api/psapi/ns-psapi-performance_information
+		[ SupportedOSPlatform( "windows" ) ]
 		[ StructLayout( LayoutKind.Sequential, CharSet = CharSet.Auto ) ]
 		private class PERFORMANCE_INFORMATION {
 			public uint cb = ( uint ) Marshal.SizeOf( typeof( PERFORMANCE_INFORMATION ) );
@@ -145,11 +150,13 @@ namespace ServerMonitor.Collector.Resource {
 		// C++ Windows API function to get information about system memory - https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-globalmemorystatusex
 		// The PerformanceCounter class is not good enough, it does not return enough detail...
 		[ return: MarshalAs( UnmanagedType.Bool ) ]
+		[ SupportedOSPlatform( "windows" ) ]
 		[ DllImport( "kernel32.dll", CharSet = CharSet.Auto, SetLastError = true ) ]
 		private static extern bool GlobalMemoryStatusEx( [ In, Out ] MEMORYSTATUSEX lpBuffer );
 
 		// The C++ Windows API function to get information about system performance - https://learn.microsoft.com/en-us/windows/win32/api/psapi/nf-psapi-getperformanceinfo
 		[ return: MarshalAs( UnmanagedType.Bool ) ]
+		[ SupportedOSPlatform( "windows" ) ]
 		[ DllImport( "kernel32.dll", CharSet = CharSet.Auto, SetLastError = true ) ]
 		private static extern bool K32GetPerformanceInfo( [ In, Out ] PERFORMANCE_INFORMATION pPerformanceInformation, [ In ] uint cb );
 

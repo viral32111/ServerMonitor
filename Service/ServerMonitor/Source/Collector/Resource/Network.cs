@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Runtime.Versioning;
 using System.Runtime.InteropServices;
 using System.Net.NetworkInformation;
 using Microsoft.Extensions.Logging;
@@ -8,7 +9,7 @@ using Prometheus;
 namespace ServerMonitor.Collector.Resource {
 
 	// Encapsulates collecting system networking metrics
-	public class Network : Resource {
+	public class Network : Base {
 
 		// Create the logger for this file
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Resource/Network" );
@@ -33,6 +34,7 @@ namespace ServerMonitor.Collector.Resource {
 		}
 
 		// Updates the exported Prometheus metrics (for Windows)
+		[ SupportedOSPlatform( "windows" ) ]
 		public override void UpdateOnWindows() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
 
@@ -50,6 +52,7 @@ namespace ServerMonitor.Collector.Resource {
 		}
 
 		// Updates the exported Prometheus metrics (for Linux)
+		[ SupportedOSPlatform( "linux" ) ]
 		public override void UpdateOnLinux() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
 

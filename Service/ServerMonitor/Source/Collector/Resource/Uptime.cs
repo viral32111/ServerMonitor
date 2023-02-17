@@ -1,13 +1,14 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using Microsoft.Extensions.Logging;
 using Prometheus;
 
 namespace ServerMonitor.Collector.Resource {
 
 	// Encapsulates collecting system uptime metrics
-	public class Uptime : Resource {
+	public class Uptime : Base {
 
 		// Create the logger for this file
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Resource/Uptime" );
@@ -22,7 +23,8 @@ namespace ServerMonitor.Collector.Resource {
 			logger.LogInformation( "Initalised Prometheus metrics" );
 		}
 
-		// Updates the metrics for Windows...
+		// Updates the exported Prometheus metrics (for Windows)
+		[ SupportedOSPlatform( "windows" ) ]
 		public override void UpdateOnWindows() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
 
@@ -32,7 +34,8 @@ namespace ServerMonitor.Collector.Resource {
 			logger.LogDebug( "Updated Prometheus metrics" );
 		}
 
-		// Updates the metrics for Linux...
+		// Updates the exported Prometheus metrics (for Linux)
+		[ SupportedOSPlatform( "linux" ) ]
 		public override void UpdateOnLinux() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
 
@@ -57,6 +60,8 @@ namespace ServerMonitor.Collector.Resource {
 		}
 
 		// C++ Windows API function to get the milliseconds elapsed since system startup - https://stackoverflow.com/a/16673001
+		[ return: MarshalAs( UnmanagedType.U8 ) ]
+		[ SupportedOSPlatform( "windows" ) ]
 		[ DllImport( "kernel32.dll", CharSet = CharSet.Auto, SetLastError = true ) ]
 		private extern static UInt64 GetTickCount64();
 

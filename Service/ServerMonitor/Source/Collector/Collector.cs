@@ -25,14 +25,15 @@ namespace ServerMonitor.Collector {
 			server.Start();
 			logger.LogInformation( "Prometheus Metrics server listening on http://{0}:{1}/{2}", configuration.PrometheusListenAddress, configuration.PrometheusListenPort, configuration.PrometheusListenPath );
 
-			Services.List();
-
 			// Create instances of each resource collector
-			/*Memory memory = new( configuration );
+			Memory memory = new( configuration );
 			Processor processor = new( configuration );
 			Uptime uptime = new( configuration );
 			Disk disk = new( configuration );
 			Network network = new( configuration );
+
+			Services services = new( configuration );
+			//services.Update();
 
 			// This is all just for debugging
 			do {
@@ -86,7 +87,7 @@ namespace ServerMonitor.Collector {
 				}
 
 				if ( singleRun == false ) Thread.Sleep( 5000 ); // 5s
-			} while ( singleRun == false );*/
+			} while ( singleRun == false );
 		}
 
 	}

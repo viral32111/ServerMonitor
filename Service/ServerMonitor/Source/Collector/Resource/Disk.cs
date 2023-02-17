@@ -3,22 +3,17 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using Microsoft.Extensions.Logging;
 using Prometheus;
 using Mono.Unix.Native;
 using Microsoft.Win32.SafeHandles;
 using System.ComponentModel;
 
-/*
-using System.Text;
-using System.Management;
-using System.Collections.Generic;
-*/
-
 namespace ServerMonitor.Collector.Resource {
 
 	// Encapsulates collecting system disk metrics
-	public class Disk : Resource {
+	public class Disk : Base {
 
 		// Create the logger for this file
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Resource/Disk" );
@@ -58,6 +53,7 @@ namespace ServerMonitor.Collector.Resource {
 		}
 
 		// Updates the exported Prometheus metrics (for Windows)
+		[ SupportedOSPlatform( "windows" ) ]
 		public override void UpdateOnWindows() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
 
@@ -100,6 +96,7 @@ namespace ServerMonitor.Collector.Resource {
 
 		// https://learn.microsoft.com/en-us/windows/win32/api/winioctl/ns-winioctl-disk_performance
 		// 64-bit signed integer is 8 bytes, 32-bit unsigned integer is 4 bytes, WCHAR (16-bit unsigned integer) is 2 bytes
+		[ SupportedOSPlatform( "windows" ) ]
 		[ StructLayout( LayoutKind.Sequential, CharSet = CharSet.Unicode ) ]
 		private struct DISK_PERFORMANCE {
 			public Int64 BytesRead; // LARGE_INTEGER, 8 bytes
@@ -119,6 +116,7 @@ namespace ServerMonitor.Collector.Resource {
 
 		// https://learn.microsoft.com/en-us/windows/win32/api/ioapiset/nf-ioapiset-deviceiocontrol, https://www.pinvoke.net/default.aspx/kernel32.deviceiocontrol, https://stackoverflow.com/a/17354960
 		[ return: MarshalAs( UnmanagedType.Bool ) ]
+		[ SupportedOSPlatform( "windows" ) ]
 		[ DllImport( "kernel32.dll", CharSet = CharSet.Auto, SetLastError = true ) ]
 		private static extern bool DeviceIoControl(
 			/*
@@ -160,6 +158,7 @@ namespace ServerMonitor.Collector.Resource {
 
 		// https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew, https://www.pinvoke.net/default.aspx/kernel32.CreateFile
 		[ DllImport( "kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true ) ]
+		[ SupportedOSPlatform( "windows" ) ]
 		private static extern SafeFileHandle CreateFileW(
 			[ In, MarshalAs( UnmanagedType.LPWStr ) ] string lpFileName, // LPCWSTR
 			[ In ] UInt32 dwDesiredAccess, // DWORD
@@ -189,6 +188,7 @@ namespace ServerMonitor.Collector.Resource {
 		//private readonly UInt32 IOCTL_DISK_PERFORMANCE = 0x70020;
 
 		// https://stackoverflow.com/a/30451751
+		[ SupportedOSPlatform( "windows" ) ]
 		private ulong[] GetWindowsDrivePerformanceStatistics() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
 
@@ -291,9 +291,8 @@ namespace ServerMonitor.Collector.Resource {
 
 		}
 
-
-
-		/*private void SMART( DriveInfo driveInformation ) {
+		/*[ SupportedOSPlatform( "windows" ) ]
+		private void SMART( DriveInfo driveInformation ) {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
 
 			foreach ( ManagementObject managementObject in new ManagementObjectSearcher( "SELECT * FROM Win32_DiskDrive" ).Get() ) {
@@ -335,6 +334,7 @@ namespace ServerMonitor.Collector.Resource {
 		}*/
 
 		// Updates the exported Prometheus metrics (for Linux)
+		[ SupportedOSPlatform( "linux" ) ]
 		public override void UpdateOnLinux() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
 
@@ -377,6 +377,7 @@ namespace ServerMonitor.Collector.Resource {
 		}
 
 		// Gets a list of drives (for Linux)
+		[ SupportedOSPlatform( "linux" ) ]
 		private string[] GetDrives() => Directory.GetDirectories( "/sys/block/" )
 			.Where( drivePath => Regex.IsMatch( Path.GetFileName( drivePath ), @"^sd[a-z]+$|^nvme\d+n\d+$" ) ) // Name must be a regular or NVMe drive
 			.Where( drivePath => File.Exists( Path.Combine( drivePath, "stat" ) ) ) // Must have I/O statistics
@@ -385,6 +386,7 @@ namespace ServerMonitor.Collector.Resource {
 			.ToArray();
 
 		// Get read & write statistics for a drive (on Linux) - https://www.kernel.org/doc/Documentation/ABI/testing/procfs-diskstats, https://unix.stackexchange.com/a/111993
+		[ SupportedOSPlatform( "linux" ) ]
 		private long[] GetDriveStatistics( string driveName ) => File.ReadAllLines( Path.Combine( "/sys/block", driveName, "stat" ) )
 			.Select( line => line.Split( " ", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries ) ) // Split each line into parts
 			.Select( parts => parts.Select( part => long.Parse( part ) ).ToArray() ) // Convert each part to a number
@@ -392,6 +394,7 @@ namespace ServerMonitor.Collector.Resource {
 			.First();
 
 		// Gets a list of partitions for a drive (on Linux)
+		[ SupportedOSPlatform( "linux" ) ]
 		private string[] GetPartitions( string driveName ) => Directory.GetDirectories( Path.Combine( "/sys/block", driveName ) ) // List pseudo-directory containing block devices
 			.Where( partitionPath => Regex.IsMatch( Path.GetFileName( partitionPath ), @"^sd[a-z]\d+$|^nvme\d+n\d+p\d+$" ) ) // Name must be a regular or NVMe partition
 			.Where( partitionPath => File.Exists( Path.Combine( partitionPath, "partition" ) ) ) // Must be a partition
@@ -400,6 +403,7 @@ namespace ServerMonitor.Collector.Resource {
 			.ToArray();
 
 		// Gets the mapped device name for a partition, if LUKS encrypted (on Linux)
+		[ SupportedOSPlatform( "linux" ) ]
 		private string? GetMappedName( string partitionName ) => Directory.GetDirectories( Path.Combine( "/sys/class/block", partitionName, "holders" ) ) // List pseudo-directory containing holder symlinks
 			.Where( holderPath => Directory.Exists( Path.Combine( holderPath, "slaves", partitionName ) ) ) // Must be a slave to this partition
 			.Where( holderPath => Regex.IsMatch( Path.GetFileName( holderPath ), @"^dm-\d+$" ) ) // Name must be a device mapper
@@ -410,6 +414,7 @@ namespace ServerMonitor.Collector.Resource {
 			.FirstOrDefault(); // Return the first item, or null if none
 
 		// Gets the mount path for a partition, if mounted (on Linux) - https://linux.die.net/man/5/proc
+		[ SupportedOSPlatform( "linux" ) ]
 		private string? GetMountPath( string partitionPath ) => File.ReadAllLines( "/proc/mounts" ) // Read pseudo-file containing mount information
 			.Select( line => line.Split( " ", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries ) ) // Split each line into parts
 			.Where( parts => parts[ 0 ] == partitionPath ) // Only keep lines related to this partition

@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Diagnostics;
+using System.Runtime.Versioning;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
 using Prometheus;
@@ -9,7 +10,7 @@ using Prometheus;
 namespace ServerMonitor.Collector.Resource {
 
 	// Encapsulates collecting system processor metrics
-	public class Processor : Resource {
+	public class Processor : Base {
 
 		// Create the logger for this file
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Resource/Processor" );
@@ -30,7 +31,8 @@ namespace ServerMonitor.Collector.Resource {
 			logger.LogInformation( "Initalised Prometheus metrics" );
 		}
 
-		// Updates the metrics for Windows...
+		// Updates the exported Prometheus metrics (for Windows)
+		[ SupportedOSPlatform( "windows" ) ]
 		public override void UpdateOnWindows() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
 
@@ -47,7 +49,8 @@ namespace ServerMonitor.Collector.Resource {
 
 		}
 
-		// Updates the metrics for Linux...
+		// Updates the exported Prometheus metrics (for Linux)
+		[ SupportedOSPlatform( "linux" ) ]
 		public override void UpdateOnLinux() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
 

@@ -1,10 +1,11 @@
 using System;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 
-namespace ServerMonitor.Collector.Resource {
+namespace ServerMonitor.Collector {
 
-	// Base class for other resource classes
-	public abstract class Resource {
+	// Common base class for all collectors...
+	public class Base {
 
 		// Calls the appropriate update function depending on the operating system...
 		public virtual void Update() {
@@ -13,8 +14,11 @@ namespace ServerMonitor.Collector.Resource {
 			else throw new Exception( "Unsupported operating system" );
 		}
 
-		// Override with code for updating for Windows & Linux respectively...
+		// Override these for updating for Windows & Linux respectively...
+		[ SupportedOSPlatform( "windows" ) ]
 		public virtual void UpdateOnWindows() => throw new InvalidOperationException( "Windows-specific updating is not supported" );
+
+		[ SupportedOSPlatform( "linux" ) ]
 		public virtual void UpdateOnLinux() => throw new InvalidOperationException( "Linux-specific updating is not supported" );
 
 	}

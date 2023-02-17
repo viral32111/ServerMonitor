@@ -13,25 +13,23 @@ using Microsoft.Extensions.Logging;
 using Prometheus;
 
 namespace ServerMonitor.Collector {
-	public static class Services {
+	public class Services : Base {
 
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Services" );
 
-		public static void List() {
-			if ( RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) ListOnWindows();
-			else if ( RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) ListOnLinux();
-			else throw new Exception( "Unsupported operating system" );
+		public Services( Config configuration ) {
+			
 		}
 
 		[ SupportedOSPlatform( "windows" ) ]
-		public static void ListOnWindows() {
+		public override void UpdateOnWindows() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
 
 			throw new NotImplementedException();
 		}
 
 		[ SupportedOSPlatform( "linux" ) ]
-		public static void ListOnLinux() {
+		public override void UpdateOnLinux() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
 
 			string[] systemServiceFileNames = Directory.GetFiles( "/usr/lib/systemd/system", "*.service" )
