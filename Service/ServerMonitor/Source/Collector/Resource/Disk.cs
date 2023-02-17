@@ -115,21 +115,15 @@ namespace ServerMonitor.Collector.Resource {
 			SafeFileHandle deviceHandle = CreateFileW( volumePath, FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE, IntPtr.Zero, OPEN_EXISTING, 0, INVALID_HANDLE_VALUE );
 			if ( deviceHandle.IsInvalid ) throw new Win32Exception( Marshal.GetLastWin32Error() ); // https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes
 
-			// Allocate memory for the output buffer
-			const int outBufferSize = 88; // Cannot be any lower otherwise DeviceIoControl() fails with code 87 (parameter incorrect)
-			IntPtr outBufferPointer = Marshal.AllocHGlobal( outBufferSize );
+			// Expected size of the output buffer, cannot be any lower otherwise DeviceIoControl() fails with code 87 (parameter incorrect)
+			const int outBufferSize = 88;
 
 			// Get disk performance information for this volume
-			bool ioSuccess = DeviceIoControl( deviceHandle, IOCTL_DISK_PERFORMANCE, Array.Empty<byte>(), 0, outBufferPointer, outBufferSize, out UInt32 bytesReturned, IntPtr.Zero );
+			DISK_PERFORMANCE diskPerformance = new();
+			bool ioSuccess = DeviceIoControl( deviceHandle, IOCTL_DISK_PERFORMANCE, Array.Empty<byte>(), 0, diskPerformance, outBufferSize, out UInt32 bytesReturned, IntPtr.Zero );
 			if ( !ioSuccess ) throw new Win32Exception( Marshal.GetLastWin32Error() );
 			if ( bytesReturned != outBufferSize ) throw new Exception( $"DeviceIoControl() returned { bytesReturned } bytes, expected { outBufferSize } bytes" );
 
-			// Marshal the output buffer into the relevant structure
-			DISK_PERFORMANCE diskPerformance = Marshal.PtrToStructure<DISK_PERFORMANCE>( outBufferPointer );
-
-			// Free the previously allocated memory
-			Marshal.FreeHGlobal( outBufferPointer );
-			
 			// Return the total bytes read & written
 			return new[] { diskPerformance.BytesRead, diskPerformance.BytesWritten };
 
@@ -273,7 +267,7 @@ namespace ServerMonitor.Collector.Resource {
 		// 64-bit signed integer is 8 bytes, 32-bit unsigned integer is 4 bytes, WCHAR (16-bit unsigned integer) is 2 bytes
 		[ SupportedOSPlatform( "windows" ) ]
 		[ StructLayout( LayoutKind.Sequential, CharSet = CharSet.Unicode ) ]
-		private struct DISK_PERFORMANCE {
+		private class DISK_PERFORMANCE {
 			[ MarshalAs( UnmanagedType.I8 ) ] public Int64 BytesRead; // LARGE_INTEGER
 			[ MarshalAs( UnmanagedType.I8 ) ] public Int64 BytesWritten; // LARGE_INTEGER
 			[ MarshalAs( UnmanagedType.I8 ) ] public Int64 ReadTime; // LARGE_INTEGER
@@ -310,7 +304,7 @@ namespace ServerMonitor.Collector.Resource {
 			[ In ] UInt32 IoControlCode, // DWORD
 			[ In, Optional ] byte[] InBuffer, // LPVOID
 			[ In ] UInt32 nInBufferSize, // DWORD
-			[ Out, Optional ] IntPtr OutBuffer, // LPVOID
+			[ Out, Optional ] DISK_PERFORMANCE OutBuffer, // LPVOID
 			[ In ] UInt32 nOutBufferSize, // DWORD
 			[ Out, Optional ] out UInt32 pBytesReturned, // LPDVOID
 			[ In, Out, Optional ] IntPtr Overlapped // LPOVERLAPPED

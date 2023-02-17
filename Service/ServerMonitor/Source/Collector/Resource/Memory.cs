@@ -41,7 +41,9 @@ namespace ServerMonitor.Collector.Resource {
 
 			// Call the Windows API functions to populate the structures with raw data - https://stackoverflow.com/a/105109
 			MEMORYSTATUSEX memoryStatus = new();
+			memoryStatus.dwLength = ( UInt32 ) Marshal.SizeOf( memoryStatus );
 			PERFORMANCE_INFORMATION performanceInformation = new();
+			performanceInformation.cb = ( UInt32 ) Marshal.SizeOf( performanceInformation );
 			if ( !GlobalMemoryStatusEx( memoryStatus ) ) throw new Exception( "Failed to get system memory status" );
 			if ( !K32GetPerformanceInfo( performanceInformation, performanceInformation.cb ) ) throw new Exception( "Failed to get system performance information" );
 
@@ -116,35 +118,35 @@ namespace ServerMonitor.Collector.Resource {
 		[ SupportedOSPlatform( "windows" ) ]
 		[ StructLayout( LayoutKind.Sequential, CharSet = CharSet.Auto ) ]
 		private class MEMORYSTATUSEX {
-			public uint dwLength = ( uint ) Marshal.SizeOf( typeof( MEMORYSTATUSEX ) );
-			public uint dwMemoryLoad;
-			public ulong ullTotalPhys;
-			public ulong ullAvailPhys;
-			public ulong ullTotalPageFile;
-			public ulong ullAvailPageFile;
-			public ulong ullTotalVirtual;
-			public ulong ullAvailVirtual;
-			public ulong ullAvailExtendedVirtual;
+			[ MarshalAs( UnmanagedType.U4 ) ] public UInt32 dwLength; // DWORD
+			[ MarshalAs( UnmanagedType.U4 ) ] public UInt32 dwMemoryLoad; // DWORD
+			[ MarshalAs( UnmanagedType.U8 ) ] public UInt64 ullTotalPhys; // DWORDLONG
+			[ MarshalAs( UnmanagedType.U8 ) ] public UInt64 ullAvailPhys; // DWORDLONG
+			[ MarshalAs( UnmanagedType.U8 ) ] public UInt64 ullTotalPageFile; // DWORDLONG
+			[ MarshalAs( UnmanagedType.U8 ) ] public UInt64 ullAvailPageFile; // DWORDLONG
+			[ MarshalAs( UnmanagedType.U8 ) ] public UInt64 ullTotalVirtual; // DWORDLONG
+			[ MarshalAs( UnmanagedType.U8 ) ] public UInt64 ullAvailVirtual; // DWORDLONG
+			[ MarshalAs( UnmanagedType.U8 ) ] public UInt64 ullAvailExtendedVirtual; // DWORDLONG
 		}
 
 		// C++ Windows API structure for GetPerformanceInfo() - https://learn.microsoft.com/en-us/windows/win32/api/psapi/ns-psapi-performance_information
 		[ SupportedOSPlatform( "windows" ) ]
 		[ StructLayout( LayoutKind.Sequential, CharSet = CharSet.Auto ) ]
 		private class PERFORMANCE_INFORMATION {
-			public uint cb = ( uint ) Marshal.SizeOf( typeof( PERFORMANCE_INFORMATION ) );
-			public ulong CommitTotal;
-			public ulong CommitLimit;
-			public ulong CommitPeak;
-			public ulong PhysicalTotal;
-			public ulong PhysicalAvailable;
-			public ulong SystemCache;
-			public ulong KernelTotal;
-			public ulong KernelPaged;
-			public ulong KernelNonpaged;
-			public ulong PageSize;
-			public uint HandleCount;
-			public uint ProcessCount;
-			public uint ThreadCount;
+			[ MarshalAs( UnmanagedType.U4 ) ] public UInt32 cb; // DWORD
+			[ MarshalAs( UnmanagedType.U8 ) ] public UInt64 CommitTotal; // SIZE_T
+			[ MarshalAs( UnmanagedType.U8 ) ] public UInt64 CommitLimit; // SIZE_T
+			[ MarshalAs( UnmanagedType.U8 ) ] public UInt64 CommitPeak; // SIZE_T
+			[ MarshalAs( UnmanagedType.U8 ) ] public UInt64 PhysicalTotal; // SIZE_T
+			[ MarshalAs( UnmanagedType.U8 ) ] public UInt64 PhysicalAvailable; // SIZE_T
+			[ MarshalAs( UnmanagedType.U8 ) ] public UInt64 SystemCache; // SIZE_T
+			[ MarshalAs( UnmanagedType.U8 ) ] public UInt64 KernelTotal; // SIZE_T
+			[ MarshalAs( UnmanagedType.U8 ) ] public UInt64 KernelPaged; // SIZE_T
+			[ MarshalAs( UnmanagedType.U8 ) ] public UInt64 KernelNonpaged; // SIZE_T
+			[ MarshalAs( UnmanagedType.U8 ) ] public UInt64 PageSize; // SIZE_T
+			[ MarshalAs( UnmanagedType.U4 ) ] public UInt32 HandleCount; // DWORD
+			[ MarshalAs( UnmanagedType.U4 ) ] public UInt32 ProcessCount; // DWORD
+			[ MarshalAs( UnmanagedType.U4 ) ] public UInt32 ThreadCount; // DWORD
 		}
 
 		// C++ Windows API function to get information about system memory - https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-globalmemorystatusex
@@ -152,13 +154,18 @@ namespace ServerMonitor.Collector.Resource {
 		[ return: MarshalAs( UnmanagedType.Bool ) ]
 		[ SupportedOSPlatform( "windows" ) ]
 		[ DllImport( "kernel32.dll", CharSet = CharSet.Auto, SetLastError = true ) ]
-		private static extern bool GlobalMemoryStatusEx( [ In, Out ] MEMORYSTATUSEX lpBuffer );
+		private static extern bool GlobalMemoryStatusEx(
+			[ In, Out ] MEMORYSTATUSEX lpBuffer // LPMEMORYSTATUSEX
+		);
 
 		// The C++ Windows API function to get information about system performance - https://learn.microsoft.com/en-us/windows/win32/api/psapi/nf-psapi-getperformanceinfo
 		[ return: MarshalAs( UnmanagedType.Bool ) ]
 		[ SupportedOSPlatform( "windows" ) ]
 		[ DllImport( "kernel32.dll", CharSet = CharSet.Auto, SetLastError = true ) ]
-		private static extern bool K32GetPerformanceInfo( [ In, Out ] PERFORMANCE_INFORMATION pPerformanceInformation, [ In ] uint cb );
+		private static extern bool K32GetPerformanceInfo(
+			[ Out ] PERFORMANCE_INFORMATION pPerformanceInformation,
+			[ In ] UInt32 cb // DWORD
+		);
 
 	}
 

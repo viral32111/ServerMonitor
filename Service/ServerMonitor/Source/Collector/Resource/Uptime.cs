@@ -59,7 +59,7 @@ namespace ServerMonitor.Collector.Resource {
 			}
 		}
 
-		// C++ Windows API function to get the milliseconds elapsed since system startup - https://stackoverflow.com/a/16673001
+		// C++ Windows API function to get the milliseconds elapsed since system startup - https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-gettickcount64, https://stackoverflow.com/a/16673001
 		[ return: MarshalAs( UnmanagedType.U8 ) ]
 		[ SupportedOSPlatform( "windows" ) ]
 		[ DllImport( "kernel32.dll", CharSet = CharSet.Auto, SetLastError = true ) ]
