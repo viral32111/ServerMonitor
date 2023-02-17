@@ -79,16 +79,16 @@ namespace ServerMonitor.Collector.Resource {
 		public override void UpdateOnLinux() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
 
-			// Get processor usage
-			double processorUsage = GetProcessorUsage();
-			Usage.Set( processorUsage );
+			// Get processor usage & frequency
+			Usage.Set( GetProcessorUsage() );
+			Frequency.Set( GetProcessorFrequency() );
 
-			// TODO: Temperature
-			Temperature.Set( 0 );
-
-			// Get processor frequency
-			double processorFrequency = GetProcessorFrequency();
-			Frequency.Set( processorFrequency );
+			// Get processor temperature from package sensor, but fallback to motherboard sensor if it doesn't exist
+			Temperature.Set(
+				GetProcessorTemperature( "x86_pkg_temp" ) ??
+				GetProcessorTemperature( "acpitz" ) ??
+				throw new Exception( "Unable to get processor temperature" )
+			);
 
 			logger.LogDebug( "Updated Prometheus metrics" );
 
@@ -103,7 +103,7 @@ namespace ServerMonitor.Collector.Resource {
 			.Select( values => values.Select( part => int.Parse( part ) ).ToArray() ) // Convert the values to integers
 			.First(); // Get the first array
 
-		// Gets the processor usage percentage (for Linux)
+		// Gets the processor usage, as a percentage (for Linux)
 		[ SupportedOSPlatform( "linux" ) ]
 		private double GetProcessorUsage() {
 
@@ -126,13 +126,24 @@ namespace ServerMonitor.Collector.Resource {
 			return ( 1000 * ( totalTimeDifference - idleTimeDifference ) / totalTimeDifference + 5 ) / 10.0;
 		}
 
-		// Gets the average processor frequency across all cores in MHz (for Linux)
+		// Gets the average processor frequency across all cores, in MHz (for Linux)
 		[ SupportedOSPlatform( "linux" ) ]
 		private double GetProcessorFrequency() => File.ReadAllLines( "/proc/cpuinfo" ) // Read the psuedo-file for processor information - https://linux.die.net/man/5/proc
 			.Where( line => !string.IsNullOrWhiteSpace( line ) ) // Skip empty lines
 			.Select( line => line.Split( ":", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries ) ) // Split the line up into key & value pairs
 			.Where( parts => parts[ 0 ] == "cpu MHz" ) // Skip anything that isn't relevant
 			.Average( parts => double.Parse( parts[ 1 ] ) ); // Calculate the average frequency
+
+		// Gets the processor temperature in degrees celsius (for Linux)
+		[ SupportedOSPlatform( "linux" ) ]
+		private double? GetProcessorTemperature( string sensorType ) => Directory.GetDirectories( "/sys/class/thermal/", "thermal_zone*" ) // Get all thermal zones
+			.Where( directoryPath => File.Exists( Path.Combine( directoryPath, "type" ) ) ) // The zone must have a type
+			.Where( directoryPath => File.ReadAllLines( Path.Combine( directoryPath, "type" ) )[ 0 ] == sensorType ) // acpitz is the motherboard sensor, x86_pkg_temp is the CPU sensor
+			.Where( directoryPath => File.Exists( Path.Combine( directoryPath, "temp" ) ) ) // The zone must have a temperature
+			.Select( directoryPath => File.ReadAllLines( Path.Combine( directoryPath, "temp" ) )[ 0 ] ) // Get the temperature value
+			.Select( temperatureValue => double.Parse( temperatureValue ) / 1000.0 ) // Convert the temperature to degrees celsius
+			.Select<double, double?>( temperature => temperature > 0 ? temperature : null ) // If the temperature is 0 or below, it's likely invalid
+			.FirstOrDefault(); // Return the value, or null if the sensor wasn't found
 
 	}
 
