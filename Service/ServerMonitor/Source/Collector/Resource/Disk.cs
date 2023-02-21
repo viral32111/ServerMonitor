@@ -210,7 +210,7 @@ namespace ServerMonitor.Collector.Resource {
 				}
 
 				// TODO: S.M.A.R.T health
-				Health.Set( -1 );
+				Health.WithLabels( driveName ).Set( -1 );
 
 			}
 
