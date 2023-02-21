@@ -10,7 +10,15 @@ namespace ServerMonitor.Tests {
 			PrometheusListenAddress = "127.0.0.1",
 			PrometheusListenPort = 5000,
 			PrometheusListenPath = "metrics",
-			PrometheusMetricsPrefix = "server_monitor"
+			PrometheusMetricsPrefix = "server_monitor",
+			CollectProcessorMetrics = true,
+			CollectMemoryMetrics = true,
+			CollectDiskMetrics = true,
+			CollectNetworkMetrics = true,
+			CollectUptimeMetrics = true,
+			CollectPowerMetrics = false,
+			CollectFanMetrics = false,
+			CollectServiceMetrics = true
 		};
 
 		[ Fact ]

@@ -82,6 +82,16 @@ namespace ServerMonitor {
 		public required string PrometheusListenPath { get; set; } = "/metrics";
 		public required string PrometheusMetricsPrefix { get; set; } = "server_monitor";
 
+		// Enable/disable individual collectors
+		public required bool CollectProcessorMetrics { get; set; } = true;
+		public required bool CollectMemoryMetrics { get; set; } = true;
+		public required bool CollectDiskMetrics { get; set; } = true;
+		public required bool CollectNetworkMetrics { get; set; } = true;
+		public required bool CollectUptimeMetrics { get; set; } = true;
+		public required bool CollectPowerMetrics { get; set; } = false;
+		public required bool CollectFanMetrics { get; set; } = false;
+		public required bool CollectServiceMetrics { get; set; } = true;
+
 	}
 
 }

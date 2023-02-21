@@ -1,5 +1,13 @@
 {
 	"PrometheusListenAddress": "127.0.0.1",
 	"PrometheusListenPort": 5000,
-	"PrometheusListenPath": "metrics/"
+	"PrometheusListenPath": "metrics/",
+	"CollectProcessorMetrics": true,
+	"CollectMemoryMetrics": true,
+	"CollectDiskMetrics": true,
+	"CollectNetworkMetrics": true,
+	"CollectUptimeMetrics": true,
+	"CollectPowerMetrics": false,
+	"CollectFansMetrics": false,
+	"CollectServiceMetrics": true
 }
