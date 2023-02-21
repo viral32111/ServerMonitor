@@ -43,13 +43,25 @@ namespace ServerMonitor.Collector {
 			logger.LogDebug( "System Services: {0}", systemServiceFileNames.Length );
 			foreach (string serviceFileName in systemServiceFileNames) {
 				Dictionary<string, Dictionary<string, string>> serviceFileData = ParseServiceFile( "/usr/lib/systemd/system/" + serviceFileName + ".service" );
-				logger.LogDebug( " - {0}: {0}", serviceFileName, serviceFileData[ "Unit" ][ "Description" ] );
+				if ( !serviceFileData.ContainsKey( "Unit" ) ) {
+					logger.LogWarning( " - {0}: No Unit section", serviceFileName );
+				} else if ( !serviceFileData[ "Unit" ].ContainsKey( "Description" ) ) {
+					logger.LogWarning( " - {0}: No Description key in Unit section", serviceFileName );
+				} else {
+					logger.LogDebug( " - {0}: {0}", serviceFileName, serviceFileData[ "Unit" ][ "Description" ] );
+				}
 			}
 
 			logger.LogDebug( "User Services: {0}", userServiceFileNames.Length );
 			foreach (string serviceFileName in userServiceFileNames) {
 				Dictionary<string, Dictionary<string, string>> serviceFileData = ParseServiceFile( "/usr/lib/systemd/user/" + serviceFileName + ".service" );
-				logger.LogDebug( " - {0}: {0}", serviceFileName, serviceFileData[ "Unit" ][ "Description" ] );
+				if ( !serviceFileData.ContainsKey( "Unit" ) ) {
+					logger.LogWarning( " - {0}: No Unit section", serviceFileName );
+				} else if ( !serviceFileData[ "Unit" ].ContainsKey( "Description" ) ) {
+					logger.LogWarning( " - {0}: No Description key in Unit section", serviceFileName );
+				} else {
+					logger.LogDebug( " - {0}: {0}", serviceFileName, serviceFileData[ "Unit" ][ "Description" ] );
+				}
 			}
 		}
 
