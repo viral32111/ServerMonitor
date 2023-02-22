@@ -25,7 +25,11 @@ namespace ServerMonitor.Collector {
 		public override void UpdateOnWindows() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
 
-			throw new NotImplementedException();
+			ServiceController[] services = ServiceController.GetServices();
+			logger.LogDebug( "Services: {0}", services.Length );
+			foreach ( ServiceController service in services ) {
+				logger.LogDebug( " - {0} ({1}): {2}", service.ServiceName, service.DisplayName, service.Status );
+			}
 		}
 
 		[ SupportedOSPlatform( "linux" ) ]
