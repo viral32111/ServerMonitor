@@ -97,62 +97,67 @@ namespace ServerMonitor.Collector {
 		public override void UpdateOnLinux() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
 
-			string[] systemServiceFileNames = Directory.GetFiles( "/usr/lib/systemd/system", "*.service" )
-				.Select( servicePath => Path.GetFileNameWithoutExtension( servicePath ) )
-				.ToArray();
+			// Loop through all system services...
+			foreach ( string serviceName in GetServiceNames( "system" ) ) {
+				Dictionary<string, Dictionary<string, string>> serviceInformation = ParseServiceFile( "system", serviceName );
 
-			string[] userServiceFileNames = Directory.GetFiles( "/usr/lib/systemd/user", "*.service" )
-				.Select( servicePath => Path.GetFileNameWithoutExtension( servicePath ) )
-				.ToArray();
+				string description = serviceInformation?[ "Unit" ]?[ "Description" ] ?? "";
 
-			logger.LogDebug( "System Services: {0}", systemServiceFileNames.Length );
-			foreach (string serviceFileName in systemServiceFileNames) {
-				Dictionary<string, Dictionary<string, string>> serviceFileData = ParseServiceFile( "/usr/lib/systemd/system/" + serviceFileName + ".service" );
-				if ( !serviceFileData.ContainsKey( "Unit" ) ) {
-					logger.LogWarning( " - {0}: No Unit section", serviceFileName );
-				} else if ( !serviceFileData[ "Unit" ].ContainsKey( "Description" ) ) {
-					logger.LogWarning( " - {0}: No Description key in Unit section", serviceFileName );
-				} else {
-					logger.LogDebug( " - {0}: {0}", serviceFileName, serviceFileData[ "Unit" ][ "Description" ] );
-				}
+				// Update the exported Prometheus metrics
+				// NOTE: Linux has no display names, so we use the service name for both
+				StatusCode.WithLabels( serviceName, serviceName, description ).Set( 0 ); // TODO
+				ExitCode.WithLabels( serviceName, serviceName, description ).Set( 0 ); // TODO
+				UptimeSeconds.WithLabels( serviceName, serviceName, description ).IncTo( 0 ); // TODO
 			}
 
-			logger.LogDebug( "User Services: {0}", userServiceFileNames.Length );
-			foreach (string serviceFileName in userServiceFileNames) {
-				Dictionary<string, Dictionary<string, string>> serviceFileData = ParseServiceFile( "/usr/lib/systemd/user/" + serviceFileName + ".service" );
-				if ( !serviceFileData.ContainsKey( "Unit" ) ) {
-					logger.LogWarning( " - {0}: No Unit section", serviceFileName );
-				} else if ( !serviceFileData[ "Unit" ].ContainsKey( "Description" ) ) {
-					logger.LogWarning( " - {0}: No Description key in Unit section", serviceFileName );
-				} else {
-					logger.LogDebug( " - {0}: {0}", serviceFileName, serviceFileData[ "Unit" ][ "Description" ] );
-				}
+			// Loop through all user services...
+			foreach ( string serviceName in GetServiceNames( "user" ) ) {
+				Dictionary<string, Dictionary<string, string>> serviceInformation = ParseServiceFile( "user", serviceName );
+
+				string description = serviceInformation?[ "Unit" ]?[ "Description" ] ?? "";
+
+				// Update the exported Prometheus metrics
+				// NOTE: Linux has no display names, so we use the service name for both
+				StatusCode.WithLabels( serviceName, serviceName, description ).Set( 0 ); // TODO
+				ExitCode.WithLabels( serviceName, serviceName, description ).Set( 0 ); // TODO
+				UptimeSeconds.WithLabels( serviceName, serviceName, description ).IncTo( 0 ); // TODO
 			}
+
+			logger.LogDebug( "Updated Prometheus metrics" );
 		}
+
+		// Gets a list of systemd service names (for Linux)
+		[ SupportedOSPlatform( "linux" ) ]
+		private static string[] GetServiceNames( string systemOrUser ) => Directory.GetFiles( Path.Combine( "/usr/lib/systemd/", systemOrUser ), "*.service" )
+			.Select( servicePath => Path.GetFileNameWithoutExtension( servicePath ) )
+			.ToArray();
 
 		// Parses a systemd service file (for Linux)
 		[ SupportedOSPlatform( "linux" ) ]
-		private static Dictionary<string, Dictionary<string, string>> ParseServiceFile( string filePath ) {
+		private static Dictionary<string, Dictionary<string, string>> ParseServiceFile( string systemOrUser, string serviceName ) {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
 
-			string[] fileLines = File.ReadAllLines( filePath )
+			// Read the service file
+			string[] fileLines = File.ReadAllLines( Path.Combine( "/usr/lib/systemd/", systemOrUser, string.Concat( serviceName, ".service" ) ) )
 				.Where( line => !string.IsNullOrWhiteSpace( line ) ) // Skip empty lines
 				.Where( line => !line.StartsWith( "#" ) ) // Skip comments
 				.ToArray();
 
+			// Create a dictionary to store all the properties
 			Dictionary<string, Dictionary<string, string>> serviceProperties = new();
 
+			// Loop through each line...
 			string sectionName = "";
 			foreach ( string fileLine in fileLines ) {
 
-				// Match the line
+				// The line will either be a new section or a property, similar to INI files
 				Match sectionMatch = Regex.Match( fileLine, @"^\[(.+)\]$" );
 				Match propertyMatch = Regex.Match( fileLine, @"^([^=]+)\s?=\s?(.*)$" );
 
-				// Update the section name
+				// Update the section name, if we have a new section
 				if ( sectionMatch.Success ) sectionName = sectionMatch.Groups[ 1 ].Value.Trim();
 
-				// Parse the property
+				// Parse the property, if we have a property
 				else if ( propertyMatch.Success ) {
 					string propertyName = propertyMatch.Groups[ 1 ].Value.Trim();
 					string propertyValue = propertyMatch.Groups[ 2 ].Value.Trim();
@@ -162,12 +167,9 @@ namespace ServerMonitor.Collector {
 					}
 
 					serviceProperties[ sectionName ][ propertyName ] = propertyValue;
-					//logger.LogTrace( "[{0}] {1} = {2}", sectionName, propertyName, propertyValue );
 
-				// Unknown?
-				} else {
-					logger.LogWarning( "Unrecognised service file line: '{0}'", fileLine );
-				}
+				// Unrecognised line
+				} else logger.LogWarning( "Unrecognised service file line: '{0}'", fileLine );
 			}
 
 			return serviceProperties;
