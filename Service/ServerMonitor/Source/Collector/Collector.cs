@@ -1,5 +1,7 @@
 using System;
 using System.Threading;
+using System.ServiceProcess;
+using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging; // https://learn.microsoft.com/en-us/dotnet/core/extensions/console-log-formatter
 using Prometheus; // https://github.com/prometheus-net/prometheus-net
 using ServerMonitor.Collector.Resource;
@@ -35,13 +37,21 @@ namespace ServerMonitor.Collector {
 			Services services = new( configuration );
 			if ( configuration.CollectServiceMetrics == true ) {
 				services.Update();
-				foreach ( string[] labelValues in services.Status.GetAllLabelValues() ) {
+				foreach ( string[] labelValues in services.StatusCode.GetAllLabelValues() ) {
 					string service = labelValues[ 0 ];
 					string name = labelValues[ 1 ];
 					string description = labelValues[ 2 ];
-					bool status = services.Status.WithLabels( service, name, description ).Value == 1;
 
-					logger.LogInformation( "Service '{0}' ({1}, {2}): {3}", service, name, description, services.Status.WithLabels( service, name, description ).Value );
+					double statusCode = services.StatusCode.WithLabels( service, name, description ).Value;
+					double exitCode = services.ExitCode.WithLabels( service, name, description ).Value;
+					double uptimeSeconds = services.UptimeSeconds.WithLabels( service, name, description ).Value;
+
+					string statusText = RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ? Enum.Parse<ServiceControllerStatus>( statusCode.ToString() ).ToString() : "N/A";
+
+					logger.LogInformation( "---- Service '{0}' ({1}, {2}) ----", service, name, description );
+					logger.LogInformation( "Status Code: {0} ({1})", statusCode );
+					logger.LogInformation( "Exit Code: {0}", exitCode );
+					logger.LogInformation( "Uptime: {0} seconds", uptimeSeconds );
 				}
 			}
 

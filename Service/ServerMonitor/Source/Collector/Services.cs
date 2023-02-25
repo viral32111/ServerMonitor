@@ -19,18 +19,22 @@ namespace ServerMonitor.Collector {
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Services" );
 
 		// Holds the exported Prometheus metrics
-		public readonly Gauge Status;
+		public readonly Gauge StatusCode;
+		public readonly Gauge ExitCode;
 		public readonly Counter UptimeSeconds;
 
 		public Services( Config configuration ) {
-			Status = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_service_status", "Service status", new GaugeConfiguration {
+			StatusCode = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_service_code_status", "Service status code", new GaugeConfiguration {
+				LabelNames = new[] { "service", "name", "description" }
+			} );
+			ExitCode = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_service_code_exit", "Service exit code", new GaugeConfiguration {
 				LabelNames = new[] { "service", "name", "description" }
 			} );
 			UptimeSeconds = Metrics.CreateCounter( $"{ configuration.PrometheusMetricsPrefix }_service_uptime_seconds", "Service uptime, in seconds", new CounterConfiguration {
 				LabelNames = new[] { "service", "name", "description" }
 			} );
 
-			Status.Set( 0 );
+			StatusCode.Set( 0 );
 			UptimeSeconds.IncTo( 0 );
 
 			logger.LogInformation( "Initalised Prometheus metrics" );
@@ -40,15 +44,27 @@ namespace ServerMonitor.Collector {
 		public override void UpdateOnWindows() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
 
-			ServiceController[] services = ServiceController.GetServices();
-			foreach ( ServiceController service in services ) {
+			// Loop through all non-driver services - https://learn.microsoft.com/en-us/dotnet/api/system.serviceprocess.servicecontroller?view=dotnet-plat-ext-7.0
+			foreach ( ServiceController service in ServiceController.GetServices() ) {
 
-				// https://stackoverflow.com/a/989866
+				// Get other information about this service, if it has one - https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-service, https://stackoverflow.com/a/989866, https://stackoverflow.com/a/1574184
 				ManagementObject managementObject = new( $"Win32_Service.Name='{ service.ServiceName }'" );
 				string description = managementObject[ "Description" ]?.ToString() ?? "";
+				if ( int.TryParse( managementObject[ "ProcessId" ].ToString(), out int processId ) == false ) throw new Exception( "Service has no process ID" );
+				if ( int.TryParse( managementObject[ "ExitCode" ].ToString(), out int exitCode ) == false ) throw new Exception( "Service has no exit code" );
 
-				Status.WithLabels( service.ServiceName, service.DisplayName, description ).Set( ( int ) service.Status );
+				// Get the uptime of the process for this service
+				Process process = Process.GetProcessById( processId );
+				if ( process == null ) throw new Exception( "Service has no process" );
+				double uptimeSeconds = ( DateTime.Now - process.StartTime ).TotalSeconds;
+
+				// Update the exported Prometheus metrics
+				StatusCode.WithLabels( service.ServiceName, service.DisplayName, description ).Set( ( int ) service.Status );
+				ExitCode.WithLabels( service.ServiceName, service.DisplayName, description ).Set( exitCode );
+				UptimeSeconds.WithLabels( service.ServiceName, service.DisplayName, description ).IncTo( uptimeSeconds );
 			}
+
+			logger.LogDebug( "Updated Prometheus metrics" );
 		}
 
 		[ SupportedOSPlatform( "linux" ) ]
