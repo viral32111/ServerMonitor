@@ -3,13 +3,12 @@ using System.Linq;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.IO;
-using System.Net;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.ServiceProcess;
 using System.Management;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
+using System.ComponentModel;
 using Microsoft.Extensions.Logging;
 using Prometheus;
 
@@ -23,6 +22,7 @@ namespace ServerMonitor.Collector {
 		public readonly Gauge ExitCode;
 		public readonly Counter UptimeSeconds;
 
+		// Initialise the exported Prometheus metrics
 		public Services( Config configuration ) {
 			StatusCode = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_service_code_status", "Service status code", new GaugeConfiguration {
 				LabelNames = new[] { "service", "name", "description" }
@@ -40,6 +40,7 @@ namespace ServerMonitor.Collector {
 			logger.LogInformation( "Initalised Prometheus metrics" );
 		}
 
+		// Updates the exported Prometheus metrics (for Windows)
 		[ SupportedOSPlatform( "windows" ) ]
 		public override void UpdateOnWindows() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
@@ -48,15 +49,21 @@ namespace ServerMonitor.Collector {
 			foreach ( ServiceController service in ServiceController.GetServices() ) {
 
 				// Get other information about this service, if it has one - https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-service, https://stackoverflow.com/a/989866, https://stackoverflow.com/a/1574184
-				ManagementObject managementObject = new( $"Win32_Service.Name='{ service.ServiceName }'" );
-				string description = managementObject[ "Description" ]?.ToString() ?? "";
-				if ( int.TryParse( managementObject[ "ProcessId" ].ToString(), out int processId ) == false ) throw new Exception( "Service has no process ID" );
-				if ( int.TryParse( managementObject[ "ExitCode" ].ToString(), out int exitCode ) == false ) throw new Exception( "Service has no exit code" );
+				ManagementObject serviceManagementObject = new( $"Win32_Service.Name='{ service.ServiceName }'" );
+				string description = serviceManagementObject[ "Description" ]?.ToString() ?? "";
+				if ( int.TryParse( serviceManagementObject[ "ProcessId" ]?.ToString(), out int processId ) == false ) {
+					logger.LogWarning( "Service {0} has no process ID", service.ServiceName );
+					continue;
+				}
+				if ( int.TryParse( serviceManagementObject[ "ExitCode" ]?.ToString(), out int exitCode ) == false ) {
+					logger.LogWarning( "Service {0} has no exit code", service.ServiceName );
+					continue;
+				}
 
 				// Get the uptime of the process for this service
 				Process process = Process.GetProcessById( processId );
 				if ( process == null ) throw new Exception( "Service has no process" );
-				double uptimeSeconds = ( DateTime.Now - process.StartTime ).TotalSeconds;
+				double uptimeSeconds = GetProcessUptime( process );
 
 				// Update the exported Prometheus metrics
 				StatusCode.WithLabels( service.ServiceName, service.DisplayName, description ).Set( ( int ) service.Status );
@@ -67,6 +74,25 @@ namespace ServerMonitor.Collector {
 			logger.LogDebug( "Updated Prometheus metrics" );
 		}
 
+		// Gets the uptime of a process, in seconds (for Windows)
+		[ SupportedOSPlatform( "windows" ) ]
+		private double GetProcessUptime( Process process ) {
+			// First try using the start time property...
+			try {
+				return ( DateTime.Now - process.StartTime ).TotalSeconds;
+
+			// Sometimes we get access denied, so fallback to searching the WMI - https://stackoverflow.com/a/31792
+			} catch ( Win32Exception ) {
+				foreach ( ManagementObject processManagementObject in new ManagementObjectSearcher( "root/CIMV2", "SELECT * FROM Win32_Process WHERE ProcessId = " + process.Id ).Get() ) {
+					string creationDateText = processManagementObject[ "CreationDate" ].ToString() ?? throw new Exception( "Service has no creation date" );
+					return ( DateTime.Now - ManagementDateTimeConverter.ToDateTime( creationDateText ) ).TotalSeconds;
+				}
+			}
+
+			throw new Exception( "Service has no uptime" );
+		}
+
+		// Updates the exported Prometheus metrics (for Linux)
 		[ SupportedOSPlatform( "linux" ) ]
 		public override void UpdateOnLinux() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
@@ -104,6 +130,8 @@ namespace ServerMonitor.Collector {
 			}
 		}
 
+		// Parses a systemd service file (for Linux)
+		[ SupportedOSPlatform( "linux" ) ]
 		private static Dictionary<string, Dictionary<string, string>> ParseServiceFile( string filePath ) {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
 

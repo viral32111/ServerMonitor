@@ -2,7 +2,9 @@ using System;
 using System.Threading;
 using System.ServiceProcess;
 using System.Runtime.InteropServices;
+using System.Security.Principal;
 using Microsoft.Extensions.Logging; // https://learn.microsoft.com/en-us/dotnet/core/extensions/console-log-formatter
+using Mono.Unix.Native; // https://github.com/mono/mono.posix
 using Prometheus; // https://github.com/prometheus-net/prometheus-net
 using ServerMonitor.Collector.Resource;
 
@@ -16,6 +18,12 @@ namespace ServerMonitor.Collector {
 		// Entry-point for the "collector" sub-command...
 		public static void HandleCommand( Config configuration, bool singleRun ) {
 			logger.LogInformation( "Launched in collector mode" );
+
+			// Fail if we're not running as administrator/root
+			/*if ( IsRunningAsAdmin() == false ) {
+				logger.LogError( "This program must be run as administrator/root" );
+				Environment.Exit( 1 );
+			}*/
 
 			// Start the Prometheus metrics server
 			MetricServer server = new(
@@ -34,7 +42,10 @@ namespace ServerMonitor.Collector {
 			Disk disk = new( configuration );
 			Network network = new( configuration );
 
+			// Create an instance of the service collector
 			Services services = new( configuration );
+
+			// This is just for debugging...
 			if ( configuration.CollectServiceMetrics == true ) {
 				services.Update();
 				foreach ( string[] labelValues in services.StatusCode.GetAllLabelValues() ) {
@@ -46,10 +57,11 @@ namespace ServerMonitor.Collector {
 					double exitCode = services.ExitCode.WithLabels( service, name, description ).Value;
 					double uptimeSeconds = services.UptimeSeconds.WithLabels( service, name, description ).Value;
 
+					// This will be done by the app itself...
 					string statusText = RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ? Enum.Parse<ServiceControllerStatus>( statusCode.ToString() ).ToString() : "N/A";
 
 					logger.LogInformation( "---- Service '{0}' ({1}, {2}) ----", service, name, description );
-					logger.LogInformation( "Status Code: {0} ({1})", statusCode );
+					logger.LogInformation( "Status Code: {0} ({1})", statusCode, statusText );
 					logger.LogInformation( "Exit Code: {0}", exitCode );
 					logger.LogInformation( "Uptime: {0} seconds", uptimeSeconds );
 				}
@@ -120,6 +132,21 @@ namespace ServerMonitor.Collector {
 
 				if ( singleRun == false ) Thread.Sleep( 5000 ); // 5s
 			} while ( singleRun == false );
+		}
+
+		// Checks if this application is running as administrator/root, which is required for some of the metrics we're collecting
+		private static bool IsRunningAsAdmin() {
+			// Windows - https://stackoverflow.com/a/11660205
+			if ( RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) {
+				WindowsIdentity identity = WindowsIdentity.GetCurrent();
+				WindowsPrincipal principal = new WindowsPrincipal( identity );
+				return principal.IsInRole( WindowsBuiltInRole.Administrator );
+
+			// Linux - https://github.com/dotnet/runtime/issues/25118#issuecomment-367407469
+			} else if ( RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) {
+				return Syscall.getuid() == 0;
+
+			} else throw new PlatformNotSupportedException( "This platform is not supported." );
 		}
 
 	}
