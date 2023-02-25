@@ -7,6 +7,7 @@ using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.ServiceProcess;
+using System.Management;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using Microsoft.Extensions.Logging;
@@ -17,8 +18,22 @@ namespace ServerMonitor.Collector {
 
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Services" );
 
+		// Holds the exported Prometheus metrics
+		public readonly Gauge Status;
+		public readonly Counter UptimeSeconds;
+
 		public Services( Config configuration ) {
-			
+			Status = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_service_status", "Service status", new GaugeConfiguration {
+				LabelNames = new[] { "service", "name", "description" }
+			} );
+			UptimeSeconds = Metrics.CreateCounter( $"{ configuration.PrometheusMetricsPrefix }_service_uptime_seconds", "Service uptime, in seconds", new CounterConfiguration {
+				LabelNames = new[] { "service", "name", "description" }
+			} );
+
+			Status.Set( 0 );
+			UptimeSeconds.IncTo( 0 );
+
+			logger.LogInformation( "Initalised Prometheus metrics" );
 		}
 
 		[ SupportedOSPlatform( "windows" ) ]
@@ -26,9 +41,13 @@ namespace ServerMonitor.Collector {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
 
 			ServiceController[] services = ServiceController.GetServices();
-			logger.LogDebug( "Services: {0}", services.Length );
 			foreach ( ServiceController service in services ) {
-				logger.LogDebug( " - {0} ({1}): {2}", service.ServiceName, service.DisplayName, service.Status );
+
+				// https://stackoverflow.com/a/989866
+				ManagementObject managementObject = new( $"Win32_Service.Name='{ service.ServiceName }'" );
+				string description = managementObject[ "Description" ]?.ToString() ?? "";
+
+				Status.WithLabels( service.ServiceName, service.DisplayName, description ).Set( ( int ) service.Status );
 			}
 		}
 

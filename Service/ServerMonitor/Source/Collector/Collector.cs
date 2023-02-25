@@ -33,7 +33,17 @@ namespace ServerMonitor.Collector {
 			Network network = new( configuration );
 
 			Services services = new( configuration );
-			if ( configuration.CollectServiceMetrics == true ) services.Update();
+			if ( configuration.CollectServiceMetrics == true ) {
+				services.Update();
+				foreach ( string[] labelValues in services.Status.GetAllLabelValues() ) {
+					string service = labelValues[ 0 ];
+					string name = labelValues[ 1 ];
+					string description = labelValues[ 2 ];
+					bool status = services.Status.WithLabels( service, name, description ).Value == 1;
+
+					logger.LogInformation( "Service '{0}' ({1}, {2}): {3}", service, name, description, services.Status.WithLabels( service, name, description ).Value );
+				}
+			}
 
 			// This is all just for debugging
 			do {
