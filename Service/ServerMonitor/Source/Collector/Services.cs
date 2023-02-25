@@ -101,7 +101,15 @@ namespace ServerMonitor.Collector {
 			foreach ( string serviceName in GetServiceNames( "system" ) ) {
 				Dictionary<string, Dictionary<string, string>> serviceInformation = ParseServiceFile( "system", serviceName );
 
-				string description = serviceInformation?[ "Unit" ]?[ "Description" ] ?? "";
+				// Try to get the description of this service from the unit section
+				if ( serviceInformation.TryGetValue( "Unit", out Dictionary<string, string>? unitSection ) == false || unitSection == null ) {
+					logger.LogWarning( "Service {0} has no unit section", serviceName );
+					continue;
+				};
+				if ( unitSection.TryGetValue( "Description", out string? description ) == false || description == null ) {
+					logger.LogWarning( "Service {0} has no description", serviceName );
+					continue;
+				}
 
 				// Update the exported Prometheus metrics
 				// NOTE: Linux has no display names, so we use the service name for both
@@ -114,7 +122,15 @@ namespace ServerMonitor.Collector {
 			foreach ( string serviceName in GetServiceNames( "user" ) ) {
 				Dictionary<string, Dictionary<string, string>> serviceInformation = ParseServiceFile( "user", serviceName );
 
-				string description = serviceInformation?[ "Unit" ]?[ "Description" ] ?? "";
+				// Try to get the description of this service from the unit section
+				if ( serviceInformation.TryGetValue( "Unit", out Dictionary<string, string>? unitSection ) == false || unitSection == null ) {
+					logger.LogWarning( "Service {0} has no unit section", serviceName );
+					continue;
+				};
+				if ( unitSection.TryGetValue( "Description", out string? description ) == false || description == null ) {
+					logger.LogWarning( "Service {0} has no description", serviceName );
+					continue;
+				}
 
 				// Update the exported Prometheus metrics
 				// NOTE: Linux has no display names, so we use the service name for both
