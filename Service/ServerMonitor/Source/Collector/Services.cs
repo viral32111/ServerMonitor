@@ -97,55 +97,57 @@ namespace ServerMonitor.Collector {
 		public override void UpdateOnLinux() {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
 
-			// Loop through all system services...
-			foreach ( string serviceName in GetServiceNames( "system" ) ) {
-				
-				// Skip template services?
-				if ( serviceName.EndsWith( "@" ) ) {
-					//logger.LogWarning( "Service '{0}' is a template? Skipping...", serviceName );
-					continue;
-				}
+			// Update the metrics for both system & user services
+			UpdateServicesMetrics( "system" );
+			UpdateServicesMetrics( "user" );
+			logger.LogDebug( "Updated Prometheus metrics" );
+		}
+
+		// Updates the metrics for all systemd services in a group (for Linux)
+		[ SupportedOSPlatform( "linux" ) ]
+		private void UpdateServicesMetrics( string systemOrUser ) {
+
+			// Read the system uptime from the uptime file, for calculating process uptime
+			long systemUptimeSeconds = File.ReadAllLines( "/proc/uptime" )
+				.First() // Only the first line
+				.Split( " ", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries ) // Split into parts
+				.Select( linePart => ( long ) Math.Round( double.Parse( linePart ), 0 ) ) // Convert part to rounded number
+				.First(); // Get the first part (the system uptime)
+
+			// Loop through all services...
+			foreach ( string serviceName in GetServiceNames( systemOrUser ) ) {
 
 				// Get information & live data about this service
-				Dictionary<string, Dictionary<string, string>> serviceInformation = ParseServiceFile( "system", serviceName );
+				Dictionary<string, Dictionary<string, string>> serviceInformation = ParseServiceFile( systemOrUser, serviceName );
 				Dictionary<string, string> serviceData = GetServiceData( serviceName );
 
-				// Try to get the description of this service from the unit section
+				// Try to get the description of this service from the information
 				string serviceDescription = "";
 				if ( serviceInformation.TryGetValue( "Unit", out Dictionary<string, string>? unitSection ) == true && unitSection != null ) {
 					if ( unitSection.TryGetValue( "Description", out string? description ) == true && string.IsNullOrWhiteSpace( description ) == false ) {
 						serviceDescription = description;
-					} else {
-						logger.LogWarning( "Service '{0}' has no description in unit section", serviceName );
 					}
-				} else {
-					logger.LogWarning( "Service '{0}' has no unit section", serviceName );
 				}
 
-				// Try to get the process ID of this service from the service section
-				int? processIdentifier = null;
+				// Try to get the process ID of this service from the information
+				int processIdentifier = 0;
 				if ( serviceInformation.TryGetValue( "Service", out Dictionary<string, string>? serviceSection ) == true && serviceSection != null ) {
 					if ( serviceSection.TryGetValue( "PIDFile", out string? processIdentifierFilePath ) == true && string.IsNullOrWhiteSpace( processIdentifierFilePath ) == false ) {
 						if ( File.Exists( processIdentifierFilePath ) == true ) {
 							processIdentifier = int.Parse( File.ReadAllLines( processIdentifierFilePath )[ 0 ] );
-						} else {
-							logger.LogWarning( "Service '{0}' process identifier file '{1}' does not exist", serviceName, processIdentifierFilePath );
 						}
-					} else {
-						//logger.LogWarning( "Service '{0}' has no process identifier file path in service section", serviceName );
 					}
-				} else {
-					logger.LogWarning( "Service '{0}' has no service section", serviceName );
 				}
 
-				// Fallback to the service data if we don't have a process identifier yet
+				// Fallback to using the service data if we don't have a process identifier yet
 				int mainProcessIdentifier = int.Parse( serviceData[ "MainPID" ] );
 				int executingProcessIdentifier = int.Parse( serviceData[ "ExecMainPID" ] );
-				if ( mainProcessIdentifier != 0 ) processIdentifier ??= mainProcessIdentifier;
-				if ( executingProcessIdentifier != 0 ) processIdentifier ??= executingProcessIdentifier;
+				if ( mainProcessIdentifier != 0 && processIdentifier == 0 ) processIdentifier = mainProcessIdentifier;
+				if ( executingProcessIdentifier != 0 && processIdentifier == 0 ) processIdentifier = executingProcessIdentifier;
 
-				// Status from the service data
-				int serviceStatus = serviceData[ "ActiveState" ] switch {
+				// Parse the status text from the service data, if we have a valid process identifier
+				int serviceStatus = 0; // Default to inactive
+				if ( processIdentifier != 0 ) serviceStatus = serviceData[ "ActiveState" ] switch {
 					"inactive" => 0,
 					"active" => 1,
 					"reloading" => 2,
@@ -154,50 +156,48 @@ namespace ServerMonitor.Collector {
 					_ => throw new Exception( $"Unrecognised service status: '{ serviceData[ "ActiveState" ] }'" )
 				};
 
-				// Exit code from the service data
+				// Parse the exit code from the service data
 				int serviceExitCode = int.Parse( serviceData[ "ExecMainStatus" ] );
 
-				if ( processIdentifier != null && processIdentifier != 0 ) {
-					logger.LogDebug( "Service '{0}': PID: {1}, Status: {2}, Exit Code: {3}", serviceName, processIdentifier, serviceStatus, serviceExitCode );
-				} else {
-					logger.LogWarning( "Service '{0}': Status: {2}, Exit Code: {3}", serviceName, serviceStatus, serviceExitCode );
+				// Calculate how long the process has been running for, if we have a valid process identifier - https://stackoverflow.com/a/16736599
+				long processUptimeSeconds = 0;
+				if ( processIdentifier != 0 ) {
+					
+					// If the process statistics file exists...
+					string statisticsFilePath = Path.Combine( "/proc", processIdentifier.ToString(), "stat" );
+					if ( File.Exists( statisticsFilePath ) == true ) {
+
+						// Read the start time from the process statistics file
+						long processStartTimeTicks = long.Parse( File.ReadAllLines( statisticsFilePath )
+							.First() // Only the first line
+							.Split( " ", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries ) // Split into parts
+							.Skip( 21 ).First() ); // Only the 22nd part
+
+						// Get the system clock ticks per second
+						long systemClockTicks = Mono.Unix.Native.Syscall.sysconf( Mono.Unix.Native.SysconfName._SC_CLK_TCK );
+
+						// Calculate the process uptime in seconds
+						processUptimeSeconds = systemUptimeSeconds - ( processStartTimeTicks / systemClockTicks );
+					
+					}
+
 				}
 
 				// Update the exported Prometheus metrics
 				// NOTE: Linux has no display names, so we use the service name for both
 				StatusCode.WithLabels( serviceName, serviceName, serviceDescription ).Set( serviceStatus );
 				ExitCode.WithLabels( serviceName, serviceName, serviceDescription ).Set( serviceExitCode );
-				UptimeSeconds.WithLabels( serviceName, serviceName, serviceDescription ).IncTo( 0 ); // TODO
+				UptimeSeconds.WithLabels( serviceName, serviceName, serviceDescription ).IncTo( processUptimeSeconds );
+
 			}
 
-			// Loop through all user services...
-			/*foreach ( string serviceName in GetServiceNames( "user" ) ) {
-				Dictionary<string, Dictionary<string, string>> serviceInformation = ParseServiceFile( "user", serviceName );
-
-				// Try to get the description of this service from the unit section
-				if ( serviceInformation.TryGetValue( "Unit", out Dictionary<string, string>? unitSection ) == false || unitSection == null ) {
-					logger.LogWarning( "Service {0} has no unit section", serviceName );
-					continue;
-				};
-				if ( unitSection.TryGetValue( "Description", out string? description ) == false || description == null ) {
-					logger.LogWarning( "Service {0} has no description", serviceName );
-					continue;
-				}
-
-				// Update the exported Prometheus metrics
-				// NOTE: Linux has no display names, so we use the service name for both
-				StatusCode.WithLabels( serviceName, serviceName, description ).Set( 0 ); // TODO
-				ExitCode.WithLabels( serviceName, serviceName, description ).Set( 0 ); // TODO
-				UptimeSeconds.WithLabels( serviceName, serviceName, description ).IncTo( 0 ); // TODO
-			}*/
-
-			logger.LogDebug( "Updated Prometheus metrics" );
 		}
 
 		// Gets a list of systemd service names (for Linux)
 		[ SupportedOSPlatform( "linux" ) ]
 		private static string[] GetServiceNames( string systemOrUser ) => Directory.GetFiles( Path.Combine( "/usr/lib/systemd/", systemOrUser ), "*.service" )
 			.Select( servicePath => Path.GetFileNameWithoutExtension( servicePath ) )
+			.Where( serviceName => !serviceName.EndsWith( "@" ) ) // Skip templates
 			.ToArray();
 
 		// Parses a systemd service file (for Linux)
@@ -230,9 +230,8 @@ namespace ServerMonitor.Collector {
 					string propertyName = propertyMatch.Groups[ 1 ].Value.Trim();
 					string propertyValue = propertyMatch.Groups[ 2 ].Value.Trim();
 
-					if ( !serviceProperties.ContainsKey( sectionName ) ) {
-						serviceProperties[ sectionName ] = new Dictionary<string, string>();
-					}
+					// Create the section in the dictionary if it doesn't exist
+					if ( !serviceProperties.ContainsKey( sectionName ) ) serviceProperties[ sectionName ] = new Dictionary<string, string>();
 
 					serviceProperties[ sectionName ][ propertyName ] = propertyValue;
 
@@ -243,9 +242,11 @@ namespace ServerMonitor.Collector {
 			return serviceProperties;
 		}
 
-		// Gets information about a systemd service (for Linux)
+		// Gets current data about a systemd service (for Linux)
 		[ SupportedOSPlatform( "linux" ) ]
 		private Dictionary<string, string> GetServiceData( string serviceName ) {
+
+			// Create the 'systemctl show' command for this service to get all the data
 			Process command = new() {
 				StartInfo = new() {
 					FileName = "systemctl",
@@ -257,13 +258,16 @@ namespace ServerMonitor.Collector {
 				}
 			};
 
+			// Run the command & store all output
 			command.Start();
 			string outputText = command.StandardOutput.ReadToEnd();
 			string errorText = command.StandardError.ReadToEnd();
 			command.WaitForExit();
 
+			// Fail if the command failed
 			if ( command.ExitCode != 0 ) throw new Exception( $"Command failed with exit code { command.ExitCode }: '{ errorText }'" );
 
+			// Parse the command output into a dictionary
 			return outputText.Split( "\n", StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries )
 				.Where( line => !string.IsNullOrWhiteSpace( line ) )
 				.Select( line => line.Split( '=', 2, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries ) )
@@ -271,6 +275,7 @@ namespace ServerMonitor.Collector {
 				.GroupBy( lineParts => lineParts[ 0 ] )
 				.Select( group => group.First() )
 				.ToDictionary( lineParts => lineParts[ 0 ], lineParts => lineParts[ 1 ] );
+
 		}
 
 	}

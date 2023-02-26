@@ -53,17 +53,10 @@ namespace ServerMonitor.Collector {
 					string name = labelValues[ 1 ];
 					string description = labelValues[ 2 ];
 
-					double statusCode = services.StatusCode.WithLabels( service, name, description ).Value;
-					double exitCode = services.ExitCode.WithLabels( service, name, description ).Value;
-					double uptimeSeconds = services.UptimeSeconds.WithLabels( service, name, description ).Value;
-
-					// This will be done by the app itself...
-					string statusText = RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ? Enum.Parse<ServiceControllerStatus>( statusCode.ToString() ).ToString() : "N/A";
-
-					/*logger.LogInformation( "---- Service '{0}' ({1}, {2}) ----", service, name, description );
-					logger.LogInformation( "Status Code: {0} ({1})", statusCode, statusText );
-					logger.LogInformation( "Exit Code: {0}", exitCode );
-					logger.LogInformation( "Uptime: {0} seconds", uptimeSeconds );*/
+					logger.LogInformation( "---- Service '{0}' ({1}, {2}) ----", service, name, description );
+					logger.LogInformation( "Status Code: {0}", services.StatusCode.WithLabels( service, name, description ).Value );
+					logger.LogInformation( "Exit Code: {0}", services.ExitCode.WithLabels( service, name, description ).Value );
+					logger.LogInformation( "Uptime: {0} seconds", services.UptimeSeconds.WithLabels( service, name, description ).Value );
 				}
 			}
 
