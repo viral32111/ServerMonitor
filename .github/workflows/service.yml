@@ -222,6 +222,8 @@ jobs:
       - name: Update Docker image
         run: |
           ssh \
+            -o 'UpdateHostKeys No' \
+            -o 'StrictHostKeyChecking No' \
             -o 'IdentityFile ~/.ssh/github-actions' \
             -o 'IdentitiesOnly Yes' \
             -o 'ProxyCommand cloudflared access ssh --hostname %h --service-token-id ${{ secrets.CLOUDFLARE_ACCESS_ID }} --service-token-secret ${{ secrets.CLOUDFLARE_ACCESS_SECRET }}' \
