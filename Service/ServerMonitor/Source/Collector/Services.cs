@@ -99,27 +99,79 @@ namespace ServerMonitor.Collector {
 
 			// Loop through all system services...
 			foreach ( string serviceName in GetServiceNames( "system" ) ) {
+				
+				// Skip template services?
+				if ( serviceName.EndsWith( "@" ) ) {
+					//logger.LogWarning( "Service '{0}' is a template? Skipping...", serviceName );
+					continue;
+				}
+
+				// Get information & live data about this service
 				Dictionary<string, Dictionary<string, string>> serviceInformation = ParseServiceFile( "system", serviceName );
+				Dictionary<string, string> serviceData = GetServiceData( serviceName );
 
 				// Try to get the description of this service from the unit section
-				if ( serviceInformation.TryGetValue( "Unit", out Dictionary<string, string>? unitSection ) == false || unitSection == null ) {
-					logger.LogWarning( "Service {0} has no unit section", serviceName );
-					continue;
+				string serviceDescription = "";
+				if ( serviceInformation.TryGetValue( "Unit", out Dictionary<string, string>? unitSection ) == true && unitSection != null ) {
+					if ( unitSection.TryGetValue( "Description", out string? description ) == true && string.IsNullOrWhiteSpace( description ) == false ) {
+						serviceDescription = description;
+					} else {
+						logger.LogWarning( "Service '{0}' has no description in unit section", serviceName );
+					}
+				} else {
+					logger.LogWarning( "Service '{0}' has no unit section", serviceName );
+				}
+
+				// Try to get the process ID of this service from the service section
+				int? processIdentifier = null;
+				if ( serviceInformation.TryGetValue( "Service", out Dictionary<string, string>? serviceSection ) == true && serviceSection != null ) {
+					if ( serviceSection.TryGetValue( "PIDFile", out string? processIdentifierFilePath ) == true && string.IsNullOrWhiteSpace( processIdentifierFilePath ) == false ) {
+						if ( File.Exists( processIdentifierFilePath ) == true ) {
+							processIdentifier = int.Parse( File.ReadAllLines( processIdentifierFilePath )[ 0 ] );
+						} else {
+							logger.LogWarning( "Service '{0}' process identifier file '{1}' does not exist", serviceName, processIdentifierFilePath );
+						}
+					} else {
+						//logger.LogWarning( "Service '{0}' has no process identifier file path in service section", serviceName );
+					}
+				} else {
+					logger.LogWarning( "Service '{0}' has no service section", serviceName );
+				}
+
+				// Fallback to the service data if we don't have a process identifier yet
+				int mainProcessIdentifier = int.Parse( serviceData[ "MainPID" ] );
+				int executingProcessIdentifier = int.Parse( serviceData[ "ExecMainPID" ] );
+				if ( mainProcessIdentifier != 0 ) processIdentifier ??= mainProcessIdentifier;
+				if ( executingProcessIdentifier != 0 ) processIdentifier ??= executingProcessIdentifier;
+
+				// Status from the service data
+				int serviceStatus = serviceData[ "ActiveState" ] switch {
+					"inactive" => 0,
+					"active" => 1,
+					"reloading" => 2,
+					"failed" => 3,
+					"exited" => 4,
+					_ => throw new Exception( $"Unrecognised service status: '{ serviceData[ "ActiveState" ] }'" )
 				};
-				if ( unitSection.TryGetValue( "Description", out string? description ) == false || description == null ) {
-					logger.LogWarning( "Service {0} has no description", serviceName );
-					continue;
+
+				// Exit code from the service data
+				int serviceExitCode = int.Parse( serviceData[ "ExecMainStatus" ] );
+
+				if ( processIdentifier != null && processIdentifier != 0 ) {
+					logger.LogDebug( "Service '{0}': PID: {1}, Status: {2}, Exit Code: {3}", serviceName, processIdentifier, serviceStatus, serviceExitCode );
+				} else {
+					logger.LogWarning( "Service '{0}': Status: {2}, Exit Code: {3}", serviceName, serviceStatus, serviceExitCode );
 				}
 
 				// Update the exported Prometheus metrics
 				// NOTE: Linux has no display names, so we use the service name for both
-				StatusCode.WithLabels( serviceName, serviceName, description ).Set( 0 ); // TODO
-				ExitCode.WithLabels( serviceName, serviceName, description ).Set( 0 ); // TODO
-				UptimeSeconds.WithLabels( serviceName, serviceName, description ).IncTo( 0 ); // TODO
+				StatusCode.WithLabels( serviceName, serviceName, serviceDescription ).Set( serviceStatus );
+				ExitCode.WithLabels( serviceName, serviceName, serviceDescription ).Set( serviceExitCode );
+				UptimeSeconds.WithLabels( serviceName, serviceName, serviceDescription ).IncTo( 0 ); // TODO
 			}
 
 			// Loop through all user services...
-			foreach ( string serviceName in GetServiceNames( "user" ) ) {
+			/*foreach ( string serviceName in GetServiceNames( "user" ) ) {
 				Dictionary<string, Dictionary<string, string>> serviceInformation = ParseServiceFile( "user", serviceName );
 
 				// Try to get the description of this service from the unit section
@@ -137,7 +189,7 @@ namespace ServerMonitor.Collector {
 				StatusCode.WithLabels( serviceName, serviceName, description ).Set( 0 ); // TODO
 				ExitCode.WithLabels( serviceName, serviceName, description ).Set( 0 ); // TODO
 				UptimeSeconds.WithLabels( serviceName, serviceName, description ).IncTo( 0 ); // TODO
-			}
+			}*/
 
 			logger.LogDebug( "Updated Prometheus metrics" );
 		}
@@ -154,7 +206,7 @@ namespace ServerMonitor.Collector {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
 
 			// Read the service file
-			string[] fileLines = File.ReadAllLines( Path.Combine( "/usr/lib/systemd/", systemOrUser, string.Concat( serviceName, ".service" ) ) )
+			string[] fileLines = File.ReadAllLines( Path.Combine( "/usr/lib/systemd/", systemOrUser, $"{ serviceName }.service" ) )
 				.Where( line => !string.IsNullOrWhiteSpace( line ) ) // Skip empty lines
 				.Where( line => !line.StartsWith( "#" ) ) // Skip comments
 				.ToArray();
@@ -189,6 +241,36 @@ namespace ServerMonitor.Collector {
 			}
 
 			return serviceProperties;
+		}
+
+		// Gets information about a systemd service (for Linux)
+		[ SupportedOSPlatform( "linux" ) ]
+		private Dictionary<string, string> GetServiceData( string serviceName ) {
+			Process command = new() {
+				StartInfo = new() {
+					FileName = "systemctl",
+					Arguments = $"show { serviceName }",
+					UseShellExecute = false,
+					RedirectStandardOutput = true,
+					RedirectStandardError = true,
+					CreateNoWindow = true
+				}
+			};
+
+			command.Start();
+			string outputText = command.StandardOutput.ReadToEnd();
+			string errorText = command.StandardError.ReadToEnd();
+			command.WaitForExit();
+
+			if ( command.ExitCode != 0 ) throw new Exception( $"Command failed with exit code { command.ExitCode }: '{ errorText }'" );
+
+			return outputText.Split( "\n", StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries )
+				.Where( line => !string.IsNullOrWhiteSpace( line ) )
+				.Select( line => line.Split( '=', 2, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries ) )
+				.Where( lineParts => lineParts.Length == 2 )
+				.GroupBy( lineParts => lineParts[ 0 ] )
+				.Select( group => group.First() )
+				.ToDictionary( lineParts => lineParts[ 0 ], lineParts => lineParts[ 1 ] );
 		}
 
 	}

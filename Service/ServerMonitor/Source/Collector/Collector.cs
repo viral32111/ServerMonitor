@@ -60,10 +60,10 @@ namespace ServerMonitor.Collector {
 					// This will be done by the app itself...
 					string statusText = RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ? Enum.Parse<ServiceControllerStatus>( statusCode.ToString() ).ToString() : "N/A";
 
-					logger.LogInformation( "---- Service '{0}' ({1}, {2}) ----", service, name, description );
+					/*logger.LogInformation( "---- Service '{0}' ({1}, {2}) ----", service, name, description );
 					logger.LogInformation( "Status Code: {0} ({1})", statusCode, statusText );
 					logger.LogInformation( "Exit Code: {0}", exitCode );
-					logger.LogInformation( "Uptime: {0} seconds", uptimeSeconds );
+					logger.LogInformation( "Uptime: {0} seconds", uptimeSeconds );*/
 				}
 			}
 
