@@ -153,17 +153,14 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v3
 
-      - name: Setup Docker
-        uses: docker/setup-buildx-action@v2
+      - name: Setup Docker (Ubuntu)
         if: ${{ matrix.name == 'Ubuntu' }}
+        uses: docker/setup-buildx-action@v2
         with:
           platforms: ${{ matrix.platform }}
 
-      #- name: Set up QEMU
-      #  uses: docker/setup-qemu-action@v2
-
       - name: Login to GitHub Container Registry
-        if: github.event_name != 'pull_request'
+        if: ${{ github.event_name != 'pull_request' }}
         uses: docker/login-action@v2
         with:
           registry: ${{ env.DOCKER_REGISTRY_DOMAIN }}
@@ -193,7 +190,8 @@ jobs:
             org.opencontainers.image.vendor=${{ github.repository_owner }}
             com.docker.extension.publisher-url=https://viral32111.com
 
-      - name: Build & push Docker image
+      - name: Build & push Docker image (Ubuntu)
+        if: ${{ matrix.name == 'Ubuntu' }}
         uses: docker/build-push-action@v4
         with:
           push: ${{ github.event_name != 'pull_request' }}
@@ -201,12 +199,27 @@ jobs:
           context: ./Service/Artifact/
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
-          platforms: ${{ matrix.platform }}
           no-cache: true
           pull: true
 
+      - name: Build Docker image (Windows)
+        if: ${{ matrix.name == 'Windows' }}
+        run: |
+          docker image build \
+            --no-cache \
+            --pull \
+            --file ./Service/${{ matrix.dockerfile }} \
+            --tag ${{ steps.metadata.outputs.tags }} \
+            --label ${{ steps.metadata.outputs.labels }} \
+            ./Service/Artifact/
+
+      - name: Push Docker image (Windows)
+        if: ${{ matrix.name == 'Windows' && github.event_name != 'pull_request' }}
+        run: |
+          docker image push ${{ steps.metadata.outputs.tags }}
+
       - name: Delete untagged Docker images
-        if: always()
+        if: ${{ always() }}
         continue-on-error: true
         uses: snok/container-retention-policy@v2
         with:
@@ -277,7 +290,7 @@ jobs:
     defaults:
       run:
         working-directory: ./Service/
-    if: github.ref_type == 'tag' && github.event_name != 'pull_request'
+    if: ${{ github.ref_type == 'tag' && github.event_name != 'pull_request' }}
     permissions:
       contents: write
     steps:
