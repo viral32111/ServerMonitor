@@ -204,7 +204,7 @@ jobs:
       matrix:
         server: [ "ubuntu-server", "windows-server" ]
     concurrency:
-      group: service-deploy
+      group: service-deploy-${{ matrix.server }}
       cancel-in-progress: true
     permissions:
       contents: read
@@ -227,6 +227,7 @@ jobs:
           echo ${{ secrets.SSH_PRIVATE_KEY }} | base64 --decode > ~/.ssh/github-actions
 
       - name: Update Docker image
+        continue-on-error: true
         run: |
           ssh \
             -o 'UpdateHostKeys No' \
