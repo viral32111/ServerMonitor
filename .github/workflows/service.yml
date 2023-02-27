@@ -204,20 +204,16 @@ jobs:
         id: format
         if: ${{ matrix.name == 'Windows' }}
         uses: actions/github-script@v6
-        env:
-          METADATA_TAGS: ${{ steps.metadata.outputs.tags }}
-          METADATA_LABELS: ${{ steps.metadata.outputs.labels }}
         with:
           script: |
-            const { METADATA_TAGS, METADATA_LABELS } = process.env;
-            const tagCommands = "--tag " + METADATA_TAGS.split( "\n" ).filter( tag => tag.trim() ).join( " --tag " )
-            const labelCommands = "--label " + METADATA_LABELS.split( "\n" ).filter( label => label.trim() ).join( " --label " )
-            core.setOutput( "tags", tagCommands )
-            core.setOutput( "labels", labelCommands )
+            const { DOCKER_METADATA_OUTPUT_JSON } = process.env;
+            const { tags, labels } = JSON.parse( DOCKER_METADATA_OUTPUT_JSON );
+            core.setOutput( "tags", "--tag " + tags.join( " --tag " ) )
+            core.setOutput( "labels", "--label " + labels.join( " --label " ) )
 
       - name: Build Docker image (Windows)
         if: ${{ matrix.name == 'Windows' }}
-        run: docker image build --no-cache --pull --file ./${{ matrix.dockerfile }} ${{ steps.format.outputs.tags }} ./Artifact/
+        run: docker image build --no-cache --pull --file ./${{ matrix.dockerfile }} ${{ steps.format.outputs.tags }} ${{ steps.format.outputs.labels }} ./Artifact/
 
       - name: Push Docker image (Windows)
         if: ${{ matrix.name == 'Windows' && github.event_name != 'pull_request' }}
