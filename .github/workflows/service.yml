@@ -175,10 +175,9 @@ jobs:
 
       - name: Create metadata for Docker image
         id: metadata
+        if: ${{ matrix.name == 'Ubuntu' }}
         uses: docker/metadata-action@v4
         with:
-          sep-tags: ${{ matrix.name == 'Windows' && ' --tag ' || '\n' }}
-          sep-labels: ${{ matrix.name == 'Windows' && ' --label ' || '\n' }}
           images: ${{ env.DOCKER_REGISTRY_DOMAIN }}/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}
           flavor: latest=true
           tags: |
@@ -206,7 +205,7 @@ jobs:
 
       - name: Build Docker image (Windows)
         if: ${{ matrix.name == 'Windows' }}
-        run: docker image build --no-cache --pull --file ./Service/${{ matrix.dockerfile }} --tag ${{ steps.metadata.outputs.tags }} --label ${{ steps.metadata.outputs.labels }} ./Service/Artifact/
+        run: docker image build --no-cache --pull --file ./Service/${{ matrix.dockerfile }} --tag ${{ env.DOCKER_REGISTRY_DOMAIN }}/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}:latest ./Service/Artifact/
 
       - name: Push Docker image (Windows)
         if: ${{ matrix.name == 'Windows' && github.event_name != 'pull_request' }}
