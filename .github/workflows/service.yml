@@ -125,7 +125,7 @@ jobs:
 
   docker:
     name: Docker
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.os }}
     needs: launch
     defaults:
       run:
@@ -155,11 +155,12 @@ jobs:
 
       - name: Setup Docker
         uses: docker/setup-buildx-action@v2
+        if: ${{ matrix.name == 'Ubuntu' }}
         with:
           platforms: ${{ matrix.platform }}
 
-      - name: Setup QEMU
-        uses: docker/setup-qemu-action@v2
+      #- name: Set up QEMU
+      #  uses: docker/setup-qemu-action@v2
 
       - name: Login to GitHub Container Registry
         if: github.event_name != 'pull_request'
@@ -200,6 +201,7 @@ jobs:
           context: ./Service/Artifact/
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
+          platforms: ${{ matrix.platform }}
           no-cache: true
           pull: true
 
