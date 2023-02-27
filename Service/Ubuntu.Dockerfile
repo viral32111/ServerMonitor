@@ -1,4 +1,4 @@
-# Start from the .NET Core Runtime
+# Start from my .NET Core Runtime
 FROM ghcr.io/viral32111/dotnet:7.0
 
 # Configure directories & files
@@ -17,5 +17,5 @@ RUN mkdir --verbose --parents ${SERVERMONITOR_CONFIG_DIRECTORY} && \
 USER ${USER_ID}:${USER_ID}
 WORKDIR ${SERVERMONITOR_DIRECTORY}
 
-# Start the bot when launched
+# Start service when launched
 ENTRYPOINT [ "dotnet", "/usr/local/server-monitor/ServerMonitor.dll" ]
