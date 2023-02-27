@@ -199,6 +199,10 @@ jobs:
     defaults:
       run:
         working-directory: ./Service/
+    strategy:
+      fail-fast: false
+      matrix:
+        server: [ "ubuntu-server", "windows-server" ]
     permissions:
       contents: read
     steps:
@@ -227,7 +231,7 @@ jobs:
             -o 'IdentityFile ~/.ssh/github-actions' \
             -o 'IdentitiesOnly Yes' \
             -o 'ProxyCommand cloudflared access ssh --hostname %h --service-token-id ${{ secrets.CLOUDFLARE_ACCESS_ID }} --service-token-secret ${{ secrets.CLOUDFLARE_ACCESS_SECRET }}' \
-            ${{ secrets.SSH_USER_NAME }}@${{ secrets.SSH_HOST_NAME }} \
+            ${{ secrets.SSH_USER_NAME }}@${{ matrix.server }}.${{ secrets.SSH_DOMAIN_NAME }} \
             'docker image pull ${{ env.DOCKER_REGISTRY_DOMAIN }}/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}:latest'
 
   release:
