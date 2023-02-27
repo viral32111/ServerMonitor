@@ -204,19 +204,11 @@ jobs:
 
       - name: Build Docker image (Windows)
         if: ${{ matrix.name == 'Windows' }}
-        run: |
-          docker image build \
-            --no-cache \
-            --pull \
-            --file ./Service/${{ matrix.dockerfile }} \
-            --tag ${{ steps.metadata.outputs.tags }} \
-            --label ${{ steps.metadata.outputs.labels }} \
-            ./Service/Artifact/
+        run: docker image build --no-cache --pull --file ./Service/${{ matrix.dockerfile }} --tag ${{ steps.metadata.outputs.tags }} --label ${{ steps.metadata.outputs.labels }} ./Service/Artifact/
 
       - name: Push Docker image (Windows)
         if: ${{ matrix.name == 'Windows' && github.event_name != 'pull_request' }}
-        run: |
-          docker image push ${{ steps.metadata.outputs.tags }}
+        run: docker image push ${{ steps.metadata.outputs.tags }}
 
       - name: Delete untagged Docker images
         if: ${{ always() }}
