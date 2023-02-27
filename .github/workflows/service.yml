@@ -203,6 +203,9 @@ jobs:
       fail-fast: false
       matrix:
         server: [ "ubuntu-server", "windows-server" ]
+    concurrency:
+      group: service-deploy
+      cancel-in-progress: true
     permissions:
       contents: read
     steps:
