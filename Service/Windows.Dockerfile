@@ -10,8 +10,8 @@ ARG SERVERMONITOR_DIRECTORY=C:\\ServerMonitor\\Install \
 COPY ./ ${SERVERMONITOR_DIRECTORY}
 
 # Move the configuration file to the system-wide configuration directory
-RUN New-Item -ItemType Directory -Path ${SERVERMONITOR_CONFIG_DIRECTORY}; `
-	Move-Item -Path ${SERVERMONITOR_DIRECTORY}/config.json -Destination ${SERVERMONITOR_CONFIG_DIRECTORY}/config.json;
+RUN New-Item -ItemType Directory -Path ${SERVERMONITOR_CONFIG_DIRECTORY}
+RUN Move-Item -Path ${SERVERMONITOR_DIRECTORY}/config.json -Destination ${SERVERMONITOR_CONFIG_DIRECTORY}/config.json
 
 # Switch to the install directory
 WORKDIR ${SERVERMONITOR_DIRECTORY}
