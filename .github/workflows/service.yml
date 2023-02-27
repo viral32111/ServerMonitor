@@ -209,7 +209,7 @@ jobs:
             const { DOCKER_METADATA_OUTPUT_JSON } = process.env;
             const { tags, labels } = JSON.parse( DOCKER_METADATA_OUTPUT_JSON );
             core.setOutput( "tags", "--tag " + tags.join( " --tag " ) )
-            core.setOutput( "labels", "--label " + labels.join( " --label " ) )
+            core.setOutput( "labels", "--label " + Object.entries( labels ).map( label => label[ 0 ] + "='" + label[ 1 ] + "'" ).join( " --label " ) )
 
       - name: Build Docker image (Windows)
         if: ${{ matrix.name == 'Windows' }}
