@@ -177,6 +177,8 @@ jobs:
         id: metadata
         uses: docker/metadata-action@v4
         with:
+          sep-tags: ${{ matrix.name == 'Windows' && ' --tag ' || '\n' }}
+          sep-labels: ${{ matrix.name == 'Windows' && ' --label ' || '\n' }}
           images: ${{ env.DOCKER_REGISTRY_DOMAIN }}/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}
           flavor: latest=true
           tags: |
