@@ -80,10 +80,21 @@ namespace ServerMonitor.Collector.Resource {
 				TotalBytes.WithLabels( driveName, driveMountPath ).Set( driveInformation.TotalSize );
 				FreeBytes.WithLabels( driveName, driveMountPath ).Set( driveInformation.TotalFreeSpace );
 
-				// Get total bytes read & written since system startup
-				long[] stats = GetDriveStatisticsForWindows( driveMountPath );
-				ReadBytes.WithLabels( driveName ).IncTo( stats[ 0 ] );
-				WriteBytes.WithLabels( driveName ).IncTo( stats[ 1 ] );
+				// Try to get total bytes read & written since system startup
+				try {
+					long[] stats = GetDriveStatisticsForWindows( driveMountPath );
+					ReadBytes.WithLabels( driveName ).IncTo( stats[ 0 ] );
+					WriteBytes.WithLabels( driveName ).IncTo( stats[ 1 ] );
+				
+				// This isn't supported by every system, so warn about it...
+				} catch ( Win32Exception exception ) {
+					ReadBytes.WithLabels( driveName ).IncTo( 0 );
+					WriteBytes.WithLabels( driveName ).IncTo( 0 );
+
+					// https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/18d8fbe8-a967-4f1c-ae50-99ca8e491d2d
+					if ( exception.ErrorCode == 1 ) logger.LogWarning( $"Cannot get total bytes read & written statistics for drive '{ driveName }' on this system" );
+					else throw exception;
+				}
 
 				// TODO: S.M.A.R.T health
 				Health.WithLabels( driveName ).Set( -1 );
