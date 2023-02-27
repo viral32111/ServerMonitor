@@ -2,19 +2,15 @@
 FROM mcr.microsoft.com/dotnet/runtime:7.0-windowsservercore-ltsc2022
 SHELL [ "powershell" ]
 
-# Configure directories & files
-ARG SERVERMONITOR_INSTALL_DIRECTORY=C:/Server-Monitor-Install \
-	SERVERMONITOR_CONFIG_DIRECTORY=C:/Server-Monitor-Config
-
 # Add artifacts from build
-COPY ./ ${SERVERMONITOR_INSTALL_DIRECTORY}
+COPY ./ C:\\Server-Monitor-Install
 
 # Move the configuration file to the system-wide configuration directory
-RUN New-Item -ItemType Directory -Path ${SERVERMONITOR_CONFIG_DIRECTORY}
-RUN Move-Item -Path ${SERVERMONITOR_INSTALL_DIRECTORY}/config.json -Destination ${SERVERMONITOR_CONFIG_DIRECTORY}/config.json
+RUN New-Item -ItemType Directory -Path C:\\ProgramData\\ServerMonitor
+RUN Move-Item -Path C:\\Server-Monitor-Install\\config.json -Destination C:\\ProgramData\\ServerMonitor\\config.json
 
 # Switch to the install directory
-WORKDIR ${SERVERMONITOR_INSTALL_DIRECTORY}
+WORKDIR C:\\Server-Monitor-Install
 
 # Start service when launched
-ENTRYPOINT [ "dotnet", "C:/Server-Monitor-Install/ServerMonitor.dll" ]
+ENTRYPOINT [ "dotnet", "C:\\Server-Monitor-Install\\ServerMonitor.dll" ]
