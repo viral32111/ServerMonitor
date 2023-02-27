@@ -205,7 +205,7 @@ jobs:
 
       - name: Build Docker image (Windows)
         if: ${{ matrix.name == 'Windows' }}
-        run: docker image build --no-cache --pull --file ./Service/${{ matrix.dockerfile }} --tag ${{ env.DOCKER_REGISTRY_DOMAIN }}/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}:latest ./Artifact/
+        run: docker image build --no-cache --pull --file ./${{ matrix.dockerfile }} --tag ${{ env.DOCKER_REGISTRY_DOMAIN }}/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}:latest ./Artifact/
 
       - name: Push Docker image (Windows)
         if: ${{ matrix.name == 'Windows' && github.event_name != 'pull_request' }}
