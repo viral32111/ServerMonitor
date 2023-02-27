@@ -230,6 +230,8 @@ jobs:
         continue-on-error: true
         run: |
           ssh \
+            -o 'BatchMode Yes' \
+            -o 'ConnectTimeout 30' \
             -o 'UpdateHostKeys No' \
             -o 'StrictHostKeyChecking No' \
             -o 'IdentityFile ~/.ssh/github-actions' \
