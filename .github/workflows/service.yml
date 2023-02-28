@@ -227,22 +227,29 @@ jobs:
         if: ${{ matrix.name == 'Windows' && github.event_name != 'pull_request' }}
         run: docker image push --all-tags ${{ env.DOCKER_REGISTRY_DOMAIN }}/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}
 
-      #- name: Delete untagged Docker images
-      #  if: ${{ always() }}
-      #  continue-on-error: true
-      #  uses: snok/container-retention-policy@v2
-      #  with:
-      #    image-names: ${{ env.DOCKER_IMAGE_NAME }}
-      #    cut-off: 0 seconds ago UTC
-      #    keep-at-least: 1
-      #    untagged-only: true
-      #    account-type: personal
-      #    token: ${{ secrets.PERSONAL_ACCESS_TOKEN_PACKAGES }}
+  cleanup:
+    name: Cleanup
+    runs-on: ubuntu-22.04
+    needs: docker
+    if: ${{ always() }}
+    continue-on-error: true
+    permissions:
+      contents: read
+    steps:
+      - name: Delete untagged Docker images
+        uses: snok/container-retention-policy@v2
+        with:
+          image-names: ${{ env.DOCKER_IMAGE_NAME }}
+          cut-off: 0 seconds ago UTC
+          keep-at-least: 1
+          untagged-only: true
+          account-type: personal
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN_PACKAGES }}
 
   deploy:
     name: Deploy
     runs-on: ubuntu-22.04
-    needs: docker
+    needs: cleanup
     defaults:
       run:
         working-directory: ./Service/
