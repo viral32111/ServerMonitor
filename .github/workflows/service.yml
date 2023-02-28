@@ -180,7 +180,7 @@ jobs:
           images: ${{ env.DOCKER_REGISTRY_DOMAIN }}/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}
           flavor: |
             latest=${{ matrix.name == 'Ubuntu' }}
-            suffix=${{ matrix.suffix }},onlatest=false
+            suffix=-${{ matrix.suffix }},onlatest=false
           tags: |
             type=ref,event=pr
             type=ref,event=branch
