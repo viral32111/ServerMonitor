@@ -186,6 +186,7 @@ jobs:
           labels: |
             org.opencontainers.image.title=Server Monitor
             org.opencontainers.image.vendor=${{ github.repository_owner }}
+            org.opencontainers.image.licenses=CC-BY-SA-4.0
             com.docker.extension.publisher-url=https://viral32111.com
 
       - name: Build & push Docker image (Ubuntu)
