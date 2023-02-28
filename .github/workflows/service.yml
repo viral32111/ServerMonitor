@@ -138,9 +138,11 @@ jobs:
           - name: Ubuntu
             os: ubuntu-22.04
             dockerfile: Ubuntu.Dockerfile
+            suffix: ubuntu
           - name: Windows
             os: windows-2022
             dockerfile: Windows.Dockerfile
+            suffix: windows
     concurrency:
       group: service-docker-${{ matrix.os }}
       cancel-in-progress: true
@@ -176,13 +178,14 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: ${{ env.DOCKER_REGISTRY_DOMAIN }}/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}
-          flavor: latest=true
+          flavor: latest=${{ matrix.name == 'Ubuntu' }}
           tags: |
             type=ref,event=pr
             type=ref,event=branch
             type=semver,pattern={{major}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}.{{minor}}.{{patch}}
+            suffix=${{ matrix.suffix }},onlatest=false
           labels: |
             org.opencontainers.image.title=Server Monitor
             org.opencontainers.image.vendor=${{ github.repository_owner }}
