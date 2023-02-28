@@ -250,8 +250,10 @@ jobs:
         include:
           - name: Ubuntu
             server: ubuntu-server
+            suffix: ubuntu
           - name: Windows
             server: windows-server
+            suffix: windows
     concurrency:
       group: service-deploy-${{ matrix.server }}
       cancel-in-progress: true
@@ -287,7 +289,7 @@ jobs:
             -o 'IdentitiesOnly Yes' \
             -o 'ProxyCommand cloudflared access ssh --hostname %h --service-token-id ${{ secrets.CLOUDFLARE_ACCESS_ID }} --service-token-secret ${{ secrets.CLOUDFLARE_ACCESS_SECRET }}' \
             ${{ secrets.SSH_USER_NAME }}@${{ matrix.server }}.${{ secrets.SSH_DOMAIN_NAME }} \
-            'docker image pull ${{ env.DOCKER_REGISTRY_DOMAIN }}/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}:latest'
+            'docker image pull ${{ env.DOCKER_REGISTRY_DOMAIN }}/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}:main-${{ matrix.suffix }}'
 
   release:
     name: Release
