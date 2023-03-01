@@ -85,21 +85,24 @@ namespace ServerMonitor.Collector {
 				logger.LogDebug( "Connected to Docker daemon, with {0} pipe server instances", pipeStream.NumberOfServerInstances );
 
 				logger.LogDebug( "Sending Docker API request..." );
-				using ( StreamWriter streamWriter = new( pipeStream ) ) {
-					streamWriter.Write( "GET /v1.42/containers/json HTTP/1.1\r\n" ); // ?all=true
-					//streamWriter.Write( "Host: docker\r\n" );
-					streamWriter.Write( "Accept: application/json\r\n" );
-					//streamWriter.Write( "User-Agent: Server Monitor (Windows)\r\n" );
-					//streamWriter.WriteLine( "Connection: close" );
-					streamWriter.Write("\r\n\r\n");
-				}
+				string[] request = new[] {
+					$"GET /v{ configuration.DockerEngineAPIVersion }/containers/json?all=true HTTP/1.1",
+					$"Host: localhost",
+					"Accept: application/json",
+					"User-Agent: Server Monitor",
+					"Connection: close"
+				};
+				pipeStream.Write( Encoding.UTF8.GetBytes( string.Concat( string.Join( "\r\n", request ), "\r\n\r\n" ) ) );
+				pipeStream.WaitForPipeDrain();
+				pipeStream.Flush();
 
 				logger.LogDebug( "Reading Docker API response..." );
-				using ( StreamReader streamReader = new( pipeStream ) ) {
-					string? line;
-					while ( ( line = streamReader.ReadLine() ) != null ) {
-						logger.LogTrace( "Docker API response: '{0}'", line );
-					}
+				int bytesRead;
+					byte[] readBuffer = new byte[ 65536 ];
+				while ( ( bytesRead = pipeStream.Read( readBuffer ) ) > 0 ) {
+					string response = Encoding.UTF8.GetString( readBuffer, 0, bytesRead );
+					logger.LogDebug( "Docker API response: '{0}'", response );
+					Array.Clear( readBuffer, 0, readBuffer.Length );
 				}
 
 				logger.LogDebug( "Disconnecting from Docker daemon..." );
@@ -127,7 +130,7 @@ namespace ServerMonitor.Collector {
 						"GET /v1.41/containers/json?all=true HTTP/1.1",
 						$"Host: { address }:{ port }",
 						"Accept: application/json",
-						"User-Agent: Server Monitor (Windows)",
+						"User-Agent: Server Monitor",
 						"Connection: close"
 					};
 					networkStream.Write( Encoding.UTF8.GetBytes( string.Concat( string.Join( "\r\n", request ), "\r\n\r\n" ) ) );
