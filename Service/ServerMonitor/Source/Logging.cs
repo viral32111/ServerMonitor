@@ -92,8 +92,16 @@ namespace ServerMonitor {
 			// Write the category name (the file name in our case)
 			textWriter.Write( $"({ logEntry.Category }) " );
 
-			// Write the message
-			textWriter.WriteLine( message );
+			// If there is an exception, write it with the message
+			if ( logEntry.Exception != null ) {
+				textWriter.Write( message );
+				textWriter.Write( ": " );
+				textWriter.WriteLine( logEntry.Exception.Message );
+
+			// Otherwise, write the message normally
+			} else {
+				textWriter.WriteLine( message );
+			}
 
 			// Reset color
 			if ( formatterOptions.ColorBehavior != LoggerColorBehavior.Disabled ) textWriter.Write( "\x1B[0m" );
