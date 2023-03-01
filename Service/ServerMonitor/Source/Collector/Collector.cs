@@ -80,6 +80,7 @@ namespace ServerMonitor.Collector {
 						logger.LogInformation( "Status: {0}", docker.Status.WithLabels( id, name, image ).Value );
 						logger.LogInformation( "Exit Code: {0}", docker.ExitCode.WithLabels( id, name, image ).Value );
 						logger.LogInformation( "Uptime: {0}", docker.CreatedTimestamp.WithLabels( id, name, image ).Value );
+						logger.LogInformation( "Health: {0}", docker.HealthStatus.WithLabels( id, name, image ).Value );
 					}
 				} catch ( Exception exception ) {
 					logger.LogError( exception, "Failed to collect Docker metrics" );

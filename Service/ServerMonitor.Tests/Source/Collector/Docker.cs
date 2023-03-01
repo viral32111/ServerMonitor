@@ -41,12 +41,21 @@ namespace ServerMonitor.Tests.Collector {
 					Assert.True( docker.Status.WithLabels( id, name, image ).Value >= 0, $"Docker container status is below 0 ({ id })" );
 					Assert.True( docker.Status.WithLabels( id, name, image ).Value <= 6, $"Docker container status is above 6 ({ id })" );
 
-					Assert.True( docker.ExitCode.WithLabels( id, name, image ).Value >= 0, $"Docker container exit code is below 0 ({ id })" );
+					// Not every container has exited yet
+					if ( docker.ExitCode.WithLabels( id, name, image ).Value != -1 ) {
+						Assert.True( docker.ExitCode.WithLabels( id, name, image ).Value >= 0, $"Docker container exit code is below 0 ({ id })" );
+					}
 
 					Assert.True( docker.CreatedTimestamp.WithLabels( id, name, image ).Value >= 0, $"Docker container uptime is below 0 seconds ({ id })" );
+
+					// Not every container has a healthcheck
+					if ( docker.HealthStatus.WithLabels( id, name, image ).Value != -1 ) {
+						Assert.True( docker.HealthStatus.WithLabels( id, name, image ).Value >= 0, $"Docker container health status is below 0 ({ id })" );
+						Assert.True( docker.HealthStatus.WithLabels( id, name, image ).Value <= 2, $"Docker container health status is above 2 ({ id })" );
+					}
 				}
 			} catch ( Exception exception ) {
-				Console.WriteLine( $"Failed to test Docker metrics: '{ exception.Message }'" );
+				Assert.True( false, $"Failed to collect Docker metrics: { exception.Message }" );
 			}
 		}
 
