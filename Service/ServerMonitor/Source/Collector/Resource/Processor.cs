@@ -86,7 +86,7 @@ namespace ServerMonitor.Collector.Resource {
 			Temperature.Set(
 				GetProcessorTemperature( "x86_pkg_temp" ) ??
 				GetProcessorTemperature( "acpitz" ) ??
-				throw new Exception( "No sensors available to fetch processor temperature from" )
+				-1
 			);
 
 			logger.LogDebug( "Updated Prometheus metrics" );
