@@ -13,7 +13,7 @@ using System.Runtime.Versioning;
 using Microsoft.Extensions.Logging;
 using Prometheus;
 
-// https://docs.docker.com/engine/api/
+// https://docs.docker.com/engine/api/, https://docs.docker.com/engine/api/sdk/examples/
 
 /* https://docs.docker.com/desktop/faqs/general/#/how-do-i-connect-to-the-remote-docker-engine-api
 Linux (default): unix:///var/run/docker.sock
@@ -28,7 +28,7 @@ namespace ServerMonitor.Collector {
 
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Docker" );
 
-		// Setup a basic HTTP client for talking to the Docker Engine API
+		// Setup a basic HTTP client for talking to the Docker Engine API - https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient?view=net-7.0
 		private static readonly HttpClient httpClient = new() {
 			DefaultRequestHeaders = {
 				{ "Accept", "application/json" },
@@ -104,7 +104,7 @@ namespace ServerMonitor.Collector {
 			}
 		}
 
-		// Sends a HTTP request & receives its response over a named pipe (for Windows)
+		// Sends a HTTP request & receives its response over a named pipe (for Windows) - https://stackoverflow.com/q/47297569
 		[ SupportedOSPlatform( "windows" ) ]
 		private HttpResponseMessage HTTPRequestOverPipe( PipeStream pipeStream, string method, string path, Config configuration ) {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new PlatformNotSupportedException( "Method only available on Windows" );
@@ -120,13 +120,13 @@ namespace ServerMonitor.Collector {
 			pipeStream.WaitForPipeDrain();
 			pipeStream.Flush();
 
-			// Read the entire response from the pipe
+			// Read the entire response from the pipe into a memory stream - https://stackoverflow.com/a/7123063
 			int bytesRead = -1;
 			byte[] readBuffer = new byte[ 65536 ];
 			MemoryStream memoryStream = new();
 			while ( ( bytesRead = pipeStream.Read( readBuffer ) ) > 0 ) {
 				memoryStream.Write( readBuffer, 0, bytesRead );
-				Array.Clear( readBuffer, 0, readBuffer.Length );
+				Array.Clear( readBuffer, 0, readBuffer.Length ); // https://stackoverflow.com/a/1407762
 			}
 			
 			// Convert the response to a UTF-8 string & remove the seemingly random garbage inside it
@@ -140,7 +140,7 @@ namespace ServerMonitor.Collector {
 			string[] responseHeaders = response.Substring( 0, responseDivisionPosition ).Split( "\r\n", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries );
 			string responseBody = response.Substring( responseDivisionPosition + 4 );
 
-			// Parse the response into the standard HTTP response message class
+			// Parse the response into the standard HTTP response message class - https://stackoverflow.com/a/12240946
 			HttpResponseMessage responseMessage = new();
 			foreach ( string responseHeader in responseHeaders ) {
 				Match statusLineMatch = Regex.Match( responseHeader, @"^HTTP/1.1 (\d+) .+$" );
