@@ -45,6 +45,9 @@ namespace ServerMonitor.Collector {
 			// Create an instance of the service collector
 			Services services = new( configuration );
 
+			// Create an instance of the Docker collector
+			Docker docker = new( configuration );
+
 			if ( configuration.CollectServiceMetrics == true ) {
 				try {
 					services.Update();
@@ -61,6 +64,14 @@ namespace ServerMonitor.Collector {
 					}
 				} catch ( Exception exception ) {
 					logger.LogError( exception, "Failed to collect service metrics" );
+				}
+			}
+
+			if ( configuration.CollectDockerMetrics == true ) {
+				try {
+					docker.Update();
+				} catch ( Exception exception ) {
+					logger.LogError( exception, "Failed to collect Docker metrics" );
 				}
 			}
 
@@ -84,7 +95,7 @@ namespace ServerMonitor.Collector {
 						logger.LogInformation( "Memory: {0} MiB / {1} MiB ({2} MiB free, {3}% usage)", usedMemory, totalMemory, freeMemory, usedMemoryPercentage );
 						logger.LogInformation( "Swap/Page: {0} MiB / {1} MiB ({2} MiB free, {3}% usage)", usedSwap, totalSwap, freeSwap, usedSwapPercentage );
 					} catch ( Exception exception ) {
-						logger.LogError( exception, "Failed to collect service metrics" );
+						logger.LogError( exception, "Failed to collect memory metrics" );
 					}
 				}
 
@@ -98,7 +109,7 @@ namespace ServerMonitor.Collector {
 						
 						logger.LogInformation( "Processor: {0}% @ {1} MHz ({2} C)", processorUsage, processorFrequency, processorTemperature );
 					} catch ( Exception exception ) {
-						logger.LogError( exception, "Failed to collect service metrics" );
+						logger.LogError( exception, "Failed to collect processor metrics" );
 					}
 				}
 
@@ -107,7 +118,7 @@ namespace ServerMonitor.Collector {
 						uptime.Update();
 						logger.LogInformation( "Uptime: {0} seconds", uptime.UptimeSeconds.Value );
 					} catch ( Exception exception ) {
-						logger.LogError( exception, "Failed to collect service metrics" );
+						logger.LogError( exception, "Failed to collect uptime metrics" );
 					}
 				}
 
@@ -137,7 +148,7 @@ namespace ServerMonitor.Collector {
 							logger.LogInformation( "Partition ({0}, {1}): {2} GiB / {3} GiB ({4} GiB free, {5}% usage)", partitionName, partitionMountPath, usedSpace, totalSpace, freeSpace, usedSpacePercentage );
 						}
 					} catch ( Exception exception ) {
-						logger.LogError( exception, "Failed to collect service metrics" );
+						logger.LogError( exception, "Failed to collect disk metrics" );
 					}
 				}
 
@@ -153,7 +164,7 @@ namespace ServerMonitor.Collector {
 							logger.LogInformation( "Network ({0}): {1} KiB sent, {2} KiB received", networkInterface, bytesSent, bytesReceived );
 						}
 					} catch ( Exception exception ) {
-						logger.LogError( exception, "Failed to collect service metrics" );
+						logger.LogError( exception, "Failed to collect network metrics" );
 					}
 				}
 

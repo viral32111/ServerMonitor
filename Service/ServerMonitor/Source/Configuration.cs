@@ -82,7 +82,7 @@ namespace ServerMonitor {
 		public required string PrometheusListenPath { get; set; } = "/metrics";
 		public required string PrometheusMetricsPrefix { get; set; } = "server_monitor";
 
-		// Enable/disable individual collectors
+		// Resource metrics
 		public required bool CollectProcessorMetrics { get; set; } = true;
 		public required bool CollectMemoryMetrics { get; set; } = true;
 		public required bool CollectDiskMetrics { get; set; } = true;
@@ -90,7 +90,13 @@ namespace ServerMonitor {
 		public required bool CollectUptimeMetrics { get; set; } = true;
 		public required bool CollectPowerMetrics { get; set; } = false;
 		public required bool CollectFanMetrics { get; set; } = false;
+
+		// Service metrics
 		public required bool CollectServiceMetrics { get; set; } = true;
+
+		// Docker metrics
+		public required bool CollectDockerMetrics { get; set; } = true;
+		public required string DockerEngineAPIAddress { get; set; } = "tcp://127.0.0.1:2375";
 
 	}
 

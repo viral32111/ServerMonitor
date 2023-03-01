@@ -10,6 +10,7 @@ namespace ServerMonitor.Tests {
 			PrometheusListenPort = 5000,
 			PrometheusListenPath = "metrics",
 			PrometheusMetricsPrefix = "server_monitor",
+
 			CollectProcessorMetrics = true,
 			CollectMemoryMetrics = true,
 			CollectDiskMetrics = true,
@@ -17,7 +18,11 @@ namespace ServerMonitor.Tests {
 			CollectUptimeMetrics = true,
 			CollectPowerMetrics = false,
 			CollectFanMetrics = false,
-			CollectServiceMetrics = true
+
+			CollectServiceMetrics = true,
+
+			CollectDockerMetrics = true,
+			DockerEngineAPIAddress = "tcp://127.0.0.1:2375"
 		};
 
 		[ Fact ]

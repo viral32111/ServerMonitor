@@ -13,6 +13,8 @@ using Microsoft.Extensions.Logging;
 using Prometheus;
 
 namespace ServerMonitor.Collector {
+
+	// Encapsulates collecting system service metrics
 	public class Services : Base {
 
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Services" );
