@@ -64,7 +64,8 @@ namespace ServerMonitor.Collector {
 			} else if ( tcpMatch.Success ) {
 				string tcpAddress = tcpMatch.Groups[ 1 ].Value;
 				int tcpPort = int.Parse( tcpMatch.Groups[ 2 ].Value );
-				UpdateUsingTCP( tcpAddress, tcpPort, configuration );
+				Task updateTask = UpdateUsingTCP( tcpAddress, tcpPort, configuration );
+				updateTask.Wait();
 
 			} else throw new FormatException( "Invalid Docker Engine API address" );
 		}
@@ -105,9 +106,10 @@ namespace ServerMonitor.Collector {
 
 		[ SupportedOSPlatform( "windows" ) ]
 		[ SupportedOSPlatform( "linux" ) ]
-		private void UpdateUsingTCP( string address, int port, Config configuration ) {
+		private async Task UpdateUsingTCP( string address, int port, Config configuration ) {
 
 			// https://docs.microsoft.com/en-us/dotnet/api/system.net.sockets.tcpclient?view=net-7.0
+			/*
 			logger.LogDebug( $"Creating TCP client for IPv4..." );
 			using ( TcpClient tcpClient = new( AddressFamily.InterNetwork ) ) {
 				logger.LogDebug( $"Created TCP client, connecting to Docker daemon at '{ address }:{ port }'..." );
@@ -139,6 +141,21 @@ namespace ServerMonitor.Collector {
 				logger.LogDebug( "Disconnecting from Docker daemon..." );
 			}
 			logger.LogDebug( "Disconnected from Docker daemon" );
+			*/
+
+			// https://docs.microsoft.com/en-us/dotnet/api/system.net.http.httpclient?view=net-7.0
+			HttpClient httpClient = new();
+			httpClient.DefaultRequestHeaders.Add( "Accept", "application/json" );
+			httpClient.DefaultRequestHeaders.Add( "User-Agent", "Server Monitor" );
+
+			using ( HttpResponseMessage response = await httpClient.GetAsync( $"http://{ address }:{ port }/v1.41/containers/json?all=true" ) ) {
+				if ( response.IsSuccessStatusCode ) {
+					string responseString = await response.Content.ReadAsStringAsync();
+					logger.LogDebug( "Docker API response: '{0}'", responseString );
+				} else {
+					logger.LogError( "Docker API request failed: {0}", response.StatusCode );
+				}
+			}
 
 		}
 
