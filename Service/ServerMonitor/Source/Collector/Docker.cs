@@ -1,24 +1,15 @@
 using System;
-using System.Linq;
-using System.Diagnostics;
-using System.Collections.Generic;
 using System.Text;
-using System.Text.Encodings;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
 using System.IO;
 using System.IO.Pipes;
-using System.Text.RegularExpressions;
-using System.ServiceProcess;
-using System.Management;
-using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
-using System.ComponentModel;
 using System.Net;
-using System.Net.Sockets;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
+using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using Microsoft.Extensions.Logging;
 using Prometheus;
 
@@ -35,7 +26,13 @@ namespace ServerMonitor.Collector {
 	// Encapsulates collecting Docker container metrics
 	public class Docker : Base {
 
-		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Services" );
+		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Docker" );
+		private static readonly HttpClient httpClient = new() {
+			DefaultRequestHeaders = {
+				{ "Accept", "application/json" },
+				{ "User-Agent", "Server Monitor" }
+			}
+		};
 
 		// Holds the exported Prometheus metrics
 		public readonly Gauge State; // Running, exited, etc.
@@ -56,157 +53,96 @@ namespace ServerMonitor.Collector {
 		public override void UpdateOnWindows( Config configuration ) {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new PlatformNotSupportedException( "Method only available on Windows" );
 
+			// Parse the methods of connecting to the Docker Engine API
 			Match namedPipeMatch = Regex.Match( configuration.DockerEngineAPIAddress, @"^npipe://(.+)/pipe/(.+)$" );
 			Match tcpMatch = Regex.Match( configuration.DockerEngineAPIAddress, @"^tcp://(.+):(\d+)$" );
 
+			// Update the metrics by connecting over a named pipe...
 			if ( namedPipeMatch.Success ) {
 				string pipeMachine = namedPipeMatch.Groups[ 1 ].Value;
 				string pipeName = namedPipeMatch.Groups[ 2 ].Value;
-				UpdateUsingPipe( pipeMachine, pipeName, configuration );
+				UpdateOverPipe( pipeMachine, pipeName, configuration );
 
+			// Update the metrics by connecting over a TCP socket...
 			} else if ( tcpMatch.Success ) {
 				string tcpAddress = tcpMatch.Groups[ 1 ].Value;
 				int tcpPort = int.Parse( tcpMatch.Groups[ 2 ].Value );
-				Task updateTask = UpdateUsingTCP( tcpAddress, tcpPort, configuration );
-				updateTask.Wait();
+				UpdateOverTCP( tcpAddress, tcpPort, configuration ).Wait();
 
+			// Unrecognised method of connecting
 			} else throw new FormatException( $"Invalid Docker Engine API address '${ configuration.DockerEngineAPIAddress }'" );
 		}
 
+		// Updates the metrics by connecting to the Docker Engine API over a named pipe (for Windows)
 		[ SupportedOSPlatform( "windows" ) ]
-		private void UpdateUsingPipe( string machine, string name, Config configuration ) {
+		private void UpdateOverPipe( string machine, string name, Config configuration ) {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new PlatformNotSupportedException( "Method only available on Windows" );
 
-			// https://learn.microsoft.com/en-us/dotnet/api/system.io.pipes.namedpipeclientstream?view=net-7.0
-			logger.LogDebug( $"Opening named pipe '{ name }' on machine '{ machine }' ({ configuration.DockerEngineAPIAddress })..." );
+			// Connect to the named pipe - https://learn.microsoft.com/en-us/dotnet/api/system.io.pipes.namedpipeclientstream?view=net-7.0
 			using ( NamedPipeClientStream pipeStream = new( machine, name, PipeDirection.InOut ) ) {
-				logger.LogDebug( $"Opened pipe, connecting to Docker daemon..." );
-				pipeStream.Connect( 3000 ); // 3 second timeout
-				logger.LogDebug( "Connected to Docker daemon, with {0} pipe server instances", pipeStream.NumberOfServerInstances );
+				pipeStream.Connect( 1000 ); // 1 second
 
-				logger.LogDebug( "Sending Docker API request..." );
-				string[] request = new[] {
-					$"GET /v{ configuration.DockerEngineAPIVersion }/containers/json?all=true HTTP/1.1",
-					$"Host: localhost",
-					"Accept: application/json",
-					"User-Agent: Server Monitor",
-					"Connection: close"
-				};
-				pipeStream.Write( Encoding.ASCII.GetBytes( string.Concat( string.Join( "\r\n", request ), "\r\n\r\n" ) ) );
-				pipeStream.WaitForPipeDrain();
-				pipeStream.Flush();
+				// HTTP request to fetch the list of all Docker containers
+				HttpResponseMessage response = HTTPRequestOverPipe( pipeStream, "GET", $"/v{ configuration.DockerEngineAPIVersion }/containers/json?all=true", configuration );
+				if ( response.IsSuccessStatusCode == false ) throw new Exception( $"Docker Engine API request failed with HTTP status { response.StatusCode }" );
+				string responseContent = response.Content.ReadAsStringAsync().Result;
 
-				logger.LogDebug( "Reading Docker API response..." );
-				int bytesRead;
-				byte[] readBuffer = new byte[ 65536 ];
-				StringBuilder stringBuilder = new();
-				while ( ( bytesRead = pipeStream.Read( readBuffer ) ) > 0 ) {
-					string hex = BitConverter.ToString( readBuffer, 0, bytesRead ).Replace( "-", " " );
-					logger.LogTrace( "Docker API response (Hex): '{0}'", hex );
-
-					// 2d3 CRLF
-					/*if ( readBuffer.Take( 5 ).SequenceEqual( new byte[] { 0x32, 0x64, 0x33, 0x0D, 0x0A } ) ) {
-						readBuffer = readBuffer.Skip( 5 ).ToArray();
-						bytesRead -= 5;
-					}
-
-					if ( readBuffer.TakeLast( 7 ).SequenceEqual( new byte[] { 0x0D, 0x0A, 0x30, 0x0D, 0x0A, 0x0D, 0x0A } ) ) {
-						readBuffer = readBuffer.Take( bytesRead - 7 ).ToArray();
-						bytesRead -= 2;
-					}*/
-
-					string response = Encoding.UTF8.GetString( readBuffer, 0, bytesRead );
-
-					// I have no idea what this is, tried to find out but there's no information online...
-					//if ( response.StartsWith( "2d3" ) ) response = response.Substring( 3 );
-					if ( response.EndsWith( "0" ) ) response = response.Substring( 0, response.Length - 1 );
-
-					//logger.LogDebug( "Docker API response: '{0}'", response );
-					stringBuilder.Append( response );
-					Array.Clear( readBuffer, 0, readBuffer.Length );
-				}
-				string responseString = stringBuilder.ToString().Trim().TrimEnd( '0' ).Trim();
-
-				int positionOfCrap = responseString.IndexOf( "2d3\r\n" );
-				if ( positionOfCrap != -1 ) responseString = string.Concat( responseString.Substring( 0, positionOfCrap ), responseString.Substring( positionOfCrap + 5 ) );
-
-				logger.LogDebug( "Docker API response: '{0}'", responseString );
-				/*int byteRead;
-				StringBuilder stringBuilder = new();
-				while ( ( byteRead = pipeStream.ReadByte() ) != -1 ) {
-					stringBuilder.Append( Convert.ToChar( byteRead ) );
-				}
-				string responseString = stringBuilder.ToString().Trim();
-				logger.LogDebug( "Docker API response: '{0}'", responseString );*/
-
-				logger.LogDebug( "Disconnecting from Docker daemon..." );
+				// Process the response
+				UpdateUsingResponse( responseContent );
 			}
-			logger.LogDebug( "Disconnected from Docker daemon" );
-
 		}
 
+		// Sends a HTTP request & receives its response over a named pipe (for Windows)
 		[ SupportedOSPlatform( "windows" ) ]
-		[ SupportedOSPlatform( "linux" ) ]
-		private async Task UpdateUsingTCP( string address, int port, Config configuration ) {
+		private HttpResponseMessage HTTPRequestOverPipe( PipeStream pipeStream, string method, string path, Config configuration ) {
+			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new PlatformNotSupportedException( "Method only available on Windows" );
 
-			// https://docs.microsoft.com/en-us/dotnet/api/system.net.sockets.tcpclient?view=net-7.0
-			/*
-			logger.LogDebug( $"Creating TCP client for IPv4..." );
-			using ( TcpClient tcpClient = new( AddressFamily.InterNetwork ) ) {
-				logger.LogDebug( $"Created TCP client, connecting to Docker daemon at '{ address }:{ port }'..." );
-				tcpClient.Connect( address, port );
-				logger.LogDebug( "Connected to Docker daemon" );
+			// Send UTF-8 encoded HTTP request lines joined with CRLF over the named pipe
+			pipeStream.Write( Encoding.UTF8.GetBytes( string.Concat( string.Join( "\r\n", new[] {
+				$"{ method } { path } HTTP/1.1",
+				$"Host: localhost",
+				$"Accept: ${ httpClient.DefaultRequestHeaders.Accept }",
+				$"User-Agent: { httpClient.DefaultRequestHeaders.UserAgent }",
+				"Connection: close"
+			} ), "\r\n\r\n" ) ) );
+			pipeStream.WaitForPipeDrain();
+			pipeStream.Flush();
 
-				using ( NetworkStream networkStream = tcpClient.GetStream() ) {
-
-					logger.LogDebug( "Sending Docker API request..." );
-					string[] request = new[] {
-						"GET /v1.41/containers/json?all=true HTTP/1.1",
-						$"Host: { address }:{ port }",
-						"Accept: application/json",
-						"User-Agent: Server Monitor",
-						"Connection: close"
-					};
-					networkStream.Write( Encoding.UTF8.GetBytes( string.Concat( string.Join( "\r\n", request ), "\r\n\r\n" ) ) );
-
-					logger.LogDebug( "Reading Docker API response..." );
-					int bytesRead;
-					byte[] readBuffer = new byte[ 65536 ];
-					while ( ( bytesRead = networkStream.Read( readBuffer ) ) > 0 ) {
-						string response = Encoding.UTF8.GetString( readBuffer, 0, bytesRead );
-						logger.LogDebug( "Docker API response: '{0}'", response );
-						Array.Clear( readBuffer, 0, readBuffer.Length );
-					}
-				}
-
-				logger.LogDebug( "Disconnecting from Docker daemon..." );
+			// Read the entire response from the pipe
+			int bytesRead = -1;
+			byte[] readBuffer = new byte[ 65536 ];
+			MemoryStream memoryStream = new();
+			while ( ( bytesRead = pipeStream.Read( readBuffer ) ) > 0 ) {
+				memoryStream.Write( readBuffer, 0, bytesRead );
+				Array.Clear( readBuffer, 0, readBuffer.Length );
 			}
-			logger.LogDebug( "Disconnected from Docker daemon" );
-			*/
+			
+			// Convert the response to a UTF-8 string & remove the seemingly random garbage inside it
+			string response = Encoding.UTF8.GetString( memoryStream.GetBuffer(), 0, ( int ) memoryStream.Length );
+			int positionOfGarbage = response.IndexOf( "2d3\r\n" );
+			if ( positionOfGarbage != -1 ) response = string.Concat( response.Substring( 0, positionOfGarbage ), response.Substring( positionOfGarbage + 5 ) ); // Random 2d3 before body
+			response = response.Substring( 0, response.Length - 5 ).Trim(); // Random zero at the end
 
-			// https://docs.microsoft.com/en-us/dotnet/api/system.net.http.httpclient?view=net-7.0
-			HttpClient httpClient = new();
-			httpClient.DefaultRequestHeaders.Add( "Accept", "application/json" );
-			httpClient.DefaultRequestHeaders.Add( "User-Agent", "Server Monitor" );
+			// Break up the parts of the HTTP response
+			int responseDivisionPosition = response.IndexOf( "\r\n\r\n" );
+			string[] responseHeaders = response.Substring( 0, responseDivisionPosition ).Split( "\r\n", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries );
+			string responseBody = response.Substring( responseDivisionPosition + 4 );
 
-			using ( HttpResponseMessage response = await httpClient.GetAsync( $"http://{ address }:{ port }/v{ configuration.DockerEngineAPIVersion }/containers/json?all=true" ) ) {
-				if ( response.IsSuccessStatusCode == false ) throw new Exception( $"Docker API request failed with HTTP status { response.StatusCode }" );
-
-				string responseString = await response.Content.ReadAsStringAsync();
-
-				JsonArray? responseJson = JsonSerializer.Deserialize<JsonArray>( responseString );
-				if ( responseJson == null ) throw new JsonException( $"Failed to parse Docker API response '{ responseString }' as JSON array" );
-
-				foreach ( JsonObject? containerJson in responseJson ) {
-					if ( containerJson == null ) throw new JsonException( $"Docker API response JSON array contains null JSON object" );
-
-					string? containerId = containerJson[ "Id" ]?.GetValue<string>();
-					if ( containerId == null ) throw new JsonException( $"Docker API response JSON object has no container ID" );
-
-					logger.LogDebug( "Docker container: '{0}'", containerId );
+			// Parse the response into the standard HTTP response message class
+			HttpResponseMessage responseMessage = new();
+			foreach ( string responseHeader in responseHeaders ) {
+				Match statusLineMatch = Regex.Match( responseHeader, @"^HTTP/1.1 (\d+) .+$" );
+				if ( statusLineMatch.Success ) {
+					responseMessage.StatusCode = ( HttpStatusCode ) int.Parse( statusLineMatch.Groups[ 1 ].Value );
+				} else {
+					string[] header = responseHeader.Split( ": ", 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries );
+					string name = header[ 0 ].ToLower(), value = header[ 1 ];
+					if ( name != "content-type" ) responseMessage.Headers.Add( header[ 0 ].ToLower(), header[ 1 ] );
 				}
 			}
+			responseMessage.Content = new StringContent( responseBody, Encoding.UTF8 );
 
+			return responseMessage;
 		}
 
 		// Updates the exported Prometheus metrics (for Linux)
@@ -214,27 +150,65 @@ namespace ServerMonitor.Collector {
 		public override void UpdateOnLinux( Config configuration ) {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new PlatformNotSupportedException( "Method only available on Linux" );
 
+			// Parse the methods of connecting to the Docker Engine API
 			Match socketMatch = Regex.Match( configuration.DockerEngineAPIAddress, @"^unix://(.+)$" );
 			Match tcpMatch = Regex.Match( configuration.DockerEngineAPIAddress, @"^tcp://(.+):(\d+)$" );
 
+			// Update the metrics by connecting over a unix socket...
 			if ( socketMatch.Success ) {
 				string socketPath = socketMatch.Groups[ 1 ].Value;
-				UpdateUsingSocket( socketPath, configuration );
+				UpdateOverSocket( socketPath, configuration );
 
+			// Update the metrics by connecting over a TCP socket...
 			} else if ( tcpMatch.Success ) {
 				string tcpAddress = tcpMatch.Groups[ 1 ].Value;
 				int tcpPort = int.Parse( tcpMatch.Groups[ 2 ].Value );
-				Task updateTask = UpdateUsingTCP( tcpAddress, tcpPort, configuration );
-				updateTask.Wait();
+				UpdateOverTCP( tcpAddress, tcpPort, configuration ).Wait();
 
+			// Unrecognised method of connecting
 			} else throw new FormatException( $"Invalid Docker Engine API address '${ configuration.DockerEngineAPIAddress }'" );
 		}
 
+		// Updates the metrics by connecting to the Docker Engine API over a unix socket (for Linux)
 		[ SupportedOSPlatform( "linux" ) ]
-		private void UpdateUsingSocket( string socketPath, Config configuration ) {
+		private void UpdateOverSocket( string socketPath, Config configuration ) {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new PlatformNotSupportedException( "Method only available on Linux" );
 
 			throw new NotImplementedException();
+		}
+
+		// Updates the metrics by sending a HTTP request (TCP under-the-hood) to the Docker Engine API - https://docs.microsoft.com/en-us/dotnet/api/system.net.http.httpclient?view=net-7.0
+		[ SupportedOSPlatform( "windows" ) ]
+		[ SupportedOSPlatform( "linux" ) ]
+		private async Task UpdateOverTCP( string address, int port, Config configuration ) {
+			using ( HttpResponseMessage response = await httpClient.GetAsync( $"http://{ address }:{ port }/v{ configuration.DockerEngineAPIVersion }/containers/json?all=true" ) ) {
+				if ( response.IsSuccessStatusCode == false ) throw new Exception( $"Docker Engine API request failed with HTTP status { response.StatusCode }" );
+				UpdateUsingResponse( await response.Content.ReadAsStringAsync() );
+			}
+		}
+
+		/*
+		[{"Id":"d76139ff9f2fc813bf4add87329a0af85cb2adfc8e81ab065605f7af0018da66","Names":["/HelloWorld"],"Image":"hello-world:latest","ImageID":"sha256:e7c2385a663fe328a753fa44090c644868949b764b64131d792c49a1f28d151a","Command":"cmd /C 'type C:\\hello.txt'","Created":1677677039,"Ports":[],"Labels":{},"State":"exited","Status":"Exited (0) 4 hours ago","HostConfig":{"NetworkMode":"default"},"NetworkSettings":{"Networks":{"nat":{"IPAMConfig":null,"Links":null,"Aliases":null,"NetworkID":"ae2f59fa5a0540995170a33f5618b4bdf14559d1fccf0d4dcc70dfc21563a60d","EndpointID":"","Gateway":"","IPAddress":"","IPPrefixLen":0,"IPv6Gateway":"","GlobalIPv6Address":"","GlobalIPv6PrefixLen":0,"MacAddress":"","DriverOpts":null}}},"Mounts":[]}]
+		*/
+
+		// Updates the metrics using the JSON response from the Docker Engine API
+		[ SupportedOSPlatform( "windows" ) ]
+		[ SupportedOSPlatform( "linux" ) ]
+		private void UpdateUsingResponse( string response ) {
+
+			// Parse the response as a JSON array
+			JsonArray? responseJson = JsonSerializer.Deserialize<JsonArray>( response );
+			if ( responseJson == null ) throw new JsonException( $"Failed to parse response '{ response }' as JSON array" );
+
+			// Loop through each JSON object in the JSON array...
+			foreach ( JsonObject? containerJson in responseJson ) {
+				if ( containerJson == null ) throw new JsonException( $"JSON array contains null JSON object" );
+
+				// Get the container ID
+				string? containerId = containerJson[ "Id" ]?.GetValue<string>();
+				if ( containerId == null ) throw new JsonException( $"JSON object has no property for container ID" );
+				logger.LogDebug( "Docker container: '{0}'", containerId );
+			}
 		}
 
 	}

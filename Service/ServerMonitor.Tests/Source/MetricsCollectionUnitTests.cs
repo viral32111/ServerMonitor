@@ -23,7 +23,7 @@ namespace ServerMonitor.Tests {
 
 			CollectDockerMetrics = true,
 			DockerEngineAPIAddress = "tcp://127.0.0.1:2375",
-			DockerEngineAPIVersion = 1.41f,
+			DockerEngineAPIVersion = 1.41f
 		};
 
 		[ Fact ]
