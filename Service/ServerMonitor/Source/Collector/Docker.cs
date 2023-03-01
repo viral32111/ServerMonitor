@@ -59,7 +59,7 @@ namespace ServerMonitor.Collector {
 			if ( namedPipeMatch.Success ) {
 				string pipeMachine = namedPipeMatch.Groups[ 1 ].Value;
 				string pipeName = namedPipeMatch.Groups[ 2 ].Value;
-				UpdateOnWindowsUsingPipe( pipeMachine, pipeName, configuration );
+				UpdateUsingPipe( pipeMachine, pipeName, configuration );
 
 			} else if ( tcpMatch.Success ) {
 				string tcpAddress = tcpMatch.Groups[ 1 ].Value;
@@ -67,11 +67,12 @@ namespace ServerMonitor.Collector {
 				Task updateTask = UpdateUsingTCP( tcpAddress, tcpPort, configuration );
 				updateTask.Wait();
 
-			} else throw new FormatException( "Invalid Docker Engine API address" );
+			} else throw new FormatException( $"Invalid Docker Engine API address '${ configuration.DockerEngineAPIAddress }'" );
 		}
 
 		[ SupportedOSPlatform( "windows" ) ]
-		private void UpdateOnWindowsUsingPipe( string machine, string name, Config configuration ) {
+		private void UpdateUsingPipe( string machine, string name, Config configuration ) {
+			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new PlatformNotSupportedException( "Method only available on Windows" );
 
 			// https://learn.microsoft.com/en-us/dotnet/api/system.io.pipes.namedpipeclientstream?view=net-7.0
 			logger.LogDebug( $"Opening named pipe '{ name }' on machine '{ machine }' ({ configuration.DockerEngineAPIAddress })..." );
@@ -162,6 +163,26 @@ namespace ServerMonitor.Collector {
 		// Updates the exported Prometheus metrics (for Linux)
 		[ SupportedOSPlatform( "linux" ) ]
 		public override void UpdateOnLinux( Config configuration ) {
+			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new PlatformNotSupportedException( "Method only available on Linux" );
+
+			Match socketMatch = Regex.Match( configuration.DockerEngineAPIAddress, @"^unix://(.+)$" );
+			Match tcpMatch = Regex.Match( configuration.DockerEngineAPIAddress, @"^tcp://(.+):(\d+)$" );
+
+			if ( socketMatch.Success ) {
+				string socketPath = socketMatch.Groups[ 1 ].Value;
+				UpdateUsingSocket( socketPath, configuration );
+
+			} else if ( tcpMatch.Success ) {
+				string tcpAddress = tcpMatch.Groups[ 1 ].Value;
+				int tcpPort = int.Parse( tcpMatch.Groups[ 2 ].Value );
+				Task updateTask = UpdateUsingTCP( tcpAddress, tcpPort, configuration );
+				updateTask.Wait();
+
+			} else throw new FormatException( $"Invalid Docker Engine API address '${ configuration.DockerEngineAPIAddress }'" );
+		}
+
+		[ SupportedOSPlatform( "linux" ) ]
+		private void UpdateUsingSocket( string socketPath, Config configuration ) {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new PlatformNotSupportedException( "Method only available on Linux" );
 
 			throw new NotImplementedException();
