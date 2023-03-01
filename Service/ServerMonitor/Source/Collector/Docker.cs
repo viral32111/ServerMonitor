@@ -187,10 +187,6 @@ namespace ServerMonitor.Collector {
 			}
 		}
 
-		/*
-		[{"Id":"d76139ff9f2fc813bf4add87329a0af85cb2adfc8e81ab065605f7af0018da66","Names":["/HelloWorld"],"Image":"hello-world:latest","ImageID":"sha256:e7c2385a663fe328a753fa44090c644868949b764b64131d792c49a1f28d151a","Command":"cmd /C 'type C:\\hello.txt'","Created":1677677039,"Ports":[],"Labels":{},"State":"exited","Status":"Exited (0) 4 hours ago","HostConfig":{"NetworkMode":"default"},"NetworkSettings":{"Networks":{"nat":{"IPAMConfig":null,"Links":null,"Aliases":null,"NetworkID":"ae2f59fa5a0540995170a33f5618b4bdf14559d1fccf0d4dcc70dfc21563a60d","EndpointID":"","Gateway":"","IPAddress":"","IPPrefixLen":0,"IPv6Gateway":"","GlobalIPv6Address":"","GlobalIPv6PrefixLen":0,"MacAddress":"","DriverOpts":null}}},"Mounts":[]}]
-		*/
-
 		// Updates the metrics using the JSON response from the Docker Engine API
 		[ SupportedOSPlatform( "windows" ) ]
 		[ SupportedOSPlatform( "linux" ) ]
@@ -204,10 +200,39 @@ namespace ServerMonitor.Collector {
 			foreach ( JsonObject? containerJson in responseJson ) {
 				if ( containerJson == null ) throw new JsonException( $"JSON array contains null JSON object" );
 
-				// Get the container ID
-				string? containerId = containerJson[ "Id" ]?.GetValue<string>();
-				if ( containerId == null ) throw new JsonException( $"JSON object has no property for container ID" );
-				logger.LogDebug( "Docker container: '{0}'", containerId );
+				// Get the container identifier
+				if ( containerJson.TryGetPropertyValue( "Id", out JsonNode? containerIdProperty ) == false || containerIdProperty == null ) throw new JsonException( $"JSON object '{ containerJson.ToJsonString() }' has no property for container ID" );
+				string containerId = containerIdProperty.AsValue().GetValue<string>();
+				if ( string.IsNullOrWhiteSpace( containerId ) ) throw new JsonException( $"Container ID '{ containerId }' is null, empty or whitespace" );
+
+				// Get the container name
+				if ( containerJson.TryGetPropertyValue( "Names", out JsonNode? containerNamesProperty ) == false || containerNamesProperty == null ) throw new JsonException( $"JSON object '{ containerJson.ToJsonString() }' has no property for container names" );
+				JsonArray containerNames = containerNamesProperty.AsArray();
+				if ( containerNames.Count <= 0 ) throw new JsonException( $"JSON array '{ containerNames.ToJsonString() }' for container names is empty" );
+				string? containerName = containerNames[ 0 ]?.GetValue<string>();
+				if ( string.IsNullOrWhiteSpace( containerName ) ) throw new JsonException( $"Container name '{ containerName }' is null, empty or whitespace" );
+
+				// Get the container image
+				if ( containerJson.TryGetPropertyValue( "Image", out JsonNode? containerImageProperty ) == false || containerImageProperty == null ) throw new JsonException( $"JSON object '{ containerJson.ToJsonString() }' has no property for container image" );
+				string containerImage = containerImageProperty.AsValue().GetValue<string>();
+				if ( string.IsNullOrWhiteSpace( containerImage ) ) throw new JsonException( $"Container image '{ containerImage }' is null, empty or whitespace" );
+
+				// Get the container created timestamp
+				if ( containerJson.TryGetPropertyValue( "Created", out JsonNode? containerCreatedProperty ) == false || containerCreatedProperty == null ) throw new JsonException( $"JSON object '{ containerJson.ToJsonString() }' has no property for container created timestamp" );
+				long containerCreatedTimestamp = containerCreatedProperty.AsValue().GetValue<long>();
+				DateTimeOffset containerCreated = DateTimeOffset.FromUnixTimeSeconds( containerCreatedTimestamp );
+
+				// Get the container state
+				if ( containerJson.TryGetPropertyValue( "State", out JsonNode? containerStateProperty ) == false || containerStateProperty == null ) throw new JsonException( $"JSON object '{ containerJson.ToJsonString() }' has no property for container state" );
+				string containerState = containerStateProperty.AsValue().GetValue<string>();
+				if ( string.IsNullOrWhiteSpace( containerState ) ) throw new JsonException( $"Container state '{ containerState }' is null, empty or whitespace" );
+
+				// Get the container status
+				if ( containerJson.TryGetPropertyValue( "Status", out JsonNode? containerStatusProperty ) == false || containerStatusProperty == null ) throw new JsonException( $"JSON object '{ containerJson.ToJsonString() }' has no property for container status" );
+				string containerStatus = containerStatusProperty.AsValue().GetValue<string>();
+				if ( string.IsNullOrWhiteSpace( containerStatus ) ) throw new JsonException( $"Container status '{ containerStatus }' is null, empty or whitespace" );
+
+				logger.LogDebug( "Docker container: '{0}', '{1}', '{2}', '{3}', '{4}', '{5}'", containerId, containerName, containerImage, containerCreated, containerState, containerStatus );
 			}
 		}
 
