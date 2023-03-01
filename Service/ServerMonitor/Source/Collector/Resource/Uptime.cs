@@ -26,7 +26,7 @@ namespace ServerMonitor.Collector.Resource {
 		// Updates the exported Prometheus metrics (for Windows)
 		[ SupportedOSPlatform( "windows" ) ]
 		public override void UpdateOnWindows() {
-			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
+			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new PlatformNotSupportedException( "Method only available on Windows" );
 
 			// Get the uptime & set the value for the exported Prometheus metric
 			TimeSpan uptime = TimeSpan.FromMilliseconds( GetTickCount64() );
@@ -37,21 +37,21 @@ namespace ServerMonitor.Collector.Resource {
 		// Updates the exported Prometheus metrics (for Linux)
 		[ SupportedOSPlatform( "linux" ) ]
 		public override void UpdateOnLinux() {
-			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
+			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new PlatformNotSupportedException( "Method only available on Linux" );
 
 			using ( FileStream fileStream = new( "/proc/uptime", FileMode.Open, FileAccess.Read ) ) {
 				using ( StreamReader streamReader = new( fileStream ) ) {
 
 					// Get the first line of the file
 					string? fileLine = streamReader.ReadLine();
-					if ( string.IsNullOrWhiteSpace( fileLine ) ) throw new Exception( "First line of file is empty or whitespace" );
+					if ( string.IsNullOrWhiteSpace( fileLine ) ) throw new Exception( $"Uptime file first line '{ fileLine }' is null, empty or whitespace" );
 
 					// Split the line into its components
 					string[] lineParts = fileLine.Split( " ", 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries );
-					if ( lineParts.Length != 2 ) throw new Exception( "File line has incorrect number of parts" );
+					if ( lineParts.Length != 2 ) throw new Exception( $"Uptime file line parts count is { lineParts }, expected 2" );
 
 					// Get the uptime & set the value for the exported Prometheus metric
-					if ( double.TryParse( lineParts[ 0 ], out double uptime ) != true ) throw new Exception( "Failed to parse uptime as double" );
+					if ( double.TryParse( lineParts[ 0 ], out double uptime ) != true ) throw new Exception( $"Failed to parse uptime '{ lineParts[ 0 ] }' as double" );
 					UptimeSeconds.Set( uptime );
 					logger.LogDebug( "Updated Prometheus metrics" );
 

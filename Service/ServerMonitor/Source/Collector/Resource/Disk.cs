@@ -57,7 +57,7 @@ namespace ServerMonitor.Collector.Resource {
 		// Updates the exported Prometheus metrics (for Windows)
 		[ SupportedOSPlatform( "windows" ) ]
 		public override void UpdateOnWindows() {
-			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
+			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new PlatformNotSupportedException( "Method only available on Windows" );
 
 			// Get information about drives - https://learn.microsoft.com/en-us/dotnet/api/system.io.driveinfo.availablefreespace?view=net-7.0#examples
 			DriveInfo[] drives = DriveInfo.GetDrives()
@@ -107,7 +107,7 @@ namespace ServerMonitor.Collector.Resource {
 		// Get read & write statistics for a drive (for Windows) - https://stackoverflow.com/a/30451751
 		[ SupportedOSPlatform( "windows" ) ]
 		private long[] GetDriveStatisticsForWindows( string driveLetter ) {
-			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
+			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new PlatformNotSupportedException( "Method only available on Windows" );
 
 			// File & I/O control code constants - https://learn.microsoft.com/en-us/windows/win32/fileio/file-access-rights-constants, http://www.ioctls.net
 			const UInt32 FILE_READ_ATTRIBUTES = 0x80;
@@ -133,7 +133,7 @@ namespace ServerMonitor.Collector.Resource {
 			DISK_PERFORMANCE diskPerformance = new();
 			bool ioSuccess = DeviceIoControl( deviceHandle, IOCTL_DISK_PERFORMANCE, Array.Empty<byte>(), 0, diskPerformance, outBufferSize, out UInt32 bytesReturned, IntPtr.Zero );
 			if ( !ioSuccess ) throw new Win32Exception( Marshal.GetLastWin32Error() );
-			if ( bytesReturned != outBufferSize ) throw new Exception( $"DeviceIoControl() returned { bytesReturned } bytes, expected { outBufferSize } bytes" );
+			if ( bytesReturned != outBufferSize ) throw new Exception( $"Windows API function DeviceIoControl() returned { bytesReturned } bytes, expected { outBufferSize } bytes" );
 
 			// Return the total bytes read & written
 			return new[] { diskPerformance.BytesRead, diskPerformance.BytesWritten };
@@ -142,7 +142,7 @@ namespace ServerMonitor.Collector.Resource {
 
 		/*[ SupportedOSPlatform( "windows" ) ]
 		private void SMART( DriveInfo driveInformation ) {
-			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
+			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new PlatformNotSupportedException( "Method only available on Windows" );
 
 			foreach ( ManagementObject managementObject in new ManagementObjectSearcher( "SELECT * FROM Win32_DiskDrive" ).Get() ) {
 				logger.LogDebug( "Name: '{0}'", managementObject[ "Name" ] );
@@ -187,7 +187,7 @@ namespace ServerMonitor.Collector.Resource {
 		// Updates the exported Prometheus metrics (for Linux)
 		[ SupportedOSPlatform( "linux" ) ]
 		public override void UpdateOnLinux() {
-			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
+			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new PlatformNotSupportedException( "Method only available on Linux" );
 
 			// Loop through each drive...
 			foreach ( string driveName in GetDrives() ) {
@@ -210,8 +210,8 @@ namespace ServerMonitor.Collector.Resource {
 
 					// Get filesystem statistics for the partition using the Linux C statvfs() function
 					Statvfs filesystemStatistics = new();
-					int status = Syscall.statvfs( mountPath, out filesystemStatistics );
-					if ( status != 0 ) throw new Exception( "statvfs() call failed" );
+					int statusCode = Syscall.statvfs( mountPath, out filesystemStatistics );
+					if ( statusCode != 0 ) throw new Exception( $"Linux syscall statvfs() failed with code { statusCode }" );
 
 					// Set the values for the exported Prometheus metrics
 					TotalBytes.WithLabels( partitionName, mountPath ).Set( filesystemStatistics.f_blocks * filesystemStatistics.f_bsize );

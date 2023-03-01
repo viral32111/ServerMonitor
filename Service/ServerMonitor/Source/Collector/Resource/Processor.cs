@@ -6,7 +6,6 @@ using System.Management;
 using System.Diagnostics;
 using System.Runtime.Versioning;
 using System.Runtime.InteropServices;
-using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using Prometheus;
 
@@ -37,7 +36,7 @@ namespace ServerMonitor.Collector.Resource {
 		// Updates the exported Prometheus metrics (for Windows)
 		[ SupportedOSPlatform( "windows" ) ]
 		public override void UpdateOnWindows() {
-			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
+			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new PlatformNotSupportedException( "Method only available on Windows" );
 
 			// Get processor usage from the Performance Monitor interface - https://stackoverflow.com/a/278088
 			// NOTE: Two samples required with 1 second wait to get an accurate reading
@@ -64,7 +63,7 @@ namespace ServerMonitor.Collector.Resource {
 		// https://stackoverflow.com/a/3114251
 		/*[ SupportedOSPlatform( "windows" ) ]
 		private void GetTemperature() {
-			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
+			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new PlatformNotSupportedException( "Method only available on Windows" );
 
 			foreach ( ManagementObject managementObject in new ManagementObjectSearcher( @"root\WMI", "SELECT * FROM MSAcpi_ThermalZoneTemperature" ).Get() ) {
 				double currentTemperature = Convert.ToDouble( managementObject[ "CurrentTemperature" ].ToString() );
@@ -77,22 +76,17 @@ namespace ServerMonitor.Collector.Resource {
 		// Updates the exported Prometheus metrics (for Linux)
 		[ SupportedOSPlatform( "linux" ) ]
 		public override void UpdateOnLinux() {
-			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
+			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new PlatformNotSupportedException( "Method only available on Linux" );
 
 			// Get processor usage & frequency
 			Usage.Set( GetProcessorUsage() );
 			Frequency.Set( GetProcessorFrequency() );
 
-			// Do not get processor temperature if running in GitHub Actions
-			if ( !string.IsNullOrEmpty( Environment.GetEnvironmentVariable( "CI" ) ) ) {
-				logger.LogWarning( "Skipping temperature check due to running in CI environment" );
-				Temperature.Set( 0 );
-
 			// Get processor temperature from package sensor, but fallback to motherboard sensor if it doesn't exist
-			} else Temperature.Set(
+			Temperature.Set(
 				GetProcessorTemperature( "x86_pkg_temp" ) ??
 				GetProcessorTemperature( "acpitz" ) ??
-				throw new Exception( "Unable to get processor temperature" )
+				throw new Exception( "No sensors available to fetch processor temperature from" )
 			);
 
 			logger.LogDebug( "Updated Prometheus metrics" );

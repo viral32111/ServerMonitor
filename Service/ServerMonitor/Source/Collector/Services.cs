@@ -43,7 +43,7 @@ namespace ServerMonitor.Collector {
 		// Updates the exported Prometheus metrics (for Windows)
 		[ SupportedOSPlatform( "windows" ) ]
 		public override void UpdateOnWindows() {
-			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
+			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new PlatformNotSupportedException( "Method only available on Windows" );
 
 			// Loop through all non-driver services - https://learn.microsoft.com/en-us/dotnet/api/system.serviceprocess.servicecontroller?view=dotnet-plat-ext-7.0
 			foreach ( ServiceController service in ServiceController.GetServices() ) {
@@ -62,7 +62,7 @@ namespace ServerMonitor.Collector {
 
 				// Get the uptime of the process for this service
 				Process process = Process.GetProcessById( processId );
-				if ( process == null ) throw new Exception( "Service has no process" );
+				if ( process == null ) throw new Exception( $"No process with process ID '{ processId }' for service '{ service.ServiceName }'" );
 				double uptimeSeconds = GetProcessUptime( process );
 
 				// Update the exported Prometheus metrics
@@ -84,18 +84,18 @@ namespace ServerMonitor.Collector {
 			// Sometimes we get access denied, so fallback to searching the WMI - https://stackoverflow.com/a/31792
 			} catch ( Win32Exception ) {
 				foreach ( ManagementObject processManagementObject in new ManagementObjectSearcher( "root/CIMV2", "SELECT * FROM Win32_Process WHERE ProcessId = " + process.Id ).Get() ) {
-					string creationDateText = processManagementObject[ "CreationDate" ].ToString() ?? throw new Exception( "Service has no creation date" );
+					string creationDateText = processManagementObject[ "CreationDate" ].ToString() ?? throw new Exception( $"Process '{ process.ProcessName }' has no creation date" );
 					return ( DateTime.Now - ManagementDateTimeConverter.ToDateTime( creationDateText ) ).TotalSeconds;
 				}
 			}
 
-			throw new Exception( "Service has no uptime" );
+			throw new Exception( $"No way to get uptime for process '{ process.ProcessName }'" );
 		}
 
 		// Updates the exported Prometheus metrics (for Linux)
 		[ SupportedOSPlatform( "linux" ) ]
 		public override void UpdateOnLinux() {
-			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
+			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new PlatformNotSupportedException( "Method only available on Linux" );
 
 			// Update the metrics for both system & user services
 			UpdateServicesMetrics( "system" );
@@ -153,7 +153,7 @@ namespace ServerMonitor.Collector {
 					"reloading" => 2,
 					"failed" => 3,
 					"exited" => 4,
-					_ => throw new Exception( $"Unrecognised service status: '{ serviceData[ "ActiveState" ] }'" )
+					_ => throw new Exception( $"Unrecognised status: '{ serviceData[ "ActiveState" ] }' for service '{ serviceName }'" )
 				};
 
 				// Parse the exit code from the service data
@@ -203,7 +203,7 @@ namespace ServerMonitor.Collector {
 		// Parses a systemd service file (for Linux)
 		[ SupportedOSPlatform( "linux" ) ]
 		private static Dictionary<string, Dictionary<string, string>> ParseServiceFile( string systemOrUser, string serviceName ) {
-			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
+			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new PlatformNotSupportedException( "Method only available on Linux" );
 
 			// Read the service file
 			string[] fileLines = File.ReadAllLines( Path.Combine( "/usr/lib/systemd/", systemOrUser, $"{ serviceName }.service" ) )
@@ -265,7 +265,7 @@ namespace ServerMonitor.Collector {
 			command.WaitForExit();
 
 			// Fail if the command failed
-			if ( command.ExitCode != 0 ) throw new Exception( $"Command failed with exit code { command.ExitCode }: '{ errorText }'" );
+			if ( command.ExitCode != 0 ) throw new Exception( $"Command '{ command.StartInfo.FileName }' '{ command.StartInfo.Arguments }' failed with exit code { command.ExitCode } ({ errorText })" );
 
 			// Parse the command output into a dictionary
 			return outputText.Split( "\n", StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries )

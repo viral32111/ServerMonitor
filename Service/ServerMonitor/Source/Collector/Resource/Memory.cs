@@ -37,15 +37,15 @@ namespace ServerMonitor.Collector.Resource {
 		// Updates the exported Prometheus metrics (for Windows)
 		[ SupportedOSPlatform( "windows" ) ]
 		public override void UpdateOnWindows() {
-			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new InvalidOperationException( "Method only available on Windows" );
+			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new PlatformNotSupportedException( "Method only available on Windows" );
 
 			// Call the Windows API functions to populate the structures with raw data - https://stackoverflow.com/a/105109
 			MEMORYSTATUSEX memoryStatus = new();
 			memoryStatus.dwLength = ( UInt32 ) Marshal.SizeOf( memoryStatus );
 			PERFORMANCE_INFORMATION performanceInformation = new();
 			performanceInformation.cb = ( UInt32 ) Marshal.SizeOf( performanceInformation );
-			if ( !GlobalMemoryStatusEx( memoryStatus ) ) throw new Exception( "Failed to get system memory status" );
-			if ( !K32GetPerformanceInfo( performanceInformation, performanceInformation.cb ) ) throw new Exception( "Failed to get system performance information" );
+			if ( !GlobalMemoryStatusEx( memoryStatus ) ) throw new Exception( "Windows API function GlobalMemoryStatusEx() failed" );
+			if ( !K32GetPerformanceInfo( performanceInformation, performanceInformation.cb ) ) throw new Exception( "Windows API function K32GetPerformanceInfo() failed" );
 
 			// Set the values for the exported Prometheus memory metrics
 			TotalBytes.Set( memoryStatus.ullTotalPhys );
@@ -67,7 +67,7 @@ namespace ServerMonitor.Collector.Resource {
 		// Updates the exported Prometheus metrics (for Linux)
 		[ SupportedOSPlatform( "linux" ) ]
 		public override void UpdateOnLinux() {
-			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new InvalidOperationException( "Method only available on Linux" );
+			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new PlatformNotSupportedException( "Method only available on Linux" );
 
 			// Read the psuedo-file to get the current memory information
 			using ( FileStream fileStream = new( "/proc/meminfo", FileMode.Open, FileAccess.Read ) ) {
@@ -83,24 +83,21 @@ namespace ServerMonitor.Collector.Resource {
 
 						// Split the line into the name & data (e.g., "MemTotal:       123456 kB")
 						string[] lineParts = fileLine.Split( ":", 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries );
-						if ( lineParts.Length != 2 ) throw new Exception( "Unexpected number of parts on file line" );
+						if ( lineParts.Length != 2 ) throw new Exception( $"Memory information line part count is { lineParts }, expected 2" );
 						string name = lineParts[ 0 ], data = lineParts[ 1 ];
 
 						// Split the data into value & suffix
 						string[] dataParts = data.Split( " ", 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries );
-						if ( double.TryParse( dataParts[ 0 ], out double value ) != true ) throw new Exception( "Failed to parse data value as double" );
+						if ( double.TryParse( dataParts[ 0 ], out double value ) != true ) throw new Exception( $"Failed to parse data part value '{ dataParts[ 0 ] }' as double" );
 
 						// If there is a suffix, convert the value down to bytes
-						if ( dataParts.Length == 2 ) {
-							memoryInformation.Add( name, dataParts[ 1 ] switch {
-								"kB" => value * 1024, // https://superuser.com/q/1737654
-								_ => throw new Exception( "Unrecognised suffix" )
-							} );
+						if ( dataParts.Length == 2 ) memoryInformation.Add( name, dataParts[ 1 ] switch {
+							"kB" => value * 1024, // https://superuser.com/q/1737654
+							_ => throw new Exception( $"Unrecognised data suffix '{ dataParts[ 1 ] }'" )
+						} );
 
-						// No suffix so just add the value as-is
-						} else {
-							memoryInformation.Add( name, value );
-						}
+						// Otherwise there is no suffix, so just add the value as-is
+						else memoryInformation.Add( name, value );
 					} while ( !streamReader.EndOfStream );
 
 					// Set the values for the exported Prometheus metrics

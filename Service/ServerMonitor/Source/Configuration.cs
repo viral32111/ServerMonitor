@@ -31,7 +31,7 @@ namespace ServerMonitor {
 				return Path.Combine( Environment.GetFolderPath( Environment.SpecialFolder.UserProfile ), ".config", "server-monitor", FileName );
 
 			// Anything else is unsupported
-			} else throw new Exception( "Unsupported operating system" );
+			} else throw new PlatformNotSupportedException( "Unsupported operating system" );
 		}
 
 		// Gets the path to the system-wide configuration file
@@ -45,7 +45,7 @@ namespace ServerMonitor {
 				return Path.Combine( "/etc", "server-monitor", FileName ); // No SpecialFolder enum for /etc
 
 			// Anything else is unsupported
-			} else throw new Exception( "Unsupported operating system" );
+			} else throw new PlatformNotSupportedException( "Unsupported operating system" );
 		}
 
 		// Loads the configuration from JSON files & environment variables

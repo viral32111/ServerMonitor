@@ -116,7 +116,7 @@ namespace ServerMonitor {
 				LogLevel.Warning => "\x1B[33;22m", // Yellow
 				LogLevel.Error => "\x1B[31;22m", // Red,
 				LogLevel.Critical => "\x1B[31;1m", // Bold & Red,
-				_ => throw new Exception( "Unrecognised log level" )
+				_ => throw new Exception( $"Unrecognised log level '{ logLevel }'" )
 			};
 
 			textWriter.Write( ansiColorCode );
@@ -131,7 +131,7 @@ namespace ServerMonitor {
 				LogLevel.Warning => "WARN",
 				LogLevel.Error => "ERROR",
 				LogLevel.Critical => "CRITICAL",
-				_ => throw new Exception( "Unrecognised log level" )
+				_ => throw new Exception( $"Unrecognised log level '{ logLevel }'" )
 			};
 
 			textWriter.Write( $"[{ logLevelString }] " );
