@@ -5,7 +5,7 @@ using Xunit;
 
 namespace ServerMonitor.Tests {
 
-	public class ServerFeatureUnitTests {
+	public class ServerFeatures {
 
 		[ Fact ]
 		public void TestLoadingConfiguration() {
