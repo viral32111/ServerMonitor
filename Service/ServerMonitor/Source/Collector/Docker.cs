@@ -92,18 +92,52 @@ namespace ServerMonitor.Collector {
 					"User-Agent: Server Monitor",
 					"Connection: close"
 				};
-				pipeStream.Write( Encoding.UTF8.GetBytes( string.Concat( string.Join( "\r\n", request ), "\r\n\r\n" ) ) );
+				pipeStream.Write( Encoding.ASCII.GetBytes( string.Concat( string.Join( "\r\n", request ), "\r\n\r\n" ) ) );
 				pipeStream.WaitForPipeDrain();
 				pipeStream.Flush();
 
 				logger.LogDebug( "Reading Docker API response..." );
 				int bytesRead;
-					byte[] readBuffer = new byte[ 65536 ];
+				byte[] readBuffer = new byte[ 65536 ];
+				StringBuilder stringBuilder = new();
 				while ( ( bytesRead = pipeStream.Read( readBuffer ) ) > 0 ) {
+					string hex = BitConverter.ToString( readBuffer, 0, bytesRead ).Replace( "-", " " );
+					logger.LogTrace( "Docker API response (Hex): '{0}'", hex );
+
+					// 2d3 CRLF
+					/*if ( readBuffer.Take( 5 ).SequenceEqual( new byte[] { 0x32, 0x64, 0x33, 0x0D, 0x0A } ) ) {
+						readBuffer = readBuffer.Skip( 5 ).ToArray();
+						bytesRead -= 5;
+					}
+
+					if ( readBuffer.TakeLast( 7 ).SequenceEqual( new byte[] { 0x0D, 0x0A, 0x30, 0x0D, 0x0A, 0x0D, 0x0A } ) ) {
+						readBuffer = readBuffer.Take( bytesRead - 7 ).ToArray();
+						bytesRead -= 2;
+					}*/
+
 					string response = Encoding.UTF8.GetString( readBuffer, 0, bytesRead );
-					logger.LogDebug( "Docker API response: '{0}'", response );
+
+					// I have no idea what this is, tried to find out but there's no information online...
+					//if ( response.StartsWith( "2d3" ) ) response = response.Substring( 3 );
+					if ( response.EndsWith( "0" ) ) response = response.Substring( 0, response.Length - 1 );
+
+					//logger.LogDebug( "Docker API response: '{0}'", response );
+					stringBuilder.Append( response );
 					Array.Clear( readBuffer, 0, readBuffer.Length );
 				}
+				string responseString = stringBuilder.ToString().Trim().TrimEnd( '0' ).Trim();
+
+				int positionOfCrap = responseString.IndexOf( "2d3\r\n" );
+				if ( positionOfCrap != -1 ) responseString = string.Concat( responseString.Substring( 0, positionOfCrap ), responseString.Substring( positionOfCrap + 5 ) );
+
+				logger.LogDebug( "Docker API response: '{0}'", responseString );
+				/*int byteRead;
+				StringBuilder stringBuilder = new();
+				while ( ( byteRead = pipeStream.ReadByte() ) != -1 ) {
+					stringBuilder.Append( Convert.ToChar( byteRead ) );
+				}
+				string responseString = stringBuilder.ToString().Trim();
+				logger.LogDebug( "Docker API response: '{0}'", responseString );*/
 
 				logger.LogDebug( "Disconnecting from Docker daemon..." );
 			}
