@@ -22,7 +22,7 @@ namespace ServerMonitor.Collector.Resource {
 		public readonly Gauge SwapFreeBytes;
 
 		// Initialise the exported Prometheus metrics
-		public Memory( Config configuration ) {
+		public Memory( Config configuration ) : base( configuration ) {
 			TotalBytes = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_memory_total_bytes", "Total system memory, in bytes." );
 			FreeBytes = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_memory_free_bytes", "Free system memory, in bytes." );
 			SwapTotalBytes = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_memory_swap_total_bytes", "Total swap/page-file, in bytes." );
@@ -36,7 +36,7 @@ namespace ServerMonitor.Collector.Resource {
 
 		// Updates the exported Prometheus metrics (for Windows)
 		[ SupportedOSPlatform( "windows" ) ]
-		public override void UpdateOnWindows() {
+		public override void UpdateOnWindows( Config configuration ) {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new PlatformNotSupportedException( "Method only available on Windows" );
 
 			// Call the Windows API functions to populate the structures with raw data - https://stackoverflow.com/a/105109
@@ -66,7 +66,7 @@ namespace ServerMonitor.Collector.Resource {
 
 		// Updates the exported Prometheus metrics (for Linux)
 		[ SupportedOSPlatform( "linux" ) ]
-		public override void UpdateOnLinux() {
+		public override void UpdateOnLinux( Config configuration ) {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new PlatformNotSupportedException( "Method only available on Linux" );
 
 			// Read the psuedo-file to get the current memory information

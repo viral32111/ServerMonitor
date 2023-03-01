@@ -19,7 +19,7 @@ namespace ServerMonitor.Collector.Resource {
 		public readonly Gauge MaximumWattage;
 
 		// Initialise the exported Prometheus metrics
-		public Power( Config configuration ) {
+		public Power( Config configuration ) : base( configuration ) {
 			CurrentWattage = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_power_current_wattage", "Current system power usage, in watts." );
 			MaximumWattage = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_power_maximum_wattage", "Maximum system power usage, in watts." );
 
@@ -31,7 +31,7 @@ namespace ServerMonitor.Collector.Resource {
 
 		// Updates the exported Prometheus metrics (for Windows)
 		[ SupportedOSPlatform( "windows" ) ]
-		public override void UpdateOnWindows() {
+		public override void UpdateOnWindows( Config configuration ) {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new PlatformNotSupportedException( "Method only available on Windows" );
 
 			throw new NotImplementedException();
@@ -39,7 +39,7 @@ namespace ServerMonitor.Collector.Resource {
 
 		// Updates the exported Prometheus metrics (for Linux)
 		[ SupportedOSPlatform( "linux" ) ]
-		public override void UpdateOnLinux() {
+		public override void UpdateOnLinux( Config configuration ) {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new PlatformNotSupportedException( "Method only available on Linux" );
 
 			throw new NotImplementedException();

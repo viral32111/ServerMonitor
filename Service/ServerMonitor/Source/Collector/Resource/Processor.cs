@@ -23,7 +23,7 @@ namespace ServerMonitor.Collector.Resource {
 		public readonly Gauge Frequency;
 
 		// Initialise the exported Prometheus metrics
-		public Processor( Config configuration ) {
+		public Processor( Config configuration ) : base( configuration ) {
 			Usage = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_processor_usage", "Processor usage, as percentage." );
 			Temperature = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_processor_temperature", "Processor temperature, in degrees Celsius." );
 			Frequency = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_processor_frequency", "Processor frequency, in hertz." );
@@ -35,7 +35,7 @@ namespace ServerMonitor.Collector.Resource {
 
 		// Updates the exported Prometheus metrics (for Windows)
 		[ SupportedOSPlatform( "windows" ) ]
-		public override void UpdateOnWindows() {
+		public override void UpdateOnWindows( Config configuration ) {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new PlatformNotSupportedException( "Method only available on Windows" );
 
 			// Get processor usage from the Performance Monitor interface - https://stackoverflow.com/a/278088
@@ -75,7 +75,7 @@ namespace ServerMonitor.Collector.Resource {
 
 		// Updates the exported Prometheus metrics (for Linux)
 		[ SupportedOSPlatform( "linux" ) ]
-		public override void UpdateOnLinux() {
+		public override void UpdateOnLinux( Config configuration ) {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new PlatformNotSupportedException( "Method only available on Linux" );
 
 			// Get processor usage & frequency

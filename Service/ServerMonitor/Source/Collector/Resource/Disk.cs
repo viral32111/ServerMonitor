@@ -26,7 +26,7 @@ namespace ServerMonitor.Collector.Resource {
 		public readonly Gauge Health;
 
 		// Initialise the exported Prometheus metrics
-		public Disk( Config configuration ) {
+		public Disk( Config configuration ) : base( configuration ) {
 			TotalBytes = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_disk_total_bytes", "Total disk space, in bytes.", new GaugeConfiguration {
 				LabelNames = new[] { "partition", "mountpoint" }
 			} );
@@ -56,7 +56,7 @@ namespace ServerMonitor.Collector.Resource {
 
 		// Updates the exported Prometheus metrics (for Windows)
 		[ SupportedOSPlatform( "windows" ) ]
-		public override void UpdateOnWindows() {
+		public override void UpdateOnWindows( Config configuration ) {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new PlatformNotSupportedException( "Method only available on Windows" );
 
 			// Get information about drives - https://learn.microsoft.com/en-us/dotnet/api/system.io.driveinfo.availablefreespace?view=net-7.0#examples
@@ -174,7 +174,7 @@ namespace ServerMonitor.Collector.Resource {
 
 		// Updates the exported Prometheus metrics (for Linux)
 		[ SupportedOSPlatform( "linux" ) ]
-		public override void UpdateOnLinux() {
+		public override void UpdateOnLinux( Config configuration ) {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new PlatformNotSupportedException( "Method only available on Linux" );
 
 			// Loop through each drive...

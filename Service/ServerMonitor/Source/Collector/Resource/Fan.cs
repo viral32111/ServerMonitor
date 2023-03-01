@@ -18,7 +18,7 @@ namespace ServerMonitor.Collector.Resource {
 		public readonly Gauge SpeedRPM;
 
 		// Initialise the exported Prometheus metrics
-		public Fan( Config configuration ) {
+		public Fan( Config configuration ) : base( configuration ) {
 			SpeedRPM = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_fan_speed_rpm", "Current fan speed, in revolutions per minute." );
 			SpeedRPM.Set( -1 );
 			logger.LogInformation( "Initalised Prometheus metrics" );
@@ -26,7 +26,7 @@ namespace ServerMonitor.Collector.Resource {
 
 		// Updates the exported Prometheus metrics (for Windows)
 		[ SupportedOSPlatform( "windows" ) ]
-		public override void UpdateOnWindows() {
+		public override void UpdateOnWindows( Config configuration ) {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new PlatformNotSupportedException( "Method only available on Windows" );
 
 			throw new NotImplementedException();
@@ -34,7 +34,7 @@ namespace ServerMonitor.Collector.Resource {
 
 		// Updates the exported Prometheus metrics (for Linux)
 		[ SupportedOSPlatform( "linux" ) ]
-		public override void UpdateOnLinux() {
+		public override void UpdateOnLinux( Config configuration ) {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new PlatformNotSupportedException( "Method only available on Linux" );
 
 			throw new NotImplementedException();

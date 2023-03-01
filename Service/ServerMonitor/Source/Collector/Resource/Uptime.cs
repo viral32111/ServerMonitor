@@ -17,7 +17,7 @@ namespace ServerMonitor.Collector.Resource {
 		public readonly Gauge UptimeSeconds;
 
 		// Initialise the exported Prometheus metrics
-		public Uptime( Config configuration ) {
+		public Uptime( Config configuration ) : base( configuration ) {
 			UptimeSeconds = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_uptime_seconds", "System uptime, in seconds." );
 			UptimeSeconds.Set( -1 );
 			logger.LogInformation( "Initalised Prometheus metrics" );
@@ -25,7 +25,7 @@ namespace ServerMonitor.Collector.Resource {
 
 		// Updates the exported Prometheus metrics (for Windows)
 		[ SupportedOSPlatform( "windows" ) ]
-		public override void UpdateOnWindows() {
+		public override void UpdateOnWindows( Config configuration ) {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new PlatformNotSupportedException( "Method only available on Windows" );
 
 			// Get the uptime & set the value for the exported Prometheus metric
@@ -36,7 +36,7 @@ namespace ServerMonitor.Collector.Resource {
 
 		// Updates the exported Prometheus metrics (for Linux)
 		[ SupportedOSPlatform( "linux" ) ]
-		public override void UpdateOnLinux() {
+		public override void UpdateOnLinux( Config configuration ) {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new PlatformNotSupportedException( "Method only available on Linux" );
 
 			using ( FileStream fileStream = new( "/proc/uptime", FileMode.Open, FileAccess.Read ) ) {

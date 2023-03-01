@@ -23,7 +23,7 @@ namespace ServerMonitor.Collector {
 		public readonly Counter UptimeSeconds;
 
 		// Initialise the exported Prometheus metrics
-		public Services( Config configuration ) {
+		public Services( Config configuration ) : base( configuration ) {
 			StatusCode = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_service_code_status", "Service status code", new GaugeConfiguration {
 				LabelNames = new[] { "service", "name", "description" }
 			} );
@@ -42,7 +42,7 @@ namespace ServerMonitor.Collector {
 
 		// Updates the exported Prometheus metrics (for Windows)
 		[ SupportedOSPlatform( "windows" ) ]
-		public override void UpdateOnWindows() {
+		public override void UpdateOnWindows( Config configuration ) {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new PlatformNotSupportedException( "Method only available on Windows" );
 
 			// Loop through all non-driver services - https://learn.microsoft.com/en-us/dotnet/api/system.serviceprocess.servicecontroller?view=dotnet-plat-ext-7.0
@@ -94,7 +94,7 @@ namespace ServerMonitor.Collector {
 
 		// Updates the exported Prometheus metrics (for Linux)
 		[ SupportedOSPlatform( "linux" ) ]
-		public override void UpdateOnLinux() {
+		public override void UpdateOnLinux( Config configuration ) {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new PlatformNotSupportedException( "Method only available on Linux" );
 
 			// Update the metrics for both system & user services

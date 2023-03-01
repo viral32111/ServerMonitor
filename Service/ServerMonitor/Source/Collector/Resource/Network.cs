@@ -19,7 +19,7 @@ namespace ServerMonitor.Collector.Resource {
 		public readonly Counter ReceivedBytes;
 
 		// Initialise the exported Prometheus metrics
-		public Network( Config configuration ) {
+		public Network( Config configuration ) : base( configuration ) {
 			SentBytes = Metrics.CreateCounter( $"{ configuration.PrometheusMetricsPrefix }_resource_network_sent_bytes", "Total bytes sent over the network, in bytes.", new CounterConfiguration() {
 				LabelNames = new[] { "interface" }
 			} );
@@ -35,7 +35,7 @@ namespace ServerMonitor.Collector.Resource {
 
 		// Updates the exported Prometheus metrics (for Windows)
 		[ SupportedOSPlatform( "windows" ) ]
-		public override void UpdateOnWindows() {
+		public override void UpdateOnWindows( Config configuration ) {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new PlatformNotSupportedException( "Method only available on Windows" );
 
 			// Loop through each network interface's statistics - https://learn.microsoft.com/en-us/dotnet/api/system.net.networkinformation.networkinterface.getallnetworkinterfaces
@@ -53,7 +53,7 @@ namespace ServerMonitor.Collector.Resource {
 
 		// Updates the exported Prometheus metrics (for Linux)
 		[ SupportedOSPlatform( "linux" ) ]
-		public override void UpdateOnLinux() {
+		public override void UpdateOnLinux( Config configuration ) {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new PlatformNotSupportedException( "Method only available on Linux" );
 
 			// Read the pseudo-file containing network interface statistics - https://stackoverflow.com/a/61893775
