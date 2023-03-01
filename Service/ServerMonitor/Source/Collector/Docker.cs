@@ -27,6 +27,8 @@ namespace ServerMonitor.Collector {
 	public class Docker : Base {
 
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Docker" );
+
+		// Setup a basic HTTP client for talking to the Docker Engine API
 		private static readonly HttpClient httpClient = new() {
 			DefaultRequestHeaders = {
 				{ "Accept", "application/json" },
@@ -35,15 +37,25 @@ namespace ServerMonitor.Collector {
 		};
 
 		// Holds the exported Prometheus metrics
-		public readonly Gauge State; // Running, exited, etc.
+		public readonly Gauge Status;
+		public readonly Gauge ExitCode;
+		public readonly Counter CreatedTimestamp;
 
 		// Initialise the exported Prometheus metrics
 		public Docker( Config configuration ) : base( configuration ) {
-			State = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_docker_state", "Docker container state", new GaugeConfiguration {
+			Status = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_docker_status", "Docker container status", new GaugeConfiguration {
+				LabelNames = new[] { "name", "id", "image" }
+			} );
+			ExitCode = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_docker_exit_code", "Docker container exit code", new GaugeConfiguration {
+				LabelNames = new[] { "name", "id", "image" }
+			} );
+			CreatedTimestamp = Metrics.CreateCounter( $"{ configuration.PrometheusMetricsPrefix }_docker_created_timestamp", "Docker container creation unix timestamp", new CounterConfiguration {
 				LabelNames = new[] { "name", "id", "image" }
 			} );
 
-			State.Set( -1 );
+			Status.Set( -1 );
+			ExitCode.Set( -1 );
+			CreatedTimestamp.IncTo( -1 );
 
 			logger.LogInformation( "Initalised Prometheus metrics" );
 		}
@@ -209,7 +221,7 @@ namespace ServerMonitor.Collector {
 				if ( containerJson.TryGetPropertyValue( "Names", out JsonNode? containerNamesProperty ) == false || containerNamesProperty == null ) throw new JsonException( $"JSON object '{ containerJson.ToJsonString() }' has no property for container names" );
 				JsonArray containerNames = containerNamesProperty.AsArray();
 				if ( containerNames.Count <= 0 ) throw new JsonException( $"JSON array '{ containerNames.ToJsonString() }' for container names is empty" );
-				string? containerName = containerNames[ 0 ]?.GetValue<string>();
+				string? containerName = containerNames[ 0 ]?.GetValue<string>().TrimStart( '/' );
 				if ( string.IsNullOrWhiteSpace( containerName ) ) throw new JsonException( $"Container name '{ containerName }' is null, empty or whitespace" );
 
 				// Get the container image
@@ -232,7 +244,26 @@ namespace ServerMonitor.Collector {
 				string containerStatus = containerStatusProperty.AsValue().GetValue<string>();
 				if ( string.IsNullOrWhiteSpace( containerStatus ) ) throw new JsonException( $"Container status '{ containerStatus }' is null, empty or whitespace" );
 
-				logger.LogDebug( "Docker container: '{0}', '{1}', '{2}', '{3}', '{4}', '{5}'", containerId, containerName, containerImage, containerCreated, containerState, containerStatus );
+				// Update the exported Prometheus metrics
+				Status.WithLabels( containerId, containerName, containerImage ).Set( containerState switch {
+					"created" => 0,
+					"running" => 1,
+					"restarting" => 2,
+					"dead" => 3,
+					"exited" => 4,
+					"paused" => 5,
+					"removing" => 6,
+					_ => throw new Exception( $"Unrecognised status '{ containerState }' for Docker container '{ containerId }'" )
+				} );
+
+				Match exitCodeMatch = Regex.Match( containerStatus, @"^\w+ \((\d+)\) .+$" );
+				if ( exitCodeMatch.Success == false ) throw new Exception( $"Failed to extract exit code from status '{ containerStatus }' for Docker container '{ containerId }'" );
+				ExitCode.WithLabels( containerId, containerName, containerImage ).Set( int.Parse( exitCodeMatch.Groups[ 1 ].Value ) );
+
+				CreatedTimestamp.WithLabels( containerId, containerName, containerImage ).IncTo( containerCreated.ToUnixTimeSeconds() );
+
+				logger.LogDebug( "Updated Prometheus metrics" );
+
 			}
 		}
 

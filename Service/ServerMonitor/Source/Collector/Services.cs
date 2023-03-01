@@ -155,7 +155,7 @@ namespace ServerMonitor.Collector {
 					"reloading" => 2,
 					"failed" => 3,
 					"exited" => 4,
-					_ => throw new Exception( $"Unrecognised status: '{ serviceData[ "ActiveState" ] }' for service '{ serviceName }'" )
+					_ => throw new Exception( $"Unrecognised status '{ serviceData[ "ActiveState" ] }' for service '{ serviceName }'" )
 				};
 
 				// Parse the exit code from the service data
