@@ -11,5 +11,6 @@
 	"CollectFansMetrics": false,
 	"CollectServiceMetrics": false,
 	"CollectDockerMetrics": true,
-	"DockerEngineAPIAddress": "tcp://localhost:2375"
+	"DockerEngineAPIAddress": "tcp://localhost:2375",
+	"DockerEngineAPIVersion": 1.41
 }

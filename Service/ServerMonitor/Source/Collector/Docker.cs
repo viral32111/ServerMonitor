@@ -4,6 +4,9 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.Encodings;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using System.IO;
 using System.IO.Pipes;
 using System.Text.RegularExpressions;
@@ -149,12 +152,21 @@ namespace ServerMonitor.Collector {
 			httpClient.DefaultRequestHeaders.Add( "Accept", "application/json" );
 			httpClient.DefaultRequestHeaders.Add( "User-Agent", "Server Monitor" );
 
-			using ( HttpResponseMessage response = await httpClient.GetAsync( $"http://{ address }:{ port }/v1.41/containers/json?all=true" ) ) {
-				if ( response.IsSuccessStatusCode ) {
-					string responseString = await response.Content.ReadAsStringAsync();
-					logger.LogDebug( "Docker API response: '{0}'", responseString );
-				} else {
-					logger.LogError( "Docker API request failed: {0}", response.StatusCode );
+			using ( HttpResponseMessage response = await httpClient.GetAsync( $"http://{ address }:{ port }/v{ configuration.DockerEngineAPIVersion }/containers/json?all=true" ) ) {
+				if ( response.IsSuccessStatusCode == false ) throw new Exception( $"Docker API request failed with HTTP status { response.StatusCode }" );
+
+				string responseString = await response.Content.ReadAsStringAsync();
+
+				JsonArray? responseJson = JsonSerializer.Deserialize<JsonArray>( responseString );
+				if ( responseJson == null ) throw new JsonException( $"Failed to parse Docker API response '{ responseString }' as JSON array" );
+
+				foreach ( JsonObject? containerJson in responseJson ) {
+					if ( containerJson == null ) throw new JsonException( $"Docker API response JSON array contains null JSON object" );
+
+					string? containerId = containerJson[ "Id" ]?.GetValue<string>();
+					if ( containerId == null ) throw new JsonException( $"Docker API response JSON object has no container ID" );
+
+					logger.LogDebug( "Docker container: '{0}'", containerId );
 				}
 			}
 

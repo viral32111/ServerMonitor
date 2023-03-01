@@ -97,6 +97,7 @@ namespace ServerMonitor {
 		// Docker metrics
 		public required bool CollectDockerMetrics { get; set; } = true;
 		public required string DockerEngineAPIAddress { get; set; } = "tcp://127.0.0.1:2375";
+		public required float DockerEngineAPIVersion { get; set; } = 1.41f;
 
 	}
 
