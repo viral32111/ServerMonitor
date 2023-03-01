@@ -19,7 +19,7 @@ namespace ServerMonitor.Collector.Resource {
 
 		// Holds the exported Prometheus metrics
 		public readonly Gauge Usage;
-		public readonly Gauge Temperature; // TODO
+		public readonly Gauge Temperature;
 		public readonly Gauge Frequency;
 
 		// Initialise the exported Prometheus metrics
@@ -27,9 +27,9 @@ namespace ServerMonitor.Collector.Resource {
 			Usage = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_processor_usage", "Processor usage, as percentage." );
 			Temperature = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_processor_temperature", "Processor temperature, in degrees Celsius." );
 			Frequency = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_processor_frequency", "Processor frequency, in hertz." );
-			Usage.Set( 0 );
-			Temperature.Set( 0 );
-			Frequency.Set( 0 );
+			Usage.Set( -1 );
+			Temperature.Set( -1 );
+			Frequency.Set( -1 );
 			logger.LogInformation( "Initalised Prometheus metrics" );
 		}
 
@@ -56,7 +56,7 @@ namespace ServerMonitor.Collector.Resource {
 			// Set the values for the exported Prometheus metrics
 			Usage.Set( processorUsage );
 			Frequency.Set( currentFrequency );
-			Temperature.Set( 0 );
+			Temperature.Set( -1 );
 			logger.LogDebug( "Updated Prometheus metrics" );
 		}
 

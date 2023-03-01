@@ -41,8 +41,11 @@ namespace ServerMonitor.Tests {
 			Assert.True( processor.Usage.Value >= 0, "Processor usage is below 0%" );
 			Assert.True( processor.Usage.Value <= 100, "Processor usage is above 100%" );
 			
-			Assert.True( processor.Temperature.Value >= 0, "Processor temperature is below 0C" );
-			Assert.True( processor.Temperature.Value <= 150, "Processor temperature is above 150C" );
+			// Processor temperature is not supported on Windows yet!
+			if ( processor.Temperature.Value != -1 ) {
+				Assert.True( processor.Temperature.Value >= 0, "Processor temperature is below 0C" );
+				Assert.True( processor.Temperature.Value <= 150, "Processor temperature is above 150C" );
+			}
 
 			Assert.True( processor.Frequency.Value >= 0, "Processor frequency is below 0Hz" );
 			// No upper limit for future proofing, but as of today it should be about 6GHz
@@ -67,6 +70,7 @@ namespace ServerMonitor.Tests {
 				Assert.True( disk.ReadBytes.WithLabels( driveName ).Value >= 0, $"Total bytes read is below 0 bytes ({ driveName })" );
 				Assert.True( disk.WriteBytes.WithLabels( driveName ).Value >= 0, $"Total bytes written is below 0 bytes ({ driveName })" );
 
+				// S.M.A.R.T health is not supported yet!
 				if ( disk.Health.WithLabels( driveName ).Value != -1 ) {
 					Assert.True( disk.Health.WithLabels( driveName ).Value >= 0, $"Disk S.M.A.R.T health is below 0% ({ driveName })" );
 					Assert.True( disk.Health.WithLabels( driveName ).Value <= 100, $"Disk S.M.A.R.T health is above 100% ({ driveName })" );

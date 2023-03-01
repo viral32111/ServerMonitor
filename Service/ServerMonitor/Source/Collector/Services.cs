@@ -34,8 +34,8 @@ namespace ServerMonitor.Collector {
 				LabelNames = new[] { "service", "name", "description" }
 			} );
 
-			StatusCode.Set( 0 );
-			UptimeSeconds.IncTo( 0 );
+			StatusCode.Set( -1 );
+			UptimeSeconds.IncTo( -1 );
 
 			logger.LogInformation( "Initalised Prometheus metrics" );
 		}

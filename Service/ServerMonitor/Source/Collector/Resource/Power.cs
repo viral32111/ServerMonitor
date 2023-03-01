@@ -23,8 +23,8 @@ namespace ServerMonitor.Collector.Resource {
 			CurrentWattage = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_power_current_wattage", "Current system power usage, in watts." );
 			MaximumWattage = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_power_maximum_wattage", "Maximum system power usage, in watts." );
 
-			CurrentWattage.Set( 0 );
-			CurrentWattage.Set( 0 );
+			CurrentWattage.Set( -1 );
+			CurrentWattage.Set( -1 );
 
 			logger.LogInformation( "Initalised Prometheus metrics" );
 		}

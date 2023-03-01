@@ -20,7 +20,7 @@ namespace ServerMonitor.Collector.Resource {
 		// Initialise the exported Prometheus metrics
 		public Fan( Config configuration ) {
 			SpeedRPM = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_fan_speed_rpm", "Current fan speed, in revolutions per minute." );
-			SpeedRPM.Set( 0 );
+			SpeedRPM.Set( -1 );
 			logger.LogInformation( "Initalised Prometheus metrics" );
 		}
 

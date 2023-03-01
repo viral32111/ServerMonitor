@@ -19,7 +19,7 @@ namespace ServerMonitor.Collector.Resource {
 		// Initialise the exported Prometheus metrics
 		public Uptime( Config configuration ) {
 			UptimeSeconds = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_uptime_seconds", "System uptime, in seconds." );
-			UptimeSeconds.Set( 0 );
+			UptimeSeconds.Set( -1 );
 			logger.LogInformation( "Initalised Prometheus metrics" );
 		}
 

@@ -27,8 +27,8 @@ namespace ServerMonitor.Collector.Resource {
 				LabelNames = new[] { "interface" }
 			} );
 
-			SentBytes.IncTo( 0 );
-			ReceivedBytes.IncTo( 0 );
+			SentBytes.IncTo( -1 );
+			ReceivedBytes.IncTo( -1 );
 
 			logger.LogInformation( "Initalised Prometheus metrics" );
 		}
