@@ -14,6 +14,8 @@ using System.Runtime.Versioning;
 using Microsoft.Extensions.Logging;
 using Prometheus;
 
+// docker container run --name example-web-server --publish published=127.0.0.1:80,target=80,protocol=tcp --interactive --tty --detach --rm viral32111/example-web-server:latest
+
 // https://docs.docker.com/engine/api/, https://docs.docker.com/engine/api/sdk/examples/
 
 /* https://docs.docker.com/desktop/faqs/general/#/how-do-i-connect-to-the-remote-docker-engine-api
@@ -312,12 +314,13 @@ namespace ServerMonitor.Collector {
 				CreatedTimestamp.WithLabels( containerId, containerName, containerImage ).IncTo( containerCreated.ToUnixTimeSeconds() );
 
 				// Update the health status Prometheus metric - https://stackoverflow.com/a/59983912
-				Match healthcheckMatch = Regex.Match( containerStatus, @"^\w+ \((.+)\)$" );
+				Match healthcheckMatch = Regex.Match( containerStatus, @"^.+ \((.+)\)$" );
 				if ( healthcheckMatch.Success == true ) {
 					HealthStatus.WithLabels( containerId, containerName, containerImage ).Set( healthcheckMatch.Groups[ 1 ].Value switch {
 						"unhealthy" => 0,
 						"healthy" => 1,
 						"starting" => 2,
+						"health: starting" => 2,
 						_ => throw new Exception( $"Unrecognised health status '{ healthcheckMatch.Groups[ 1 ].Value }' for Docker container '{ containerId }'" )
 					} );
 				} else {
