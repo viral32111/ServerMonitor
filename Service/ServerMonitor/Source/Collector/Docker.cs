@@ -6,6 +6,7 @@ using System.IO;
 using System.IO.Pipes;
 using System.Net;
 using System.Net.Http;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using System.Runtime.InteropServices;
@@ -140,26 +141,8 @@ namespace ServerMonitor.Collector {
 			if ( positionOfGarbage != -1 ) response = string.Concat( response.Substring( 0, positionOfGarbage ), response.Substring( positionOfGarbage + 5 ) ); // Random 2d3 before body
 			response = response.Substring( 0, response.Length - 5 ).Trim(); // Random zero at the end
 
-			// Break up the parts of the HTTP response
-			int responseDivisionPosition = response.IndexOf( "\r\n\r\n" );
-			string[] responseHeaders = response.Substring( 0, responseDivisionPosition ).Split( "\r\n", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries );
-			string responseBody = response.Substring( responseDivisionPosition + 4 );
-
-			// Parse the response into the standard HTTP response message class - https://stackoverflow.com/a/12240946
-			HttpResponseMessage responseMessage = new();
-			foreach ( string responseHeader in responseHeaders ) {
-				Match statusLineMatch = Regex.Match( responseHeader, @"^HTTP/1.1 (\d+) .+$" );
-				if ( statusLineMatch.Success ) {
-					responseMessage.StatusCode = ( HttpStatusCode ) int.Parse( statusLineMatch.Groups[ 1 ].Value );
-				} else {
-					string[] header = responseHeader.Split( ": ", 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries );
-					string name = header[ 0 ].ToLower(), value = header[ 1 ];
-					if ( name != "content-type" ) responseMessage.Headers.Add( header[ 0 ].ToLower(), header[ 1 ] );
-				}
-			}
-			responseMessage.Content = new StringContent( responseBody, Encoding.UTF8 );
-
-			return responseMessage;
+			// Parse the response into an HTTP response message object before returning it
+			return ParseHTTPResponse( response );
 		}
 
 		// Updates the exported Prometheus metrics (for Linux)
@@ -191,7 +174,63 @@ namespace ServerMonitor.Collector {
 		private void UpdateOverSocket( string socketPath, Config configuration ) {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new PlatformNotSupportedException( "Method only available on Linux" );
 
-			throw new NotImplementedException();
+			// Connect to the unix socket - https://stackoverflow.com/a/65483283
+			using ( Socket unixSocket = new( AddressFamily.Unix, SocketType.Stream, ProtocolType.IP ) ) {
+				unixSocket.Connect( new UnixDomainSocketEndPoint( socketPath ) );
+
+				// Send a UTF-8 encoded HTTP request to get the list of all Docker containers
+				unixSocket.Send( Encoding.UTF8.GetBytes( string.Concat( string.Join( "\r\n", new[] {
+					$"GET /v1.41/containers/json?all=true HTTP/1.1",
+					$"Host: localhost",
+					$"Accept: ${ httpClient.DefaultRequestHeaders.Accept }",
+					$"User-Agent: { httpClient.DefaultRequestHeaders.UserAgent }",
+					"Connection: close"
+				} ), "\r\n\r\n" ) ) );
+
+				// Read the entire response into a memory stream
+				MemoryStream memoryStream = new();
+				byte[] readBuffer = new byte[ 65536 ];
+				int bytesRead = -1;
+				while ( ( bytesRead = unixSocket.Receive( readBuffer ) ) > 0 ) {
+					memoryStream.Write( readBuffer, 0, bytesRead );
+					Array.Clear( readBuffer, 0, readBuffer.Length );
+				}
+
+				// Convert the response to a UTF-8 string
+				string response = Encoding.UTF8.GetString( memoryStream.GetBuffer(), 0, ( int ) memoryStream.Length ).Trim();
+
+				// Parse the response into an HTTP response message object & process it
+				HttpResponseMessage responseMessage = ParseHTTPResponse( response );
+				UpdateUsingResponse( responseMessage.Content.ReadAsStringAsync().Result );
+			}
+		}
+
+		// Converts HTTP response text to the standard HTTP response message object
+		[ SupportedOSPlatform( "windows" ) ]
+		[ SupportedOSPlatform( "linux" ) ]
+		private HttpResponseMessage ParseHTTPResponse( string response ) {
+
+			// Break up the parts of the HTTP response
+			int responseDivisionPosition = response.IndexOf( "\r\n\r\n" );
+			string[] responseHeaders = response.Substring( 0, responseDivisionPosition ).Split( "\r\n", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries );
+			string responseBody = response.Substring( responseDivisionPosition + 4 );
+
+			// Parse the response into the standard HTTP response message class - https://stackoverflow.com/a/12240946
+			HttpResponseMessage responseMessage = new();
+			foreach ( string responseHeader in responseHeaders ) {
+				Match statusLineMatch = Regex.Match( responseHeader, @"^HTTP/1.1 (\d+) .+$" );
+				if ( statusLineMatch.Success ) {
+					responseMessage.StatusCode = ( HttpStatusCode ) int.Parse( statusLineMatch.Groups[ 1 ].Value );
+				} else {
+					string[] header = responseHeader.Split( ": ", 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries );
+					string name = header[ 0 ].ToLower(), value = header[ 1 ];
+					if ( name.StartsWith( "content-" ) == false ) responseMessage.Headers.Add( header[ 0 ].ToLower(), header[ 1 ] );
+				}
+			}
+			responseMessage.Content = new StringContent( responseBody, Encoding.UTF8 );
+
+			return responseMessage;
+
 		}
 
 		// Updates the metrics by sending a HTTP request (TCP under-the-hood) to the Docker Engine API - https://docs.microsoft.com/en-us/dotnet/api/system.net.http.httpclient?view=net-7.0
