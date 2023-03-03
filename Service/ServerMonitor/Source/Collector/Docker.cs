@@ -104,10 +104,8 @@ namespace ServerMonitor.Collector {
 
 				// HTTP request to fetch the list of all Docker containers
 				HttpResponseMessage response = HTTPRequestOverPipe( pipeStream, "GET", $"/v{ configuration.DockerEngineAPIVersion }/containers/json?all=true", configuration );
-				logger.LogInformation( $"UpdateOverPipe -> HTTPRequestOverPipe: { response.StatusCode }" );
 				if ( response.IsSuccessStatusCode == false ) throw new Exception( $"Docker Engine API request failed with HTTP status { response.StatusCode }" );
 				string responseContent = response.Content.ReadAsStringAsync().Result;
-				logger.LogInformation( $"UpdateOverPipe -> responseContent: { response.StatusCode }" );
 
 				// Process the response
 				UpdateUsingResponse( responseContent );
@@ -121,7 +119,7 @@ namespace ServerMonitor.Collector {
 
 			// Send UTF-8 encoded HTTP request lines joined with CRLF over the named pipe
 			pipeStream.Write( Encoding.UTF8.GetBytes( string.Concat( string.Join( "\r\n", new[] {
-				$"{ method } { path } HTTP/1.1",
+				$"{ method } { path } HTTP/1.0",
 				$"Host: localhost",
 				$"Accept: ${ httpClient.DefaultRequestHeaders.Accept }",
 				$"User-Agent: { httpClient.DefaultRequestHeaders.UserAgent }",
@@ -129,7 +127,6 @@ namespace ServerMonitor.Collector {
 			} ), "\r\n\r\n" ) ) );
 			pipeStream.WaitForPipeDrain();
 			pipeStream.Flush();
-			logger.LogInformation( $"HTTPRequestOverPipe -> Sent HTTP request over pipe" );
 
 			// Read the entire response from the pipe into a memory stream - https://stackoverflow.com/a/7123063
 			int bytesRead = -1;
@@ -139,19 +136,9 @@ namespace ServerMonitor.Collector {
 				memoryStream.Write( readBuffer, 0, bytesRead );
 				Array.Clear( readBuffer, 0, readBuffer.Length ); // https://stackoverflow.com/a/1407762
 			}
-			logger.LogInformation( $"HTTPRequestOverPipe -> Received HTTP response over pipe: '{ bytesRead }', '{ memoryStream.Length }'" );
 
 			// Convert the response to a UTF-8 string & remove the seemingly random garbage inside it
-			string response = Encoding.UTF8.GetString( memoryStream.GetBuffer(), 0, ( int ) memoryStream.Length );
-			logger.LogInformation( $"HTTPRequestOverPipe -> response: '{ response }'" );
-			int positionOfGarbage1 = response.IndexOf( "2d3\r\n" );
-			logger.LogInformation( $"HTTPRequestOverPipe -> positionOfGarbage1: '{ positionOfGarbage1 }'" );
-			if ( positionOfGarbage1 != -1 ) response = string.Concat( response.Substring( 0, positionOfGarbage1 ), response.Substring( positionOfGarbage1 + 5 ) ); // Random 2d3 before body
-			int positionOfGarbage2 = response.IndexOf( "3\r\n" );
-			logger.LogInformation( $"HTTPRequestOverPipe -> positionOfGarbage2: '{ positionOfGarbage2 }'" );
-			if ( positionOfGarbage2 != -1 ) response = string.Concat( response.Substring( 0, positionOfGarbage2 ), response.Substring( positionOfGarbage2 + 3 ) ); // Random 3 before body
-			response = response.Substring( 0, response.Length - 5 ).Trim(); // Random zero at the end
-			logger.LogInformation( $"HTTPRequestOverPipe -> response: '{ response }'" );
+			string response = Encoding.UTF8.GetString( memoryStream.GetBuffer(), 0, ( int ) memoryStream.Length ).Trim();
 
 			// Parse the response into an HTTP response message object before returning it
 			return ParseHTTPResponse( response );
@@ -192,7 +179,7 @@ namespace ServerMonitor.Collector {
 
 				// Send a UTF-8 encoded HTTP request to get the list of all Docker containers
 				unixSocket.Send( Encoding.UTF8.GetBytes( string.Concat( string.Join( "\r\n", new[] {
-					$"GET /v1.41/containers/json?all=true HTTP/1.1",
+					$"GET /v1.41/containers/json?all=true HTTP/1.0",
 					$"Host: localhost",
 					$"Accept: ${ httpClient.DefaultRequestHeaders.Accept }",
 					$"User-Agent: { httpClient.DefaultRequestHeaders.UserAgent }",
@@ -222,20 +209,15 @@ namespace ServerMonitor.Collector {
 		[ SupportedOSPlatform( "linux" ) ]
 		private HttpResponseMessage ParseHTTPResponse( string response ) {
 
-			logger.LogInformation( $"ParseHTTPResponse -> response: '{ response }'" );
-
 			// Break up the parts of the HTTP response
 			int responseDivisionPosition = response.IndexOf( "\r\n\r\n" );
-			logger.LogInformation( $"ParseHTTPResponse -> responseDivisionPosition: '{ responseDivisionPosition }'" );
 			string[] responseHeaders = response.Substring( 0, responseDivisionPosition ).Split( "\r\n", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries );
-			logger.LogInformation( $"ParseHTTPResponse -> responseHeaders: '{ responseHeaders.Length }'" );
 			string responseBody = response.Substring( responseDivisionPosition + 4 );
-			logger.LogInformation( $"ParseHTTPResponse -> responseBody: '{ responseBody }'" );
-
+			
 			// Parse the response into the standard HTTP response message class - https://stackoverflow.com/a/12240946
 			HttpResponseMessage responseMessage = new();
 			foreach ( string responseHeader in responseHeaders ) {
-				Match statusLineMatch = Regex.Match( responseHeader, @"^HTTP/1.1 (\d+) .+$" );
+				Match statusLineMatch = Regex.Match( responseHeader, @"^HTTP/1.0 (\d+) .+$" );
 				if ( statusLineMatch.Success ) {
 					responseMessage.StatusCode = ( HttpStatusCode ) int.Parse( statusLineMatch.Groups[ 1 ].Value );
 				} else {
