@@ -11,6 +11,6 @@
 	"CollectFansMetrics": false,
 	"CollectServiceMetrics": true,
 	"CollectDockerMetrics": true,
-	"DockerEngineAPIAddress": "npipe://./pipe/docker_engine",
+	"DockerEngineAPIAddress": "unix:///var/run/docker.sock",
 	"DockerEngineAPIVersion": 1.41
 }

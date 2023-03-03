@@ -29,10 +29,7 @@ namespace ServerMonitor.Tests.Collector {
 
 		[ Fact ]
 		public async Task TestMetricsServer() {
-			// This runs the server in the background, so we can make a request while it's running
-			Task serverTask = Task.Run( () =>
-				ServerMonitor.Collector.Collector.HandleCommand( mockConfig, true )
-			);
+			ServerMonitor.Collector.Collector.HandleCommand( mockConfig, true );
 
 			HttpClient httpClient = new();
 			HttpResponseMessage response = await httpClient.GetAsync( string.Format(
@@ -41,9 +38,8 @@ namespace ServerMonitor.Tests.Collector {
 				mockConfig.PrometheusListenPort,
 				mockConfig.PrometheusListenPath
 			) );
-			Assert.True( response.IsSuccessStatusCode );
 
-			await serverTask; // Wait for the server to close
+			Assert.True( response.IsSuccessStatusCode );
 		}
 
 	}
