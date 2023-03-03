@@ -1,33 +1,17 @@
+using System;
+using System.IO;
 using Xunit;
 
 namespace ServerMonitor.Tests.Collector {
 
 	public class Resources {
 
-		private static readonly Config mockConfiguration = new() {
-			PrometheusListenAddress = "127.0.0.1",
-			PrometheusListenPort = 5000,
-			PrometheusListenPath = "metrics",
-			PrometheusMetricsPrefix = "server_monitor",
-
-			CollectProcessorMetrics = true,
-			CollectMemoryMetrics = true,
-			CollectDiskMetrics = true,
-			CollectNetworkMetrics = true,
-			CollectUptimeMetrics = true,
-			CollectPowerMetrics = false,
-			CollectFanMetrics = false,
-
-			CollectServiceMetrics = true,
-
-			CollectDockerMetrics = true,
-			DockerEngineAPIAddress = "tcp://127.0.0.1:2375",
-			DockerEngineAPIVersion = 1.41f
-		};
-
 		[ Fact ]
 		public void TestMemoryMetrics() {
-			ServerMonitor.Collector.Resource.Memory memory = new( mockConfiguration );
+			ServerMonitor.Configuration.Load( Path.Combine( Environment.CurrentDirectory, "config.json" ) );
+			Assert.NotNull( ServerMonitor.Configuration.Config );
+
+			ServerMonitor.Collector.Resource.Memory memory = new( ServerMonitor.Configuration.Config );
 			memory.Update();
 
 			Assert.True( memory.TotalBytes.Value > 0, "Total memory is below 0 bytes" );
@@ -40,7 +24,10 @@ namespace ServerMonitor.Tests.Collector {
 
 		[ Fact ]
 		public void TestProcessorMetrics() {
-			ServerMonitor.Collector.Resource.Processor processor = new( mockConfiguration );
+			ServerMonitor.Configuration.Load( Path.Combine( Environment.CurrentDirectory, "config.json" ) );
+			Assert.NotNull( ServerMonitor.Configuration.Config );
+
+			ServerMonitor.Collector.Resource.Processor processor = new( ServerMonitor.Configuration.Config );
 			processor.Update();
 
 			Assert.True( processor.Usage.Value >= 0, "Processor usage is below 0%" );
@@ -58,7 +45,10 @@ namespace ServerMonitor.Tests.Collector {
 
 		[ Fact ]
 		public void TestUptimeMetrics() {
-			ServerMonitor.Collector.Resource.Uptime uptime = new( mockConfiguration );
+			ServerMonitor.Configuration.Load( Path.Combine( Environment.CurrentDirectory, "config.json" ) );
+			Assert.NotNull( ServerMonitor.Configuration.Config );
+
+			ServerMonitor.Collector.Resource.Uptime uptime = new( ServerMonitor.Configuration.Config );
 			uptime.Update();
 
 			Assert.True( uptime.UptimeSeconds.Value > 0, "Uptime is below 0 seconds" );
@@ -66,7 +56,10 @@ namespace ServerMonitor.Tests.Collector {
 
 		[ Fact ]
 		public void TestDiskMetrics() {
-			ServerMonitor.Collector.Resource.Disk disk = new( mockConfiguration );
+			ServerMonitor.Configuration.Load( Path.Combine( Environment.CurrentDirectory, "config.json" ) );
+			Assert.NotNull( ServerMonitor.Configuration.Config );
+
+			ServerMonitor.Collector.Resource.Disk disk = new( ServerMonitor.Configuration.Config );
 			disk.Update();
 
 			foreach ( string[] labelValues in disk.ReadBytes.GetAllLabelValues() ) {
@@ -96,7 +89,10 @@ namespace ServerMonitor.Tests.Collector {
 
 		[ Fact ]
 		public void TestNetworkMetrics() {
-			ServerMonitor.Collector.Resource.Network network = new( mockConfiguration );
+			ServerMonitor.Configuration.Load( Path.Combine( Environment.CurrentDirectory, "config.json" ) );
+			Assert.NotNull( ServerMonitor.Configuration.Config );
+
+			ServerMonitor.Collector.Resource.Network network = new( ServerMonitor.Configuration.Config );
 			network.Update();
 
 			foreach ( string[] labelValues in network.SentBytes.GetAllLabelValues() ) {

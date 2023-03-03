@@ -64,8 +64,10 @@ jobs:
         include:
           - name: Ubuntu
             os: ubuntu-22.04
+            docker: unix:///var/run/docker.sock
           - name: Windows
             os: windows-2022
+            docker: npipe://./pipe/docker_engine
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
@@ -82,6 +84,8 @@ jobs:
         run: dotnet build --nologo --configuration Release --no-restore --no-self-contained ./ServerMonitor.Tests/ServerMonitor.Tests.csproj
 
       - name: Run unit tests
+        env:
+          SERVER_MONITOR_DOCKERENGINEAPIADDRESS: ${{ matrix.docker }}
         run: dotnet test --nologo --configuration Release --no-build ./ServerMonitor.Tests/ServerMonitor.Tests.csproj
 
   launch:
@@ -98,8 +102,10 @@ jobs:
         include:
           - name: Ubuntu
             os: ubuntu-22.04
+            docker: unix:///var/run/docker.sock
           - name: Windows
             os: windows-2022
+            docker: npipe://./pipe/docker_engine
     permissions:
       contents: read
     steps:
@@ -118,6 +124,8 @@ jobs:
           path: ./Service/Artifact/
 
       - name: Launch in "collector" mode
+        env:
+          SERVER_MONITOR_DOCKERENGINEAPIADDRESS: ${{ matrix.docker }}
         run: dotnet ./Artifact/ServerMonitor.dll --once collector
 
       - name: Launch in "connection-point" mode
