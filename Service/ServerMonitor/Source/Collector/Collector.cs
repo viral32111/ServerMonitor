@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using System.ServiceProcess;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
@@ -34,6 +35,10 @@ namespace ServerMonitor.Collector {
 			);
 			server.Start();
 			logger.LogInformation( "Prometheus Metrics server listening on http://{0}:{1}/{2}", configuration.PrometheusListenAddress, configuration.PrometheusListenPort, configuration.PrometheusListenPath );
+
+			// Start the SNMP agent
+			/*CancellationTokenSource cancellationTokenSource = new();
+			Task snmpAgent = SNMP.StartAgent( configuration, cancellationTokenSource.Token );*/
 
 			// Create instances of each resource collector
 			Memory memory = new( configuration );
@@ -182,6 +187,10 @@ namespace ServerMonitor.Collector {
 
 				if ( singleRun == false ) Thread.Sleep( 5000 ); // 5 seconds
 			} while ( singleRun == false );
+
+			// Stop the SNMP agent
+			/*cancellationTokenSource.Cancel();
+			snmpAgent.Wait();*/
 		}
 
 		// Checks if this application is running as administrator/root, which is required for some of the metrics we're collecting
