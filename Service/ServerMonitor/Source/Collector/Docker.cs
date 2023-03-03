@@ -139,8 +139,10 @@ namespace ServerMonitor.Collector {
 			
 			// Convert the response to a UTF-8 string & remove the seemingly random garbage inside it
 			string response = Encoding.UTF8.GetString( memoryStream.GetBuffer(), 0, ( int ) memoryStream.Length );
-			int positionOfGarbage = response.IndexOf( "2d3\r\n" );
-			if ( positionOfGarbage != -1 ) response = string.Concat( response.Substring( 0, positionOfGarbage ), response.Substring( positionOfGarbage + 5 ) ); // Random 2d3 before body
+			int positionOfGarbage1 = response.IndexOf( "2d3\r\n" );
+			if ( positionOfGarbage1 != -1 ) response = string.Concat( response.Substring( 0, positionOfGarbage1 ), response.Substring( positionOfGarbage1 + 5 ) ); // Random 2d3 before body
+			int positionOfGarbage2 = response.IndexOf( "3\r\n" );
+			if ( positionOfGarbage2 != -1 ) response = string.Concat( response.Substring( 0, positionOfGarbage2 ), response.Substring( positionOfGarbage2 + 3 ) ); // Random 3 before body
 			response = response.Substring( 0, response.Length - 5 ).Trim(); // Random zero at the end
 
 			// Parse the response into an HTTP response message object before returning it
