@@ -73,12 +73,6 @@ namespace ServerMonitor.Collector {
 			UptimeSeconds.IncTo( -1 );
 			ServiceCount.Set( -1 );
 			logger.LogInformation( "Initalised Prometheus metrics" );
-
-			IPAddress listenAddress = configuration.SNMPManagerListenAddress == "0.0.0.0" ? IPAddress.Any : IPAddress.Parse( configuration.SNMPManagerListenAddress );
-			int listenPort = configuration.SNMPManagerListenPort;
-			udpSocket.Bind( new IPEndPoint( listenAddress, listenPort ) );
-			udpSocket.SetSocketOption( SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, 0 ); // Disable timeout
-			logger.LogInformation( "SNMP manager listening on {0}:{1}", configuration.SNMPManagerListenAddress, configuration.SNMPManagerListenPort );
 		}
 
 		public override void Update() {
@@ -96,6 +90,12 @@ namespace ServerMonitor.Collector {
 		public void ListenForTraps() {
 			if ( this.receiveTask != null ) throw new InvalidOperationException( "SNMP manager already started" );
 
+			IPAddress listenAddress = configuration.SNMPManagerListenAddress == "0.0.0.0" ? IPAddress.Any : IPAddress.Parse( configuration.SNMPManagerListenAddress );
+			int listenPort = configuration.SNMPManagerListenPort;
+			udpSocket.Bind( new IPEndPoint( listenAddress, listenPort ) );
+			udpSocket.SetSocketOption( SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, 0 ); // Disable timeout
+			logger.LogInformation( "SNMP manager listening on {0}:{1}", configuration.SNMPManagerListenAddress, configuration.SNMPManagerListenPort );
+
 			logger.LogDebug( "Starting to receive packets..." );
 			this.receiveTask = ReceivePackets();
 		}
@@ -110,8 +110,6 @@ namespace ServerMonitor.Collector {
 
 		// https://snmpsharpnet.com/index.php/snmp-version-1-or-2c-get-request/
 		public void UpdateAgentInformation( string agentAddress, int agentPort = 161 ) {
-			if ( this.receiveTask == null ) throw new InvalidOperationException( "SNMP manager not started" );
-
 			OctetString community = new( "Server Monitor" );
 			AgentParameters managerParameters = new( community );
 			managerParameters.Version = SnmpVersion.Ver1;
