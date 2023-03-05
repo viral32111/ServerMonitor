@@ -77,33 +77,33 @@ namespace ServerMonitor {
 	public sealed class Config {
 
 		// Prometheus metrics server
-		public required string PrometheusListenAddress { get; set; } = "127.0.0.1";
-		public required int PrometheusListenPort { get; set; } = 5000;
-		public required string PrometheusListenPath { get; set; } = "/metrics";
-		public required string PrometheusMetricsPrefix { get; set; } = "server_monitor";
+		public required string PrometheusListenAddress { get; set; }
+		public required int PrometheusListenPort { get; set; }
+		public required string PrometheusListenPath { get; set; }
+		public required string PrometheusMetricsPrefix { get; set; }
 
 		// Resource metrics
-		public required bool CollectProcessorMetrics { get; set; } = true;
-		public required bool CollectMemoryMetrics { get; set; } = true;
-		public required bool CollectDiskMetrics { get; set; } = true;
-		public required bool CollectNetworkMetrics { get; set; } = true;
-		public required bool CollectUptimeMetrics { get; set; } = true;
-		public required bool CollectPowerMetrics { get; set; } = false;
-		public required bool CollectFanMetrics { get; set; } = false;
+		public required bool CollectProcessorMetrics { get; set; }
+		public required bool CollectMemoryMetrics { get; set; }
+		public required bool CollectDiskMetrics { get; set; }
+		public required bool CollectNetworkMetrics { get; set; }
+		public required bool CollectUptimeMetrics { get; set; }
+		public required bool CollectPowerMetrics { get; set; }
+		public required bool CollectFanMetrics { get; set; }
 
 		// Service metrics
-		public required bool CollectServiceMetrics { get; set; } = true;
+		public required bool CollectServiceMetrics { get; set; }
 
 		// Docker metrics
-		public required bool CollectDockerMetrics { get; set; } = true;
-		public required string DockerEngineAPIAddress { get; set; } = "tcp://127.0.0.1:2375";
-		public required float DockerEngineAPIVersion { get; set; } = 1.41f;
+		public required bool CollectDockerMetrics { get; set; }
+		public required string DockerEngineAPIAddress { get; set; }
+		public required float DockerEngineAPIVersion { get; set; }
 
 		// SNMP options
-		public required bool CollectSNMPMetrics { get; set; } = true;
-		public required string SNMPManagerListenAddress { get; set; } = "0.0.0.0";
-		public required int SNMPManagerListenPort { get; set; } = 162;
-		public required string SNMPCommunity { get; set; } = "public";
+		public required bool CollectSNMPMetrics { get; set; }
+		public required string SNMPManagerListenAddress { get; set; }
+		public required int SNMPManagerListenPort { get; set; }
+		public required string SNMPCommunity { get; set; }
 		public required SNMPAgent[] SNMPAgents { get; set; }
 
 	}
