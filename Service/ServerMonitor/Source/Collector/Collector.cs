@@ -58,45 +58,6 @@ namespace ServerMonitor.Collector {
 			// Create an instance of the Docker collector
 			Docker docker = new( configuration );
 
-			if ( configuration.CollectServiceMetrics == true ) {
-				try {
-					services.Update();
-
-					foreach ( string[] labelValues in services.StatusCode.GetAllLabelValues() ) {
-						string service = labelValues[ 0 ];
-						string name = labelValues[ 1 ];
-						string description = labelValues[ 2 ];
-
-						logger.LogInformation( "---- Service '{0}' ({1}, {2}) ----", service, name, description );
-						logger.LogInformation( "Status Code: {0}", services.StatusCode.WithLabels( service, name, description ).Value );
-						logger.LogInformation( "Exit Code: {0}", services.ExitCode.WithLabels( service, name, description ).Value );
-						logger.LogInformation( "Uptime: {0} seconds", services.UptimeSeconds.WithLabels( service, name, description ).Value );
-					}
-				} catch ( Exception exception ) {
-					logger.LogError( exception, "Failed to collect service metrics" );
-				}
-			}
-
-			if ( configuration.CollectDockerMetrics == true ) {
-				try {
-					docker.Update();
-
-					foreach ( string[] labelValues in docker.Status.GetAllLabelValues() ) {
-						string id = labelValues[ 0 ];
-						string name = labelValues[ 1 ];
-						string image = labelValues[ 2 ];
-
-						logger.LogInformation( "---- Docker container '{0}' ({1}, {2}) ----", name, id, image );
-						logger.LogInformation( "Status: {0}", docker.Status.WithLabels( id, name, image ).Value );
-						logger.LogInformation( "Exit Code: {0}", docker.ExitCode.WithLabels( id, name, image ).Value );
-						logger.LogInformation( "Uptime: {0}", docker.CreatedTimestamp.WithLabels( id, name, image ).Value );
-						logger.LogInformation( "Health: {0}", docker.HealthStatus.WithLabels( id, name, image ).Value );
-					}
-				} catch ( Exception exception ) {
-					logger.LogError( exception, "Failed to collect Docker metrics" );
-				}
-			}
-
 			do {
 				Console.WriteLine( new string( '-', 100 ) );
 
@@ -187,6 +148,45 @@ namespace ServerMonitor.Collector {
 						}
 					} catch ( Exception exception ) {
 						logger.LogError( exception, "Failed to collect network metrics" );
+					}
+				}
+
+				if ( configuration.CollectServiceMetrics == true ) {
+					try {
+						services.Update();
+
+						foreach ( string[] labelValues in services.StatusCode.GetAllLabelValues() ) {
+							string service = labelValues[ 0 ];
+							string name = labelValues[ 1 ];
+							string description = labelValues[ 2 ];
+
+							logger.LogInformation( "---- Service '{0}' ({1}, {2}) ----", service, name, description );
+							logger.LogInformation( "Status Code: {0}", services.StatusCode.WithLabels( service, name, description ).Value );
+							logger.LogInformation( "Exit Code: {0}", services.ExitCode.WithLabels( service, name, description ).Value );
+							logger.LogInformation( "Uptime: {0} seconds", services.UptimeSeconds.WithLabels( service, name, description ).Value );
+						}
+					} catch ( Exception exception ) {
+						logger.LogError( exception, "Failed to collect service metrics" );
+					}
+				}
+
+				if ( configuration.CollectDockerMetrics == true ) {
+					try {
+						docker.Update();
+
+						foreach ( string[] labelValues in docker.Status.GetAllLabelValues() ) {
+							string id = labelValues[ 0 ];
+							string name = labelValues[ 1 ];
+							string image = labelValues[ 2 ];
+
+							logger.LogInformation( "---- Docker container '{0}' ({1}, {2}) ----", name, id, image );
+							logger.LogInformation( "Status: {0}", docker.Status.WithLabels( id, name, image ).Value );
+							logger.LogInformation( "Exit Code: {0}", docker.ExitCode.WithLabels( id, name, image ).Value );
+							logger.LogInformation( "Uptime: {0}", docker.CreatedTimestamp.WithLabels( id, name, image ).Value );
+							logger.LogInformation( "Health: {0}", docker.HealthStatus.WithLabels( id, name, image ).Value );
+						}
+					} catch ( Exception exception ) {
+						logger.LogError( exception, "Failed to collect Docker metrics" );
 					}
 				}
 
