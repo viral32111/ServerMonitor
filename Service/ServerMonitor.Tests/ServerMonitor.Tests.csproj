@@ -20,6 +20,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<Content Include="config.test.json">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+
+	<ItemGroup>
 		<ProjectReference Include="..\ServerMonitor\ServerMonitor.csproj" />
 	</ItemGroup>
 </Project>
