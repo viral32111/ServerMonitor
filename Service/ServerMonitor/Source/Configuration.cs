@@ -101,8 +101,8 @@ namespace ServerMonitor {
 
 		// SNMP options
 		public required bool CollectSNMPMetrics { get; set; } = true;
-		public required string SNMPAgentListenAddress { get; set; } = "0.0.0.0";
-		public required int SNMPAgentListenPort { get; set; } = 162;
+		public required string SNMPManagerListenAddress { get; set; } = "0.0.0.0";
+		public required int SNMPManagerListenPort { get; set; } = 162;
 
 	}
 

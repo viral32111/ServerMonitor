@@ -34,7 +34,7 @@ UDP port 162 sees use when SNMP Agents send unsolicited traps to the SNMP Manage
 
 namespace ServerMonitor.Collector {
 
-	// An SNMP agent to collect traps/events
+	// An SNMP manager to collect traps/events
 	public class SNMP {
 
 		private readonly ILogger logger = Logging.CreateLogger( "Collector/SNMP" );
@@ -51,25 +51,25 @@ namespace ServerMonitor.Collector {
 			this.configuration = configuration;
 			this.cancellationToken = cancellationToken;
 
-			IPAddress listenAddress = configuration.SNMPAgentListenAddress == "0.0.0.0" ? IPAddress.Any : IPAddress.Parse( configuration.SNMPAgentListenAddress );
-			int listenPort = configuration.SNMPAgentListenPort;
+			IPAddress listenAddress = configuration.SNMPManagerListenAddress == "0.0.0.0" ? IPAddress.Any : IPAddress.Parse( configuration.SNMPManagerListenAddress );
+			int listenPort = configuration.SNMPManagerListenPort;
 			udpSocket.Bind( new IPEndPoint( listenAddress, listenPort ) );
-			logger.LogDebug( "Listening for UDP packets on {0}:{1}", configuration.SNMPAgentListenAddress, configuration.SNMPAgentListenPort );
+			logger.LogDebug( "Listening for UDP packets on {0}:{1}", configuration.SNMPManagerListenAddress, configuration.SNMPManagerListenPort );
 
 			udpSocket.SetSocketOption( SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, 0 ); // Never timeout
 			logger.LogDebug( "Disabled timeout on socket" );
 		}
 
 		// Starts the receive packets background task
-		public void StartAgent() {
-			if ( this.receiveTask != null ) throw new InvalidOperationException( "SNMP agent already started" );
+		public void Start() {
+			if ( this.receiveTask != null ) throw new InvalidOperationException( "SNMP manager already started" );
 
 			logger.LogDebug( "Starting to receive packets..." );
 			this.receiveTask = ReceivePackets();
 		}
 
-		public void WaitForAgent() {
-			if ( this.receiveTask == null ) throw new InvalidOperationException( "SNMP agent not started" );
+		public void Wait() {
+			if ( this.receiveTask == null ) throw new InvalidOperationException( "SNMP manager not started" );
 
 			logger.LogDebug( "Waiting for receive task to finish..." );
 			try {
@@ -81,6 +81,17 @@ namespace ServerMonitor.Collector {
 			}
 			logger.LogDebug( "Receive task finished" );
 		}
+
+		// https://snmpsharpnet.com/index.php/snmp-version-1-or-2c-get-request/
+		/*public void GetInformation() {
+			if ( this.receiveTask == null ) throw new InvalidOperationException( "SNMP manager not started" );
+
+			OctetString community = new( "Server Monitor" );
+			AgentParameters managerParameters = new( community );
+			managerParameters.Version = SnmpVersion.Ver1;
+
+			
+		}*/
 
 		// Runs in the background to receive packets
 		private async Task ReceivePackets() {

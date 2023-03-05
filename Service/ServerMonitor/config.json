@@ -14,6 +14,6 @@
 	"DockerEngineAPIAddress": "unix:///var/run/docker.sock",
 	"DockerEngineAPIVersion": 1.41,
 	"CollectSNMPMetrics": true,
-	"SNMPAgentListenAddress": "0.0.0.0",
-	"SNMPAgentListenPort": 1620
+	"SNMPManagerListenAddress": "0.0.0.0",
+	"SNMPManagerListenPort": 162
 }

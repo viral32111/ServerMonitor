@@ -27,8 +27,8 @@ namespace ServerMonitor.Tests.Collector {
 			DockerEngineAPIVersion = default!,
 
 			CollectSNMPMetrics = false,
-			SNMPAgentListenAddress = "127.0.0.1",
-			SNMPAgentListenPort = 1620
+			SNMPManagerListenAddress = "127.0.0.1",
+			SNMPManagerListenPort = 1620
 		};
 
 		[ Fact ]

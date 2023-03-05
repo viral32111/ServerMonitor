@@ -39,7 +39,7 @@ namespace ServerMonitor.Collector {
 			// Start the SNMP agent
 			CancellationTokenSource cancellationTokenSource = new();
 			SNMP snmpAgent = new( configuration, cancellationTokenSource.Token );
-			snmpAgent.StartAgent();
+			snmpAgent.Start();
 
 			// Create instances of each resource collector
 			Memory memory = new( configuration );
@@ -193,7 +193,7 @@ namespace ServerMonitor.Collector {
 			if ( singleRun == true ) cancellationTokenSource.Cancel();
 
 			// Block until the SNMP agent has stopped
-			snmpAgent.WaitForAgent();
+			snmpAgent.Wait();
 		}
 
 		// Checks if this application is running as administrator/root, which is required for some of the metrics we're collecting
