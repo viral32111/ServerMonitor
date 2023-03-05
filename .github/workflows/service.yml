@@ -86,6 +86,8 @@ jobs:
       - name: Run unit tests
         env:
           SERVER_MONITOR_DOCKERENGINEAPIADDRESS: ${{ matrix.docker }}
+          SERVER_MONITOR_SNMPMANAGERLISTENADDRESS: 127.0.0.1
+          SERVER_MONITOR_SNMPMANAGERLISTENPORT: 1620
         run: dotnet test --nologo --configuration Release --no-build ./ServerMonitor.Tests/ServerMonitor.Tests.csproj
 
   launch:
@@ -126,6 +128,8 @@ jobs:
       - name: Launch in "collector" mode
         env:
           SERVER_MONITOR_DOCKERENGINEAPIADDRESS: ${{ matrix.docker }}
+          SERVER_MONITOR_SNMPMANAGERLISTENADDRESS: 127.0.0.1
+          SERVER_MONITOR_SNMPMANAGERLISTENPORT: 1620
         run: dotnet ./Artifact/ServerMonitor.dll --once collector
 
       - name: Launch in "connection-point" mode
