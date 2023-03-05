@@ -72,41 +72,57 @@ namespace ServerMonitor.Collector {
 			if ( this.receiveTask == null ) throw new InvalidOperationException( "SNMP manager not started" );
 
 			logger.LogDebug( "Waiting for receive task to finish..." );
-			try {
-				this.receiveTask.Wait();
-			} catch ( AggregateException exception ) {
-				if ( exception.InnerException?.GetType() == typeof( TaskCanceledException ) ) {
-					logger.LogDebug( "Receive task cancelled" );
-				} else throw;
-			}
+			this.receiveTask.Wait();
 			logger.LogDebug( "Receive task finished" );
 		}
 
 		// https://snmpsharpnet.com/index.php/snmp-version-1-or-2c-get-request/
-		/*public void GetInformation() {
+		public void GetInformation( string agentAddress, int agentPort = 161 ) {
 			if ( this.receiveTask == null ) throw new InvalidOperationException( "SNMP manager not started" );
 
 			OctetString community = new( "Server Monitor" );
 			AgentParameters managerParameters = new( community );
 			managerParameters.Version = SnmpVersion.Ver1;
 
-			
-		}*/
+			UdpTarget target = new( IPAddress.Parse( agentAddress ), agentPort, 2000, 1 );
+
+			Pdu pdu = new( PduType.Get );
+			pdu.VbList.Add( "1.3.6.1.2.1.1.1.0" ); // sysDescr
+			pdu.VbList.Add( "1.3.6.1.2.1.1.2.0" ); // sysObjectID
+			pdu.VbList.Add( "1.3.6.1.2.1.1.3.0" ); // sysUpTime
+			pdu.VbList.Add( "1.3.6.1.2.1.1.4.0" ); // sysContact
+			pdu.VbList.Add( "1.3.6.1.2.1.1.5.0" ); // sysName
+
+			SnmpV1Packet result = ( SnmpV1Packet ) target.Request( pdu, managerParameters );
+			if ( result == null ) throw new Exception( $"No response from SNMP agent '{ agentAddress }:{ agentPort }'" );
+
+			if ( result.Pdu.ErrorStatus != 0 ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned error status '{ result.Pdu.ErrorStatus }'" );
+
+			foreach ( Vb varBind in result.Pdu.VbList ) {
+				logger.LogDebug( "SNMP agent '{0}:{1}' returned '{2}' ({3}) = '{4}'", agentAddress, agentPort, varBind.Oid.ToString(), SnmpConstants.GetTypeName( varBind.Value.Type ), varBind.Value.ToString() );
+			}
+
+			target.Close();
+		}
 
 		// Runs in the background to receive packets
 		private async Task ReceivePackets() {
 			byte[] receiveBuffer = new byte[ 65565 ];
 
 			logger.LogDebug( "Started receiving packets" );
-			while ( udpSocket.IsBound && this.cancellationToken.IsCancellationRequested == false ) {
-				int bytesReceived = await udpSocket.ReceiveAsync( receiveBuffer, this.cancellationToken );
+			try {
+				while ( udpSocket.IsBound && this.cancellationToken.IsCancellationRequested == false ) {
+					int bytesReceived = await udpSocket.ReceiveAsync( receiveBuffer, this.cancellationToken );
 
-				if ( bytesReceived <= 0 ) {
-					logger.LogDebug( "Received 0 or less bytes" );
-					break;
+					if ( bytesReceived <= 0 ) {
+						logger.LogDebug( "Received 0 or less bytes" );
+						break;
+					}
+
+					ProcessPacket( receiveBuffer, bytesReceived );
 				}
-
-				ProcessPacket( receiveBuffer, bytesReceived );
+			} catch ( OperationCanceledException ) {
+				logger.LogDebug( "Receive task cancelled" );
 			}
 
 			logger.LogDebug( "Stopped receiving packets" );

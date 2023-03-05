@@ -103,7 +103,14 @@ namespace ServerMonitor {
 		public required bool CollectSNMPMetrics { get; set; } = true;
 		public required string SNMPManagerListenAddress { get; set; } = "0.0.0.0";
 		public required int SNMPManagerListenPort { get; set; } = 162;
+		public required string SNMPCommunity { get; set; } = "public";
+		public required SNMPAgent[] SNMPAgents { get; set; }
 
+	}
+
+	public sealed class SNMPAgent {
+		public required string Address { get; set; } = "localhost";
+		public required int Port { get; set; } = 161;
 	}
 
 }

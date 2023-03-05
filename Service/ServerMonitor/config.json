@@ -2,18 +2,22 @@
 	"PrometheusListenAddress": "127.0.0.1",
 	"PrometheusListenPort": 5000,
 	"PrometheusListenPath": "metrics/",
-	"CollectProcessorMetrics": true,
-	"CollectMemoryMetrics": true,
-	"CollectDiskMetrics": true,
-	"CollectNetworkMetrics": true,
-	"CollectUptimeMetrics": true,
+	"CollectProcessorMetrics": false,
+	"CollectMemoryMetrics": false,
+	"CollectDiskMetrics": false,
+	"CollectNetworkMetrics": false,
+	"CollectUptimeMetrics": false,
 	"CollectPowerMetrics": false,
 	"CollectFansMetrics": false,
-	"CollectServiceMetrics": true,
-	"CollectDockerMetrics": true,
+	"CollectServiceMetrics": false,
+	"CollectDockerMetrics": false,
 	"DockerEngineAPIAddress": "unix:///var/run/docker.sock",
 	"DockerEngineAPIVersion": 1.41,
 	"CollectSNMPMetrics": true,
 	"SNMPManagerListenAddress": "0.0.0.0",
-	"SNMPManagerListenPort": 162
+	"SNMPManagerListenPort": 1620,
+	"SNMPCommunity": "Server Monitor",
+	"SNMPAgents": [
+		{ "Address": "10.0.0.1", "Port": 161 }
+	]
 }

@@ -20,11 +20,13 @@ namespace ServerMonitor.Collector {
 		public static void HandleCommand( Config configuration, bool singleRun ) {
 			logger.LogInformation( "Launched in collector mode" );
 
-			// Fail if we're not running as administrator/root
-			/*if ( IsRunningAsAdmin() == false ) {
-				logger.LogError( "This program must be run as administrator/root" );
-				Environment.Exit( 1 );
-			}*/
+			// Fail if we're not running as administrator/root, and a collector requires it
+			if ( IsRunningAsAdmin() == false ) {
+				if ( configuration.CollectSNMPMetrics == true && configuration.SNMPManagerListenPort < 1024 ) {
+					logger.LogError( "This program must be run as administrator/root" );
+					Environment.Exit( 1 );
+				}
+			}
 
 			// Start the Prometheus metrics server
 			MetricServer server = new(
@@ -36,10 +38,16 @@ namespace ServerMonitor.Collector {
 			server.Start();
 			logger.LogInformation( "Prometheus Metrics server listening on http://{0}:{1}/{2}", configuration.PrometheusListenAddress, configuration.PrometheusListenPort, configuration.PrometheusListenPath );
 
-			// Start the SNMP agent
+			// Start the SNMP manager
 			CancellationTokenSource cancellationTokenSource = new();
-			SNMP snmpAgent = new( configuration, cancellationTokenSource.Token );
-			snmpAgent.Start();
+			SNMP snmpManager = new( configuration, cancellationTokenSource.Token );
+			snmpManager.Start();
+
+			// Try get information from the SNMP agent
+			logger.LogDebug( "Attempting to get information from {0} SNMP agents...", configuration.SNMPAgents.Length );
+			foreach ( SNMPAgent snmpAgent in configuration.SNMPAgents ) {
+				snmpManager.GetInformation( snmpAgent.Address, snmpAgent.Port );
+			}
 
 			// Create instances of each resource collector
 			Memory memory = new( configuration );
@@ -193,7 +201,7 @@ namespace ServerMonitor.Collector {
 			if ( singleRun == true ) cancellationTokenSource.Cancel();
 
 			// Block until the SNMP agent has stopped
-			snmpAgent.Wait();
+			snmpManager.Wait();
 		}
 
 		// Checks if this application is running as administrator/root, which is required for some of the metrics we're collecting
