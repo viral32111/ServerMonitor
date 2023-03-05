@@ -42,13 +42,7 @@ namespace ServerMonitor.Collector {
 			
 			// Start the SNMP manager
 			if ( configuration.CollectSNMPMetrics == true ) {
-				snmpManager.Start();
-			
-				// Try get information from the SNMP agent
-				logger.LogDebug( "Attempting to get information from {0} SNMP agents...", configuration.SNMPAgents.Length );
-				foreach ( SNMPAgent snmpAgent in configuration.SNMPAgents ) {
-					snmpManager.GetInformation( snmpAgent.Address, snmpAgent.Port );
-				}
+				snmpManager.ListenForTraps();
 			}
 
 			// Create instances of each resource collector
@@ -196,12 +190,20 @@ namespace ServerMonitor.Collector {
 					}
 				}
 
+				if ( configuration.CollectSNMPMetrics == true ) {
+					try {
+						snmpManager.Update();
+					} catch ( Exception exception ) {
+						logger.LogError( exception, "Failed to collect SNMP metrics" );
+					}
+				}
+
 				if ( singleRun == false ) Thread.Sleep( 5000 ); // 5 seconds
 			} while ( singleRun == false );
 
 			if ( configuration.CollectSNMPMetrics == true ) {
 				if ( singleRun == true ) cancellationTokenSource.Cancel(); // Stop the SNMP agent
-				snmpManager.Wait(); // Block until the SNMP agent has stopped
+				snmpManager.WaitForTrapListener(); // Block until the SNMP agent has stopped
 			}
 		}
 
