@@ -18,10 +18,15 @@ using Prometheus;
 
 /* Test commands:
 https://stackoverflow.com/a/37281164
- snmptrap -v 2c -c 'Server Monitor' 127.0.0.1:1620 0 1.3.6.1.4.1.2.3 1.3.6.1.6.1.4.1.2.3.1.1.1.1.1 s "This is a Test"
+ snmptrap -v 2c -c 'Server Monitor' 10.0.0.100:1620 0 1.3.6.1.4.1.2.3 1.3.6.1.6.1.4.1.2.3.1.1.1.1.1 s "This is a Test"
 
 https://support.nagios.com/kb/article.php?id=493
- snmptrap -v 2c -c 'Server Monitor' 127.0.0.1:1620 '' 1.3.6.1.4.1.8072.2.3.0.1 1.3.6.1.4.1.8072.2.3.2.1 i 123456
+ snmptrap -v 2c -c 'Server Monitor' 10.0.0.100:1620 '' 1.3.6.1.4.1.8072.2.3.0.1 1.3.6.1.4.1.8072.2.3.2.1 i 123456
+*/
+
+/* Get all SNMP OIDs for an agent:
+ snmpwalk -v 2c -c 'Server Monitor' 10.0.0.1:161 > snmpwalk-names.txt
+ snmpwalk -v 2c -O n -c 'Server Monitor' 10.0.0.1:161 > snmpwalk-ids.txt
 */
 
 /* https://blog.domotz.com/know-your-networks/snmp-port-number/
@@ -39,25 +44,41 @@ namespace ServerMonitor.Collector {
 
 		private readonly ILogger logger = Logging.CreateLogger( "Collector/SNMP" );
 
+		// Various required properties
 		private readonly Config configuration;
 		private readonly CancellationToken cancellationToken;
 		private readonly Socket udpSocket = new( AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp );
 		private Task? receiveTask = null;
 
-		// TODO: Define & initialize the exported Prometheus metrics
+		// Holds the exported Prometheus metrics
+		public readonly Counter TrapsReceived;
+		public readonly Counter UptimeSeconds;
+		public readonly Gauge ServiceCount;
 
-		// Initializes the socket
+		// Initializes the exported Prometheus metrics & listening socket
 		public SNMP( Config configuration, CancellationToken cancellationToken ) {
 			this.configuration = configuration;
 			this.cancellationToken = cancellationToken;
 
+			TrapsReceived = Metrics.CreateCounter( $"{ configuration.PrometheusMetricsPrefix }_snmp_traps_received", "Number of SNMP traps received.", new CounterConfiguration {
+				LabelNames = new[] { "name", "description", "contact", "location" }
+			} );
+			UptimeSeconds = Metrics.CreateCounter( $"{ configuration.PrometheusMetricsPrefix }_snmp_uptime_seconds", "Number of seconds an SNMP agent has been running.", new CounterConfiguration {
+				LabelNames = new[] { "name", "description", "contact", "location" }
+			} );
+			ServiceCount = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_snmp_service_count", "Number of services an SNMP agent is running.", new GaugeConfiguration {
+				LabelNames = new[] { "name", "description", "contact", "location" }
+			} );
+			TrapsReceived.IncTo( -1 );
+			UptimeSeconds.IncTo( -1 );
+			ServiceCount.Set( -1 );
+			logger.LogInformation( "Initalised Prometheus metrics" );
+
 			IPAddress listenAddress = configuration.SNMPManagerListenAddress == "0.0.0.0" ? IPAddress.Any : IPAddress.Parse( configuration.SNMPManagerListenAddress );
 			int listenPort = configuration.SNMPManagerListenPort;
 			udpSocket.Bind( new IPEndPoint( listenAddress, listenPort ) );
-			logger.LogDebug( "Listening for UDP packets on {0}:{1}", configuration.SNMPManagerListenAddress, configuration.SNMPManagerListenPort );
-
-			udpSocket.SetSocketOption( SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, 0 ); // Never timeout
-			logger.LogDebug( "Disabled timeout on socket" );
+			udpSocket.SetSocketOption( SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, 0 ); // Disable timeout
+			logger.LogInformation( "SNMP manager listening on {0}:{1}", configuration.SNMPManagerListenAddress, configuration.SNMPManagerListenPort );
 		}
 
 		// Starts the receive packets background task
@@ -87,11 +108,13 @@ namespace ServerMonitor.Collector {
 			UdpTarget target = new( IPAddress.Parse( agentAddress ), agentPort, 2000, 1 );
 
 			Pdu pdu = new( PduType.Get );
-			pdu.VbList.Add( "1.3.6.1.2.1.1.1.0" ); // sysDescr
-			pdu.VbList.Add( "1.3.6.1.2.1.1.2.0" ); // sysObjectID
-			pdu.VbList.Add( "1.3.6.1.2.1.1.3.0" ); // sysUpTime
-			pdu.VbList.Add( "1.3.6.1.2.1.1.4.0" ); // sysContact
-			pdu.VbList.Add( "1.3.6.1.2.1.1.5.0" ); // sysName
+			pdu.VbList.Add( "1.3.6.1.2.1.1.1.0" ); // SNMPv2-MIB::sysDescr.0
+			pdu.VbList.Add( "1.3.6.1.2.1.1.2.0" ); // SNMPv2-MIB::sysObjectID.0
+			pdu.VbList.Add( "1.3.6.1.2.1.1.3.0" ); // DISMAN-EVENT-MIB::sysUpTimeInstance
+			pdu.VbList.Add( "1.3.6.1.2.1.1.4.0" ); // SNMPv2-MIB::sysContact.0
+			pdu.VbList.Add( "1.3.6.1.2.1.1.5.0" ); // SNMPv2-MIB::sysName.0
+			pdu.VbList.Add( "1.3.6.1.2.1.1.6.0" ); // SNMPv2-MIB::sysLocation.0
+			pdu.VbList.Add( "1.3.6.1.2.1.1.7.0" ); // SNMPv2-MIB::sysServices.0
 
 			SnmpV1Packet result = ( SnmpV1Packet ) target.Request( pdu, managerParameters );
 			if ( result == null ) throw new Exception( $"No response from SNMP agent '{ agentAddress }:{ agentPort }'" );
