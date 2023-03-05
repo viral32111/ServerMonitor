@@ -399,4 +399,3 @@ FodyWeavers.xsd
 
 # Local configuration
 ServerMonitor/config.local.json
-ServerMonitor.Tests/config.test.json

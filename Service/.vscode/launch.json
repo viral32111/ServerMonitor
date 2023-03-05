@@ -8,8 +8,6 @@
 			"preLaunchTask": "Build (Debug)",
 			"program": "${workspaceFolder}/ServerMonitor/bin/Debug/net7.0/ServerMonitor.dll",
 			"args": [
-				"--config",
-				"${workspaceFolder}/ServerMonitor/config.local.json",
 				"--once",
 				"collector"
 			],
@@ -44,8 +42,6 @@
 			"preLaunchTask": "Build (Debug)",
 			"program": "${workspaceFolder}/ServerMonitor/bin/Debug/net7.0/ServerMonitor.dll",
 			"args": [
-				"--config",
-				"${workspaceFolder}/ServerMonitor/config.local.json",
 				"--once",
 				"connector"
 			],

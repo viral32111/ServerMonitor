@@ -1,7 +1,5 @@
 using System;
 using System.Threading;
-using System.Threading.Tasks;
-using System.ServiceProcess;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using Microsoft.Extensions.Logging; // https://learn.microsoft.com/en-us/dotnet/core/extensions/console-log-formatter
@@ -38,15 +36,19 @@ namespace ServerMonitor.Collector {
 			server.Start();
 			logger.LogInformation( "Prometheus Metrics server listening on http://{0}:{1}/{2}", configuration.PrometheusListenAddress, configuration.PrometheusListenPort, configuration.PrometheusListenPath );
 
-			// Start the SNMP manager
+			// Create the SNMP manager
 			CancellationTokenSource cancellationTokenSource = new();
 			SNMP snmpManager = new( configuration, cancellationTokenSource.Token );
-			snmpManager.Start();
-
-			// Try get information from the SNMP agent
-			logger.LogDebug( "Attempting to get information from {0} SNMP agents...", configuration.SNMPAgents.Length );
-			foreach ( SNMPAgent snmpAgent in configuration.SNMPAgents ) {
-				snmpManager.GetInformation( snmpAgent.Address, snmpAgent.Port );
+			
+			// Start the SNMP manager
+			if ( configuration.CollectSNMPMetrics == true ) {
+				snmpManager.Start();
+			
+				// Try get information from the SNMP agent
+				logger.LogDebug( "Attempting to get information from {0} SNMP agents...", configuration.SNMPAgents.Length );
+				foreach ( SNMPAgent snmpAgent in configuration.SNMPAgents ) {
+					snmpManager.GetInformation( snmpAgent.Address, snmpAgent.Port );
+				}
 			}
 
 			// Create instances of each resource collector
@@ -197,11 +199,10 @@ namespace ServerMonitor.Collector {
 				if ( singleRun == false ) Thread.Sleep( 5000 ); // 5 seconds
 			} while ( singleRun == false );
 
-			// Stop the SNMP agent
-			if ( singleRun == true ) cancellationTokenSource.Cancel();
-
-			// Block until the SNMP agent has stopped
-			snmpManager.Wait();
+			if ( configuration.CollectSNMPMetrics == true ) {
+				if ( singleRun == true ) cancellationTokenSource.Cancel(); // Stop the SNMP agent
+				snmpManager.Wait(); // Block until the SNMP agent has stopped
+			}
 		}
 
 		// Checks if this application is running as administrator/root, which is required for some of the metrics we're collecting

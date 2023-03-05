@@ -8,7 +8,7 @@ namespace ServerMonitor.Tests.Collector {
 
 		[ Fact ]
 		public void TestServicesMetrics() {
-			ServerMonitor.Configuration.Load( Path.Combine( Environment.CurrentDirectory, "config.test.json" ) );
+			ServerMonitor.Configuration.Load( Path.Combine( Environment.CurrentDirectory, "config.json" ) );
 			Assert.NotNull( ServerMonitor.Configuration.Config );
 
 			ServerMonitor.Collector.Services services = new( ServerMonitor.Configuration.Config );

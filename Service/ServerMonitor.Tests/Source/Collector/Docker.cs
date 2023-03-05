@@ -8,7 +8,7 @@ namespace ServerMonitor.Tests.Collector {
 
 		[ Fact ]
 		public void TestDockerMetrics() {
-			ServerMonitor.Configuration.Load( Path.Combine( Environment.CurrentDirectory, "config.test.json" ) );
+			ServerMonitor.Configuration.Load( Path.Combine( Environment.CurrentDirectory, "config.json" ) );
 			Assert.NotNull( ServerMonitor.Configuration.Config );
 
 			ServerMonitor.Collector.Docker docker = new( ServerMonitor.Configuration.Config );

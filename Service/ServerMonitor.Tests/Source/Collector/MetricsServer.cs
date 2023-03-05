@@ -9,8 +9,20 @@ namespace ServerMonitor.Tests.Collector {
 
 		[ Fact ]
 		public async Task TestMetricsServer() {
-			ServerMonitor.Configuration.Load( Path.Combine( Directory.GetCurrentDirectory(), "config.test.json" ) );
+			ServerMonitor.Configuration.Load( Path.Combine( Directory.GetCurrentDirectory(), "config.json" ) );
 			Assert.NotNull( ServerMonitor.Configuration.Config );
+
+			// Disable all metrics as we're only testing listening functionality
+			ServerMonitor.Configuration.Config.CollectProcessorMetrics = false;
+			ServerMonitor.Configuration.Config.CollectMemoryMetrics = false;
+			ServerMonitor.Configuration.Config.CollectDiskMetrics = false;
+			ServerMonitor.Configuration.Config.CollectNetworkMetrics = false;
+			ServerMonitor.Configuration.Config.CollectUptimeMetrics = false;
+			ServerMonitor.Configuration.Config.CollectPowerMetrics = false;
+			ServerMonitor.Configuration.Config.CollectFanMetrics = false;
+			ServerMonitor.Configuration.Config.CollectServiceMetrics = false;
+			ServerMonitor.Configuration.Config.CollectDockerMetrics = false;
+			ServerMonitor.Configuration.Config.CollectSNMPMetrics = false;
 
 			ServerMonitor.Collector.Collector.HandleCommand( ServerMonitor.Configuration.Config, true );
 

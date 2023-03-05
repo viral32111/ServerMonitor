@@ -20,13 +20,15 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Content Include="config.json">
+		<ContentWithTargetPath Include="config.json" Condition="!Exists( 'config.local.json' )">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</Content>
+			<TargetPath>config.json</TargetPath>
+		</ContentWithTargetPath>
 
-		<Content Include="config.local.json">
+		<ContentWithTargetPath Include="config.local.json" Condition="Exists( 'config.local.json' )">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</Content>
+			<TargetPath>config.json</TargetPath>
+		</ContentWithTargetPath>
 	</ItemGroup>
 
 	<ItemGroup>
