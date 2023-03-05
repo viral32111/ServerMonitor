@@ -99,6 +99,11 @@ namespace ServerMonitor {
 		public required string DockerEngineAPIAddress { get; set; } = "tcp://127.0.0.1:2375";
 		public required float DockerEngineAPIVersion { get; set; } = 1.41f;
 
+		// SNMP options
+		public required bool CollectSNMPMetrics { get; set; } = true;
+		public required string SNMPAgentListenAddress { get; set; } = "0.0.0.0";
+		public required int SNMPAgentListenPort { get; set; } = 162;
+
 	}
 
 }

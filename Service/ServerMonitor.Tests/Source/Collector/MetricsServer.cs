@@ -24,7 +24,11 @@ namespace ServerMonitor.Tests.Collector {
 			CollectDockerMetrics = false,
 
 			DockerEngineAPIAddress = default!,
-			DockerEngineAPIVersion = default!
+			DockerEngineAPIVersion = default!,
+
+			CollectSNMPMetrics = false,
+			SNMPAgentListenAddress = default!,
+			SNMPAgentListenPort = default!
 		};
 
 		[ Fact ]
