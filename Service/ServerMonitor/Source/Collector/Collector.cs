@@ -190,7 +190,9 @@ namespace ServerMonitor.Collector {
 			} while ( singleRun == false );
 
 			// Stop the SNMP agent
-			//cancellationTokenSource.Cancel();
+			if ( singleRun == true ) cancellationTokenSource.Cancel();
+
+			// Block until the SNMP agent has stopped
 			snmpAgent.WaitForAgent();
 		}
 

@@ -15,5 +15,5 @@
 	"DockerEngineAPIVersion": 1.41,
 	"CollectSNMPMetrics": true,
 	"SNMPAgentListenAddress": "0.0.0.0",
-	"SNMPAgentListenPort": 162
+	"SNMPAgentListenPort": 1620
 }

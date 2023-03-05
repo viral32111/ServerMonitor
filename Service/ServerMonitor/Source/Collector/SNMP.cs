@@ -16,6 +16,14 @@ using SnmpSharpNet;
 using Microsoft.Extensions.Logging;
 using Prometheus;
 
+/* Test commands:
+https://stackoverflow.com/a/37281164
+ snmptrap -v 2c -c 'Server Monitor' 127.0.0.1:1620 0 1.3.6.1.4.1.2.3 1.3.6.1.6.1.4.1.2.3.1.1.1.1.1 s "This is a Test"
+
+https://support.nagios.com/kb/article.php?id=493
+ snmptrap -v 2c -c 'Server Monitor' 127.0.0.1:1620 '' 1.3.6.1.4.1.8072.2.3.0.1 1.3.6.1.4.1.8072.2.3.2.1 i 123456
+*/
+
 /* https://blog.domotz.com/know-your-networks/snmp-port-number/
 UDP port 161 connects the SNMP Managers with SNMP Agents (i.e. polling)
 UDP port 162 sees use when SNMP Agents send unsolicited traps to the SNMP Manager
@@ -64,7 +72,13 @@ namespace ServerMonitor.Collector {
 			if ( this.receiveTask == null ) throw new InvalidOperationException( "SNMP agent not started" );
 
 			logger.LogDebug( "Waiting for receive task to finish..." );
-			this.receiveTask.Wait();
+			try {
+				this.receiveTask.Wait();
+			} catch ( AggregateException exception ) {
+				if ( exception.InnerException?.GetType() == typeof( TaskCanceledException ) ) {
+					logger.LogDebug( "Receive task cancelled" );
+				} else throw;
+			}
 			logger.LogDebug( "Receive task finished" );
 		}
 
@@ -83,6 +97,7 @@ namespace ServerMonitor.Collector {
 
 				ProcessPacket( receiveBuffer, bytesReceived );
 			}
+
 			logger.LogDebug( "Stopped receiving packets" );
 		}
 

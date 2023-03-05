@@ -100,13 +100,20 @@ namespace ServerMonitor.Collector.Resource {
 						else memoryInformation.Add( name, value );
 					} while ( !streamReader.EndOfStream );
 
-					// Set the values for the exported Prometheus metrics
+					// Set the memory metrics metrics
 					TotalBytes.Set( memoryInformation[ "MemTotal" ] );
 					FreeBytes.Set( memoryInformation[ "MemFree" ] + memoryInformation[ "Cached" ] + memoryInformation[ "Buffers" ] ); // Ignore cached & buffered memory as its instantly reclaimable - https://stackoverflow.com/a/41251290
-					SwapTotalBytes.Set( memoryInformation[ "SwapTotal" ] );
-					SwapFreeBytes.Set( memoryInformation[ "SwapFree" ] );
-					logger.LogDebug( "Updated Prometheus metrics" );
+					
+					// Set the swap metrics, if there is swap space
+					if ( memoryInformation[ "SwapTotal" ] > 0 ) {
+						SwapTotalBytes.Set( memoryInformation[ "SwapTotal" ] );
+						SwapFreeBytes.Set( memoryInformation[ "SwapFree" ] );
+					} else {
+						SwapTotalBytes.Set( -1 );
+						SwapFreeBytes.Set( -1 );
+					}
 
+					logger.LogDebug( "Updated Prometheus metrics" );
 				}
 			}
 		}

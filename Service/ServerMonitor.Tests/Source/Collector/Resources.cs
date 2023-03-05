@@ -18,8 +18,11 @@ namespace ServerMonitor.Tests.Collector {
 			Assert.True( memory.FreeBytes.Value >= 0, "Free memory is below 0 bytes" );
 			Assert.True( memory.FreeBytes.Value <= memory.TotalBytes.Value, "Free memory is greater than total memory" );
 
-			Assert.True( memory.SwapTotalBytes.Value > 0, "Total swap/page-file is below 0 bytes" );
-			Assert.True( memory.SwapFreeBytes.Value > 0, "Free swap/page-file is below 0 bytes" );
+			// Not every system has swap/page-file
+			if ( memory.SwapTotalBytes.Value != -1 ) {
+				Assert.True( memory.SwapTotalBytes.Value > 0, "Total swap/page-file is below 0 bytes" );
+				Assert.True( memory.SwapFreeBytes.Value > 0, "Free swap/page-file is below 0 bytes" );
+			}
 		}
 
 		[ Fact ]
