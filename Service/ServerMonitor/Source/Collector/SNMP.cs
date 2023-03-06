@@ -13,10 +13,10 @@ using Prometheus;
 
 /* Test commands:
 https://stackoverflow.com/a/37281164
- snmptrap -v 2c -c 'Server Monitor' 10.0.0.100:1620 0 1.3.6.1.4.1.2.3 1.3.6.1.6.1.4.1.2.3.1.1.1.1.1 s "This is a Test"
+ snmptrap -v 2c -c 'Server Monitor' 10.0.0.100:162 0 1.3.6.1.4.1.2.3 1.3.6.1.6.1.4.1.2.3.1.1.1.1.1 s "This is a Test"
 
 https://support.nagios.com/kb/article.php?id=493
- snmptrap -v 2c -c 'Server Monitor' 10.0.0.100:1620 '' 1.3.6.1.4.1.8072.2.3.0.1 1.3.6.1.4.1.8072.2.3.2.1 i 123456
+ snmptrap -v 2c -c 'Server Monitor' 10.0.0.100:162 '' 1.3.6.1.4.1.8072.2.3.0.1 1.3.6.1.4.1.8072.2.3.2.1 i 123456
 */
 
 /* Get all SNMP OIDs for an agent:
@@ -97,9 +97,26 @@ namespace ServerMonitor.Collector {
 
 		// Updates the exported Prometheus metrics for an SNMP agent
 		private void UpdateAgentMetrics( string agentAddress, int agentPort ) {
-			
-			// Fetch the required information from the agent
-			Dictionary<string, string?> agentInformation = FetchAgentInformation( agentAddress, agentPort, new() {
+
+			// Fetch information about the agent
+			AgentInformation agentInformation = FetchAgentInformation( agentAddress, agentPort );
+
+			// Update the exported Prometheus metrics
+			UptimeSeconds.WithLabels( agentAddress, agentPort.ToString(), agentInformation.Name, agentInformation.Description, agentInformation.Contact, agentInformation.Location ).IncTo( agentInformation.Uptime.TotalSeconds );
+			ServiceCount.WithLabels( agentAddress, agentPort.ToString(), agentInformation.Name, agentInformation.Description, agentInformation.Contact, agentInformation.Location ).IncTo( agentInformation.ServiceCount );
+			logger.LogInformation( "Updated Prometheus metrics for SNMP agent '{0}:{1}'", agentAddress, agentPort );
+
+		}
+
+		// Fetches information about an SNMP agent - https://snmpsharpnet.com/index.php/snmp-version-1-or-2c-get-request/
+		private AgentInformation FetchAgentInformation( string agentAddress, int agentPort ) {
+
+			// Data about the request to the agent
+			AgentParameters managerParameters = new( SnmpVersion.Ver1, new OctetString( configuration.SNMPCommunity ) );
+
+			// Create the PDU containing the OIDs to fetch values for
+			Pdu pdu = new( PduType.Get );
+			foreach ( string informationOID in new string[] {
 				"1.3.6.1.2.1.1.1.0", // SNMPv2-MIB::sysDescr.0 (Description)
 				"1.3.6.1.2.1.1.2.0", // SNMPv2-MIB::sysObjectID.0 (Object ID)
 				"1.3.6.1.2.1.1.3.0", // DISMAN-EVENT-MIB::sysUpTimeInstance (Uptime)
@@ -107,43 +124,7 @@ namespace ServerMonitor.Collector {
 				"1.3.6.1.2.1.1.5.0", // SNMPv2-MIB::sysName.0 (Name)
 				"1.3.6.1.2.1.1.6.0", // SNMPv2-MIB::sysLocation.0 (Location)
 				"1.3.6.1.2.1.1.7.0" // SNMPv2-MIB::sysServices.0 (Service Count)
-			} );
-
-			// Ensure all of the information returned is valid
-			if ( agentInformation.TryGetValue( "1.3.6.1.2.1.1.1.0", out string? description ) == false || string.IsNullOrWhiteSpace( description ) ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned description that is null, empty or whitespace" );
-			if ( agentInformation.TryGetValue( "1.3.6.1.2.1.1.2.0", out string? objectID ) == false || string.IsNullOrWhiteSpace( objectID ) ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned object ID that is null, empty or whitespace" );
-			if ( agentInformation.TryGetValue( "1.3.6.1.2.1.1.3.0", out string? uptimeText ) == false || string.IsNullOrWhiteSpace( uptimeText ) ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned uptime that is null, empty or whitespace" );
-			if ( agentInformation.TryGetValue( "1.3.6.1.2.1.1.4.0", out string? contact ) == false || string.IsNullOrWhiteSpace( contact ) ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned contact that is null, empty or whitespace" );
-			if ( agentInformation.TryGetValue( "1.3.6.1.2.1.1.5.0", out string? name ) == false || string.IsNullOrWhiteSpace( name ) ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned name that is null, empty or whitespace" );
-			if ( agentInformation.TryGetValue( "1.3.6.1.2.1.1.6.0", out string? location ) == false || string.IsNullOrWhiteSpace( location ) ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned location that is null, empty or whitespace" );
-			if ( agentInformation.TryGetValue( "1.3.6.1.2.1.1.7.0", out string? serviceCount ) == false || string.IsNullOrWhiteSpace( serviceCount ) ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned service count that is null, empty or whitespace" );
-
-			// Parse SNMP uptime string into seconds
-			Match uptimeMatch = Regex.Match( uptimeText, @"^(\d+)d (\d+)h (\d+)m (\d+)s (\d+)ms$" );
-			if ( uptimeMatch.Success == false ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned uptime '{ uptimeText }' in an unexpected format" );
-			if ( int.TryParse( uptimeMatch.Groups[ 1 ].Value, out int uptimeDays ) == false ) throw new Exception( $"Failed to parse uptime days '{ uptimeMatch.Groups[ 1 ].Value }' as an integer" );
-			if ( int.TryParse( uptimeMatch.Groups[ 2 ].Value, out int uptimeHours ) == false ) throw new Exception( $"Failed to parse uptime hours '{ uptimeMatch.Groups[ 2 ].Value }' as an integer" );
-			if ( int.TryParse( uptimeMatch.Groups[ 3 ].Value, out int uptimeMinutes ) == false ) throw new Exception( $"Failed to parse uptime minutes '{ uptimeMatch.Groups[ 3 ].Value }' as an integer" );
-			if ( int.TryParse( uptimeMatch.Groups[ 4 ].Value, out int uptimeSeconds ) == false ) throw new Exception( $"Failed to parse uptime seconds '{ uptimeMatch.Groups[ 4 ].Value }' as an integer" );
-			if ( int.TryParse( uptimeMatch.Groups[ 5 ].Value, out int uptimeMilliseconds ) == false ) throw new Exception( $"Failed to parse uptime milliseconds '{ uptimeMatch.Groups[ 5 ].Value }' as an integer" );
-			TimeSpan uptime = new( uptimeDays, uptimeHours, uptimeMinutes, uptimeSeconds, uptimeMilliseconds );
-
-			// Update the exported Prometheus metrics
-			UptimeSeconds.WithLabels( agentAddress, agentPort.ToString(), name, description, contact, location ).IncTo( uptime.TotalSeconds );
-			ServiceCount.WithLabels( agentAddress, agentPort.ToString(), name, description, contact, location ).IncTo( int.Parse( serviceCount ) );
-			logger.LogInformation( "Updated Prometheus metrics for SNMP agent '{0}:{1}'", agentAddress, agentPort );
-
-		}
-
-		// Fetches information from an SNMP agent - https://snmpsharpnet.com/index.php/snmp-version-1-or-2c-get-request/
-		private Dictionary<string, string?> FetchAgentInformation( string agentAddress, int agentPort, List<string> oids ) {
-
-			// Info about the request to the agent
-			AgentParameters managerParameters = new( SnmpVersion.Ver1, new OctetString( configuration.SNMPCommunity ) );
-
-			// Create the PDU containing the OIDs to fetch values for
-			Pdu pdu = new( PduType.Get );
-			foreach ( string oid in oids ) pdu.VbList.Add( oid );
+			} ) pdu.VbList.Add( informationOID );
 
 			// Send the request to the agent (timeout after 2 seconds)
 			using ( UdpTarget targetAgent = new( IPAddress.Parse( agentAddress ), agentPort, 2000, 1 ) ) {
@@ -152,13 +133,48 @@ namespace ServerMonitor.Collector {
 				if ( agentResponse.Pdu.ErrorStatus != 0 ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned error status '{ agentResponse.Pdu.ErrorStatus }'" );
 
 				// Print the response for debugging
-				foreach ( Vb varBinding in agentResponse.Pdu.VbList ) logger.LogDebug( "SNMP agent '{0}:{1}' returned '{0}' ({1}) = '{2}'", agentAddress, agentPort, varBinding.Oid.ToString(), SnmpConstants.GetTypeName( varBinding.Value.Type ), varBinding.Value.ToString() );
+				//foreach ( Vb varBinding in agentResponse.Pdu.VbList ) logger.LogDebug( "SNMP agent '{0}:{1}' returned '{0}' ({1}) = '{2}'", agentAddress, agentPort, varBinding.Oid.ToString(), SnmpConstants.GetTypeName( varBinding.Value.Type ), varBinding.Value.ToString() );
 
 				// Convert the response to a dictionary of OIDs and their values
-				return agentResponse.Pdu.VbList.ToDictionary(
+				Dictionary<string, string?> agentInformation = agentResponse.Pdu.VbList.ToDictionary(
 					vb => vb.Oid.ToString(),
 					vb => vb.Value.ToString()
 				);
+
+				// Ensure all of the information returned is valid
+				if ( agentInformation.TryGetValue( "1.3.6.1.2.1.1.1.0", out string? description ) == false || string.IsNullOrWhiteSpace( description ) ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned description that is null, empty or whitespace" );
+				if ( agentInformation.TryGetValue( "1.3.6.1.2.1.1.2.0", out string? objectID ) == false || string.IsNullOrWhiteSpace( objectID ) ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned object ID that is null, empty or whitespace" );
+				if ( agentInformation.TryGetValue( "1.3.6.1.2.1.1.3.0", out string? uptimeText ) == false || string.IsNullOrWhiteSpace( uptimeText ) ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned uptime that is null, empty or whitespace" );
+				if ( agentInformation.TryGetValue( "1.3.6.1.2.1.1.4.0", out string? contact ) == false || string.IsNullOrWhiteSpace( contact ) ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned contact that is null, empty or whitespace" );
+				if ( agentInformation.TryGetValue( "1.3.6.1.2.1.1.5.0", out string? name ) == false || string.IsNullOrWhiteSpace( name ) ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned name that is null, empty or whitespace" );
+				if ( agentInformation.TryGetValue( "1.3.6.1.2.1.1.6.0", out string? location ) == false || string.IsNullOrWhiteSpace( location ) ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned location that is null, empty or whitespace" );
+				if ( agentInformation.TryGetValue( "1.3.6.1.2.1.1.7.0", out string? serviceCountText ) == false || string.IsNullOrWhiteSpace( serviceCountText ) ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned service count that is null, empty or whitespace" );
+
+				// Parse SNMP uptime string into seconds
+				Match uptimeMatch = Regex.Match( uptimeText, @"^(\d+)d (\d+)h (\d+)m (\d+)s (\d+)ms$" );
+				if ( uptimeMatch.Success == false ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned uptime '{ uptimeText }' in an unexpected format" );
+				if ( int.TryParse( uptimeMatch.Groups[ 1 ].Value, out int uptimeDays ) == false ) throw new Exception( $"Failed to parse uptime days '{ uptimeMatch.Groups[ 1 ].Value }' as an integer" );
+				if ( int.TryParse( uptimeMatch.Groups[ 2 ].Value, out int uptimeHours ) == false ) throw new Exception( $"Failed to parse uptime hours '{ uptimeMatch.Groups[ 2 ].Value }' as an integer" );
+				if ( int.TryParse( uptimeMatch.Groups[ 3 ].Value, out int uptimeMinutes ) == false ) throw new Exception( $"Failed to parse uptime minutes '{ uptimeMatch.Groups[ 3 ].Value }' as an integer" );
+				if ( int.TryParse( uptimeMatch.Groups[ 4 ].Value, out int uptimeSeconds ) == false ) throw new Exception( $"Failed to parse uptime seconds '{ uptimeMatch.Groups[ 4 ].Value }' as an integer" );
+				if ( int.TryParse( uptimeMatch.Groups[ 5 ].Value, out int uptimeMilliseconds ) == false ) throw new Exception( $"Failed to parse uptime milliseconds '{ uptimeMatch.Groups[ 5 ].Value }' as an integer" );
+				TimeSpan uptime = new( uptimeDays, uptimeHours, uptimeMinutes, uptimeSeconds, uptimeMilliseconds );
+
+				// Parse service count as integer
+				if ( int.TryParse( serviceCountText, out int serviceCount ) == false ) throw new Exception( $"Failed to parse service count '{ serviceCountText }' as an integer" );
+
+				// Store all the information in a structure
+				return new AgentInformation {
+					Address = agentAddress,
+					Port = agentPort,
+					Description = description,
+					Uptime = uptime,
+					Contact = contact,
+					Name = name,
+					Location = location,
+					ServiceCount = serviceCount,
+					ObjectID = objectID
+				};
 			}
 
 		}
@@ -169,6 +185,9 @@ namespace ServerMonitor.Collector {
 			// Disable timing out when waiting to receive packets
 			udpSocket.SetSocketOption( SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, 0 );
 
+			// Receive from any IP address and port
+			EndPoint remoteEndPoint = new IPEndPoint( IPAddress.Any, 0 );
+
 			// Create a buffer to hold the received packet
 			byte[] receiveBuffer = new byte[ 65565 ];
 
@@ -177,11 +196,11 @@ namespace ServerMonitor.Collector {
 				while ( udpSocket.IsBound && this.cancellationToken.IsCancellationRequested == false ) {
 
 					// Block until a packet is received
-					int bytesReceived = await udpSocket.ReceiveAsync( receiveBuffer, this.cancellationToken );
-					if ( bytesReceived <= 0 ) break;
+					SocketReceiveFromResult receiveResult = await udpSocket.ReceiveFromAsync( receiveBuffer, remoteEndPoint, this.cancellationToken );
+					if ( receiveResult.ReceivedBytes <= 0 ) break;
 
 					// Handle the received packet
-					ProcessTrapPacket( receiveBuffer, bytesReceived );
+					ProcessTrapPacket( ( IPEndPoint ) receiveResult.RemoteEndPoint, receiveBuffer, receiveResult.ReceivedBytes );
 
 					// Clear the buffer
 					Array.Clear( receiveBuffer, 0, receiveBuffer.Length );
@@ -194,47 +213,55 @@ namespace ServerMonitor.Collector {
 		}
 
 		// Handles a received trap packet - https://snmpsharpnet.com/index.php/receive-snmp-version-1-and-2c-trap-notifications/
-		private void ProcessTrapPacket( byte[] packet, int packetLength ) {
-			int protocolVersion = SnmpPacket.GetProtocolVersion( packet, packetLength );
+		private void ProcessTrapPacket( IPEndPoint remoteEndPoint, byte[] packet, int packetLength ) {
+			
+			// Get the agent's IP address & port number
+			string agentAddress = remoteEndPoint.Address.ToString();
+			int agentPort = remoteEndPoint.Port;
 
-			// Version 1
-			if ( protocolVersion == ( int ) SnmpVersion.Ver1 ) {
-				SnmpV1TrapPacket snmpPacket = new();
-				snmpPacket.decode( packet, packetLength );
+			// We only support SNMP version 1
+			SnmpVersion snmpVersion = ( SnmpVersion ) SnmpPacket.GetProtocolVersion( packet, packetLength );
+			if ( snmpVersion != SnmpVersion.Ver1 ) throw new Exception( $"Unsupported SNMP version '{ snmpVersion }' on trap packet" );
 
-				logger.LogDebug( "SNMPv1 TRAP" );
-				logger.LogDebug( "\tTrap Generic: '{0}'", snmpPacket.Pdu.Generic );
-				logger.LogDebug( "\tTrap Specific: '{0}'", snmpPacket.Pdu.Specific );
-				logger.LogDebug( "\tAgent Address: '{0}'", snmpPacket.Pdu.AgentAddress );
-				logger.LogDebug( "\tTimestamp: '{0}'", snmpPacket.Pdu.TimeStamp );
-				logger.LogDebug( "\tVarBind Count: '{0}' ({1})", snmpPacket.Pdu.VbCount, snmpPacket.Pdu.VbList.Count );
-				foreach ( Vb varBind in snmpPacket.Pdu.VbList ) {
-					logger.LogDebug( "\t\t{0} ({1}) = '{2}'", varBind.Oid.ToString(), SnmpConstants.GetTypeName( varBind.Value.Type ), varBind.Value.ToString() );
-				}
+			// Parse the trap packet
+			SnmpV1TrapPacket trapPacket = new();
+			trapPacket.decode( packet, packetLength );
 
-				// TODO: TrapsReceived.WithLabels( agentAddress, agentPort.ToString(), name, description, contact, location ).Inc();
+			// Ensure the IP address in the packet matches the IP address of the sender
+			if ( trapPacket.Pdu.AgentAddress.ToString() != agentAddress ) throw new Exception( $"SNMP agent address '{ trapPacket.Pdu.AgentAddress }' does not match sender IP address '{ agentAddress }'" );
 
-			// Version 2
-			} else if ( protocolVersion == ( int ) SnmpVersion.Ver2 ) {
-				SnmpV2Packet snmpPacket = new();
-				snmpPacket.decode( packet, packetLength );
+			// Parse the timestamp, which is actually uptime in milliseconds
+			TimeSpan uptime = new( 0, 0, 0, ( int ) trapPacket.Pdu.TimeStamp );
 
-				if ( snmpPacket.Pdu.Type != PduType.V2Trap ) {
-					logger.LogWarning( "Received packet with unknown type: '{0}'", snmpPacket.Pdu.Type );
-					return;
-				}
+			// Windows event viewer information
+			int eventId = trapPacket.Pdu.Specific;
+			int eventSeverity = trapPacket.Pdu.Generic;
 
-				logger.LogDebug( "SNMPv2 TRAP" );
-				logger.LogDebug( "\tCommunity: '{0}'", snmpPacket.Community );
-				logger.LogDebug( "\tVarBind Count: '{0}' ({1})", snmpPacket.Pdu.VbCount, snmpPacket.Pdu.VbList.Count );
-				foreach ( Vb varBind in snmpPacket.Pdu.VbList ) {
-					logger.LogDebug( "\t\t{0} ({1}) = '{2}'", varBind.Oid.ToString(), SnmpConstants.GetTypeName( varBind.Value.Type ), varBind.Value.ToString() );
-				}
+			// Print information about the trap packet
+			logger.LogInformation( "Received SNMP trap {0}, {1} from agent '{2}:{3}'", eventId, eventSeverity, agentAddress, agentPort );
+			foreach ( Vb varBinding in trapPacket.Pdu.VbList ) logger.LogDebug( "\t'{0}' ({1}) = '{2}'", agentAddress, agentPort, varBinding.Oid.ToString(), SnmpConstants.GetTypeName( varBinding.Value.Type ), varBinding.Value.ToString() );
 
-				// TODO: TrapsReceived.WithLabels( agentAddress, agentPort.ToString(), name, description, contact, location ).Inc();
+			// Fetch information about this agent
+			AgentInformation agentInformation = FetchAgentInformation( agentAddress, agentPort );
 
-			} else logger.LogWarning( "Received packet with unknown protocol version: '{0}'", protocolVersion );
+			// Update the exported Prometheus metrics
+			TrapsReceived.WithLabels( agentAddress, agentPort.ToString(), agentInformation.Name, agentInformation.Description, agentInformation.Contact, agentInformation.Location ).Inc();
+			logger.LogInformation( "Updated Prometheus metrics for SNMP agent '{0}:{1}'", agentAddress, agentPort );
 
+		}
+
+		// Structure to hold information about an SNMP agent
+		struct AgentInformation {
+			public string Address { get; set; }
+			public int Port { get; set; }
+
+			public string Name { get; set; }
+			public string Description { get; set; }
+			public TimeSpan Uptime { get; set; }
+			public string Contact { get; set; }
+			public string Location { get; set; }
+			public int ServiceCount { get; set; }
+			public string ObjectID { get; set; }
 		}
 
 	}
