@@ -1,4 +1,6 @@
 using System;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Linq;
 using System.Collections.Generic;
 using System.Net;
@@ -110,19 +112,27 @@ namespace ServerMonitor.Collector {
 			// Ensure all of the information returned is valid
 			if ( agentInformation.TryGetValue( "1.3.6.1.2.1.1.1.0", out string? description ) == false || string.IsNullOrWhiteSpace( description ) ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned description that is null, empty or whitespace" );
 			if ( agentInformation.TryGetValue( "1.3.6.1.2.1.1.2.0", out string? objectID ) == false || string.IsNullOrWhiteSpace( objectID ) ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned object ID that is null, empty or whitespace" );
-			if ( agentInformation.TryGetValue( "1.3.6.1.2.1.1.3.0", out string? uptime ) == false || string.IsNullOrWhiteSpace( uptime ) ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned uptime that is null, empty or whitespace" );
+			if ( agentInformation.TryGetValue( "1.3.6.1.2.1.1.3.0", out string? uptimeText ) == false || string.IsNullOrWhiteSpace( uptimeText ) ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned uptime that is null, empty or whitespace" );
 			if ( agentInformation.TryGetValue( "1.3.6.1.2.1.1.4.0", out string? contact ) == false || string.IsNullOrWhiteSpace( contact ) ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned contact that is null, empty or whitespace" );
 			if ( agentInformation.TryGetValue( "1.3.6.1.2.1.1.5.0", out string? name ) == false || string.IsNullOrWhiteSpace( name ) ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned name that is null, empty or whitespace" );
 			if ( agentInformation.TryGetValue( "1.3.6.1.2.1.1.6.0", out string? location ) == false || string.IsNullOrWhiteSpace( location ) ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned location that is null, empty or whitespace" );
 			if ( agentInformation.TryGetValue( "1.3.6.1.2.1.1.7.0", out string? serviceCount ) == false || string.IsNullOrWhiteSpace( serviceCount ) ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned service count that is null, empty or whitespace" );
 
-			// TODO: Parse SNMP uptime string into seconds
+			// Parse SNMP uptime string into seconds
+			Match uptimeMatch = Regex.Match( uptimeText, @"^(\d+)d (\d+)h (\d+)m (\d+)s (\d+)ms$" );
+			if ( uptimeMatch.Success == false ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned uptime '{ uptimeText }' in an unexpected format" );
+			if ( int.TryParse( uptimeMatch.Groups[ 1 ].Value, out int uptimeDays ) == false ) throw new Exception( $"Failed to parse uptime days '{ uptimeMatch.Groups[ 1 ].Value }' as an integer" );
+			if ( int.TryParse( uptimeMatch.Groups[ 2 ].Value, out int uptimeHours ) == false ) throw new Exception( $"Failed to parse uptime hours '{ uptimeMatch.Groups[ 2 ].Value }' as an integer" );
+			if ( int.TryParse( uptimeMatch.Groups[ 3 ].Value, out int uptimeMinutes ) == false ) throw new Exception( $"Failed to parse uptime minutes '{ uptimeMatch.Groups[ 3 ].Value }' as an integer" );
+			if ( int.TryParse( uptimeMatch.Groups[ 4 ].Value, out int uptimeSeconds ) == false ) throw new Exception( $"Failed to parse uptime seconds '{ uptimeMatch.Groups[ 4 ].Value }' as an integer" );
+			if ( int.TryParse( uptimeMatch.Groups[ 5 ].Value, out int uptimeMilliseconds ) == false ) throw new Exception( $"Failed to parse uptime milliseconds '{ uptimeMatch.Groups[ 5 ].Value }' as an integer" );
+			TimeSpan uptime = new( uptimeDays, uptimeHours, uptimeMinutes, uptimeSeconds, uptimeMilliseconds );
 
 			// Update the exported Prometheus metrics
-			UptimeSeconds.WithLabels( agentAddress, agentPort.ToString(), name, description, contact, location ).IncTo( -1 ); // TODO
+			UptimeSeconds.WithLabels( agentAddress, agentPort.ToString(), name, description, contact, location ).IncTo( uptime.TotalSeconds );
 			ServiceCount.WithLabels( agentAddress, agentPort.ToString(), name, description, contact, location ).IncTo( int.Parse( serviceCount ) );
 			logger.LogInformation( "Updated Prometheus metrics for SNMP agent '{0}:{1}'", agentAddress, agentPort );
-	
+
 		}
 
 		// Fetches information from an SNMP agent - https://snmpsharpnet.com/index.php/snmp-version-1-or-2c-get-request/
@@ -140,6 +150,9 @@ namespace ServerMonitor.Collector {
 				SnmpV1Packet agentResponse = ( SnmpV1Packet ) targetAgent.Request( pdu, managerParameters );
 				if ( agentResponse == null ) throw new Exception( $"No response from SNMP agent '{ agentAddress }:{ agentPort }'" );
 				if ( agentResponse.Pdu.ErrorStatus != 0 ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned error status '{ agentResponse.Pdu.ErrorStatus }'" );
+
+				// Print the response for debugging
+				foreach ( Vb varBinding in agentResponse.Pdu.VbList ) logger.LogDebug( "SNMP agent '{0}:{1}' returned '{0}' ({1}) = '{2}'", agentAddress, agentPort, varBinding.Oid.ToString(), SnmpConstants.GetTypeName( varBinding.Value.Type ), varBinding.Value.ToString() );
 
 				// Convert the response to a dictionary of OIDs and their values
 				return agentResponse.Pdu.VbList.ToDictionary(

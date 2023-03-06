@@ -38,12 +38,10 @@ namespace ServerMonitor.Collector {
 
 			// Create the SNMP manager
 			CancellationTokenSource cancellationTokenSource = new();
-			SNMP snmpManager = new( configuration, cancellationTokenSource.Token );
-			
+			SNMP snmp = new( configuration, cancellationTokenSource.Token );
+
 			// Start the SNMP manager
-			if ( configuration.CollectSNMPMetrics == true ) {
-				snmpManager.ListenForTraps();
-			}
+			if ( configuration.CollectSNMPMetrics == true ) snmp.ListenForTraps();
 
 			// Create instances of each resource collector
 			Memory memory = new( configuration );
@@ -192,7 +190,25 @@ namespace ServerMonitor.Collector {
 
 				if ( configuration.CollectSNMPMetrics == true ) {
 					try {
-						snmpManager.Update();
+						snmp.Update();
+
+						foreach ( string[] labelValues in snmp.ServiceCount.GetAllLabelValues() ) {
+							string address = labelValues[ 0 ];
+							string port = labelValues[ 1 ];
+							string name = labelValues[ 2 ];
+							string description = labelValues[ 3 ];
+							string contact = labelValues[ 4 ];
+							string location = labelValues[ 5 ];
+
+							logger.LogInformation( "--- SNMP agent '{0}:{1}' ----", address, port );
+							logger.LogInformation( "Name: '{0}'", name );
+							logger.LogInformation( "Description: '{0}'", description );
+							logger.LogInformation( "Contact: '{0}'", contact );
+							logger.LogInformation( "Location: '{0}'", location );
+							logger.LogInformation( "Traps Received: {0}", snmp.TrapsReceived.WithLabels( address, port, name, description, contact, location ).Value );
+							logger.LogInformation( "Uptime: {0} seconds", snmp.UptimeSeconds.WithLabels( address, port, name, description, contact, location ).Value );
+							logger.LogInformation( "Service Count: {0}", snmp.ServiceCount.WithLabels( address, port, name, description, contact, location ).Value );
+						}
 					} catch ( Exception exception ) {
 						logger.LogError( exception, "Failed to collect SNMP metrics" );
 					}
@@ -203,7 +219,7 @@ namespace ServerMonitor.Collector {
 
 			if ( configuration.CollectSNMPMetrics == true ) {
 				if ( singleRun == true ) cancellationTokenSource.Cancel(); // Stop the SNMP agent
-				snmpManager.WaitForTrapListener(); // Block until the SNMP agent has stopped
+				snmp.WaitForTrapListener(); // Block until the SNMP agent has stopped
 			}
 		}
 
