@@ -1,17 +1,10 @@
 using System;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Nodes;
-using System.IO;
-using System.IO.Pipes;
+using System.Linq;
+using System.Collections.Generic;
 using System.Net;
-using System.Net.Http;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Text.RegularExpressions;
-using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
 using SnmpSharpNet;
 using Microsoft.Extensions.Logging;
 using Prometheus;
@@ -34,9 +27,6 @@ UDP port 161 connects the SNMP Managers with SNMP Agents (i.e. polling)
 UDP port 162 sees use when SNMP Agents send unsolicited traps to the SNMP Manager
 */
 
-// https://snmpsharpnet.com/index.php/receive-snmp-version-1-and-2c-trap-notifications/
-// https://snmpsharpnet.com/
-
 namespace ServerMonitor.Collector {
 
 	// An SNMP manager to fetch agent information & listen for traps
@@ -44,18 +34,18 @@ namespace ServerMonitor.Collector {
 
 		private readonly ILogger logger = Logging.CreateLogger( "Collector/SNMP" );
 
-		// Various required properties
+		// Properties used across methods
 		private readonly Config configuration;
 		private readonly CancellationToken cancellationToken;
 		private readonly Socket udpSocket = new( AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp );
 		private Task? receiveTask = null;
 
-		// Holds the exported Prometheus metrics
+		// The exported Prometheus metrics
 		public readonly Counter TrapsReceived;
 		public readonly Counter UptimeSeconds;
 		public readonly Gauge ServiceCount;
 
-		// Initializes the exported Prometheus metrics & listening socket
+		// Initializes the properties & exported Prometheus metrics
 		public SNMP( Config configuration, CancellationToken cancellationToken ) : base( configuration ) {
 			this.configuration = configuration;
 			this.cancellationToken = cancellationToken;
@@ -69,120 +59,129 @@ namespace ServerMonitor.Collector {
 			ServiceCount = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_snmp_service_count", "Number of services an SNMP agent is running.", new GaugeConfiguration {
 				LabelNames = new[] { "address", "port", "name", "description", "contact", "location" }
 			} );
+
 			TrapsReceived.IncTo( -1 );
 			UptimeSeconds.IncTo( -1 );
 			ServiceCount.Set( -1 );
+
 			logger.LogInformation( "Initalised Prometheus metrics" );
 		}
 
+		// Updates the exported Prometheus metrics for each configured SNMP agent
 		public override void Update() {
-			logger.LogDebug( "There are {0} SNMP agents", configuration.SNMPAgents.Length );
-			
-			foreach ( SNMPAgent snmpAgent in configuration.SNMPAgents ) {
-				logger.LogDebug( "Updating metrics for SNMP agent '{0}:{1}'", snmpAgent.Address, snmpAgent.Port );
-				UpdateAgentInformation( snmpAgent.Address, snmpAgent.Port );
-			}
-
+			foreach ( SNMPAgent snmpAgent in configuration.SNMPAgents ) UpdateAgentMetrics( snmpAgent.Address, snmpAgent.Port );
 			logger.LogDebug( "Updated Prometheus metrics" );
 		}
 
-		// Starts the receive packets background task
+		// Starts listening for incoming SNMP traps
 		public void ListenForTraps() {
-			if ( this.receiveTask != null ) throw new InvalidOperationException( "SNMP manager already started" );
+			if ( this.receiveTask != null ) throw new InvalidOperationException( "Already listening for SNMP traps" );
 
+			// Bind the socket to the configured address & port
 			IPAddress listenAddress = configuration.SNMPManagerListenAddress == "0.0.0.0" ? IPAddress.Any : IPAddress.Parse( configuration.SNMPManagerListenAddress );
 			int listenPort = configuration.SNMPManagerListenPort;
 			udpSocket.Bind( new IPEndPoint( listenAddress, listenPort ) );
-			udpSocket.SetSocketOption( SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, 0 ); // Disable timeout
 			logger.LogInformation( "SNMP manager listening on {0}:{1}", configuration.SNMPManagerListenAddress, configuration.SNMPManagerListenPort );
 
-			logger.LogDebug( "Starting to receive packets..." );
+			// Start the background task for receiving trap packets
 			this.receiveTask = ReceivePackets();
 		}
 
+		// Waits for the receive background task to finish
 		public void WaitForTrapListener() {
-			if ( this.receiveTask == null ) throw new InvalidOperationException( "SNMP manager not started" );
-
-			logger.LogDebug( "Waiting for receive task to finish..." );
+			if ( this.receiveTask == null ) throw new InvalidOperationException( "Not yet listening for SNMP traps" );
 			this.receiveTask.Wait();
-			logger.LogDebug( "Receive task finished" );
 		}
 
-		// https://snmpsharpnet.com/index.php/snmp-version-1-or-2c-get-request/
-		public void UpdateAgentInformation( string agentAddress, int agentPort = 161 ) {
-			OctetString community = new( "Server Monitor" );
-			AgentParameters managerParameters = new( community );
-			managerParameters.Version = SnmpVersion.Ver1;
+		// Updates the exported Prometheus metrics for an SNMP agent
+		private void UpdateAgentMetrics( string agentAddress, int agentPort ) {
+			
+			// Fetch the required information from the agent
+			Dictionary<string, string?> agentInformation = FetchAgentInformation( agentAddress, agentPort, new() {
+				"1.3.6.1.2.1.1.1.0", // SNMPv2-MIB::sysDescr.0 (Description)
+				"1.3.6.1.2.1.1.2.0", // SNMPv2-MIB::sysObjectID.0 (Object ID)
+				"1.3.6.1.2.1.1.3.0", // DISMAN-EVENT-MIB::sysUpTimeInstance (Uptime)
+				"1.3.6.1.2.1.1.4.0", // SNMPv2-MIB::sysContact.0 (Contact)
+				"1.3.6.1.2.1.1.5.0", // SNMPv2-MIB::sysName.0 (Name)
+				"1.3.6.1.2.1.1.6.0", // SNMPv2-MIB::sysLocation.0 (Location)
+				"1.3.6.1.2.1.1.7.0" // SNMPv2-MIB::sysServices.0 (Service Count)
+			} );
 
-			using ( UdpTarget target = new( IPAddress.Parse( agentAddress ), agentPort, 2000, 1 ) ) {
-				Pdu pdu = new( PduType.Get );
-				pdu.VbList.Add( "1.3.6.1.2.1.1.1.0" ); // SNMPv2-MIB::sysDescr.0
-				pdu.VbList.Add( "1.3.6.1.2.1.1.2.0" ); // SNMPv2-MIB::sysObjectID.0
-				pdu.VbList.Add( "1.3.6.1.2.1.1.3.0" ); // DISMAN-EVENT-MIB::sysUpTimeInstance
-				pdu.VbList.Add( "1.3.6.1.2.1.1.4.0" ); // SNMPv2-MIB::sysContact.0
-				pdu.VbList.Add( "1.3.6.1.2.1.1.5.0" ); // SNMPv2-MIB::sysName.0
-				pdu.VbList.Add( "1.3.6.1.2.1.1.6.0" ); // SNMPv2-MIB::sysLocation.0
-				pdu.VbList.Add( "1.3.6.1.2.1.1.7.0" ); // SNMPv2-MIB::sysServices.0
+			// Ensure all of the information returned is valid
+			if ( agentInformation.TryGetValue( "1.3.6.1.2.1.1.1.0", out string? description ) == false || string.IsNullOrWhiteSpace( description ) ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned description that is null, empty or whitespace" );
+			if ( agentInformation.TryGetValue( "1.3.6.1.2.1.1.2.0", out string? objectID ) == false || string.IsNullOrWhiteSpace( objectID ) ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned object ID that is null, empty or whitespace" );
+			if ( agentInformation.TryGetValue( "1.3.6.1.2.1.1.3.0", out string? uptime ) == false || string.IsNullOrWhiteSpace( uptime ) ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned uptime that is null, empty or whitespace" );
+			if ( agentInformation.TryGetValue( "1.3.6.1.2.1.1.4.0", out string? contact ) == false || string.IsNullOrWhiteSpace( contact ) ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned contact that is null, empty or whitespace" );
+			if ( agentInformation.TryGetValue( "1.3.6.1.2.1.1.5.0", out string? name ) == false || string.IsNullOrWhiteSpace( name ) ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned name that is null, empty or whitespace" );
+			if ( agentInformation.TryGetValue( "1.3.6.1.2.1.1.6.0", out string? location ) == false || string.IsNullOrWhiteSpace( location ) ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned location that is null, empty or whitespace" );
+			if ( agentInformation.TryGetValue( "1.3.6.1.2.1.1.7.0", out string? serviceCount ) == false || string.IsNullOrWhiteSpace( serviceCount ) ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned service count that is null, empty or whitespace" );
 
-				SnmpV1Packet result = ( SnmpV1Packet ) target.Request( pdu, managerParameters );
-				if ( result == null ) throw new Exception( $"No response from SNMP agent '{ agentAddress }:{ agentPort }'" );
+			// TODO: Parse SNMP uptime string into seconds
 
-				if ( result.Pdu.ErrorStatus != 0 ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned error status '{ result.Pdu.ErrorStatus }'" );
+			// Update the exported Prometheus metrics
+			UptimeSeconds.WithLabels( agentAddress, agentPort.ToString(), name, description, contact, location ).IncTo( -1 ); // TODO
+			ServiceCount.WithLabels( agentAddress, agentPort.ToString(), name, description, contact, location ).IncTo( int.Parse( serviceCount ) );
+			logger.LogInformation( "Updated Prometheus metrics for SNMP agent '{0}:{1}'", agentAddress, agentPort );
+	
+		}
 
-				foreach ( Vb varBind in result.Pdu.VbList ) {
-					logger.LogDebug( "SNMP agent '{0}:{1}' returned '{2}' ({3}) = '{4}'", agentAddress, agentPort, varBind.Oid.ToString(), SnmpConstants.GetTypeName( varBind.Value.Type ), varBind.Value.ToString() );
-				}
+		// Fetches information from an SNMP agent - https://snmpsharpnet.com/index.php/snmp-version-1-or-2c-get-request/
+		private Dictionary<string, string?> FetchAgentInformation( string agentAddress, int agentPort, List<string> oids ) {
 
-				string? description = result.Pdu.VbList[ 0 ].Value.ToString();
-				string? objectID = result.Pdu.VbList[ 1 ].Value.ToString();
-				string? uptime = result.Pdu.VbList[ 2 ].Value.ToString();
-				string? contact = result.Pdu.VbList[ 3 ].Value.ToString();
-				string? name = result.Pdu.VbList[ 4 ].Value.ToString();
-				string? location = result.Pdu.VbList[ 5 ].Value.ToString();
-				string? services = result.Pdu.VbList[ 6 ].Value.ToString();
+			// Info about the request to the agent
+			AgentParameters managerParameters = new( SnmpVersion.Ver1, new OctetString( configuration.SNMPCommunity ) );
 
-				if (
-					string.IsNullOrWhiteSpace( description ) ||
-					string.IsNullOrWhiteSpace( objectID ) ||
-					string.IsNullOrWhiteSpace( uptime ) ||
-					string.IsNullOrWhiteSpace( contact ) ||
-					string.IsNullOrWhiteSpace( name ) ||
-					string.IsNullOrWhiteSpace( location ) ||
-					string.IsNullOrWhiteSpace( services )
-				) throw new Exception( $"One or more values returned by SNMP agent '{ agentAddress }:{ agentPort }' are null, empty or whitespace" );
+			// Create the PDU containing the OIDs to fetch values for
+			Pdu pdu = new( PduType.Get );
+			foreach ( string oid in oids ) pdu.VbList.Add( oid );
 
-				// Update Prometheus metrics
-				TrapsReceived.WithLabels( agentAddress, agentPort.ToString(), name, description, contact, location ).IncTo( -1 ); // TODO
-				UptimeSeconds.WithLabels( agentAddress, agentPort.ToString(), name, description, contact, location ).IncTo( -1 ); // TODO
-				ServiceCount.WithLabels( agentAddress, agentPort.ToString(), name, description, contact, location ).IncTo( int.Parse( services ) );
+			// Send the request to the agent (timeout after 2 seconds)
+			using ( UdpTarget targetAgent = new( IPAddress.Parse( agentAddress ), agentPort, 2000, 1 ) ) {
+				SnmpV1Packet agentResponse = ( SnmpV1Packet ) targetAgent.Request( pdu, managerParameters );
+				if ( agentResponse == null ) throw new Exception( $"No response from SNMP agent '{ agentAddress }:{ agentPort }'" );
+				if ( agentResponse.Pdu.ErrorStatus != 0 ) throw new Exception( $"SNMP agent '{ agentAddress }:{ agentPort }' returned error status '{ agentResponse.Pdu.ErrorStatus }'" );
+
+				// Convert the response to a dictionary of OIDs and their values
+				return agentResponse.Pdu.VbList.ToDictionary(
+					vb => vb.Oid.ToString(),
+					vb => vb.Value.ToString()
+				);
 			}
+
 		}
 
-		// Runs in the background to receive packets
+		// Runs in the background to receive trap packets
 		private async Task ReceivePackets() {
+
+			// Disable timing out when waiting to receive packets
+			udpSocket.SetSocketOption( SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, 0 );
+
+			// Create a buffer to hold the received packet
 			byte[] receiveBuffer = new byte[ 65565 ];
 
-			logger.LogDebug( "Started receiving packets" );
+			// Loop forever until cancelled
 			try {
 				while ( udpSocket.IsBound && this.cancellationToken.IsCancellationRequested == false ) {
+
+					// Block until a packet is received
 					int bytesReceived = await udpSocket.ReceiveAsync( receiveBuffer, this.cancellationToken );
+					if ( bytesReceived <= 0 ) break;
 
-					if ( bytesReceived <= 0 ) {
-						logger.LogDebug( "Received 0 or less bytes" );
-						break;
-					}
+					// Handle the received packet
+					ProcessTrapPacket( receiveBuffer, bytesReceived );
 
-					ProcessPacket( receiveBuffer, bytesReceived );
+					// Clear the buffer
+					Array.Clear( receiveBuffer, 0, receiveBuffer.Length );
+
 				}
 			} catch ( OperationCanceledException ) {
-				logger.LogDebug( "Receive task cancelled" );
+				logger.LogInformation( "Cancelled listening for traps" );
 			}
 
-			logger.LogDebug( "Stopped receiving packets" );
 		}
 
-		// Processes a received packet
-		private void ProcessPacket( byte[] packet, int packetLength ) {
+		// Handles a received trap packet - https://snmpsharpnet.com/index.php/receive-snmp-version-1-and-2c-trap-notifications/
+		private void ProcessTrapPacket( byte[] packet, int packetLength ) {
 			int protocolVersion = SnmpPacket.GetProtocolVersion( packet, packetLength );
 
 			// Version 1
@@ -199,6 +198,8 @@ namespace ServerMonitor.Collector {
 				foreach ( Vb varBind in snmpPacket.Pdu.VbList ) {
 					logger.LogDebug( "\t\t{0} ({1}) = '{2}'", varBind.Oid.ToString(), SnmpConstants.GetTypeName( varBind.Value.Type ), varBind.Value.ToString() );
 				}
+
+				// TODO: TrapsReceived.WithLabels( agentAddress, agentPort.ToString(), name, description, contact, location ).Inc();
 
 			// Version 2
 			} else if ( protocolVersion == ( int ) SnmpVersion.Ver2 ) {
@@ -217,7 +218,10 @@ namespace ServerMonitor.Collector {
 					logger.LogDebug( "\t\t{0} ({1}) = '{2}'", varBind.Oid.ToString(), SnmpConstants.GetTypeName( varBind.Value.Type ), varBind.Value.ToString() );
 				}
 
+				// TODO: TrapsReceived.WithLabels( agentAddress, agentPort.ToString(), name, description, contact, location ).Inc();
+
 			} else logger.LogWarning( "Received packet with unknown protocol version: '{0}'", protocolVersion );
+
 		}
 
 	}
