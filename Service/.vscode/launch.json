@@ -8,6 +8,22 @@
 			"preLaunchTask": "Build (Debug)",
 			"program": "${workspaceFolder}/ServerMonitor/bin/Debug/net7.0/ServerMonitor.dll",
 			"args": [
+				"collector"
+			],
+			"cwd": "${workspaceFolder}",
+			"console": "internalConsole",
+			"stopAtEntry": false,
+			"logging": {
+				"moduleLoad": false
+			}
+		},
+		{
+			"name": "Launch Collector (Once, Debug)",
+			"type": "coreclr",
+			"request": "launch",
+			"preLaunchTask": "Build (Debug)",
+			"program": "${workspaceFolder}/ServerMonitor/bin/Debug/net7.0/ServerMonitor.dll",
+			"args": [
 				"--once",
 				"collector"
 			],
@@ -20,6 +36,22 @@
 		},
 		{
 			"name": "Launch Collector (Release)",
+			"type": "coreclr",
+			"request": "launch",
+			"preLaunchTask": "Build (Release)",
+			"program": "${workspaceFolder}/ServerMonitor/bin/Release/net7.0/ServerMonitor.dll",
+			"args": [
+				"collector"
+			],
+			"cwd": "${workspaceFolder}",
+			"console": "internalConsole",
+			"stopAtEntry": false,
+			"logging": {
+				"moduleLoad": false,
+			}
+		},
+		{
+			"name": "Launch Collector (Once, Release)",
 			"type": "coreclr",
 			"request": "launch",
 			"preLaunchTask": "Build (Release)",
@@ -42,6 +74,22 @@
 			"preLaunchTask": "Build (Debug)",
 			"program": "${workspaceFolder}/ServerMonitor/bin/Debug/net7.0/ServerMonitor.dll",
 			"args": [
+				"connector"
+			],
+			"cwd": "${workspaceFolder}",
+			"console": "internalConsole",
+			"stopAtEntry": false,
+			"logging": {
+				"moduleLoad": false
+			}
+		},
+		{
+			"name": "Launch Connector (Once, Debug)",
+			"type": "coreclr",
+			"request": "launch",
+			"preLaunchTask": "Build (Debug)",
+			"program": "${workspaceFolder}/ServerMonitor/bin/Debug/net7.0/ServerMonitor.dll",
+			"args": [
 				"--once",
 				"connector"
 			],
@@ -54,6 +102,22 @@
 		},
 		{
 			"name": "Launch Connector (Release)",
+			"type": "coreclr",
+			"request": "launch",
+			"preLaunchTask": "Build (Release)",
+			"program": "${workspaceFolder}/ServerMonitor/bin/Release/net7.0/ServerMonitor.dll",
+			"args": [
+				"connector"
+			],
+			"cwd": "${workspaceFolder}",
+			"console": "internalConsole",
+			"stopAtEntry": false,
+			"logging": {
+				"moduleLoad": false,
+			}
+		},
+		{
+			"name": "Launch Connector (Once, Release)",
 			"type": "coreclr",
 			"request": "launch",
 			"preLaunchTask": "Build (Release)",
