@@ -4,8 +4,11 @@ using System.Net;
 using System.Linq;
 using System.Text;
 using System.Text.Encodings;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Security;
+using System.Security.Cryptography;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging; // https://learn.microsoft.com/en-us/dotnet/core/extensions/console-log-formatter
 using Mono.Unix.Native; // https://github.com/mono/mono.posix
@@ -17,6 +20,8 @@ namespace ServerMonitor.Connector {
 
 		// Create the logger for this file
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Collector" );
+
+		private static readonly RandomNumberGenerator randomNumberGenerator = RandomNumberGenerator.Create();
 		
 		public static void HandleCommand( Config configuration, bool singleRun ) {
 			logger.LogInformation( "Launched in connection point mode" );
@@ -33,15 +38,30 @@ namespace ServerMonitor.Connector {
 			httpListener.Start();
 			logger.LogDebug( "Started HTTP listener" );
 
-			Dictionary<string, string> credentials = configuration.ConnectorCredentials.ToDictionary(
-				credential => credential.Username,
-				credential => credential.Password
-			);
+			Dictionary<string, string> authenticationCredentials = new();
+			foreach ( Credential credential in configuration.ConnectorCredentials ) {
+				if ( authenticationCredentials.ContainsKey( credential.Username ) == true ) {
+					logger.LogWarning( "Duplicate username '{0}' found in credentials", credential.Username );
+					continue;
+				}
+
+				logger.LogDebug( "Username: '{0}', Password: '{1}'", credential.Username, credential.Password );
+
+				Match passwordMatch = Regex.Match( credential.Password, @"PBKDF2-(\d+)-(.+)-(.+)" );
+				if ( passwordMatch.Success == false ) {
+					string hashedPassword = PBKDF2( credential.Password );
+					logger.LogWarning( "Password for user '{0}' is NOT hashed yet! The password should be changed to: '{1}'", credential.Username, hashedPassword );
+					authenticationCredentials.Add( credential.Username, hashedPassword );
+				} else {
+					logger.LogDebug( "Password '{0}' for user '{1}' is already hashed", credential.Password, credential.Username );
+					authenticationCredentials.Add( credential.Username, credential.Password );
+				}
+			}
 
 			while ( httpListener.IsListening == true ) {
 				IAsyncResult asyncResult = httpListener.BeginGetContext( new AsyncCallback( OnHttpRequest ), new State {
 					Listener = httpListener,
-					Credentials = credentials
+					Credentials = authenticationCredentials
 				} );
 				asyncResult.AsyncWaitHandle.WaitOne();
 			}
@@ -68,21 +88,43 @@ namespace ServerMonitor.Connector {
 				response.AddHeader( "WWW-Authenticate", "Basic realm=\"Server Monitor\"" );
 				response.Close();
 				return;
-			} else {
-				string usernameAttempt = basicIdentity.Name;
-				string passwordAttempt = basicIdentity.Password;
+			}
+				
+			string attemptedUsername = basicIdentity.Name;
+			string attemptedPassword = basicIdentity.Password;
+			logger.LogDebug( "Attempted username: '{0}', Attempted password: '{1}'", attemptedUsername, attemptedPassword );
 
-				if (
-					credentials.TryGetValue( usernameAttempt, out string? actualPassword ) == false ||
-					string.IsNullOrWhiteSpace( actualPassword ) == true ||
-					passwordAttempt != actualPassword
-				) {
-					logger.LogDebug( "Received HTTP request with invalid authentication" );
-					response.StatusCode = ( int ) HttpStatusCode.Unauthorized;
-					response.AddHeader( "WWW-Authenticate", "Basic realm=\"Server Monitor\"" );
-					response.Close();
-					return;
-				}
+			if ( credentials.TryGetValue( attemptedUsername, out string? actualPasswordHash ) == false || string.IsNullOrWhiteSpace( actualPasswordHash ) == true ) {
+				logger.LogWarning( "Received HTTP request with invalid authentication" );
+				response.StatusCode = ( int ) HttpStatusCode.Unauthorized;
+				response.AddHeader( "WWW-Authenticate", "Basic realm=\"Server Monitor\"" );
+				response.Close();
+				return;
+			}
+			logger.LogDebug( "Actual password hash: '{0}'", actualPasswordHash );
+
+			Match actualPasswordMatch = Regex.Match( actualPasswordHash, @"PBKDF2-(\d+)-(.+)-(.+)" );
+			if ( actualPasswordMatch.Success == false ) {
+				logger.LogWarning( "Hashed password does not match regular expression" );
+				response.StatusCode = ( int ) HttpStatusCode.InternalServerError;
+				response.Close();
+				return;
+			}
+
+			if ( int.TryParse( actualPasswordMatch.Groups[ 1 ].Value, out int iterationCount ) == false ) throw new Exception( $"Failed to parse iteration count '{ actualPasswordMatch.Groups[ 1 ].Value }' as an integer" );
+			string actualSaltHex = actualPasswordMatch.Groups[ 2 ].Value;
+			string actualHashHex = actualPasswordMatch.Groups[ 3 ].Value;
+			logger.LogDebug( "Actual iteration count: '{0}', Actual salt hex: '{1}', Actual hash: '{2}'", iterationCount, actualSaltHex, actualHashHex );
+
+			string attemptedPasswordHash = PBKDF2( attemptedPassword, iterationCount, actualSaltHex );
+			logger.LogDebug( "Attempted password hash: '{0}'", attemptedPasswordHash );
+
+			if ( attemptedPasswordHash != actualPasswordHash ) {
+				logger.LogWarning( "Received HTTP request with bad authentication" );
+				response.StatusCode = ( int ) HttpStatusCode.Unauthorized;
+				response.AddHeader( "WWW-Authenticate", "Basic realm=\"Server Monitor\"" );
+				response.Close();
+				return;
 			}
 
 			byte[] responseBytes = Encoding.UTF8.GetBytes( "Hello World!" );
@@ -92,6 +134,27 @@ namespace ServerMonitor.Connector {
 			output.Write( responseBytes, 0, responseBytes.Length );
 			output.Close();
 			logger.LogDebug( "Sent HTTP response: {0}", response.StatusCode );
+		}
+
+		private static string PBKDF2( string text, int iterationCount = 1000, string? existingSaltHex = null ) {
+			byte[] saltBytes = new byte[ 16 ];
+
+			if ( string.IsNullOrWhiteSpace( existingSaltHex ) ) {
+				randomNumberGenerator.GetBytes( saltBytes );
+			} else {
+				saltBytes = Enumerable.Range( 0, saltBytes.Length )
+					.Where( x => x % 2 == 0 )
+					.Select( hex => Convert.ToByte( existingSaltHex.Substring( hex, 2 ), 16 ) )
+					.ToArray();
+			}
+
+			Rfc2898DeriveBytes pbkdf2 = new( text, saltBytes, iterationCount, HashAlgorithmName.SHA256 );
+			byte[] hashBytes = pbkdf2.GetBytes( 256 / 8 );
+
+			string hashHex = BitConverter.ToString( hashBytes ).Replace( "-", "" ).ToLower();
+			string saltHex = BitConverter.ToString( saltBytes ).Replace( "-", "" ).ToLower();
+
+			return $"PBKDF2-{ iterationCount }-{ saltHex }-{ hashHex }";
 		}
 
 	}
