@@ -266,7 +266,7 @@ jobs:
           keep-at-least: 1
           untagged-only: true
           account-type: personal
-          token: ${{ secrets.PERSONAL_ACCESS_TOKEN_PACKAGES }}
+          token: ${{ secrets.GH_PACKAGES_TOKEN }}
 
   deploy:
     name: Deploy
