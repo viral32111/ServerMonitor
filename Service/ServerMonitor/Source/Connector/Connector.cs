@@ -72,58 +72,72 @@ namespace ServerMonitor.Connector {
 		}
 
 		private static void OnHttpRequest( IAsyncResult asyncResult ) {
+
+			// Get the variables within state that was passed to us
 			if ( asyncResult.AsyncState == null ) throw new Exception( $"Invalid state '{ asyncResult.AsyncState }' passed to async callback" );
 			State state = ( State ) asyncResult.AsyncState;
 			HttpListener httpListener = state.Listener;
 			Dictionary<string, string> credentials = state.Credentials;
 
+			// Get the request and response
 			HttpListenerContext context = httpListener.EndGetContext( asyncResult );
 			HttpListenerRequest request = context.Request;
 			HttpListenerResponse response = context.Response;
 			logger.LogDebug( "Received HTTP request: {0} {1}", request.HttpMethod, request.Url );
 
+			// Ensure basic authentication credentials were provided
 			HttpListenerBasicIdentity? basicIdentity = ( HttpListenerBasicIdentity? ) context.User?.Identity;
 			if ( basicIdentity == null ) {
-				logger.LogDebug( "Received HTTP request without authentication" );
+				logger.LogWarning( "Received HTTP request without authentication" );
 				response.StatusCode = ( int ) HttpStatusCode.Unauthorized;
 				response.AddHeader( "WWW-Authenticate", "Basic realm=\"Server Monitor\"" );
+				response.OutputStream.Write( Encoding.UTF8.GetBytes( "No authentication provided" ) );
 				response.Close();
 				return;
 			}
-				
+
+			// Get the username & password they sent
 			string attemptedUsername = basicIdentity.Name;
 			string attemptedPassword = basicIdentity.Password;
 			logger.LogDebug( "Attempted username: '{0}', Attempted password: '{1}'", attemptedUsername, attemptedPassword );
 
+			// Try to get the actual hashed password associated with the username they sent
 			if ( credentials.TryGetValue( attemptedUsername, out string? actualPasswordHash ) == false || string.IsNullOrWhiteSpace( actualPasswordHash ) == true ) {
-				logger.LogWarning( "Received HTTP request with invalid authentication" );
+				logger.LogWarning( "Received HTTP request with unknown username for authentication" );
 				response.StatusCode = ( int ) HttpStatusCode.Unauthorized;
 				response.AddHeader( "WWW-Authenticate", "Basic realm=\"Server Monitor\"" );
+				response.OutputStream.Write( Encoding.UTF8.GetBytes( "Unknown username" ) );
 				response.Close();
 				return;
 			}
-			logger.LogDebug( "Actual password hash: '{0}'", actualPasswordHash );
+			logger.LogDebug( "Actual password hash: '{0}' for user: '{1}'", actualPasswordHash, attemptedUsername );
 
+			// Match the actual hashed password against a regular expression
 			Match actualPasswordMatch = Regex.Match( actualPasswordHash, @"PBKDF2-(\d+)-(.+)-(.+)" );
 			if ( actualPasswordMatch.Success == false ) {
-				logger.LogWarning( "Hashed password does not match regular expression" );
+				logger.LogWarning( "Actual hashed password does not match regular expression" );
 				response.StatusCode = ( int ) HttpStatusCode.InternalServerError;
+				response.OutputStream.Write( Encoding.UTF8.GetBytes( "Could not break apart hashed password" ) );
 				response.Close();
 				return;
 			}
 
+			// Parse & extract the components from the regular expression match
 			if ( int.TryParse( actualPasswordMatch.Groups[ 1 ].Value, out int iterationCount ) == false ) throw new Exception( $"Failed to parse iteration count '{ actualPasswordMatch.Groups[ 1 ].Value }' as an integer" );
 			string actualSaltHex = actualPasswordMatch.Groups[ 2 ].Value;
 			string actualHashHex = actualPasswordMatch.Groups[ 3 ].Value;
-			logger.LogDebug( "Actual iteration count: '{0}', Actual salt hex: '{1}', Actual hash: '{2}'", iterationCount, actualSaltHex, actualHashHex );
+			logger.LogDebug( "Actual iteration count: '{0}', Actual salt (hex): '{1}', Actual hash (hex): '{2}'", iterationCount, actualSaltHex, actualHashHex );
 
+			// Hash the attempted password using the same iteration count & salt
 			string attemptedPasswordHash = PBKDF2( attemptedPassword, iterationCount, actualSaltHex );
 			logger.LogDebug( "Attempted password hash: '{0}'", attemptedPasswordHash );
 
+			// Compare the attempted password hash against the actual password hash
 			if ( attemptedPasswordHash != actualPasswordHash ) {
-				logger.LogWarning( "Received HTTP request with bad authentication" );
+				logger.LogWarning( "Received HTTP request with incorrect authentication" );
 				response.StatusCode = ( int ) HttpStatusCode.Unauthorized;
 				response.AddHeader( "WWW-Authenticate", "Basic realm=\"Server Monitor\"" );
+				response.OutputStream.Write( Encoding.UTF8.GetBytes( "Incorrect authentication" ) );
 				response.Close();
 				return;
 			}
@@ -142,18 +156,17 @@ namespace ServerMonitor.Connector {
 
 			if ( string.IsNullOrWhiteSpace( existingSaltHex ) ) {
 				randomNumberGenerator.GetBytes( saltBytes );
+				logger.LogDebug( "Generating fresh salt" );
 			} else {
-				saltBytes = Enumerable.Range( 0, saltBytes.Length )
-					.Where( x => x % 2 == 0 )
-					.Select( hex => Convert.ToByte( existingSaltHex.Substring( hex, 2 ), 16 ) )
-					.ToArray();
+				logger.LogDebug( "Using provided salt" );
+				saltBytes = Convert.FromHexString( existingSaltHex );
 			}
 
-			Rfc2898DeriveBytes pbkdf2 = new( text, saltBytes, iterationCount, HashAlgorithmName.SHA256 );
-			byte[] hashBytes = pbkdf2.GetBytes( 256 / 8 );
+			Rfc2898DeriveBytes pbkdf2 = new( text, saltBytes, iterationCount, HashAlgorithmName.SHA512 );
+			byte[] hashBytes = pbkdf2.GetBytes( 512 / 8 );
 
-			string hashHex = BitConverter.ToString( hashBytes ).Replace( "-", "" ).ToLower();
-			string saltHex = BitConverter.ToString( saltBytes ).Replace( "-", "" ).ToLower();
+			string hashHex = Convert.ToHexString( hashBytes ).ToLower();
+			string saltHex = Convert.ToHexString( saltBytes ).ToLower();
 
 			return $"PBKDF2-{ iterationCount }-{ saltHex }-{ hashHex }";
 		}
