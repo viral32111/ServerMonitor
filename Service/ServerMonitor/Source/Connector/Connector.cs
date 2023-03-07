@@ -58,11 +58,12 @@ namespace ServerMonitor.Connector {
 				}
 			}
 
-			while ( httpListener.IsListening == true ) {
+			while ( httpListener.IsListening == true && singleRun == false ) {
 				IAsyncResult asyncResult = httpListener.BeginGetContext( new AsyncCallback( OnHttpRequest ), new State {
 					Listener = httpListener,
 					Credentials = authenticationCredentials
 				} );
+
 				asyncResult.AsyncWaitHandle.WaitOne();
 			}
 
