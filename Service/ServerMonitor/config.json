@@ -17,5 +17,8 @@
 	"SNMPManagerListenAddress": "0.0.0.0",
 	"SNMPManagerListenPort": 162,
 	"SNMPCommunity": "public",
-	"SNMPAgents": []
+	"SNMPAgents": [],
+	"ConnectorListenAddress": "127.0.0.1",
+	"ConnectorListenPort": 8080,
+	"ConnectorPublicUrl": "http://localhost:8080/"
 }

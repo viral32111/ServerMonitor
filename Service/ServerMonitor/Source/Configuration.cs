@@ -106,6 +106,11 @@ namespace ServerMonitor {
 		public required string SNMPCommunity { get; set; } = "public";
 		public required SNMPAgent[] SNMPAgents { get; set; } = Array.Empty<SNMPAgent>();
 
+		// Connection point options
+		public required string ConnectorListenAddress { get; set; } = "127.0.0.1";
+		public required int ConnectorListenPort { get; set; } = 8080;
+		public required string ConnectorPublicUrl { get; set; } = "http://localhost:8080/";
+
 	}
 
 	public sealed class SNMPAgent {
