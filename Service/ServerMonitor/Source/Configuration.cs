@@ -110,12 +110,18 @@ namespace ServerMonitor {
 		public required string ConnectorListenAddress { get; set; } = "127.0.0.1";
 		public required int ConnectorListenPort { get; set; } = 8080;
 		public required string ConnectorPublicUrl { get; set; } = "http://localhost:8080/";
+		public required Credential[] ConnectorCredentials { get; set; } = Array.Empty<Credential>();
 
 	}
 
 	public sealed class SNMPAgent {
 		public required string Address { get; set; } = "localhost";
 		public required int Port { get; set; } = 161;
+	}
+
+	public sealed class Credential {
+		public required string Username { get; set; } = "";
+		public required string Password { get; set; } = "";
 	}
 
 }
