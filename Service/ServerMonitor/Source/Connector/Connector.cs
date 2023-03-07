@@ -26,6 +26,8 @@ namespace ServerMonitor.Connector {
 		public static void HandleCommand( Config configuration, bool singleRun ) {
 			logger.LogInformation( "Launched in connection point mode" );
 
+			// https://stackoverflow.com/a/56207032
+			// https://learn.microsoft.com/en-us/dotnet/api/system.net.httplistener?view=net-8.0
 			HttpListener httpListener = new HttpListener();
 			logger.LogDebug( "Created HTTP listener" );
 			
@@ -85,7 +87,7 @@ namespace ServerMonitor.Connector {
 			HttpListenerResponse response = context.Response;
 			logger.LogDebug( "Received HTTP request: {0} {1}", request.HttpMethod, request.Url );
 
-			// Ensure basic authentication credentials were provided
+			// Ensure basic authentication credentials were provided - https://stackoverflow.com/q/570605
 			HttpListenerBasicIdentity? basicIdentity = ( HttpListenerBasicIdentity? ) context.User?.Identity;
 			if ( basicIdentity == null ) {
 				logger.LogWarning( "Received HTTP request without authentication" );
@@ -162,9 +164,11 @@ namespace ServerMonitor.Connector {
 				saltBytes = Convert.FromHexString( existingSaltHex );
 			}
 
+			// https://learn.microsoft.com/en-us/dotnet/api/system.security.cryptography.rfc2898derivebytes?view=net-7.0
 			Rfc2898DeriveBytes pbkdf2 = new( text, saltBytes, iterationCount, HashAlgorithmName.SHA512 );
 			byte[] hashBytes = pbkdf2.GetBytes( 512 / 8 );
 
+			// https://stackoverflow.com/a/311179
 			string hashHex = Convert.ToHexString( hashBytes ).ToLower();
 			string saltHex = Convert.ToHexString( saltBytes ).ToLower();
 
