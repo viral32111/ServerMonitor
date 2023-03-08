@@ -14,7 +14,7 @@ namespace ServerMonitor.Connector.Route {
 
 		// TODO: Return data for a specific server
 		[ Route( "GET", "/server" ) ]
-		public static HttpListenerResponse OnRequest( HttpListenerRequest request, HttpListenerResponse response, HttpListener listener, HttpListenerContext context ) {
+		public static HttpListenerResponse OnGetRequest( HttpListenerRequest request, HttpListenerResponse response, HttpListener listener, HttpListenerContext context ) {
 			string? queryString = request.Url?.Query;
 			if ( string.IsNullOrWhiteSpace( queryString ) ) return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.NoParameters );
 
@@ -153,6 +153,28 @@ namespace ServerMonitor.Connector.Route {
 						} }
 					}
 				} }
+			} );
+		}
+
+		// TODO: Executing an action on a server
+		[ Route( "POST", "/server" ) ]
+		public static HttpListenerResponse OnPostRequest( HttpListenerRequest request, HttpListenerResponse response, HttpListener listener, HttpListenerContext context ) {
+			string? queryString = request.Url?.Query;
+			if ( string.IsNullOrWhiteSpace( queryString ) ) return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.NoParameters );
+
+			NameValueCollection queryParameters = HttpUtility.ParseQueryString( queryString );
+			string? serverIdentifier = queryParameters.Get( "id" );
+			string? actionName = queryParameters.Get( "action" );
+			if ( string.IsNullOrWhiteSpace( serverIdentifier ) ) return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.MissingParameter, data: new JsonObject() {
+				{ "parameter", "id" }
+			} );
+			if ( string.IsNullOrWhiteSpace( actionName ) ) return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.MissingParameter, data: new JsonObject() {
+				{ "parameter", "action" }
+			} );
+
+			return Response.SendJson( response, statusCode: HttpStatusCode.NotImplemented, errorCode: ErrorCode.ExampleData, data: new JsonObject() {
+				{ "success", true },
+				{ "response", "This is the output of the action." }
 			} );
 		}
 

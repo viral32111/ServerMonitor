@@ -31,7 +31,8 @@ namespace ServerMonitor.Connector {
 		// List of request handlers for API routes
 		private static readonly RouteRequestHandler[] routeRequestHandlers = new[] {
 			Hello.OnRequest, // GET /hello
-			Server.OnRequest, // GET /server?id=
+			Server.OnGetRequest, // GET /server?id=
+			Server.OnPostRequest, // POST /server?id=&action=
 			Servers.OnRequest, // GET /servers
 		};
 
