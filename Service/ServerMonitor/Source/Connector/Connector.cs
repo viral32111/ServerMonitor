@@ -37,6 +37,7 @@ namespace ServerMonitor.Connector {
 			// Setup a HTTP listener - https://stackoverflow.com/a/56207032, https://learn.microsoft.com/en-us/dotnet/api/system.net.httplistener?view=net-8.0
 			HttpListener httpListener = new HttpListener();
 			httpListener.AuthenticationSchemes = AuthenticationSchemes.Basic;
+			httpListener.Realm = configuration.ConnectorAuthenticationRealm;
 			string baseUrl = $"http://{ configuration.ConnectorListenAddress }:{ configuration.ConnectorListenPort }";
 
 			// Loop through the route request handlers...
@@ -111,12 +112,13 @@ namespace ServerMonitor.Connector {
 			HttpListenerResponse response = context.Response;
 			string requestMethod = request.HttpMethod;
 			string requestPath = request.Url?.AbsolutePath ?? "/";
-			logger.LogDebug( "Incoming HTTP request '{0}' '{1}' from '{2}'", requestMethod, requestPath, request.RemoteEndPoint.Address.ToString() );
+			string requestAddress = request.RemoteEndPoint.Address.ToString();
+			logger.LogDebug( "Incoming HTTP request '{0}' '{1}' from '{2}'", requestMethod, requestPath, requestAddress );
 
 			// Ensure basic authentication was used - https://stackoverflow.com/q/570605
 			HttpListenerBasicIdentity? basicAuthentication = ( HttpListenerBasicIdentity? ) context.User?.Identity;
 			if ( basicAuthentication == null ) {
-				logger.LogWarning( "No authentication for API request '{0}' '{1}' from '{2}'", requestMethod, requestPath, request.RemoteEndPoint.Address.ToString() );
+				logger.LogWarning( "No authentication for API request '{0}' '{1}' from '{2}'", requestMethod, requestPath, requestAddress );
 				response.AddHeader( "WWW-Authenticate", $"Basic realm=\"{ configuration.ConnectorAuthenticationRealm }\"" );
 				Response.SendJson( response, statusCode: HttpStatusCode.Unauthorized, errorCode: ErrorCode.NoAuthentication );
 				return;
@@ -125,11 +127,11 @@ namespace ServerMonitor.Connector {
 			// Store the username & password attempt
 			string usernameAttempt = basicAuthentication.Name;
 			string passwordAttempt = basicAuthentication.Password;
-			logger.LogInformation( "Received API request '{0}' '{1}' from '{2}' ({3})", requestMethod, requestPath, request.RemoteEndPoint.Address.ToString(), usernameAttempt );
+			logger.LogInformation( "Received API request '{0}' '{1}' from '{2}' ({3})", requestMethod, requestPath, requestAddress, usernameAttempt );
 
 			// Try get the hashed password associated for this user
 			if ( authenticationCredentials.TryGetValue( usernameAttempt, out string? hashedPassword ) == false || string.IsNullOrWhiteSpace( hashedPassword ) == true ) {
-				logger.LogWarning( "Unrecognised user '{1}' for API request '{0}' '{1}' from '{2}'", usernameAttempt, requestMethod, requestPath, request.RemoteEndPoint.Address.ToString() );
+				logger.LogWarning( "Unrecognised user '{1}' for API request '{0}' '{1}' from '{2}'", usernameAttempt, requestMethod, requestPath, requestAddress );
 				response.AddHeader( "WWW-Authenticate", $"Basic realm=\"{ configuration.ConnectorAuthenticationRealm }\"" );
 				Response.SendJson( response, statusCode: HttpStatusCode.Unauthorized, errorCode: ErrorCode.UnknownUser );
 				return;
@@ -143,7 +145,7 @@ namespace ServerMonitor.Connector {
 
 			// Check if the hashed password attempt matches the hashed password
 			if ( Hash.PBKDF2( passwordAttempt, iterationCount, hashedPasswordSalt ) != hashedPassword ) {
-				logger.LogWarning( "Incorrect password for user '{1}' for API request '{0}' '{1}' from '{2}'", usernameAttempt, requestMethod, requestPath, request.RemoteEndPoint.Address.ToString() );
+				logger.LogWarning( "Incorrect password for user '{1}' for API request '{0}' '{1}' from '{2}'", usernameAttempt, requestMethod, requestPath, requestAddress );
 				response.AddHeader( "WWW-Authenticate", $"Basic realm=\"{ configuration.ConnectorAuthenticationRealm }\"" );
 				Response.SendJson( response, statusCode: HttpStatusCode.Unauthorized, errorCode: ErrorCode.IncorrectPassword );
 				return;
@@ -151,14 +153,14 @@ namespace ServerMonitor.Connector {
 
 			// Check if the request is for a valid route (by method)
 			if ( routes.TryGetValue( request.HttpMethod, out Dictionary<string, Action<HttpListenerRequest, HttpListenerResponse, HttpListener, HttpListenerContext>>? routesForMethod ) == false || routesForMethod == null ) {
-				logger.LogWarning( "No registered routes for method '{0}' for API request '{1}' '{2}' from '{3}' ({4})", requestMethod, requestMethod, requestPath, request.RemoteEndPoint.Address.ToString(), usernameAttempt );
+				logger.LogWarning( "No registered routes for method '{0}' for API request '{1}' '{2}' from '{3}' ({4})", requestMethod, requestMethod, requestPath, requestAddress, usernameAttempt );
 				Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.UnknownRoute );
 				return;
 			}
 
 			// Check if the request is for a valid route (by path)
 			if ( routesForMethod.TryGetValue( requestPath, out Action<HttpListenerRequest, HttpListenerResponse, HttpListener, HttpListenerContext>? routeHandler ) == false || routeHandler == null ) {
-				logger.LogWarning( "No registered route for path '{0}' for API request '{1}' '{2}' from '{3}' ({4})", requestPath, requestMethod, requestPath, request.RemoteEndPoint.Address.ToString(), usernameAttempt );
+				logger.LogWarning( "No registered route for path '{0}' for API request '{1}' '{2}' from '{3}' ({4})", requestPath, requestMethod, requestPath, requestAddress, usernameAttempt );
 				Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.UnknownRoute );
 				return;
 			}
@@ -167,11 +169,11 @@ namespace ServerMonitor.Connector {
 			try {
 				routeHandler( request, response, httpListener, context );
 			} catch ( Exception exception ) {
-				logger.LogError( exception, "Failed to handle API request '{0}' '{1}' from '{2}'", requestMethod, requestPath, request.RemoteEndPoint.Address.ToString() );
+				logger.LogError( exception, "Failed to handle API request '{0}' '{1}' from '{2}'", requestMethod, requestPath, requestAddress );
 				Response.SendJson( response, statusCode: HttpStatusCode.InternalServerError, errorCode: ErrorCode.UncaughtServerError );
 			} finally {
-				logger.LogDebug( "Completed API request '{0}' '{1}' from '{2}' ({3})", requestMethod, requestPath, request.RemoteEndPoint.Address.ToString(), usernameAttempt );
-				response.Close();
+				logger.LogDebug( "Completed API request '{0}' '{1}' from '{2}' ({3})", requestMethod, requestPath, requestAddress, usernameAttempt );
+				if ( response != null ) response.Close();
 			}
 
 		}

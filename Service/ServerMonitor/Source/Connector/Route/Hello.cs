@@ -11,7 +11,7 @@ namespace ServerMonitor.Connector.Route {
 
 		[ Route( "GET", "/hello" ) ]
 		public static void OnRequest( HttpListenerRequest request, HttpListenerResponse response, HttpListener listener, HttpListenerContext context ) {
-			logger.LogInformation( "Received hello world request from '{0}'", request.RemoteEndPoint.Address.ToString() );
+			logger.LogInformation( "Hello, {0}!", context.User!.Identity!.Name );
 
 			Response.SendJson( response, data: new JsonObject() {
 				{ "message", "Hello World!" }
