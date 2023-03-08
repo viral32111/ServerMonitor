@@ -34,6 +34,7 @@ namespace ServerMonitor.Connector {
 			Server.OnGetRequest, // GET /server?id=
 			Server.OnPostRequest, // POST /server?id=&action=
 			Servers.OnGetRequest, // GET /servers
+			Service.OnPostRequest // POST /service?server=&name=&action=
 		};
 
 		// The main entry-point for this mode
