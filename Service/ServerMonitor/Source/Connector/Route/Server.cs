@@ -26,11 +26,10 @@ namespace ServerMonitor.Connector.Route {
 
 			return Response.SendJson( response, statusCode: HttpStatusCode.NotImplemented, errorCode: ErrorCode.ExampleData, data: new JsonObject() {
 				{ "id", serverIdentifier },
-				{ "lastUpdate", DateTimeOffset.UtcNow.ToUnixTimeSeconds() },
 				{ "name", "DEBIAN-SERVER-01" },
 				{ "description", "Example server for testing purposes." },
-				{ "ipAddress", "127.0.0.1" },
 				{ "uptimeSeconds", 60 * 60 * 24 * 7 },
+				{ "lastUpdate", DateTimeOffset.UtcNow.ToUnixTimeSeconds() },
 				{ "supportedActions", new JsonObject() {
 					{ "shutdown", false },
 					{ "reboot", false }
