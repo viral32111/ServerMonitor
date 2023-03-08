@@ -80,7 +80,7 @@ namespace ServerMonitor {
 		public required string PrometheusListenAddress { get; set; } = "127.0.0.1";
 		public required int PrometheusListenPort { get; set; } = 5000;
 		public required string PrometheusListenPath { get; set; } = "metrics/";
-		public required string PrometheusMetricsPrefix { get; set; } = "server_monitor_";
+		public required string PrometheusMetricsPrefix { get; set; } = "server_monitor";
 
 		// Resource metrics
 		public required bool CollectProcessorMetrics { get; set; } = true;
