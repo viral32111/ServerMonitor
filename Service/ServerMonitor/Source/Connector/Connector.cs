@@ -3,16 +3,11 @@ using System.IO;
 using System.Net;
 using System.Linq;
 using System.Text;
-using System.Text.Encodings;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Security;
 using System.Security.Cryptography;
 using System.Collections.Generic;
-using Microsoft.Extensions.Logging; // https://learn.microsoft.com/en-us/dotnet/core/extensions/console-log-formatter
-using Mono.Unix.Native; // https://github.com/mono/mono.posix
-using Prometheus; // https://github.com/prometheus-net/prometheus-net
+using Microsoft.Extensions.Logging;
+using ServerMonitor.Connector.Routes;
 
 namespace ServerMonitor.Connector {
 
@@ -21,165 +16,200 @@ namespace ServerMonitor.Connector {
 		// Create the logger for this file
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Collector" );
 
+		// Secure random number generator for generating hash salts
 		private static readonly RandomNumberGenerator randomNumberGenerator = RandomNumberGenerator.Create();
-		
-		public static void HandleCommand( Config configuration, bool singleRun ) {
+
+		// Dictionary of authentication credentials (usernames & hashed passwords)
+		private static readonly Dictionary<string, string> authenticationCredentials = new();
+
+		// Regular expression for the format to store hashed password data
+		private static readonly Regex hashedPasswordRegex = new( @"PBKDF2-(\d+)-(.+)-(.+)" );
+
+		// Will hold all the registered request handlers, by method & path
+		private static readonly Dictionary<string, Dictionary<string, Action<HttpListenerRequest, HttpListenerResponse, HttpListener, HttpListenerContext>>> routes = new();
+
+		// List of request handlers for API routes
+		private static readonly Action<HttpListenerRequest, HttpListenerResponse, HttpListener, HttpListenerContext>[] routeRequestHandlers = new[] {
+			Hello.OnRequest // GET /hello
+		};
+
+		// The main entry-point for this mode
+		public static void HandleCommand( Config configuration, bool runOnce ) {
 			logger.LogInformation( "Launched in connection point mode" );
 
-			// https://stackoverflow.com/a/56207032
-			// https://learn.microsoft.com/en-us/dotnet/api/system.net.httplistener?view=net-8.0
+			// Setup a HTTP listener - https://stackoverflow.com/a/56207032, https://learn.microsoft.com/en-us/dotnet/api/system.net.httplistener?view=net-8.0
 			HttpListener httpListener = new HttpListener();
-			logger.LogDebug( "Created HTTP listener" );
-			
 			httpListener.AuthenticationSchemes = AuthenticationSchemes.Basic;
+			string baseUrl = $"http://{ configuration.ConnectorListenAddress }:{ configuration.ConnectorListenPort }";
 
-			string prefix = $"http://{ configuration.ConnectorListenAddress }:{ configuration.ConnectorListenPort }/";
-			httpListener.Prefixes.Add( prefix );
-			logger.LogDebug( "Added HTTP listener prefix: '{0}'", prefix );
+			// Loop through the route request handlers...
+			foreach ( Action<HttpListenerRequest, HttpListenerResponse, HttpListener, HttpListenerContext> routeRequestHandler in routeRequestHandlers ) {
 
-			httpListener.Start();
-			logger.LogDebug( "Started HTTP listener" );
+				// Get the route attribute for this request handler
+				RouteAttribute? routeAttribute = ( RouteAttribute? ) routeRequestHandler.Method.GetCustomAttributes( typeof( RouteAttribute ), false ).FirstOrDefault();
+				if ( routeAttribute == null ) throw new Exception( $"Request handler '{ routeRequestHandler.Method.Name }' does not have a route attribute" );
 
-			Dictionary<string, string> authenticationCredentials = new();
+				// Add the route to the registered request handlers
+				if ( routes.ContainsKey( routeAttribute.Method ) == false ) routes.Add( routeAttribute.Method, new Dictionary<string, Action<HttpListenerRequest, HttpListenerResponse, HttpListener, HttpListenerContext>>() );
+				if ( routes[ routeAttribute.Method ].TryAdd( routeAttribute.Path, routeRequestHandler ) == false ) throw new Exception( $"Duplicate route '{ routeAttribute.Method } { routeAttribute.Path }' found for request handler '{ routeRequestHandler.Method.Name }'" );
+
+				// Add the route path to the HTTP listener
+				httpListener.Prefixes.Add( string.Concat( baseUrl, routeAttribute.Path, "/" ) );
+	
+				logger.LogInformation( "Registered API route '{0}' '{1}' ({2})", routeAttribute.Method, routeAttribute.Path, routeRequestHandler.Method.Name );
+
+			}
+
+			// Loop through the configured credentials...
 			foreach ( Credential credential in configuration.ConnectorCredentials ) {
+				
+				// Skip if this user has already been added
 				if ( authenticationCredentials.ContainsKey( credential.Username ) == true ) {
-					logger.LogWarning( "Duplicate username '{0}' found in credentials", credential.Username );
+					logger.LogWarning( "Duplicate user '{0}' found in credentials! Skipping...", credential.Username );
 					continue;
 				}
 
-				logger.LogDebug( "Username: '{0}', Password: '{1}'", credential.Username, credential.Password );
-
-				Match passwordMatch = Regex.Match( credential.Password, @"PBKDF2-(\d+)-(.+)-(.+)" );
+				// Hash the password if it isn't already hashed
+				Match passwordMatch = hashedPasswordRegex.Match( credential.Password );
 				if ( passwordMatch.Success == false ) {
 					string hashedPassword = PBKDF2( credential.Password );
-					logger.LogWarning( "Password for user '{0}' is NOT hashed yet! The password should be changed to: '{1}'", credential.Username, hashedPassword );
+					logger.LogWarning( "Password for user '{0}' is NOT hashed yet! Change password to: '{1}'", credential.Username, hashedPassword );
 					authenticationCredentials.Add( credential.Username, hashedPassword );
 				} else {
-					logger.LogDebug( "Password '{0}' for user '{1}' is already hashed", credential.Password, credential.Username );
 					authenticationCredentials.Add( credential.Username, credential.Password );
 				}
+
+				logger.LogInformation( "Added user '{0}' to credentials list", credential.Username );
+
 			}
 
-			while ( httpListener.IsListening == true && singleRun == false ) {
-				IAsyncResult asyncResult = httpListener.BeginGetContext( new AsyncCallback( OnHttpRequest ), new State {
-					Listener = httpListener,
-					Credentials = authenticationCredentials
-				} );
+			// Start the HTTP listener
+			httpListener.Start();
+			logger.LogInformation( "Listening for API requests on '{0}'", baseUrl );
 
-				asyncResult.AsyncWaitHandle.WaitOne();
-			}
+			// Forever process for incoming HTTP requests...
+			while ( httpListener.IsListening == true && runOnce == false ) httpListener.BeginGetContext( new AsyncCallback( OnHttpRequest ), new State {
+				HttpListener = httpListener,
+				Config = configuration
+			} ).AsyncWaitHandle.WaitOne();
 
+			// Stop the HTTP listener
 			httpListener.Stop();
-			logger.LogDebug( "Stopped HTTP listener" );
+			logger.LogInformation( "Stopped listening for API requests" );
+
 		}
 
+		// Processes an incoming HTTP request
 		private static void OnHttpRequest( IAsyncResult asyncResult ) {
 
 			// Get the variables within state that was passed to us
-			if ( asyncResult.AsyncState == null ) throw new Exception( $"Invalid state '{ asyncResult.AsyncState }' passed to async callback" );
+			if ( asyncResult.AsyncState == null ) throw new Exception( $"Invalid state '{ asyncResult.AsyncState }' passed to incoming request callback" );
 			State state = ( State ) asyncResult.AsyncState;
-			HttpListener httpListener = state.Listener;
-			Dictionary<string, string> credentials = state.Credentials;
+			HttpListener httpListener = state.HttpListener;
+			Config configuration = state.Config;
 
-			// Get the request and response
+			// Get the request & response
 			HttpListenerContext context = httpListener.EndGetContext( asyncResult );
 			HttpListenerRequest request = context.Request;
 			HttpListenerResponse response = context.Response;
-			logger.LogDebug( "Received HTTP request: {0} {1}", request.HttpMethod, request.Url );
+			string requestMethod = request.HttpMethod;
+			string requestPath = request.Url?.AbsolutePath ?? "/";
+			logger.LogDebug( "Received HTTP request '{0}' '{1}' from '{2}'", requestMethod, requestPath, request.RemoteEndPoint.Address.ToString() );
 
-			// Ensure basic authentication credentials were provided - https://stackoverflow.com/q/570605
+			// Ensure basic authentication was used - https://stackoverflow.com/q/570605
 			HttpListenerBasicIdentity? basicIdentity = ( HttpListenerBasicIdentity? ) context.User?.Identity;
 			if ( basicIdentity == null ) {
-				logger.LogWarning( "Received HTTP request without authentication" );
-				response.StatusCode = ( int ) HttpStatusCode.Unauthorized;
-				response.AddHeader( "WWW-Authenticate", "Basic realm=\"Server Monitor\"" );
-				response.OutputStream.Write( Encoding.UTF8.GetBytes( "No authentication provided" ) );
-				response.Close();
+				logger.LogWarning( "No authentication for API request '{0}' '{1}' from '{2}'", requestMethod, requestPath, request.RemoteEndPoint.Address.ToString() );
+				response.AddHeader( "WWW-Authenticate", $"Basic realm=\"{ configuration.ConnectorAuthenticationRealm }\"" );
+				QuickResponse( response, HttpStatusCode.Unauthorized, "No authentication attempt" );
 				return;
 			}
 
-			// Get the username & password they sent
-			string attemptedUsername = basicIdentity.Name;
-			string attemptedPassword = basicIdentity.Password;
-			logger.LogDebug( "Attempted username: '{0}', Attempted password: '{1}'", attemptedUsername, attemptedPassword );
+			// Store the username & password attempt
+			string usernameAttempt = basicIdentity.Name;
+			string passwordAttempt = basicIdentity.Password;
 
-			// Try to get the actual hashed password associated with the username they sent
-			if ( credentials.TryGetValue( attemptedUsername, out string? actualPasswordHash ) == false || string.IsNullOrWhiteSpace( actualPasswordHash ) == true ) {
-				logger.LogWarning( "Received HTTP request with unknown username for authentication" );
-				response.StatusCode = ( int ) HttpStatusCode.Unauthorized;
-				response.AddHeader( "WWW-Authenticate", "Basic realm=\"Server Monitor\"" );
-				response.OutputStream.Write( Encoding.UTF8.GetBytes( "Unknown username" ) );
-				response.Close();
-				return;
-			}
-			logger.LogDebug( "Actual password hash: '{0}' for user: '{1}'", actualPasswordHash, attemptedUsername );
-
-			// Match the actual hashed password against a regular expression
-			Match actualPasswordMatch = Regex.Match( actualPasswordHash, @"PBKDF2-(\d+)-(.+)-(.+)" );
-			if ( actualPasswordMatch.Success == false ) {
-				logger.LogWarning( "Actual hashed password does not match regular expression" );
-				response.StatusCode = ( int ) HttpStatusCode.InternalServerError;
-				response.OutputStream.Write( Encoding.UTF8.GetBytes( "Could not break apart hashed password" ) );
-				response.Close();
+			// Try get the hashed password associated for this user
+			if ( authenticationCredentials.TryGetValue( usernameAttempt, out string? hashedPassword ) == false || string.IsNullOrWhiteSpace( hashedPassword ) == true ) {
+				logger.LogWarning( "Unrecognised user '{1}' for API request '{0}' '{1}' from '{2}'", usernameAttempt, requestMethod, requestPath, request.RemoteEndPoint.Address.ToString() );
+				response.AddHeader( "WWW-Authenticate", $"Basic realm=\"{ configuration.ConnectorAuthenticationRealm }\"" );
+				QuickResponse( response, HttpStatusCode.Unauthorized, "Unrecognised user" );
 				return;
 			}
 
-			// Parse & extract the components from the regular expression match
-			if ( int.TryParse( actualPasswordMatch.Groups[ 1 ].Value, out int iterationCount ) == false ) throw new Exception( $"Failed to parse iteration count '{ actualPasswordMatch.Groups[ 1 ].Value }' as an integer" );
-			string actualSaltHex = actualPasswordMatch.Groups[ 2 ].Value;
-			string actualHashHex = actualPasswordMatch.Groups[ 3 ].Value;
-			logger.LogDebug( "Actual iteration count: '{0}', Actual salt (hex): '{1}', Actual hash (hex): '{2}'", iterationCount, actualSaltHex, actualHashHex );
+			// Parse the components from the hashed password
+			Match hashedPasswordMatch = hashedPasswordRegex.Match( hashedPassword );
+			if ( hashedPasswordMatch.Success == false ) throw new Exception( $"Failed to match hashed password '{ hashedPassword }'" );
+			if ( int.TryParse( hashedPasswordMatch.Groups[ 1 ].Value, out int iterationCount ) == false ) throw new Exception( $"Failed to parse iteration count '{ hashedPasswordMatch.Groups[ 1 ].Value }' as an integer" );
+			byte[] hashedPasswordSalt = Convert.FromHexString( hashedPasswordMatch.Groups[ 2 ].Value );
 
-			// Hash the attempted password using the same iteration count & salt
-			string attemptedPasswordHash = PBKDF2( attemptedPassword, iterationCount, actualSaltHex );
-			logger.LogDebug( "Attempted password hash: '{0}'", attemptedPasswordHash );
-
-			// Compare the attempted password hash against the actual password hash
-			if ( attemptedPasswordHash != actualPasswordHash ) {
-				logger.LogWarning( "Received HTTP request with incorrect authentication" );
-				response.StatusCode = ( int ) HttpStatusCode.Unauthorized;
-				response.AddHeader( "WWW-Authenticate", "Basic realm=\"Server Monitor\"" );
-				response.OutputStream.Write( Encoding.UTF8.GetBytes( "Incorrect authentication" ) );
-				response.Close();
+			// Check if the hashed password attempt matches the hashed password
+			if ( PBKDF2( passwordAttempt, iterationCount, hashedPasswordSalt ) != hashedPassword ) {
+				logger.LogWarning( "Incorrect password for user '{1}' for API request '{0}' '{1}' from '{2}'", usernameAttempt, requestMethod, requestPath, request.RemoteEndPoint.Address.ToString() );
+				response.AddHeader( "WWW-Authenticate", $"Basic realm=\"{ configuration.ConnectorAuthenticationRealm }\"" );
+				QuickResponse( response, HttpStatusCode.Unauthorized, "Incorrect password" );
 				return;
 			}
 
-			byte[] responseBytes = Encoding.UTF8.GetBytes( "Hello World!" );
-			response.ContentLength64 = responseBytes.Length;
+			// Check if the request is for a valid route (by method)
+			if ( routes.TryGetValue( request.HttpMethod, out Dictionary<string, Action<HttpListenerRequest, HttpListenerResponse, HttpListener, HttpListenerContext>>? routesForMethod ) == false || routesForMethod == null ) {
+				logger.LogWarning( "No registered route (by method) for API request '{0}' '{1}' from '{2}'", requestMethod, requestPath, request.RemoteEndPoint.Address.ToString() );
+				QuickResponse( response, HttpStatusCode.NotFound, "Route does not exist" );
+				return;
+			}
 
-			Stream output = response.OutputStream;
-			output.Write( responseBytes, 0, responseBytes.Length );
-			output.Close();
-			logger.LogDebug( "Sent HTTP response: {0}", response.StatusCode );
+			// Check if the request is for a valid route (by path)
+			if ( routesForMethod.TryGetValue( requestPath, out Action<HttpListenerRequest, HttpListenerResponse, HttpListener, HttpListenerContext>? routeHandler ) == false || routeHandler == null ) {
+				logger.LogWarning( "No registered route (by path) for API request '{0}' '{1}' from '{2}'", requestMethod, requestPath, request.RemoteEndPoint.Address.ToString() );
+				QuickResponse( response, HttpStatusCode.NotFound, "Route does not exist" );
+				return;
+			}
+
+			// Safely run the route request handler
+			try {
+				routeHandler( request, response, httpListener, context );
+			} catch ( Exception exception ) {
+				logger.LogError( exception, "Failed to handle API request '{0}' '{1}' from '{2}'", requestMethod, requestPath, request.RemoteEndPoint.Address.ToString() );
+				QuickResponse( response, HttpStatusCode.InternalServerError, "Failure handling request" );
+			} finally {
+				logger.LogDebug( "Completed API request '{0}' '{1}' from '{2}'", requestMethod, requestPath, request.RemoteEndPoint.Address.ToString() );
+				response.Close();
+			}
+
 		}
 
-		private static string PBKDF2( string text, int iterationCount = 1000, string? existingSaltHex = null ) {
-			byte[] saltBytes = new byte[ 16 ];
+		// Helper to send a HTTP response
+		private static void QuickResponse( HttpListenerResponse response, HttpStatusCode statusCode, string body ) {
+			response.StatusCode = ( int ) statusCode;
+			response.OutputStream.Write( Encoding.UTF8.GetBytes( body ) );
+			response.Close();
+		}
 
-			if ( string.IsNullOrWhiteSpace( existingSaltHex ) ) {
+		// Hashes text using the PBKDF2 algorithm
+		private static string PBKDF2( string text, int iterationCount = 1000, byte[]? saltBytes = null ) {
+
+			// Generate fresh salt if none was provided
+			if ( saltBytes == null ) {
+				saltBytes = new byte[ 16 ];
 				randomNumberGenerator.GetBytes( saltBytes );
-				logger.LogDebug( "Generating fresh salt" );
-			} else {
-				logger.LogDebug( "Using provided salt" );
-				saltBytes = Convert.FromHexString( existingSaltHex );
 			}
 
-			// https://learn.microsoft.com/en-us/dotnet/api/system.security.cryptography.rfc2898derivebytes?view=net-7.0
-			Rfc2898DeriveBytes pbkdf2 = new( text, saltBytes, iterationCount, HashAlgorithmName.SHA512 );
-			byte[] hashBytes = pbkdf2.GetBytes( 512 / 8 );
+			// Securely hash the text - https://learn.microsoft.com/en-us/dotnet/api/system.security.cryptography.rfc2898derivebytes?view=net-7.0
+			using ( Rfc2898DeriveBytes pbkdf2 = new( text, saltBytes, iterationCount, HashAlgorithmName.SHA512 ) ) {
+				byte[] hashBytes = pbkdf2.GetBytes( 512 / 8 );
 
-			// https://stackoverflow.com/a/311179
-			string hashHex = Convert.ToHexString( hashBytes ).ToLower();
-			string saltHex = Convert.ToHexString( saltBytes ).ToLower();
+				// Return the hash in the custom format, with the bytes converted to hexadecimal - https://stackoverflow.com/a/311179
+				return $"PBKDF2-{ iterationCount }-{ Convert.ToHexString( saltBytes ).ToLower() }-{ Convert.ToHexString( hashBytes ).ToLower() }";
+			}
 
-			return $"PBKDF2-{ iterationCount }-{ saltHex }-{ hashHex }";
 		}
 
 	}
 
+	// Variables we want to pass to the incoming request callback
 	public struct State {
-		public HttpListener Listener;
-		public Dictionary<string, string> Credentials;
+		public HttpListener HttpListener;
+		public Config Config;
 	}
 
 }

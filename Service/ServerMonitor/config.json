@@ -20,8 +20,8 @@
 	"SNMPAgents": [],
 	"ConnectorListenAddress": "127.0.0.1",
 	"ConnectorListenPort": 8080,
-	"ConnectorPublicUrl": "http://localhost:8080/",
 	"ConnectorCredentials": [
 		{ "Username": "JohnDoe", "Password": "P4ssw0rd!" }
-	]
+	],
+	"ConnectorAuthenticationRealm": "Example"
 }
