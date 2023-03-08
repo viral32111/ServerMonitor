@@ -26,10 +26,10 @@ namespace ServerMonitor.Collector {
 
 		// Initialise the exported Prometheus metrics
 		public Services( Config configuration ) : base( configuration ) {
-			StatusCode = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_service_code_status", "Service status code", new GaugeConfiguration {
+			StatusCode = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_service_status_code", "Service status code", new GaugeConfiguration {
 				LabelNames = new[] { "service", "name", "description" }
 			} );
-			ExitCode = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_service_code_exit", "Service exit code", new GaugeConfiguration {
+			ExitCode = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_service_exit_code", "Service exit code", new GaugeConfiguration {
 				LabelNames = new[] { "service", "name", "description" }
 			} );
 			UptimeSeconds = Metrics.CreateCounter( $"{ configuration.PrometheusMetricsPrefix }_service_uptime_seconds", "Service uptime, in seconds", new CounterConfiguration {

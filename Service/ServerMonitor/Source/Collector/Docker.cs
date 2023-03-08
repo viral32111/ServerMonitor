@@ -40,14 +40,14 @@ namespace ServerMonitor.Collector {
 		};
 
 		// Holds the exported Prometheus metrics
-		public readonly Gauge Status;
+		public readonly Gauge StatusCode;
 		public readonly Gauge ExitCode;
 		public readonly Counter CreatedTimestamp;
-		public readonly Gauge HealthStatus;
+		public readonly Gauge HealthStatusCode;
 
 		// Initialise the exported Prometheus metrics
 		public Docker( Config configuration ) : base( configuration ) {
-			Status = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_docker_status", "Docker container status", new GaugeConfiguration {
+			StatusCode = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_docker_status_code", "Docker container status code", new GaugeConfiguration {
 				LabelNames = new[] { "name", "id", "image" }
 			} );
 			ExitCode = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_docker_exit_code", "Docker container exit code", new GaugeConfiguration {
@@ -56,14 +56,14 @@ namespace ServerMonitor.Collector {
 			CreatedTimestamp = Metrics.CreateCounter( $"{ configuration.PrometheusMetricsPrefix }_docker_created_timestamp", "Docker container creation unix timestamp", new CounterConfiguration {
 				LabelNames = new[] { "name", "id", "image" }
 			} );
-			HealthStatus = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_docker_health_status", "Docker container healthcheck status", new GaugeConfiguration {
+			HealthStatusCode = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_docker_health_status_code", "Docker container healthcheck status code", new GaugeConfiguration {
 				LabelNames = new[] { "name", "id", "image" }
 			} );
 
-			Status.Set( -1 );
+			StatusCode.Set( -1 );
 			ExitCode.Set( -1 );
 			CreatedTimestamp.IncTo( -1 );
-			HealthStatus.Set( -1 );
+			HealthStatusCode.Set( -1 );
 
 			logger.LogInformation( "Initalised Prometheus metrics" );
 		}
@@ -288,7 +288,7 @@ namespace ServerMonitor.Collector {
 				if ( string.IsNullOrWhiteSpace( containerStatus ) ) throw new JsonException( $"Container status '{ containerStatus }' is null, empty or whitespace" );
 
 				// Update the status code Prometheus metric
-				Status.WithLabels( containerId, containerName, containerImage ).Set( containerState switch {
+				StatusCode.WithLabels( containerId, containerName, containerImage ).Set( containerState switch {
 					"created" => 0,
 					"running" => 1,
 					"restarting" => 2,
@@ -313,7 +313,7 @@ namespace ServerMonitor.Collector {
 				// Update the health status Prometheus metric - https://stackoverflow.com/a/59983912
 				Match healthcheckMatch = Regex.Match( containerStatus, @"^.+ \((.+)\)$" );
 				if ( healthcheckMatch.Success == true ) {
-					HealthStatus.WithLabels( containerId, containerName, containerImage ).Set( healthcheckMatch.Groups[ 1 ].Value switch {
+					HealthStatusCode.WithLabels( containerId, containerName, containerImage ).Set( healthcheckMatch.Groups[ 1 ].Value switch {
 						"unhealthy" => 0,
 						"healthy" => 1,
 						"starting" => 2,
@@ -321,7 +321,7 @@ namespace ServerMonitor.Collector {
 						_ => throw new Exception( $"Unrecognised health status '{ healthcheckMatch.Groups[ 1 ].Value }' for Docker container '{ containerId }'" )
 					} );
 				} else {
-					HealthStatus.WithLabels( containerId, containerName, containerImage ).Set( -1 );
+					HealthStatusCode.WithLabels( containerId, containerName, containerImage ).Set( -1 );
 				}
 
 				logger.LogDebug( "Updated Prometheus metrics" );

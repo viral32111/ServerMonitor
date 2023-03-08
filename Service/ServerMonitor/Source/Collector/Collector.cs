@@ -172,16 +172,16 @@ namespace ServerMonitor.Collector {
 					try {
 						docker.Update();
 
-						foreach ( string[] labelValues in docker.Status.GetAllLabelValues() ) {
+						foreach ( string[] labelValues in docker.StatusCode.GetAllLabelValues() ) {
 							string id = labelValues[ 0 ];
 							string name = labelValues[ 1 ];
 							string image = labelValues[ 2 ];
 
 							logger.LogInformation( "---- Docker container '{0}' ({1}, {2}) ----", name, id, image );
-							logger.LogInformation( "Status: {0}", docker.Status.WithLabels( id, name, image ).Value );
+							logger.LogInformation( "Status: {0}", docker.StatusCode.WithLabels( id, name, image ).Value );
 							logger.LogInformation( "Exit Code: {0}", docker.ExitCode.WithLabels( id, name, image ).Value );
 							logger.LogInformation( "Uptime: {0}", docker.CreatedTimestamp.WithLabels( id, name, image ).Value );
-							logger.LogInformation( "Health: {0}", docker.HealthStatus.WithLabels( id, name, image ).Value );
+							logger.LogInformation( "Health: {0}", docker.HealthStatusCode.WithLabels( id, name, image ).Value );
 						}
 					} catch ( Exception exception ) {
 						logger.LogError( exception, "Failed to collect Docker metrics" );
