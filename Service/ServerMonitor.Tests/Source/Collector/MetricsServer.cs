@@ -27,12 +27,7 @@ namespace ServerMonitor.Tests.Collector {
 			ServerMonitor.Collector.Collector.HandleCommand( ServerMonitor.Configuration.Config, true );
 
 			HttpClient httpClient = new();
-			HttpResponseMessage response = await httpClient.GetAsync( string.Format(
-				"http://{0}:{1}/{2}",
-				ServerMonitor.Configuration.Config.PrometheusListenAddress,
-				ServerMonitor.Configuration.Config.PrometheusListenPort,
-				ServerMonitor.Configuration.Config.PrometheusListenPath
-			) );
+			HttpResponseMessage response = await httpClient.GetAsync( $"http://{ ServerMonitor.Configuration.Config.PrometheusListenAddress }:{ ServerMonitor.Configuration.Config.PrometheusListenPort }/{ ServerMonitor.Configuration.Config.PrometheusListenPath }" );
 
 			Assert.True( response.IsSuccessStatusCode );
 		}

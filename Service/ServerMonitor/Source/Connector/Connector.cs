@@ -1,7 +1,5 @@
 using System;
 using System.Net;
-using System.Text.Json;
-using System.Text.Json.Nodes;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
@@ -93,7 +91,7 @@ namespace ServerMonitor.Connector {
 			logger.LogInformation( "Listening for API requests on '{0}'", baseUrl );
 
 			// Forever process for incoming HTTP requests...
-			while ( httpListener.IsListening == true && runOnce == false )
+			while ( httpListener.IsListening == true ) {
 				httpListener.BeginGetContext(
 					asyncResult => OnHttpRequest( asyncResult ),
 					new State {
@@ -101,6 +99,10 @@ namespace ServerMonitor.Connector {
 						Config = configuration
 					}
 				).AsyncWaitHandle.WaitOne();
+
+				// Stop looping if we're only meant to run once
+				if ( runOnce == true ) break;
+			}
 
 			// Stop the HTTP listener
 			httpListener.Stop();
