@@ -105,7 +105,13 @@ namespace ServerMonitor.Connector.Route {
 							{ "description", "Requests IP addresses" },
 							{ "statusCode", 1 },
 							{ "exitCode", -1 },
-							{ "uptimeSeconds", 60 * 60 * 24 }
+							{ "uptimeSeconds", 60 * 60 * 24 },
+							{ "supportedActions", new JsonObject() {
+								{ "restart", true },
+								{ "stop", true },
+								{ "start", false }
+							} },
+							{ "logs", new JsonArray() }
 						},
 						new JsonObject() {
 							{ "service", "dnsmasq" },
@@ -113,7 +119,13 @@ namespace ServerMonitor.Connector.Route {
 							{ "description", "Local DNS cache" },
 							{ "statusCode", 0 },
 							{ "exitCode", 1 },
-							{ "uptimeSeconds", -1 }
+							{ "uptimeSeconds", -1 },
+							{ "supportedActions", new JsonObject() {
+								{ "restart", false },
+								{ "stop", false },
+								{ "start", true }
+							} },
+							{ "logs", new JsonArray() }
 						},
 					} },
 					{ "dockerContainers", new JsonArray() {
@@ -124,7 +136,14 @@ namespace ServerMonitor.Connector.Route {
 							{ "statusCode", 1 },
 							{ "exitCode", -1 },
 							{ "createdAt", DateTimeOffset.UtcNow.ToUnixTimeSeconds() },
-							{ "healthStatusCode", 1 }
+							{ "healthStatusCode", 1 },
+							{ "supportedActions", new JsonObject() {
+								{ "restart", true },
+								{ "stop", true },
+								{ "start", false },
+								{ "remove", false }
+							} },
+							{ "logs", new JsonArray() }
 						},
 						new JsonObject() {
 							{ "name", "prometheus" },
@@ -133,7 +152,14 @@ namespace ServerMonitor.Connector.Route {
 							{ "statusCode", 2 },
 							{ "exitCode", 1 },
 							{ "createdAt", DateTimeOffset.UtcNow.ToUnixTimeSeconds() },
-							{ "healthStatusCode", 2 }
+							{ "healthStatusCode", 2 },
+							{ "supportedActions", new JsonObject() {
+								{ "restart", false },
+								{ "stop", false },
+								{ "start", true },
+								{ "remove", true }
+							} },
+							{ "logs", new JsonArray() }
 						}
 					} },
 					{ "snmp", new JsonObject() {
@@ -146,7 +172,10 @@ namespace ServerMonitor.Connector.Route {
 								{ "description", "Microsoft Windows Enterprise Server 2016" },
 								{ "contact", "admin@example.com" },
 								{ "location", "Office" },
-								{ "trapsReceived", 5 },
+								{ "receivedTraps", new JsonObject() {
+									{ "count", 5 },
+									{ "logs", new JsonArray() }
+								} },
 								{ "uptimeSeconds", 60 * 60 * 24 * 7 },
 								{ "serviceCount", 50 }
 							} }
