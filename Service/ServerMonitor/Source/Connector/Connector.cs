@@ -1,13 +1,13 @@
 using System;
-using System.IO;
 using System.Net;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Security.Cryptography;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
-using ServerMonitor.Connector.Routes;
+using ServerMonitor.Connector.Route;
+using ServerMonitor.Connector.Helper;
 
 namespace ServerMonitor.Connector {
 
@@ -15,9 +15,6 @@ namespace ServerMonitor.Connector {
 
 		// Create the logger for this file
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Collector" );
-
-		// Secure random number generator for generating hash salts
-		private static readonly RandomNumberGenerator randomNumberGenerator = RandomNumberGenerator.Create();
 
 		// Dictionary of authentication credentials (usernames & hashed passwords)
 		private static readonly Dictionary<string, string> authenticationCredentials = new();
@@ -72,7 +69,7 @@ namespace ServerMonitor.Connector {
 				// Hash the password if it isn't already hashed
 				Match passwordMatch = hashedPasswordRegex.Match( credential.Password );
 				if ( passwordMatch.Success == false ) {
-					string hashedPassword = PBKDF2( credential.Password );
+					string hashedPassword = Hash.PBKDF2( credential.Password );
 					logger.LogWarning( "Password for user '{0}' is NOT hashed yet! Change password to: '{1}'", credential.Username, hashedPassword );
 					authenticationCredentials.Add( credential.Username, hashedPassword );
 				} else {
@@ -114,26 +111,27 @@ namespace ServerMonitor.Connector {
 			HttpListenerResponse response = context.Response;
 			string requestMethod = request.HttpMethod;
 			string requestPath = request.Url?.AbsolutePath ?? "/";
-			logger.LogDebug( "Received HTTP request '{0}' '{1}' from '{2}'", requestMethod, requestPath, request.RemoteEndPoint.Address.ToString() );
+			logger.LogDebug( "Incoming HTTP request '{0}' '{1}' from '{2}'", requestMethod, requestPath, request.RemoteEndPoint.Address.ToString() );
 
 			// Ensure basic authentication was used - https://stackoverflow.com/q/570605
-			HttpListenerBasicIdentity? basicIdentity = ( HttpListenerBasicIdentity? ) context.User?.Identity;
-			if ( basicIdentity == null ) {
+			HttpListenerBasicIdentity? basicAuthentication = ( HttpListenerBasicIdentity? ) context.User?.Identity;
+			if ( basicAuthentication == null ) {
 				logger.LogWarning( "No authentication for API request '{0}' '{1}' from '{2}'", requestMethod, requestPath, request.RemoteEndPoint.Address.ToString() );
 				response.AddHeader( "WWW-Authenticate", $"Basic realm=\"{ configuration.ConnectorAuthenticationRealm }\"" );
-				QuickResponse( response, HttpStatusCode.Unauthorized, "No authentication attempt" );
+				Response.SendJson( response, statusCode: HttpStatusCode.Unauthorized, errorCode: ErrorCode.NoAuthentication );
 				return;
 			}
 
 			// Store the username & password attempt
-			string usernameAttempt = basicIdentity.Name;
-			string passwordAttempt = basicIdentity.Password;
+			string usernameAttempt = basicAuthentication.Name;
+			string passwordAttempt = basicAuthentication.Password;
+			logger.LogInformation( "Received API request '{0}' '{1}' from '{2}' ({3})", requestMethod, requestPath, request.RemoteEndPoint.Address.ToString(), usernameAttempt );
 
 			// Try get the hashed password associated for this user
 			if ( authenticationCredentials.TryGetValue( usernameAttempt, out string? hashedPassword ) == false || string.IsNullOrWhiteSpace( hashedPassword ) == true ) {
 				logger.LogWarning( "Unrecognised user '{1}' for API request '{0}' '{1}' from '{2}'", usernameAttempt, requestMethod, requestPath, request.RemoteEndPoint.Address.ToString() );
 				response.AddHeader( "WWW-Authenticate", $"Basic realm=\"{ configuration.ConnectorAuthenticationRealm }\"" );
-				QuickResponse( response, HttpStatusCode.Unauthorized, "Unrecognised user" );
+				Response.SendJson( response, statusCode: HttpStatusCode.Unauthorized, errorCode: ErrorCode.UnknownUser );
 				return;
 			}
 
@@ -144,24 +142,24 @@ namespace ServerMonitor.Connector {
 			byte[] hashedPasswordSalt = Convert.FromHexString( hashedPasswordMatch.Groups[ 2 ].Value );
 
 			// Check if the hashed password attempt matches the hashed password
-			if ( PBKDF2( passwordAttempt, iterationCount, hashedPasswordSalt ) != hashedPassword ) {
+			if ( Hash.PBKDF2( passwordAttempt, iterationCount, hashedPasswordSalt ) != hashedPassword ) {
 				logger.LogWarning( "Incorrect password for user '{1}' for API request '{0}' '{1}' from '{2}'", usernameAttempt, requestMethod, requestPath, request.RemoteEndPoint.Address.ToString() );
 				response.AddHeader( "WWW-Authenticate", $"Basic realm=\"{ configuration.ConnectorAuthenticationRealm }\"" );
-				QuickResponse( response, HttpStatusCode.Unauthorized, "Incorrect password" );
+				Response.SendJson( response, statusCode: HttpStatusCode.Unauthorized, errorCode: ErrorCode.IncorrectPassword );
 				return;
 			}
 
 			// Check if the request is for a valid route (by method)
 			if ( routes.TryGetValue( request.HttpMethod, out Dictionary<string, Action<HttpListenerRequest, HttpListenerResponse, HttpListener, HttpListenerContext>>? routesForMethod ) == false || routesForMethod == null ) {
-				logger.LogWarning( "No registered route (by method) for API request '{0}' '{1}' from '{2}'", requestMethod, requestPath, request.RemoteEndPoint.Address.ToString() );
-				QuickResponse( response, HttpStatusCode.NotFound, "Route does not exist" );
+				logger.LogWarning( "No registered routes for method '{0}' for API request '{1}' '{2}' from '{3}' ({4})", requestMethod, requestMethod, requestPath, request.RemoteEndPoint.Address.ToString(), usernameAttempt );
+				Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.UnknownRoute );
 				return;
 			}
 
 			// Check if the request is for a valid route (by path)
 			if ( routesForMethod.TryGetValue( requestPath, out Action<HttpListenerRequest, HttpListenerResponse, HttpListener, HttpListenerContext>? routeHandler ) == false || routeHandler == null ) {
-				logger.LogWarning( "No registered route (by path) for API request '{0}' '{1}' from '{2}'", requestMethod, requestPath, request.RemoteEndPoint.Address.ToString() );
-				QuickResponse( response, HttpStatusCode.NotFound, "Route does not exist" );
+				logger.LogWarning( "No registered route for path '{0}' for API request '{1}' '{2}' from '{3}' ({4})", requestPath, requestMethod, requestPath, request.RemoteEndPoint.Address.ToString(), usernameAttempt );
+				Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.UnknownRoute );
 				return;
 			}
 
@@ -170,36 +168,10 @@ namespace ServerMonitor.Connector {
 				routeHandler( request, response, httpListener, context );
 			} catch ( Exception exception ) {
 				logger.LogError( exception, "Failed to handle API request '{0}' '{1}' from '{2}'", requestMethod, requestPath, request.RemoteEndPoint.Address.ToString() );
-				QuickResponse( response, HttpStatusCode.InternalServerError, "Failure handling request" );
+				Response.SendJson( response, statusCode: HttpStatusCode.InternalServerError, errorCode: ErrorCode.UncaughtServerError );
 			} finally {
-				logger.LogDebug( "Completed API request '{0}' '{1}' from '{2}'", requestMethod, requestPath, request.RemoteEndPoint.Address.ToString() );
+				logger.LogDebug( "Completed API request '{0}' '{1}' from '{2}' ({3})", requestMethod, requestPath, request.RemoteEndPoint.Address.ToString(), usernameAttempt );
 				response.Close();
-			}
-
-		}
-
-		// Helper to send a HTTP response
-		private static void QuickResponse( HttpListenerResponse response, HttpStatusCode statusCode, string body ) {
-			response.StatusCode = ( int ) statusCode;
-			response.OutputStream.Write( Encoding.UTF8.GetBytes( body ) );
-			response.Close();
-		}
-
-		// Hashes text using the PBKDF2 algorithm
-		private static string PBKDF2( string text, int iterationCount = 1000, byte[]? saltBytes = null ) {
-
-			// Generate fresh salt if none was provided
-			if ( saltBytes == null ) {
-				saltBytes = new byte[ 16 ];
-				randomNumberGenerator.GetBytes( saltBytes );
-			}
-
-			// Securely hash the text - https://learn.microsoft.com/en-us/dotnet/api/system.security.cryptography.rfc2898derivebytes?view=net-7.0
-			using ( Rfc2898DeriveBytes pbkdf2 = new( text, saltBytes, iterationCount, HashAlgorithmName.SHA512 ) ) {
-				byte[] hashBytes = pbkdf2.GetBytes( 512 / 8 );
-
-				// Return the hash in the custom format, with the bytes converted to hexadecimal - https://stackoverflow.com/a/311179
-				return $"PBKDF2-{ iterationCount }-{ Convert.ToHexString( saltBytes ).ToLower() }-{ Convert.ToHexString( hashBytes ).ToLower() }";
 			}
 
 		}

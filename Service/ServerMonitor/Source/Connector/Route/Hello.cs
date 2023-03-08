@@ -1,9 +1,9 @@
-using System;
 using System.Net;
-using System.Text;
+using System.Text.Json.Nodes;
 using Microsoft.Extensions.Logging;
+using ServerMonitor.Connector.Helper;
 
-namespace ServerMonitor.Connector.Routes {
+namespace ServerMonitor.Connector.Route {
 
 	public static class Hello {
 
@@ -13,10 +13,9 @@ namespace ServerMonitor.Connector.Routes {
 		public static void OnRequest( HttpListenerRequest request, HttpListenerResponse response, HttpListener listener, HttpListenerContext context ) {
 			logger.LogInformation( "Received hello world request from '{0}'", request.RemoteEndPoint.Address.ToString() );
 
-			response.StatusCode = ( int ) HttpStatusCode.OK;
-			response.AddHeader( "Content-Type", "text/plain" );
-			response.OutputStream.Write( Encoding.UTF8.GetBytes( "Hello World!" ) );
-			response.Close();
+			Response.SendJson( response, data: new JsonObject() {
+				{ "message", "Hello World!" }
+			} );
 		}
 
 	}
