@@ -30,10 +30,10 @@ namespace ServerMonitor.Connector {
 
 		// List of request handlers for API routes
 		private static readonly RouteRequestHandler[] routeRequestHandlers = new[] {
-			Hello.OnRequest, // GET /hello
+			Hello.OnGetRequest, // GET /hello
 			Server.OnGetRequest, // GET /server?id=
 			Server.OnPostRequest, // POST /server?id=&action=
-			Servers.OnRequest, // GET /servers
+			Servers.OnGetRequest, // GET /servers
 		};
 
 		// The main entry-point for this mode
