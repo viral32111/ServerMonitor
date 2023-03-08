@@ -11,6 +11,9 @@ using ServerMonitor.Connector.Helper;
 
 namespace ServerMonitor.Connector {
 
+	// Type alias for a route request handler, as its quite long - https://stackoverflow.com/a/161484
+	using RouteRequestHandler = Func<HttpListenerRequest, HttpListenerResponse, HttpListener, HttpListenerContext, HttpListenerResponse>;
+
 	public static class Connector {
 
 		// Create the logger for this file
@@ -23,10 +26,10 @@ namespace ServerMonitor.Connector {
 		private static readonly Regex hashedPasswordRegex = new( @"PBKDF2-(\d+)-(.+)-(.+)" );
 
 		// Will hold all the registered request handlers, by method & path
-		private static readonly Dictionary<string, Dictionary<string, Action<HttpListenerRequest, HttpListenerResponse, HttpListener, HttpListenerContext>>> routes = new();
+		private static readonly Dictionary<string, Dictionary<string, RouteRequestHandler>> routes = new();
 
 		// List of request handlers for API routes
-		private static readonly Action<HttpListenerRequest, HttpListenerResponse, HttpListener, HttpListenerContext>[] routeRequestHandlers = new[] {
+		private static readonly RouteRequestHandler[] routeRequestHandlers = new[] {
 			Hello.OnRequest // GET /hello
 		};
 
@@ -41,14 +44,14 @@ namespace ServerMonitor.Connector {
 			string baseUrl = $"http://{ configuration.ConnectorListenAddress }:{ configuration.ConnectorListenPort }";
 
 			// Loop through the route request handlers...
-			foreach ( Action<HttpListenerRequest, HttpListenerResponse, HttpListener, HttpListenerContext> routeRequestHandler in routeRequestHandlers ) {
+			foreach ( RouteRequestHandler routeRequestHandler in routeRequestHandlers ) {
 
 				// Get the route attribute for this request handler
 				RouteAttribute? routeAttribute = ( RouteAttribute? ) routeRequestHandler.Method.GetCustomAttributes( typeof( RouteAttribute ), false ).FirstOrDefault();
 				if ( routeAttribute == null ) throw new Exception( $"Request handler '{ routeRequestHandler.Method.Name }' does not have a route attribute" );
 
 				// Add the route to the registered request handlers
-				if ( routes.ContainsKey( routeAttribute.Method ) == false ) routes.Add( routeAttribute.Method, new Dictionary<string, Action<HttpListenerRequest, HttpListenerResponse, HttpListener, HttpListenerContext>>() );
+				if ( routes.ContainsKey( routeAttribute.Method ) == false ) routes.Add( routeAttribute.Method, new Dictionary<string, RouteRequestHandler>() );
 				if ( routes[ routeAttribute.Method ].TryAdd( routeAttribute.Path, routeRequestHandler ) == false ) throw new Exception( $"Duplicate route '{ routeAttribute.Method } { routeAttribute.Path }' found for request handler '{ routeRequestHandler.Method.Name }'" );
 
 				// Add the route path to the HTTP listener
@@ -86,10 +89,14 @@ namespace ServerMonitor.Connector {
 			logger.LogInformation( "Listening for API requests on '{0}'", baseUrl );
 
 			// Forever process for incoming HTTP requests...
-			while ( httpListener.IsListening == true && runOnce == false ) httpListener.BeginGetContext( new AsyncCallback( OnHttpRequest ), new State {
-				HttpListener = httpListener,
-				Config = configuration
-			} ).AsyncWaitHandle.WaitOne();
+			while ( httpListener.IsListening == true && runOnce == false )
+				httpListener.BeginGetContext(
+					asyncResult => OnHttpRequest( asyncResult ),
+					new State {
+						HttpListener = httpListener,
+						Config = configuration
+					}
+				).AsyncWaitHandle.WaitOne();
 
 			// Stop the HTTP listener
 			httpListener.Stop();
@@ -98,7 +105,7 @@ namespace ServerMonitor.Connector {
 		}
 
 		// Processes an incoming HTTP request
-		private static void OnHttpRequest( IAsyncResult asyncResult ) {
+		private static HttpListenerResponse OnHttpRequest( IAsyncResult asyncResult ) {
 
 			// Get the variables within state that was passed to us
 			if ( asyncResult.AsyncState == null ) throw new Exception( $"Invalid state '{ asyncResult.AsyncState }' passed to incoming request callback" );
@@ -120,8 +127,7 @@ namespace ServerMonitor.Connector {
 			if ( basicAuthentication == null ) {
 				logger.LogWarning( "No authentication for API request '{0}' '{1}' from '{2}'", requestMethod, requestPath, requestAddress );
 				response.AddHeader( "WWW-Authenticate", $"Basic realm=\"{ configuration.ConnectorAuthenticationRealm }\"" );
-				Response.SendJson( response, statusCode: HttpStatusCode.Unauthorized, errorCode: ErrorCode.NoAuthentication );
-				return;
+				return Response.SendJson( response, statusCode: HttpStatusCode.Unauthorized, errorCode: ErrorCode.NoAuthentication );
 			}
 
 			// Store the username & password attempt
@@ -133,8 +139,7 @@ namespace ServerMonitor.Connector {
 			if ( authenticationCredentials.TryGetValue( usernameAttempt, out string? hashedPassword ) == false || string.IsNullOrWhiteSpace( hashedPassword ) == true ) {
 				logger.LogWarning( "Unrecognised user '{1}' for API request '{0}' '{1}' from '{2}'", usernameAttempt, requestMethod, requestPath, requestAddress );
 				response.AddHeader( "WWW-Authenticate", $"Basic realm=\"{ configuration.ConnectorAuthenticationRealm }\"" );
-				Response.SendJson( response, statusCode: HttpStatusCode.Unauthorized, errorCode: ErrorCode.UnknownUser );
-				return;
+				return Response.SendJson( response, statusCode: HttpStatusCode.Unauthorized, errorCode: ErrorCode.UnknownUser );
 			}
 
 			// Parse the components from the hashed password
@@ -147,30 +152,27 @@ namespace ServerMonitor.Connector {
 			if ( Hash.PBKDF2( passwordAttempt, iterationCount, hashedPasswordSalt ) != hashedPassword ) {
 				logger.LogWarning( "Incorrect password for user '{1}' for API request '{0}' '{1}' from '{2}'", usernameAttempt, requestMethod, requestPath, requestAddress );
 				response.AddHeader( "WWW-Authenticate", $"Basic realm=\"{ configuration.ConnectorAuthenticationRealm }\"" );
-				Response.SendJson( response, statusCode: HttpStatusCode.Unauthorized, errorCode: ErrorCode.IncorrectPassword );
-				return;
+				return Response.SendJson( response, statusCode: HttpStatusCode.Unauthorized, errorCode: ErrorCode.IncorrectPassword );
 			}
 
 			// Check if the request is for a valid route (by method)
-			if ( routes.TryGetValue( request.HttpMethod, out Dictionary<string, Action<HttpListenerRequest, HttpListenerResponse, HttpListener, HttpListenerContext>>? routesForMethod ) == false || routesForMethod == null ) {
+			if ( routes.TryGetValue( request.HttpMethod, out Dictionary<string, RouteRequestHandler>? routesForMethod ) == false || routesForMethod == null ) {
 				logger.LogWarning( "No registered routes for method '{0}' for API request '{1}' '{2}' from '{3}' ({4})", requestMethod, requestMethod, requestPath, requestAddress, usernameAttempt );
-				Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.UnknownRoute );
-				return;
+				return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.UnknownRoute );
 			}
 
 			// Check if the request is for a valid route (by path)
-			if ( routesForMethod.TryGetValue( requestPath, out Action<HttpListenerRequest, HttpListenerResponse, HttpListener, HttpListenerContext>? routeHandler ) == false || routeHandler == null ) {
+			if ( routesForMethod.TryGetValue( requestPath, out RouteRequestHandler? routeHandler ) == false || routeHandler == null ) {
 				logger.LogWarning( "No registered route for path '{0}' for API request '{1}' '{2}' from '{3}' ({4})", requestPath, requestMethod, requestPath, requestAddress, usernameAttempt );
-				Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.UnknownRoute );
-				return;
+				return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.UnknownRoute );
 			}
 
 			// Safely run the route request handler
 			try {
-				routeHandler( request, response, httpListener, context );
+				return routeHandler( request, response, httpListener, context );
 			} catch ( Exception exception ) {
 				logger.LogError( exception, "Failed to handle API request '{0}' '{1}' from '{2}'", requestMethod, requestPath, requestAddress );
-				Response.SendJson( response, statusCode: HttpStatusCode.InternalServerError, errorCode: ErrorCode.UncaughtServerError );
+				return Response.SendJson( response, statusCode: HttpStatusCode.InternalServerError, errorCode: ErrorCode.UncaughtServerError );
 			} finally {
 				logger.LogDebug( "Completed API request '{0}' '{1}' from '{2}' ({3})", requestMethod, requestPath, requestAddress, usernameAttempt );
 				if ( response != null ) response.Close();

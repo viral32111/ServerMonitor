@@ -13,7 +13,7 @@ namespace ServerMonitor.Connector.Helper {
 			response.Close();
 		}
 
-		public static void SendJson( HttpListenerResponse response, HttpStatusCode? statusCode = null, JsonNode? data = null, ErrorCode? errorCode = null ) {
+		public static HttpListenerResponse SendJson( HttpListenerResponse response, HttpStatusCode? statusCode = null, JsonNode? data = null, ErrorCode? errorCode = null ) {
 			JsonObject payload = new() {
 				{ "errorCode", ( int ) ( errorCode ?? ErrorCode.Success ) },
 				{ "data", data }
@@ -23,6 +23,8 @@ namespace ServerMonitor.Connector.Helper {
 			response.ContentType = "application/json; charset=utf-8";
 			response.OutputStream.Write( Encoding.UTF8.GetBytes( payload.ToJsonString() ) );
 			response.Close();
+
+			return response;
 		}
 	
 	}
