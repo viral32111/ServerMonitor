@@ -8,7 +8,10 @@ namespace ServerMonitor.Connector {
 		UnknownUser = 2,
 		IncorrectPassword = 3,
 		UnknownRoute = 4,
-		UncaughtServerError = 5
+		UncaughtServerError = 5,
+		ExampleData = 6,
+		NoParameters = 7,
+		MissingParameter = 8,
 	}
 
 }
