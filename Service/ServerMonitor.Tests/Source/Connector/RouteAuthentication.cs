@@ -44,7 +44,7 @@ namespace ServerMonitor.Tests.Connector {
 					Assert.True( content.Length == 0, "API response contains content" );
 				}
 
-				connector.StopServerCompletionSource.SetResult(); // Only required for this test, as server never receives this request's context since it is handled internally by the listener
+				connector.StopServerCompletionSource.SetResult();
 			};
 
 			connector.HandleCommand( ServerMonitor.Configuration.Config, true );
@@ -98,6 +98,8 @@ namespace ServerMonitor.Tests.Connector {
 
 					Assert.True( jsonBody.ContainsKey( "data" ), "API response JSON content does not contain the data property" );
 				}
+
+				connector.StopServerCompletionSource.SetResult();
 			};
 
 			connector.HandleCommand( ServerMonitor.Configuration.Config, true );
@@ -151,6 +153,8 @@ namespace ServerMonitor.Tests.Connector {
 
 					Assert.True( jsonBody.ContainsKey( "data" ), "API response JSON content does not contain the data property" );
 				}
+
+				connector.StopServerCompletionSource.SetResult();
 			};
 
 			connector.HandleCommand( ServerMonitor.Configuration.Config, true );

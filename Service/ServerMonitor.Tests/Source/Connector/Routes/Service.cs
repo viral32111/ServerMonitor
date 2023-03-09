@@ -56,6 +56,8 @@ namespace ServerMonitor.Tests.Connector.Routes {
 
 					Assert.True( jsonBody.ContainsKey( "data" ), "API response JSON content does not contain the data property" );
 				}
+
+				connector.StopServerCompletionSource.SetResult();
 			};
 
 			connector.HandleCommand( ServerMonitor.Configuration.Config, true );
@@ -104,6 +106,8 @@ namespace ServerMonitor.Tests.Connector.Routes {
 
 					Assert.True( jsonBody.ContainsKey( "data" ), "API response JSON content does not contain the data property" );
 				}
+
+				connector.StopServerCompletionSource.SetResult();
 			};
 
 			connector.HandleCommand( ServerMonitor.Configuration.Config, true );

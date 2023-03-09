@@ -88,6 +88,11 @@ jobs:
           SERVER_MONITOR_DOCKERENGINEAPIADDRESS: ${{ matrix.docker }}
           SERVER_MONITOR_SNMPMANAGERLISTENADDRESS: 127.0.0.1
           SERVER_MONITOR_SNMPMANAGERLISTENPORT: 1620
+          SERVER_MONITOR_CONNECTORLISTENADDRESS: 127.0.0.1
+          SERVER_MONITOR_CONNECTORLISTENPORT: 8080
+          SERVER_MONITOR_CONNECTORCREDENTIALS__0__USERNAME: GitHub
+          SERVER_MONITOR_CONNECTORCREDENTIALS__0__PASSWORD: GitHub
+          SERVER_MONITOR_CONNECTORAUTHENTICATIONREALM: GitHub-Actions-Test
         run: dotnet test --nologo --configuration Release --no-build ./ServerMonitor.Tests/ServerMonitor.Tests.csproj
 
   launch:
@@ -143,6 +148,12 @@ jobs:
         run: dotnet ./Artifact/ServerMonitor.dll --once collector
 
       - name: Launch in "connection-point" mode
+        env:
+          SERVER_MONITOR_CONNECTORLISTENADDRESS: 127.0.0.1
+          SERVER_MONITOR_CONNECTORLISTENPORT: 8080
+          SERVER_MONITOR_CONNECTORCREDENTIALS__0__USERNAME: GitHub
+          SERVER_MONITOR_CONNECTORCREDENTIALS__0__PASSWORD: GitHub
+          SERVER_MONITOR_CONNECTORAUTHENTICATIONREALM: GitHub-Actions-Test
         run: dotnet ./Artifact/ServerMonitor.dll --once connector
 
   docker:
