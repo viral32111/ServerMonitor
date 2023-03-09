@@ -92,7 +92,7 @@ jobs:
           SERVER_MONITOR_CONNECTORLISTENPORT: 8080
           SERVER_MONITOR_CONNECTORCREDENTIALS__0__USERNAME: GitHub
           SERVER_MONITOR_CONNECTORCREDENTIALS__0__PASSWORD: GitHub
-          SERVER_MONITOR_CONNECTORAUTHENTICATIONREALM: GitHub-Actions-Test
+          SERVER_MONITOR_CONNECTORAUTHENTICATIONREALM: GitHub
         run: dotnet test --nologo --configuration Release --no-build ./ServerMonitor.Tests/ServerMonitor.Tests.csproj
 
   launch:
@@ -153,7 +153,7 @@ jobs:
           SERVER_MONITOR_CONNECTORLISTENPORT: 8080
           SERVER_MONITOR_CONNECTORCREDENTIALS__0__USERNAME: GitHub
           SERVER_MONITOR_CONNECTORCREDENTIALS__0__PASSWORD: GitHub
-          SERVER_MONITOR_CONNECTORAUTHENTICATIONREALM: GitHub-Actions-Test
+          SERVER_MONITOR_CONNECTORAUTHENTICATIONREALM: GitHub
         run: dotnet ./Artifact/ServerMonitor.dll --once connector
 
   docker:
