@@ -1,23 +1,15 @@
 using System;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Text.Json;
-using System.Text.Json.Nodes;
-using System.Threading;
-using System.Threading.Tasks;
 using Xunit;
-using Xunit.Abstractions;
-using ServerMonitor.Connector;
 
-[ assembly: CollectionBehavior( DisableTestParallelization = true ) ]
+//[ assembly: CollectionBehavior( DisableTestParallelization = true ) ]
 namespace ServerMonitor.Tests.Connector {
 
 	public class Routes {
 
-		private readonly ITestOutputHelper output;
-		public Routes( ITestOutputHelper output ) => this.output = output;
+		private static readonly HttpClient httpClient = new();
 
 		[ Theory ]
 		[ InlineData( "GET", "/hello" ) ]
@@ -25,62 +17,29 @@ namespace ServerMonitor.Tests.Connector {
 			ServerMonitor.Configuration.Load( Path.Combine( Directory.GetCurrentDirectory(), "config.json" ) );
 			Assert.NotNull( ServerMonitor.Configuration.Config );
 
-			Task serverTask = Task.Run( () => {
-				try {
-					Console.WriteLine( "Starting handle command..." );
-					ServerMonitor.Connector.Connector.HandleCommand( ServerMonitor.Configuration.Config, true );
-					Console.WriteLine( "End handle command..." );
-				} catch ( Exception exception ) {
-					Console.WriteLine( "Exception: {0}", exception.Message );
+			HttpRequestMessage httpRequest = new() {
+				Method = new( method ),
+				RequestUri = new( $"http://{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }{path}" ),
+				Headers = {
+					{ "Host", $"{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }" },
+					{ "Accept", "application/json" },
+					{ "Connection", "close" }
 				}
-			} );
+			};
 
-			Console.WriteLine( "Waiting..." );
-			Thread.Sleep( 1000 );
-			Console.WriteLine( "Waited" );
+			ServerMonitor.Connector.Connector.OnListeningStarted += async ( object? _, EventArgs _ ) => {
+				using ( HttpResponseMessage httpResponse = await httpClient.SendAsync( httpRequest ) ) {
+					string content = await httpResponse.Content.ReadAsStringAsync();
 
-			string url = $"http://{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }{path}";
-			Console.WriteLine( "Url: '{0}'", url );
-
-			string username = ServerMonitor.Configuration.Config.ConnectorCredentials[ 0 ].Username;
-			string password = ServerMonitor.Configuration.Config.ConnectorCredentials[ 0 ].Password;
-
-			using ( HttpClient httpClient = new() ) {
-				Console.WriteLine( "Creating request..." );
-				HttpRequestMessage request = new() {
-					Method = new( method ),
-					RequestUri = new( url )
-				};
-				request.Headers.ConnectionClose = true;
-				request.Headers.Authorization = new( "Basic", Convert.ToBase64String( System.Text.Encoding.UTF8.GetBytes( $"{ username }:{ password }" ) ) );
-				request.Headers.Accept.Add( new( "application/json" ) );
-				request.Headers.Host = $"{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }";
-				//request.Headers.UserAgent.Add( new( "ServerMonitor/0.0.0" ) );
-
-				Console.WriteLine( "request: '{0}'", request.ToString() );
-				Console.WriteLine( "request.Method: '{0}'", request.Method.ToString() );
-				Console.WriteLine( "request.RequestUri: '{0}'", request.RequestUri.ToString() );
-				Console.WriteLine( "request.Headers: '{0}'", request.Headers.ToString() );
-				foreach ( var header in request.Headers ) {
-					Console.WriteLine( "request.Headers -> '{0}' = '{1}'", header.Key, string.Join( ", ", header.Value ) );
+					Assert.True( httpResponse.StatusCode == HttpStatusCode.Unauthorized, "API response status code is not 401 Unauthorized" );
+					Assert.True( httpResponse.Headers.WwwAuthenticate.Count == 1, "API response does not include WWW-Authenticate header" );
+					Assert.True( content.Length == 0, "API response contains content" );
 				}
 
-				Console.WriteLine( "Sending request..." );
-				using ( HttpResponseMessage response = httpClient.SendAsync( request ).Result ) {
-					Console.WriteLine( "Response received" );
-					Console.WriteLine( "Status Code: '{0}'", ( int ) response.StatusCode );
-					Console.WriteLine( "Content: '{0}'", response.Content.ReadAsStringAsync().Result );
-					foreach ( var header in response.Headers ) Console.WriteLine( "response.Headers -> '{0}' = '{1}'", header.Key, string.Join( ", ", header.Value ) );
+				ServerMonitor.Connector.Connector.StopServerCompletionSource.SetResult();
+			};
 
-					Assert.True( response.StatusCode == HttpStatusCode.Unauthorized, "API response status code is not 401 Unauthorized" );
-					Assert.True( response.Headers.WwwAuthenticate.Count == 1, "API response does not include WWW-Authenticate header" );
-					Console.WriteLine( "Assertions done" );
-				}
-			}
-
-			Console.WriteLine( "Waiting for server task..." );
-			serverTask.Wait();
-			Console.WriteLine( "Server dead & done" );
+			ServerMonitor.Connector.Connector.HandleCommand( ServerMonitor.Configuration.Config, true );
 		}
 
 		/*

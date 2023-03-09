@@ -1,7 +1,6 @@
 using System;
 using System.Net;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
@@ -37,14 +36,24 @@ namespace ServerMonitor.Connector {
 			Service.OnPostRequest // POST /service?server=&name=&action=
 		};
 
+		// Signal this to arbitrarily stop the HTTP listener
+		public static readonly TaskCompletionSource StopServerCompletionSource = new();
+
+		// Event that fires when the HTTP listener starts listening
+		public static event EventHandler<EventArgs>? OnListeningStarted;
+		public delegate void OnListeningStartedEventHandler( object sender, EventArgs e );
+
 		// The main entry-point for this mode
 		public static void HandleCommand( Config configuration, bool runOnce ) {
 			logger.LogInformation( "Launched in connection point mode" );
 
-			// Setup a HTTP listener - https://stackoverflow.com/a/56207032, https://learn.microsoft.com/en-us/dotnet/api/system.net.httplistener?view=net-8.0
-			HttpListener httpListener = new HttpListener();
-			httpListener.AuthenticationSchemes = AuthenticationSchemes.Basic;
-			httpListener.Realm = configuration.ConnectorAuthenticationRealm;
+			// Create a HTTP listener that requires authentication - https://stackoverflow.com/a/56207032, https://learn.microsoft.com/en-us/dotnet/api/system.net.httplistener?view=net-8.0
+			HttpListener httpListener = new() {
+				AuthenticationSchemes = AuthenticationSchemes.Basic,
+				Realm = configuration.ConnectorAuthenticationRealm
+			};
+
+			// The base URL for the HTTP listener
 			string baseUrl = $"http://{ configuration.ConnectorListenAddress }:{ configuration.ConnectorListenPort }";
 
 			// Loop through the route request handlers...
@@ -67,7 +76,7 @@ namespace ServerMonitor.Connector {
 
 			// Loop through the configured credentials...
 			foreach ( Credential credential in configuration.ConnectorCredentials ) {
-				
+
 				// Skip if this user has already been added
 				if ( authenticationCredentials.ContainsKey( credential.Username ) == true ) {
 					logger.LogWarning( "Duplicate user '{0}' found in credentials! Skipping...", credential.Username );
@@ -90,31 +99,29 @@ namespace ServerMonitor.Connector {
 
 			// Start the HTTP listener
 			httpListener.Start();
+			OnListeningStarted?.Invoke( null, EventArgs.Empty );
 			logger.LogInformation( "Listening for API requests on '{0}'", baseUrl );
 
-			// Forever process for incoming HTTP requests...
+			// Loop forever...
 			while ( httpListener.IsListening == true ) {
-				Console.WriteLine( "Request started" );
-				logger.LogTrace( "Request started" );
-				try {
-					logger.LogTrace( "Get context start" );
-					HttpListenerContext context = httpListener.GetContext();
-					logger.LogTrace( "Get context finish, onhttprequest start" );
-					OnHttpRequest( configuration, context );
-					logger.LogTrace( "onhttprequest finish" );
-				} catch ( Exception ex ) {
-					logger.LogError( ex, "there was an error!!" );
-				}
-				Console.WriteLine( "Request finished" );
-				logger.LogTrace( "Request finished" );
 
-				// Stop looping if we're only meant to run once
-				if ( runOnce == true ) {
-					Console.WriteLine( "We're only running once, breaking..." );
+				// Wait for a request to come in, or for the server to be stopped
+				Task<HttpListenerContext> getContextTask = httpListener.GetContextAsync();
+				Task stopServerTask = StopServerCompletionSource.Task;
+				if ( Task.WhenAny( getContextTask, stopServerTask ).Result == stopServerTask ) {
+					logger.LogDebug( "Received signal to stop API listener loop" );
 					break;
-				} else {
-					Console.WriteLine( "Not running once, looping again!" );
-				}
+				};
+
+				// Process the request
+				ProcessHttpRequest( configuration, getContextTask.Result );
+
+				// Stop looping if we're only meant to run once (i.e. integration tests)
+				if ( runOnce == true ) {
+					logger.LogDebug( "Stopping API listener loop, as we're only running once." );
+					break;
+				};
+
 			}
 
 			// Stop the HTTP listener
@@ -124,9 +131,7 @@ namespace ServerMonitor.Connector {
 		}
 
 		// Processes an incoming HTTP request
-		private static HttpListenerResponse OnHttpRequest( Config configuration, HttpListenerContext context ) {
-
-			Console.WriteLine( "hello world?" );
+		private static HttpListenerResponse ProcessHttpRequest( Config configuration, HttpListenerContext context ) {
 
 			// Get the request & response
 			HttpListenerRequest request = context.Request;
@@ -135,8 +140,6 @@ namespace ServerMonitor.Connector {
 			string requestPath = request.Url?.AbsolutePath ?? "/";
 			string requestAddress = request.RemoteEndPoint.Address.ToString();
 			logger.LogDebug( "Incoming HTTP request '{0}' '{1}' from '{2}'", requestMethod, requestPath, requestAddress );
-
-			response.AddHeader( "X-My-Custom-Header", "Hello, this proves I came from OnHttpRequest()" );
 
 			// Ensure basic authentication was used - https://stackoverflow.com/q/570605
 			HttpListenerBasicIdentity? basicAuthentication = ( HttpListenerBasicIdentity? ) context.User?.Identity;
@@ -196,12 +199,6 @@ namespace ServerMonitor.Connector {
 
 		}
 
-	}
-
-	// Variables we want to pass to the incoming request callback
-	public struct State {
-		public HttpListener HttpListener;
-		public Config Config;
 	}
 
 }
