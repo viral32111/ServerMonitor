@@ -41,7 +41,7 @@ namespace ServerMonitor.Tests.Connector {
 					string content = await httpResponse.Content.ReadAsStringAsync();
 
 					Assert.True( httpResponse.StatusCode == HttpStatusCode.Unauthorized, "API response status code is incorrect" );
-					Assert.True( httpResponse.Headers.WwwAuthenticate.Count >= 1, "API response does not include WWW-Authenticate header" );
+					Assert.True( httpResponse.Headers.WwwAuthenticate.Count == 1, "API response does not include WWW-Authenticate header" );
 					Assert.True( content.Length == 0, "API response contains content" );
 				}
 
@@ -64,11 +64,6 @@ namespace ServerMonitor.Tests.Connector {
 
 			ServerMonitor.Connector.Connector connector = new();
 
-			// Override the configured credentials
-			ServerMonitor.Configuration.Config.ConnectorCredentials = new Credential[] {
-				new() { Username = "CorrectUsername", Password = "CorrectPassword" }
-			};
-
 			string testUsername = "IncorrectUsername";
 			string testPassword = "IncorrectPassword";
 			string encodedCredentials = System.Convert.ToBase64String( System.Text.Encoding.UTF8.GetBytes( $"{ testUsername }:{ testPassword }" ) );
@@ -89,7 +84,7 @@ namespace ServerMonitor.Tests.Connector {
 					string content = await httpResponse.Content.ReadAsStringAsync();
 
 					Assert.True( httpResponse.StatusCode == HttpStatusCode.Unauthorized, "API response status code is incorrect" );
-					Assert.True( httpResponse.Headers.WwwAuthenticate.Count >= 1, "API response does not include WWW-Authenticate header" );
+					Assert.True( httpResponse.Headers.WwwAuthenticate.Count == 1, "API response does not include WWW-Authenticate header" );
 					Assert.True( content.Length > 0, "API response does not contain content" );
 
 					JsonObject? jsonBody = JsonSerializer.Deserialize<JsonObject>( content );
@@ -119,11 +114,6 @@ namespace ServerMonitor.Tests.Connector {
 
 			ServerMonitor.Connector.Connector connector = new();
 
-			// Override the configured credentials
-			ServerMonitor.Configuration.Config.ConnectorCredentials = new Credential[] {
-				new() { Username = "CorrectUsername", Password = "CorrectPassword" }
-			};
-
 			string testUsername = ServerMonitor.Configuration.Config.ConnectorCredentials[ 0 ].Username;
 			string testPassword = "IncorrectPassword";
 			string encodedCredentials = System.Convert.ToBase64String( System.Text.Encoding.UTF8.GetBytes( $"{ testUsername }:{ testPassword }" ) );
@@ -144,7 +134,7 @@ namespace ServerMonitor.Tests.Connector {
 					string content = await httpResponse.Content.ReadAsStringAsync();
 
 					Assert.True( httpResponse.StatusCode == HttpStatusCode.Unauthorized, "API response status code is incorrect" );
-					Assert.True( httpResponse.Headers.WwwAuthenticate.Count >= 1, "API response does not include WWW-Authenticate header" );
+					Assert.True( httpResponse.Headers.WwwAuthenticate.Count == 1, "API response does not include WWW-Authenticate header" );
 					Assert.True( content.Length > 0, "API response does not contain content" );
 
 					JsonObject? jsonBody = JsonSerializer.Deserialize<JsonObject>( content );
