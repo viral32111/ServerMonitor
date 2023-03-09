@@ -221,6 +221,8 @@ namespace ServerMonitor.Collector {
 				if ( singleRun == true ) cancellationTokenSource.Cancel(); // Stop the SNMP agent
 				snmp.WaitForTrapListener(); // Block until the SNMP agent has stopped
 			}
+
+			// TODO: Stop/wait for Prometheus metrics server?
 		}
 
 		// Checks if this application is running as administrator/root, which is required for some of the metrics we're collecting

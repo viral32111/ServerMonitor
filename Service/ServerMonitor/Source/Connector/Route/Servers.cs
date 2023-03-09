@@ -12,7 +12,7 @@ namespace ServerMonitor.Connector.Route {
 
 		// TODO: Return an array of basic server data objects
 		[ Route( "GET", "/servers" ) ]
-		public static HttpListenerResponse OnGetRequest( HttpListenerRequest request, HttpListenerResponse response, HttpListener listener, HttpListenerContext context ) {
+		public static HttpListenerResponse OnGetRequest( HttpListenerRequest request, HttpListenerResponse response, HttpListenerContext context ) {
 			return Response.SendJson( response, statusCode: HttpStatusCode.NotImplemented, errorCode: ErrorCode.ExampleData, data: new JsonArray() {
 				new JsonObject() {
 					{ "id", "abcdefghijklmnopqrstuvwxyz" },

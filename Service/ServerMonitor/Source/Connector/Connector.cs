@@ -1,6 +1,8 @@
 using System;
 using System.Net;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
@@ -10,7 +12,7 @@ using ServerMonitor.Connector.Helper;
 namespace ServerMonitor.Connector {
 
 	// Type alias for a route request handler, as its quite long - https://stackoverflow.com/a/161484
-	using RouteRequestHandler = Func<HttpListenerRequest, HttpListenerResponse, HttpListener, HttpListenerContext, HttpListenerResponse>;
+	using RouteRequestHandler = Func<HttpListenerRequest, HttpListenerResponse, HttpListenerContext, HttpListenerResponse>;
 
 	public static class Connector {
 
@@ -93,18 +95,18 @@ namespace ServerMonitor.Connector {
 			// Forever process for incoming HTTP requests...
 			while ( httpListener.IsListening == true ) {
 				Console.WriteLine( "Request started" );
-				httpListener.BeginGetContext(
-					( asyncResult ) => {
-						Console.WriteLine( "Request callback started" );
-						HttpListenerResponse resp = OnHttpRequest( asyncResult );
-						Console.WriteLine( "Request callback finished: {0}", resp.StatusCode );
-					},
-					new State {
-						HttpListener = httpListener,
-						Config = configuration
-					}
-				).AsyncWaitHandle.WaitOne();
+				logger.LogTrace( "Request started" );
+				try {
+					logger.LogTrace( "Get context start" );
+					HttpListenerContext context = httpListener.GetContext();
+					logger.LogTrace( "Get context finish, onhttprequest start" );
+					OnHttpRequest( configuration, context );
+					logger.LogTrace( "onhttprequest finish" );
+				} catch ( Exception ex ) {
+					logger.LogError( ex, "there was an error!!" );
+				}
 				Console.WriteLine( "Request finished" );
+				logger.LogTrace( "Request finished" );
 
 				// Stop looping if we're only meant to run once
 				if ( runOnce == true ) {
@@ -122,24 +124,19 @@ namespace ServerMonitor.Connector {
 		}
 
 		// Processes an incoming HTTP request
-		private static HttpListenerResponse OnHttpRequest( IAsyncResult asyncResult ) {
+		private static HttpListenerResponse OnHttpRequest( Config configuration, HttpListenerContext context ) {
 
 			Console.WriteLine( "hello world?" );
 
-			// Get the variables within state that was passed to us
-			if ( asyncResult.AsyncState == null ) throw new Exception( $"Invalid state '{ asyncResult.AsyncState }' passed to incoming request callback" );
-			State state = ( State ) asyncResult.AsyncState;
-			HttpListener httpListener = state.HttpListener;
-			Config configuration = state.Config;
-
 			// Get the request & response
-			HttpListenerContext context = httpListener.EndGetContext( asyncResult );
 			HttpListenerRequest request = context.Request;
 			HttpListenerResponse response = context.Response;
 			string requestMethod = request.HttpMethod;
 			string requestPath = request.Url?.AbsolutePath ?? "/";
 			string requestAddress = request.RemoteEndPoint.Address.ToString();
 			logger.LogDebug( "Incoming HTTP request '{0}' '{1}' from '{2}'", requestMethod, requestPath, requestAddress );
+
+			response.AddHeader( "X-My-Custom-Header", "Hello, this proves I came from OnHttpRequest()" );
 
 			// Ensure basic authentication was used - https://stackoverflow.com/q/570605
 			HttpListenerBasicIdentity? basicAuthentication = ( HttpListenerBasicIdentity? ) context.User?.Identity;
@@ -188,7 +185,7 @@ namespace ServerMonitor.Connector {
 
 			// Safely run the route request handler
 			try {
-				return routeHandler( request, response, httpListener, context );
+				return routeHandler( request, response, context );
 			} catch ( Exception exception ) {
 				logger.LogError( exception, "Failed to handle API request '{0}' '{1}' from '{2}'", requestMethod, requestPath, requestAddress );
 				return Response.SendJson( response, statusCode: HttpStatusCode.InternalServerError, errorCode: ErrorCode.UncaughtServerError );

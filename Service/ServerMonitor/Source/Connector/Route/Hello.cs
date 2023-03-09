@@ -11,7 +11,7 @@ namespace ServerMonitor.Connector.Route {
 
 		// Used to test if an instance is running & valid
 		[ Route( "GET", "/hello" ) ]
-		public static HttpListenerResponse OnGetRequest( HttpListenerRequest request, HttpListenerResponse response, HttpListener listener, HttpListenerContext context ) {
+		public static HttpListenerResponse OnGetRequest( HttpListenerRequest request, HttpListenerResponse response, HttpListenerContext context ) {
 			logger.LogInformation( "Hello, {0}!", context.User!.Identity!.Name );
 
 			return Response.SendJson( response, data: new JsonObject() {

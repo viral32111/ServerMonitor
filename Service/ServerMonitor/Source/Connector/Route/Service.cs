@@ -14,7 +14,7 @@ namespace ServerMonitor.Connector.Route {
 
 		// TODO: Executing an action on a server
 		[ Route( "POST", "/service" ) ]
-		public static HttpListenerResponse OnPostRequest( HttpListenerRequest request, HttpListenerResponse response, HttpListener listener, HttpListenerContext context ) {
+		public static HttpListenerResponse OnPostRequest( HttpListenerRequest request, HttpListenerResponse response, HttpListenerContext context ) {
 			string? queryString = request.Url?.Query;
 			if ( string.IsNullOrWhiteSpace( queryString ) ) return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.NoParameters );
 
