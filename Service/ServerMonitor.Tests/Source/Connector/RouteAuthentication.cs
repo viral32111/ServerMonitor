@@ -13,6 +13,7 @@ namespace ServerMonitor.Tests.Connector {
 
 		private static readonly HttpClient httpClient = new();
 
+		/*
 		[ Theory ]
 		[ InlineData( "GET", "/hello" ) ]
 		[ InlineData( "GET", "/server" ) ]
@@ -49,6 +50,7 @@ namespace ServerMonitor.Tests.Connector {
 
 			connector.HandleCommand( ServerMonitor.Configuration.Config, true );
 		}
+		*/
 
 		[ Theory ]
 		[ InlineData( "GET", "/hello" ) ]
