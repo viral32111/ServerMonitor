@@ -55,7 +55,7 @@ namespace ServerMonitor.Tests.Connector.Routes {
 				connector.StopServerCompletionSource.SetResult();
 			};
 
-			connector.HandleCommand( ServerMonitor.Configuration.Config, true );
+			connector.HandleCommand( ServerMonitor.Configuration.Config, false );
 		}
 
 		[ Fact ]
@@ -105,7 +105,7 @@ namespace ServerMonitor.Tests.Connector.Routes {
 				connector.StopServerCompletionSource.SetResult();
 			};
 
-			connector.HandleCommand( ServerMonitor.Configuration.Config, true );
+			connector.HandleCommand( ServerMonitor.Configuration.Config, false );
 		}
 
 	}

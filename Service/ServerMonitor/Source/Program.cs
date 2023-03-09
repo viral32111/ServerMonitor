@@ -13,9 +13,6 @@ namespace ServerMonitor {
 
 		public static int Main( string[] arguments ) {
 
-			//Logging.LogInfo( "This is an example message" );
-			//Environment.Exit( 1 );
-
 			// Get the directory that the executable DLL/binary is in - https://stackoverflow.com/a/66023223
 			Assembly? executable = Assembly.GetEntryAssembly() ?? throw new Exception( "Failed to get this executable" );
 			string executableDirectory = Path.GetDirectoryName( executable.Location ) ?? throw new Exception( "Failed to get this executable's directory" );
@@ -32,27 +29,27 @@ namespace ServerMonitor {
 			);
 			rootCommand.AddOption( extraConfigurationFilePathOption );
 
-			// Option to run everything once instead of repeatedly, for testing
-			Option<bool> singleRunOption = new(
+			// Option not run forever
+			Option<bool> singleRunOrNoListenOption = new(
 				name: "--once",
-				description: "Run everything once then exit, for testing.",
+				description: "Run collector once then exit, or never start the connection-point listening loop, for testing.",
 				getDefaultValue: () => false
 			);
-			rootCommand.AddOption( singleRunOption );
+			rootCommand.AddOption( singleRunOrNoListenOption );
 
 			// Sub-command to start in "collector" mode
 			Command collectorCommand = new( "collector", "Expose metrics to Prometheus from configured sources." );
-			collectorCommand.SetHandler( ( string extraConfigurationFilePath, bool singleRun ) =>
-				HandleSubCommand( Collector.Collector.HandleCommand, extraConfigurationFilePath, singleRun ),
-				extraConfigurationFilePathOption, singleRunOption
+			collectorCommand.SetHandler( ( string extraConfigurationFilePath, bool singleRunOrNoListen ) =>
+				HandleSubCommand( Collector.Collector.HandleCommand, extraConfigurationFilePath, singleRunOrNoListen ),
+				extraConfigurationFilePathOption, singleRunOrNoListenOption
 			);
 			rootCommand.AddCommand( collectorCommand );
 	
 			// Sub-command to start in "connection point" mode
 			Command connectorCommand = new( "connector", "Serve metrics from Prometheus to the mobile app." );
-			connectorCommand.SetHandler( ( string extraConfigurationFilePath, bool singleRun ) =>
-				HandleSubCommand( new Connector.Connector().HandleCommand, extraConfigurationFilePath, singleRun ),
-				extraConfigurationFilePathOption, singleRunOption
+			connectorCommand.SetHandler( ( string extraConfigurationFilePath, bool singleRunOrNoListen ) =>
+				HandleSubCommand( new Connector.Connector().HandleCommand, extraConfigurationFilePath, singleRunOrNoListen ),
+				extraConfigurationFilePathOption, singleRunOrNoListenOption
 			);
 			rootCommand.AddCommand( connectorCommand );
 
@@ -60,14 +57,14 @@ namespace ServerMonitor {
 		}
 
 		// Intermediary handler for all sub-commands, loads the configuration & then calls real sub-command handler
-		private static void HandleSubCommand( Action<Config, bool> subCommandHandler, string extraConfigurationFilePath, bool singleRun ) {
+		private static void HandleSubCommand( Action<Config, bool> subCommandHandler, string extraConfigurationFilePath, bool singleRunOrNoListen ) {
 
 			// Load the configuration
 			Configuration.Load( extraConfigurationFilePath );
 			logger.LogInformation( "Loaded the configuration" );
 
 			// Call the sub-command handler
-			subCommandHandler.Invoke( Configuration.Config!, singleRun );
+			subCommandHandler.Invoke( Configuration.Config!, singleRunOrNoListen );
 
 		}
 

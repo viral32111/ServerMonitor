@@ -84,7 +84,7 @@
 			}
 		},
 		{
-			"name": "Launch Connector (Once, Debug)",
+			"name": "Launch Connector (No Listen, Debug)",
 			"type": "coreclr",
 			"request": "launch",
 			"preLaunchTask": "Build (Debug)",
@@ -117,7 +117,7 @@
 			}
 		},
 		{
-			"name": "Launch Connector (Once, Release)",
+			"name": "Launch Connector (No Listen, Release)",
 			"type": "coreclr",
 			"request": "launch",
 			"preLaunchTask": "Build (Release)",

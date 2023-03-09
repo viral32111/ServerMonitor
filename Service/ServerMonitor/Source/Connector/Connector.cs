@@ -46,7 +46,7 @@ namespace ServerMonitor.Connector {
 		public delegate void OnListeningStartedEventHandler( object sender, EventArgs e );
 
 		// The main entry-point for this mode
-		public void HandleCommand( Config configuration, bool runOnce ) {
+		public void HandleCommand( Config configuration, bool doNotListen ) {
 			logger.LogInformation( "Launched in connection point mode" );
 
 			// Create a HTTP listener that requires authentication - https://stackoverflow.com/a/56207032, https://learn.microsoft.com/en-us/dotnet/api/system.net.httplistener?view=net-8.0
@@ -105,7 +105,7 @@ namespace ServerMonitor.Connector {
 			logger.LogInformation( "Listening for API requests on '{0}'", baseUrl );
 
 			// Loop forever...
-			while ( httpListener.IsListening == true ) {
+			while ( httpListener.IsListening == true && doNotListen == false ) {
 
 				// Wait for a request to come in, or for the server to be stopped
 				Task<HttpListenerContext> getContextTask = httpListener.GetContextAsync();
@@ -117,12 +117,6 @@ namespace ServerMonitor.Connector {
 
 				// Process the request
 				ProcessHttpRequest( configuration, getContextTask.Result );
-
-				// Stop looping if we're only meant to run once (i.e. integration tests)
-				if ( runOnce == true ) {
-					logger.LogDebug( "Stopping API listener loop, as we're only running once." );
-					break;
-				};
 
 			}
 

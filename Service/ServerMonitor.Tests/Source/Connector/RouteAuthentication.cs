@@ -48,7 +48,7 @@ namespace ServerMonitor.Tests.Connector {
 				connector.StopServerCompletionSource.SetResult();
 			};
 
-			connector.HandleCommand( ServerMonitor.Configuration.Config, true );
+			connector.HandleCommand( ServerMonitor.Configuration.Config, false );
 		}
 		*/
 
@@ -99,7 +99,7 @@ namespace ServerMonitor.Tests.Connector {
 				connector.StopServerCompletionSource.SetResult();
 			};
 
-			connector.HandleCommand( ServerMonitor.Configuration.Config, true );
+			connector.HandleCommand( ServerMonitor.Configuration.Config, false );
 		}
 
 		[ Theory ]
@@ -149,7 +149,7 @@ namespace ServerMonitor.Tests.Connector {
 				connector.StopServerCompletionSource.SetResult();
 			};
 
-			connector.HandleCommand( ServerMonitor.Configuration.Config, true );
+			connector.HandleCommand( ServerMonitor.Configuration.Config, false );
 		}
 
 	}
