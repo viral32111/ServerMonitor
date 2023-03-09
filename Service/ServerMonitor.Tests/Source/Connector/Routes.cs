@@ -396,6 +396,54 @@ namespace ServerMonitor.Tests.Connector {
 			connector.HandleCommand( ServerMonitor.Configuration.Config, true );
 		}
 
+		[ Fact ]
+		public void TestGetServersRoute() {
+			ServerMonitor.Configuration.Load( Path.Combine( Directory.GetCurrentDirectory(), "config.json" ) );
+			Assert.NotNull( ServerMonitor.Configuration.Config );
+
+			ServerMonitor.Connector.Connector connector = new();
+
+			// Override the configured credentials
+			ServerMonitor.Configuration.Config.ConnectorCredentials = new Credential[] {
+				new() { Username = "CorrectUsername", Password = "CorrectPassword" }
+			};
+
+			string testUsername = ServerMonitor.Configuration.Config.ConnectorCredentials[ 0 ].Username;
+			string testPassword = ServerMonitor.Configuration.Config.ConnectorCredentials[ 0 ].Password;
+			string encodedCredentials = System.Convert.ToBase64String( System.Text.Encoding.UTF8.GetBytes( $"{ testUsername }:{ testPassword }" ) );
+
+			HttpRequestMessage httpRequest = new() {
+				Method = HttpMethod.Get,
+				RequestUri = new( $"http://{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }/servers" ),
+				Headers = {
+					{ "Host", $"{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }" },
+					{ "Authorization", $"Basic { encodedCredentials }" },
+					{ "Accept", "application/json" },
+					{ "Connection", "close" }
+				}
+			};
+
+			connector.OnListeningStarted += async ( object? _, EventArgs _ ) => {
+				using ( HttpResponseMessage httpResponse = await httpClient.SendAsync( httpRequest ) ) {
+					string content = await httpResponse.Content.ReadAsStringAsync();
+
+					Assert.True( httpResponse.StatusCode == HttpStatusCode.NotImplemented, "API response status code is incorrect" );
+					Assert.True( httpResponse.Headers.WwwAuthenticate.Count == 0, "API response includes WWW-Authenticate header" );
+					Assert.True( content.Length > 0, "API response does not contain content" );
+
+					JsonObject? jsonBody = JsonSerializer.Deserialize<JsonObject>( content );
+					Assert.NotNull( jsonBody );
+
+					Assert.True( jsonBody.ContainsKey( "errorCode" ), "API response JSON content does not contain the error code property" );
+					Assert.True( ( ServerMonitor.Connector.ErrorCode ) jsonBody[ "errorCode" ]!.GetValue<int>() == ServerMonitor.Connector.ErrorCode.ExampleData, "API response JSON content error code property is incorrect" );
+
+					Assert.True( jsonBody.ContainsKey( "data" ), "API response JSON content does not contain the data property" );
+				}
+			};
+
+			connector.HandleCommand( ServerMonitor.Configuration.Config, true );
+		}
+
 	}
 
 }
