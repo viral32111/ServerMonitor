@@ -92,16 +92,27 @@ namespace ServerMonitor.Connector {
 
 			// Forever process for incoming HTTP requests...
 			while ( httpListener.IsListening == true ) {
+				Console.WriteLine( "Request started" );
 				httpListener.BeginGetContext(
-					asyncResult => OnHttpRequest( asyncResult ),
+					( asyncResult ) => {
+						Console.WriteLine( "Request callback started" );
+						HttpListenerResponse resp = OnHttpRequest( asyncResult );
+						Console.WriteLine( "Request callback finished: {0}", resp.StatusCode );
+					},
 					new State {
 						HttpListener = httpListener,
 						Config = configuration
 					}
 				).AsyncWaitHandle.WaitOne();
+				Console.WriteLine( "Request finished" );
 
 				// Stop looping if we're only meant to run once
-				if ( runOnce == true ) break;
+				if ( runOnce == true ) {
+					Console.WriteLine( "We're only running once, breaking..." );
+					break;
+				} else {
+					Console.WriteLine( "Not running once, looping again!" );
+				}
 			}
 
 			// Stop the HTTP listener
@@ -112,6 +123,8 @@ namespace ServerMonitor.Connector {
 
 		// Processes an incoming HTTP request
 		private static HttpListenerResponse OnHttpRequest( IAsyncResult asyncResult ) {
+
+			Console.WriteLine( "hello world?" );
 
 			// Get the variables within state that was passed to us
 			if ( asyncResult.AsyncState == null ) throw new Exception( $"Invalid state '{ asyncResult.AsyncState }' passed to incoming request callback" );

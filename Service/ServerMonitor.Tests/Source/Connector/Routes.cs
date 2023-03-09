@@ -1,8 +1,10 @@
+using System;
 using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 using ServerMonitor.Connector;
@@ -12,21 +14,42 @@ namespace ServerMonitor.Tests.Connector {
 	public class Routes {
 
 		[ Theory ]
-		[ InlineData( "GET", "/hello" ) ]
+		[ InlineData( "Get", "/hello" ) ]
 		public async Task TestNoAuthentication( string method, string path ) {
 			ServerMonitor.Configuration.Load( Path.Combine( Directory.GetCurrentDirectory(), "config.json" ) );
 			Assert.NotNull( ServerMonitor.Configuration.Config );
 
-			ServerMonitor.Connector.Connector.HandleCommand( ServerMonitor.Configuration.Config, true );
-
-			HttpClient httpClient = new();
-			HttpResponseMessage response = await httpClient.SendAsync( new() {
-				Method = new( method ),
-				RequestUri = new( $"http://{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }{path}/" )
+			Task serverTask = Task.Run( () => {
+				ServerMonitor.Connector.Connector.HandleCommand( ServerMonitor.Configuration.Config, true );
 			} );
 
-			Assert.True( response.StatusCode == HttpStatusCode.Unauthorized, "API response status code is not 401 Unauthorized" );
-			Assert.True( response.Headers.WwwAuthenticate.Count == 1, "API response does not include WWW-Authenticate header" );
+			Console.WriteLine( "Waiting..." );
+			Thread.Sleep( 5000 );
+			Console.WriteLine( "Waited" );
+
+			string url = $"http://{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }{path}";
+			Console.WriteLine( "Url: {0}", url );
+
+			using ( HttpClient httpClient = new() ) {
+				Console.WriteLine( "Creating request..." );
+				HttpRequestMessage request = new() {
+					Method = new( method ),
+					RequestUri = new( url )
+				};
+				request.Headers.ConnectionClose = true;
+
+				Console.WriteLine( "Sending request..." );
+				using ( HttpResponseMessage response = await httpClient.GetAsync( url ) ) {
+					Console.WriteLine( "Response received" );
+					Console.WriteLine( "Status Code: {0}", ( int ) response.StatusCode );
+					Console.WriteLine( "Content: {0}", ( await response.Content.ReadAsStringAsync() ) );
+
+					Assert.True( response.StatusCode == HttpStatusCode.Unauthorized, "API response status code is not 401 Unauthorized" );
+					Assert.True( response.Headers.WwwAuthenticate.Count == 1, "API response does not include WWW-Authenticate header" );
+				}
+			}
+
+			await serverTask;
 		}
 
 		/*
