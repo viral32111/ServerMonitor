@@ -30,42 +30,52 @@ namespace ServerMonitor {
 			rootCommand.AddOption( extraConfigurationFilePathOption );
 
 			// Option not run forever
-			Option<bool> singleRunOrNoListenOption = new(
+			Option<bool> runOnceOption = new(
 				name: "--once",
-				description: "Run collector once then exit, or never start the connection-point listening loop, for testing.",
+				description: "Collect metrics once, or respond to one connection request, then exit.",
 				getDefaultValue: () => false
 			);
-			rootCommand.AddOption( singleRunOrNoListenOption );
+			rootCommand.AddOption( runOnceOption );
 
 			// Sub-command to start in "collector" mode
 			Command collectorCommand = new( "collector", "Expose metrics to Prometheus from configured sources." );
-			collectorCommand.SetHandler( ( string extraConfigurationFilePath, bool singleRunOrNoListen ) =>
-				HandleSubCommand( Collector.Collector.HandleCommand, extraConfigurationFilePath, singleRunOrNoListen ),
-				extraConfigurationFilePathOption, singleRunOrNoListenOption
-			);
+			collectorCommand.SetHandler( ( string extraConfigurationFilePath, bool runOnce ) => {
+				
+				// Load the configuration
+				Configuration.Load( extraConfigurationFilePath );
+				logger.LogInformation( "Loaded the configuration" );
+
+				// Call the handler
+				Collector.Collector.HandleCommand( Configuration.Config!, runOnce );
+
+			}, extraConfigurationFilePathOption, runOnceOption );
 			rootCommand.AddCommand( collectorCommand );
 	
 			// Sub-command to start in "connection point" mode
 			Command connectorCommand = new( "connector", "Serve metrics from Prometheus to the mobile app." );
-			connectorCommand.SetHandler( ( string extraConfigurationFilePath, bool singleRunOrNoListen ) =>
-				HandleSubCommand( new Connector.Connector().HandleCommand, extraConfigurationFilePath, singleRunOrNoListen ),
-				extraConfigurationFilePathOption, singleRunOrNoListenOption
-			);
 			rootCommand.AddCommand( connectorCommand );
 
+			// Option to not start listening for requests when in "connection point" mode
+			Option<bool> noListenOption = new(
+				name: "--no-listen",
+				description: "Do not start the request listening loop.",
+				getDefaultValue: () => false
+			);
+			connectorCommand.AddOption( noListenOption );
+
+			// Handler for the "connection point" mode sub-command
+			connectorCommand.SetHandler( ( string extraConfigurationFilePath, bool runOnce, bool noListen ) => {
+
+				// Load the configuration
+				Configuration.Load( extraConfigurationFilePath );
+				logger.LogInformation( "Loaded the configuration" );
+
+				// Call the handler
+				new Connector.Connector().HandleCommand( Configuration.Config!, runOnce, noListen );
+
+			}, extraConfigurationFilePathOption, runOnceOption, noListenOption );
+
 			return rootCommand.Invoke( arguments );
-		}
-
-		// Intermediary handler for all sub-commands, loads the configuration & then calls real sub-command handler
-		private static void HandleSubCommand( Action<Config, bool> subCommandHandler, string extraConfigurationFilePath, bool singleRunOrNoListen ) {
-
-			// Load the configuration
-			Configuration.Load( extraConfigurationFilePath );
-			logger.LogInformation( "Loaded the configuration" );
-
-			// Call the sub-command handler
-			subCommandHandler.Invoke( Configuration.Config!, singleRunOrNoListen );
-
 		}
 
 	}

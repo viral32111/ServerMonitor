@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
 using Microsoft.Extensions.Logging;
 using ServerMonitor.Connector.Route;
 using ServerMonitor.Connector.Helper;
@@ -46,7 +45,7 @@ namespace ServerMonitor.Connector {
 		public delegate void OnListeningStartedEventHandler( object sender, EventArgs e );
 
 		// The main entry-point for this mode
-		public void HandleCommand( Config configuration, bool doNotListen ) {
+		public void HandleCommand( Config configuration, bool runOnce, bool noListen ) {
 			logger.LogInformation( "Launched in connection point mode" );
 
 			// Create a HTTP listener that requires authentication - https://stackoverflow.com/a/56207032, https://learn.microsoft.com/en-us/dotnet/api/system.net.httplistener?view=net-8.0
@@ -105,7 +104,7 @@ namespace ServerMonitor.Connector {
 			logger.LogInformation( "Listening for API requests on '{0}'", baseUrl );
 
 			// Loop forever...
-			while ( httpListener.IsListening == true && doNotListen == false ) {
+			while ( httpListener.IsListening == true && noListen == false ) {
 
 				// Wait for a request to come in, or for the server to be stopped
 				Task<HttpListenerContext> getContextTask = httpListener.GetContextAsync();
@@ -117,6 +116,9 @@ namespace ServerMonitor.Connector {
 
 				// Process the request
 				ProcessHttpRequest( configuration, getContextTask.Result );
+
+				// End the loop if we're only running once
+				if ( runOnce == true ) break;
 
 			}
 

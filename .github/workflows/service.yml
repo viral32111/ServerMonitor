@@ -154,7 +154,7 @@ jobs:
           SERVER_MONITOR_CONNECTORCREDENTIALS__0__USERNAME: GitHub
           SERVER_MONITOR_CONNECTORCREDENTIALS__0__PASSWORD: GitHub
           SERVER_MONITOR_CONNECTORAUTHENTICATIONREALM: GitHub
-        run: dotnet ./Artifact/ServerMonitor.dll --once connector
+        run: dotnet ./Artifact/ServerMonitor.dll --once connector --no-listen
 
   docker:
     name: Docker
