@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Xunit;
 
 //[ assembly: CollectionBehavior( DisableTestParallelization = true ) ]
@@ -48,43 +50,57 @@ namespace ServerMonitor.Tests.Connector {
 			connector.HandleCommand( ServerMonitor.Configuration.Config, true );
 		}
 
-		/*
 		[ Theory ]
 		[ InlineData( "GET", "/hello" ) ]
-		public async Task TestBadUsernameAuthentication( string method, string path ) {
+		[ InlineData( "GET", "/server" ) ]
+		[ InlineData( "POST", "/server" ) ]
+		[ InlineData( "GET", "/servers" ) ]
+		[ InlineData( "POST", "/service" ) ]
+		public void TestIncorrectUsernameAuthentication( string method, string path ) {
 			ServerMonitor.Configuration.Load( Path.Combine( Directory.GetCurrentDirectory(), "config.json" ) );
 			Assert.NotNull( ServerMonitor.Configuration.Config );
 
-			ServerMonitor.Connector.Connector.HandleCommand( ServerMonitor.Configuration.Config, true );
+			ServerMonitor.Connector.Connector connector = new();
 
-			string username = "UnknownUsername";
-			string password = "IncorrectPassword";
+			string testUsername = "IncorrectUsername";
+			string testPassword = "IncorrectPassword";
+			string encodedCredentials = System.Convert.ToBase64String( System.Text.Encoding.UTF8.GetBytes( $"{ testUsername }:${ testPassword }" ) );
 
-			HttpRequestMessage request = new() {
+			HttpRequestMessage httpRequest = new() {
 				Method = new( method ),
-				RequestUri = new( $"http://{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }{path}/" )
+				RequestUri = new( $"http://{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }{path}" ),
+				Headers = {
+					{ "Host", $"{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }" },
+					{ "Authorization", $"Basic { encodedCredentials }" },
+					{ "Accept", "application/json" },
+					{ "Connection", "close" }
+				}
 			};
-			request.Headers.Authorization = new( "Basic", System.Convert.ToBase64String( System.Text.Encoding.UTF8.GetBytes( $"{ username }:${ password }" ) ) );
 
-			HttpClient httpClient = new();
-			HttpResponseMessage response = await httpClient.SendAsync( request );
-			string responseContent = await response.Content.ReadAsStringAsync();
+			connector.OnListeningStarted += async ( object? _, EventArgs _ ) => {
+				using ( HttpResponseMessage httpResponse = await httpClient.SendAsync( httpRequest ) ) {
+					string content = await httpResponse.Content.ReadAsStringAsync();
 
-			Assert.True( response.StatusCode == HttpStatusCode.Unauthorized, "API response status code is not 401 Unauthorized" );
-			Assert.True( response.Headers.WwwAuthenticate.Count == 1, "API response does not include WWW-Authenticate header" );
-			Assert.True( responseContent.Length > 0, "API response does not contain any content" );
+					Assert.True( httpResponse.StatusCode == HttpStatusCode.Unauthorized, "API response status code is not 401 Unauthorized" );
+					Assert.True( httpResponse.Headers.WwwAuthenticate.Count == 1, "API response does not include WWW-Authenticate header" );
+					Assert.True( content.Length > 0, "API response does not contain content" );
 
-			JsonObject? jsonBody = JsonSerializer.Deserialize<JsonObject>( responseContent );
-			Assert.NotNull( jsonBody );
+					JsonObject? jsonBody = JsonSerializer.Deserialize<JsonObject>( content );
+					Assert.NotNull( jsonBody );
 
-			Assert.True( jsonBody.ContainsKey( "errorCode" ), "API response JSON content does not contain the error code property" );
-			Assert.True( ( ErrorCode ) jsonBody[ "errorCode" ]!.GetValue<int>() == ErrorCode.UnknownUser, "API response JSON content error code property is incorrect" );
+					Assert.True( jsonBody.ContainsKey( "errorCode" ), "API response JSON content does not contain the error code property" );
+					Assert.True( ( ServerMonitor.Connector.ErrorCode ) jsonBody[ "errorCode" ]!.GetValue<int>() == ServerMonitor.Connector.ErrorCode.UnknownUser, "API response JSON content error code property is incorrect" );
 
-			Assert.True( jsonBody.ContainsKey( "data" ), "API response JSON content does not contain the data property" );
-			Assert.Null( jsonBody[ "data" ]!.GetValue<JsonNode?>() );
+					Assert.True( jsonBody.ContainsKey( "data" ), "API response JSON content does not contain the data property" );
+				}
+
+				connector.StopServerCompletionSource.SetResult();
+			};
+
+			connector.HandleCommand( ServerMonitor.Configuration.Config, true );
 		}
 
-		[ Theory ]
+		/*[ Theory ]
 		[ InlineData( "GET", "/hello" ) ]
 		public async Task TestBadPasswordAuthentication( string method, string path ) {
 			ServerMonitor.Configuration.Load( Path.Combine( Directory.GetCurrentDirectory(), "config.json" ) );
