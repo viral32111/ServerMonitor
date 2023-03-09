@@ -13,22 +13,22 @@ namespace ServerMonitor.Connector {
 	// Type alias for a route request handler, as its quite long - https://stackoverflow.com/a/161484
 	using RouteRequestHandler = Func<HttpListenerRequest, HttpListenerResponse, HttpListenerContext, HttpListenerResponse>;
 
-	public static class Connector {
+	public class Connector {
 
 		// Create the logger for this file
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Collector" );
 
-		// Dictionary of authentication credentials (usernames & hashed passwords)
-		private static readonly Dictionary<string, string> authenticationCredentials = new();
-
 		// Regular expression for the format to store hashed password data
 		private static readonly Regex hashedPasswordRegex = new( @"PBKDF2-(\d+)-(.+)-(.+)" );
 
+		// Dictionary of authentication credentials (usernames & hashed passwords)
+		private readonly Dictionary<string, string> authenticationCredentials = new();
+
 		// Will hold all the registered request handlers, by method & path
-		private static readonly Dictionary<string, Dictionary<string, RouteRequestHandler>> routes = new();
+		private readonly Dictionary<string, Dictionary<string, RouteRequestHandler>> routes = new();
 
 		// List of request handlers for API routes
-		private static readonly RouteRequestHandler[] routeRequestHandlers = new[] {
+		private readonly RouteRequestHandler[] routeRequestHandlers = new[] {
 			Hello.OnGetRequest, // GET /hello
 			Server.OnGetRequest, // GET /server?id=
 			Server.OnPostRequest, // POST /server?id=&action=
@@ -37,14 +37,14 @@ namespace ServerMonitor.Connector {
 		};
 
 		// Signal this to arbitrarily stop the HTTP listener
-		public static readonly TaskCompletionSource StopServerCompletionSource = new();
+		public readonly TaskCompletionSource StopServerCompletionSource = new();
 
 		// Event that fires when the HTTP listener starts listening
-		public static event EventHandler<EventArgs>? OnListeningStarted;
+		public event EventHandler<EventArgs>? OnListeningStarted;
 		public delegate void OnListeningStartedEventHandler( object sender, EventArgs e );
 
 		// The main entry-point for this mode
-		public static void HandleCommand( Config configuration, bool runOnce ) {
+		public void HandleCommand( Config configuration, bool runOnce ) {
 			logger.LogInformation( "Launched in connection point mode" );
 
 			// Create a HTTP listener that requires authentication - https://stackoverflow.com/a/56207032, https://learn.microsoft.com/en-us/dotnet/api/system.net.httplistener?view=net-8.0
@@ -131,7 +131,7 @@ namespace ServerMonitor.Connector {
 		}
 
 		// Processes an incoming HTTP request
-		private static HttpListenerResponse ProcessHttpRequest( Config configuration, HttpListenerContext context ) {
+		private HttpListenerResponse ProcessHttpRequest( Config configuration, HttpListenerContext context ) {
 
 			// Get the request & response
 			HttpListenerRequest request = context.Request;

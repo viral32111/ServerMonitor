@@ -13,9 +13,15 @@ namespace ServerMonitor.Tests.Connector {
 
 		[ Theory ]
 		[ InlineData( "GET", "/hello" ) ]
+		[ InlineData( "GET", "/server" ) ]
+		[ InlineData( "POST", "/server" ) ]
+		[ InlineData( "GET", "/servers" ) ]
+		[ InlineData( "POST", "/service" ) ]
 		public void TestNoAuthentication( string method, string path ) {
 			ServerMonitor.Configuration.Load( Path.Combine( Directory.GetCurrentDirectory(), "config.json" ) );
 			Assert.NotNull( ServerMonitor.Configuration.Config );
+
+			ServerMonitor.Connector.Connector connector = new();
 
 			HttpRequestMessage httpRequest = new() {
 				Method = new( method ),
@@ -27,7 +33,7 @@ namespace ServerMonitor.Tests.Connector {
 				}
 			};
 
-			ServerMonitor.Connector.Connector.OnListeningStarted += async ( object? _, EventArgs _ ) => {
+			connector.OnListeningStarted += async ( object? _, EventArgs _ ) => {
 				using ( HttpResponseMessage httpResponse = await httpClient.SendAsync( httpRequest ) ) {
 					string content = await httpResponse.Content.ReadAsStringAsync();
 
@@ -36,10 +42,10 @@ namespace ServerMonitor.Tests.Connector {
 					Assert.True( content.Length == 0, "API response contains content" );
 				}
 
-				ServerMonitor.Connector.Connector.StopServerCompletionSource.SetResult();
+				connector.StopServerCompletionSource.SetResult();
 			};
 
-			ServerMonitor.Connector.Connector.HandleCommand( ServerMonitor.Configuration.Config, true );
+			connector.HandleCommand( ServerMonitor.Configuration.Config, true );
 		}
 
 		/*

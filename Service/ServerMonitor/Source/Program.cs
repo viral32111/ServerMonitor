@@ -51,7 +51,7 @@ namespace ServerMonitor {
 			// Sub-command to start in "connection point" mode
 			Command connectorCommand = new( "connector", "Serve metrics from Prometheus to the mobile app." );
 			connectorCommand.SetHandler( ( string extraConfigurationFilePath, bool singleRun ) =>
-				HandleSubCommand( Connector.Connector.HandleCommand, extraConfigurationFilePath, singleRun ),
+				HandleSubCommand( new Connector.Connector().HandleCommand, extraConfigurationFilePath, singleRun ),
 				extraConfigurationFilePathOption, singleRunOption
 			);
 			rootCommand.AddCommand( connectorCommand );
