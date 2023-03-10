@@ -1,14 +1,19 @@
 using System;
 using System.Security.Cryptography;
+using Microsoft.Extensions.Logging;
 
 namespace ServerMonitor.Connector.Helper {
 	
+	// Helper class to encapsulate hashing
 	public static class Hash {
+
+		// Create the logger for this file
+		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Helper/Hash" );
 
 		// Secure random number generator for generating hash salts
 		private static readonly RandomNumberGenerator randomNumberGenerator = RandomNumberGenerator.Create();
 
-		// Hashes text using the PBKDF2 algorithm
+		// Hashes text using the PBKDF2 algorithm and returns it in our custom format for storing hashed passwords
 		public static string PBKDF2( string text, int iterationCount = 1000, byte[]? saltBytes = null ) {
 
 			// Generate fresh salt if none was provided
@@ -26,6 +31,9 @@ namespace ServerMonitor.Connector.Helper {
 			}
 
 		}
+
+		// Hashes text using the SHA1 algorithm
+		public static string SHA1( string text ) => Convert.ToHexString( System.Security.Cryptography.SHA1.Create().ComputeHash( System.Text.Encoding.UTF8.GetBytes( text ) ) ).ToLower();
 
 	}
 

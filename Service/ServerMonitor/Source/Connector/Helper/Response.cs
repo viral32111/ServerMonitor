@@ -1,10 +1,13 @@
 using System.Net;
 using System.Text;
 using System.Text.Json.Nodes;
+using Microsoft.Extensions.Logging;
 
 namespace ServerMonitor.Connector.Helper {
 	
 	public static class Response {
+
+		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Helper/Response" );
 
 		public static void SendText( HttpListenerResponse response, HttpStatusCode statusCode, string body ) {
 			response.StatusCode = ( int ) statusCode;
