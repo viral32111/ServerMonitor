@@ -66,22 +66,6 @@ namespace ServerMonitor.Connector.Route {
 
 			}
 
-			/*
-			JsonArray serversWithUptime = await Helper.Prometheus.Series( configuration, "server_monitor_resource_uptime_seconds" );
-
-			foreach ( JsonObject? serverWithUptime in serversWithUptime ) {
-				if ( serverWithUptime == null ) throw new Exception( "Null object in Prometheus API series response for servers with uptime" );
-
-				if ( serverWithUptime.TryGetPropertyValue( "instance", out JsonNode? instanceNode ) == false || instanceNode == null ) throw new Exception( "No instance property on object in Prometheus API series response for servers with uptime" );
-				string targetAddress = instanceNode.AsValue().GetValue<string>();
-
-				if ( serverWithUptime.TryGetPropertyValue( "job", out JsonNode? jobNode ) == false || jobNode == null ) throw new Exception( "No job property on object in Prometheus API series response for servers with uptime" );
-				string targetName = jobNode.AsValue().GetValue<string>();
-
-				DateTimeOffset lastUpdate = await Helper.Prometheus.GetTargetLastUpdate( configuration, targetAddress );
-			}
-			*/
-
 			// Return the list of servers
 			return Response.SendJson( response, data: servers );
 
