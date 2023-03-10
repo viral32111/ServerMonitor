@@ -76,25 +76,28 @@ namespace ServerMonitor {
 	// Structure of the configuration file
 	public sealed class Config {
 
-		// Prometheus metrics server
+		// Prometheus options
 		public required string PrometheusListenAddress { get; set; } = "127.0.0.1";
 		public required int PrometheusListenPort { get; set; } = 5000;
 		public required string PrometheusListenPath { get; set; } = "metrics/";
 		public required string PrometheusMetricsPrefix { get; set; } = "server_monitor";
+		public required string PrometheusAPIAddress { get; set; } = "127.0.0.1";
+		public required int PrometheusAPIPort { get; set; } = 9090;
+		public required float PrometheusAPIVersion { get; set; } = 1f;
 
-		// Resource metrics
+		// Resource metrics options
 		public required bool CollectProcessorMetrics { get; set; } = true;
 		public required bool CollectMemoryMetrics { get; set; } = true;
 		public required bool CollectDiskMetrics { get; set; } = true;
 		public required bool CollectNetworkMetrics { get; set; } = true;
 		public required bool CollectInformationMetrics { get; set; } = true;
-		public required bool CollectPowerMetrics { get; set; } = false;
-		public required bool CollectFanMetrics { get; set; } = false;
+		public required bool CollectPowerMetrics { get; set; } = false; // Not implemented yet!
+		public required bool CollectFanMetrics { get; set; } = false; // Not implemented yet!
 
-		// Service metrics
+		// Service metrics options
 		public required bool CollectServiceMetrics { get; set; } = true;
 
-		// Docker metrics
+		// Docker metrics options
 		public required bool CollectDockerMetrics { get; set; } = true;
 		public required string DockerEngineAPIAddress { get; set; } = "tcp://127.0.0.1:2375";
 		public required float DockerEngineAPIVersion { get; set; } = 1.41f;
@@ -106,16 +109,13 @@ namespace ServerMonitor {
 		public required string SNMPCommunity { get; set; } = "public";
 		public required SNMPAgent[] SNMPAgents { get; set; } = Array.Empty<SNMPAgent>();
 
-		// Connection point options
+		// Connection-point mode options
 		public required string ConnectorListenAddress { get; set; } = "127.0.0.1";
 		public required int ConnectorListenPort { get; set; } = 8080;
-		public required Credential[] ConnectorCredentials { get; set; } = Array.Empty<Credential>();
+		public required Credential[] ConnectorAuthenticationCredentials { get; set; } = Array.Empty<Credential>();
 		public required string ConnectorAuthenticationRealm { get; set; } = "Example";
-		public required string ConnectorPrometheusAPIAddress { get; set; } = "127.0.0.1";
-		public required int ConnectorPrometheusAPIPort { get; set; } = 9090;
-		public required float ConnectorPrometheusAPIVersion { get; set; } = 1f;
 
-		// Cloudflare Zero Trust options
+		// Cloudflare Access options
 		public required string CloudflareAccessServiceTokenId { get; set; } = "";
 		public required string CloudflareAccessServiceTokenSecret { get; set; } = "";
 
@@ -125,11 +125,13 @@ namespace ServerMonitor {
 
 	}
 
+	// Address & port combination for an SNMP agent
 	public sealed class SNMPAgent {
 		public required string Address { get; set; } = "localhost";
 		public required int Port { get; set; } = 161;
 	}
 
+	// Username & password combination for connection-point API authentication
 	public sealed class Credential {
 		public required string Username { get; set; } = "";
 		public required string Password { get; set; } = "";

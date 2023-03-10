@@ -1,6 +1,5 @@
 using System;
 using System.Net;
-using System.Net.Http;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
@@ -77,7 +76,7 @@ namespace ServerMonitor.Connector {
 			}
 
 			// Loop through the configured credentials...
-			foreach ( Credential credential in configuration.ConnectorCredentials ) {
+			foreach ( Credential credential in configuration.ConnectorAuthenticationCredentials ) {
 
 				// Skip if this user has already been added
 				if ( authenticationCredentials.ContainsKey( credential.Username ) == true ) {

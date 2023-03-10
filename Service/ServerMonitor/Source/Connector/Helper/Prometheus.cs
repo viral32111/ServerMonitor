@@ -26,7 +26,7 @@ namespace ServerMonitor.Connector.Helper {
 		public static async Task<T> Request<T>( Config configuration, string path, Dictionary<string, string?>? parameters = null ) {
 
 			// Construct the base URL & query string parameter
-			string baseUrl = $"{ ( configuration.ConnectorPrometheusAPIPort == 443 ? "https" : "http" ) }://{ configuration.ConnectorPrometheusAPIAddress }:{ configuration.ConnectorPrometheusAPIPort }/api/v{ configuration.ConnectorPrometheusAPIVersion }";
+			string baseUrl = $"{ ( configuration.PrometheusAPIPort == 443 ? "https" : "http" ) }://{ configuration.PrometheusAPIAddress }:{ configuration.PrometheusAPIPort }/api/v{ configuration.PrometheusAPIVersion }";
 			string queryString = CreateQueryString( parameters ?? new() );
 
 			// Create the HTTP request

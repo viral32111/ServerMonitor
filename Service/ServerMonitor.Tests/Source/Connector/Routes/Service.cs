@@ -18,8 +18,8 @@ namespace ServerMonitor.Tests.Connector.Routes {
 
 			ServerMonitor.Connector.Connector connector = new();
 
-			string testUsername = ServerMonitor.Configuration.Config.ConnectorCredentials[ 0 ].Username;
-			string testPassword = ServerMonitor.Configuration.Config.ConnectorCredentials[ 0 ].Password;
+			string testUsername = ServerMonitor.Configuration.Config.ConnectorAuthenticationCredentials[ 0 ].Username;
+			string testPassword = ServerMonitor.Configuration.Config.ConnectorAuthenticationCredentials[ 0 ].Password;
 			string encodedCredentials = System.Convert.ToBase64String( System.Text.Encoding.UTF8.GetBytes( $"{ testUsername }:{ testPassword }" ) );
 
 			HttpRequestMessage httpRequest = new() {
@@ -62,12 +62,12 @@ namespace ServerMonitor.Tests.Connector.Routes {
 			ServerMonitor.Connector.Connector connector = new();
 
 			// Override the configured credentials
-			ServerMonitor.Configuration.Config.ConnectorCredentials = new Credential[] {
+			ServerMonitor.Configuration.Config.ConnectorAuthenticationCredentials = new Credential[] {
 				new() { Username = "CorrectUsername", Password = "CorrectPassword" }
 			};
 
-			string testUsername = ServerMonitor.Configuration.Config.ConnectorCredentials[ 0 ].Username;
-			string testPassword = ServerMonitor.Configuration.Config.ConnectorCredentials[ 0 ].Password;
+			string testUsername = ServerMonitor.Configuration.Config.ConnectorAuthenticationCredentials[ 0 ].Username;
+			string testPassword = ServerMonitor.Configuration.Config.ConnectorAuthenticationCredentials[ 0 ].Password;
 			string encodedCredentials = System.Convert.ToBase64String( System.Text.Encoding.UTF8.GetBytes( $"{ testUsername }:{ testPassword }" ) );
 
 			HttpRequestMessage httpRequest = new() {

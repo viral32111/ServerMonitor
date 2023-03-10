@@ -108,7 +108,7 @@ namespace ServerMonitor.Tests.Connector {
 
 			ServerMonitor.Connector.Connector connector = new();
 
-			string testUsername = ServerMonitor.Configuration.Config.ConnectorCredentials[ 0 ].Username;
+			string testUsername = ServerMonitor.Configuration.Config.ConnectorAuthenticationCredentials[ 0 ].Username;
 			string testPassword = "IncorrectPassword";
 			string encodedCredentials = System.Convert.ToBase64String( System.Text.Encoding.UTF8.GetBytes( $"{ testUsername }:{ testPassword }" ) );
 

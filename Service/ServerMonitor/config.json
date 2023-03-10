@@ -2,6 +2,9 @@
 	"PrometheusListenAddress": "127.0.0.1",
 	"PrometheusListenPort": 5000,
 	"PrometheusListenPath": "metrics/",
+	"PrometheusAPIAddress": "127.0.0.1",
+	"PrometheusAPIPort": 9090,
+	"PrometheusAPIVersion": 1,
 	"PrometheusMetricsPrefix": "server_monitor",
 	"CollectProcessorMetrics": true,
 	"CollectMemoryMetrics": true,
@@ -21,13 +24,10 @@
 	"SNMPAgents": [],
 	"ConnectorListenAddress": "127.0.0.1",
 	"ConnectorListenPort": 8080,
-	"ConnectorCredentials": [
+	"ConnectorAuthenticationCredentials": [
 		{ "Username": "JohnDoe", "Password": "P4ssw0rd!" }
 	],
 	"ConnectorAuthenticationRealm": "Example",
-	"ConnectorPrometheusAPIAddress": "127.0.0.1",
-	"ConnectorPrometheusAPIPort": 9090,
-	"ConnectorPrometheusAPIVersion": 1,
 	"CloudflareAccessServiceTokenId": "",
 	"CloudflareAccessServiceTokenSecret": "",
 	"HTTPClientTimeoutSeconds": 30,
