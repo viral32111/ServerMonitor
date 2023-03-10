@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using Microsoft.Extensions.Logging; // https://learn.microsoft.com/en-us/dotnet/core/extensions/console-log-formatter
@@ -17,6 +18,9 @@ namespace ServerMonitor.Collector {
 		// Entry-point for the "collector" sub-command...
 		public static void HandleCommand( Config configuration, bool singleRun ) {
 			logger.LogInformation( "Launched in collector mode" );
+
+			// Setup the global HTTP client
+			Program.SetupHTTPClient();
 
 			// Fail if we're not running as administrator/root, and a collector requires it
 			if ( IsRunningAsAdmin() == false ) {

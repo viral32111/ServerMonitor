@@ -48,6 +48,9 @@ namespace ServerMonitor.Connector {
 		public void HandleCommand( Config configuration, bool runOnce, bool noListen ) {
 			logger.LogInformation( "Launched in connection point mode" );
 
+			// Setup the global HTTP client
+			Program.SetupHTTPClient();
+
 			// Create a HTTP listener that requires authentication - https://stackoverflow.com/a/56207032, https://learn.microsoft.com/en-us/dotnet/api/system.net.httplistener?view=net-8.0
 			HttpListener httpListener = new() {
 				AuthenticationSchemes = AuthenticationSchemes.Basic,

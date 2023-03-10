@@ -121,7 +121,7 @@ namespace ServerMonitor {
 
 		// HTTP client options
 		public required int HTTPClientTimeoutSeconds { get; set; } = 30;
-		public required string HTTPClientUserAgent { get; set; } = "Server Monitor (https://viral32111.com; contact@viral32111.com)";
+		public required string HTTPClientUserAgent { get; set; } = "ServerMonitor/0.0.0 (https://viral32111.com; contact@viral32111.com)";
 
 	}
 

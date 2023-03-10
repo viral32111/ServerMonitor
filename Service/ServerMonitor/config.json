@@ -31,5 +31,5 @@
 	"CloudflareAccessServiceTokenId": "",
 	"CloudflareAccessServiceTokenSecret": "",
 	"HTTPClientTimeoutSeconds": 30,
-	"HTTPClientUserAgent": "Server Monitor (https://viral32111.com; contact@viral32111.com)"
+	"HTTPClientUserAgent": "ServerMonitor/0.0.0 (https://viral32111.com; contact@viral32111.com)"
 }

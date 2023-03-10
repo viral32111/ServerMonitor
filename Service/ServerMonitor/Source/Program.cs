@@ -2,6 +2,7 @@
 using System.IO;
 using System.Net.Http;
 using System.Reflection;
+using System.Collections.Generic;
 using System.CommandLine; // https://learn.microsoft.com/en-us/dotnet/standard/commandline/get-started-tutorial
 using Microsoft.Extensions.Logging; // https://learn.microsoft.com/en-us/dotnet/core/extensions/console-log-formatter
 
@@ -12,13 +13,9 @@ namespace ServerMonitor {
 		// Create the logger for this file
 		private static readonly ILogger logger = Logging.CreateLogger( "Program" );
 
-		// Setup a HTTP client for everything to use - https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient?view=net-7.0
-		public static readonly HttpClient HttpClient = new() {
-			DefaultRequestHeaders = {
-				{ "Accept", "application/json, */*" },
-				{ "Connection", "close" }
-			}
-		};
+		// Create a HTTP client for everything to use - https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient?view=net-7.0
+		public static readonly HttpClient HttpClient = new();
+		private static bool IsHTTPClientSetup = false;
 
 		public static int Main( string[] arguments ) {
 
@@ -54,14 +51,6 @@ namespace ServerMonitor {
 				Configuration.Load( extraConfigurationFilePath );
 				logger.LogInformation( "Loaded the configuration" );
 
-				// Set the request timeout & user agent on the HTTP client
-				HttpClient.Timeout = TimeSpan.FromSeconds( Configuration.Config!.HTTPClientTimeoutSeconds );
-				HttpClient.DefaultRequestHeaders.Add( "User-Agent", Configuration.Config!.HTTPClientUserAgent );
-
-				// Add Cloudflare Access headers to the HTTP client, if configured
-				if ( string.IsNullOrWhiteSpace( Configuration.Config!.CloudflareAccessServiceTokenId ) == false ) HttpClient.DefaultRequestHeaders.Add( "CF-Access-Client-Id", Configuration.Config!.CloudflareAccessServiceTokenId );
-				if ( string.IsNullOrWhiteSpace( Configuration.Config!.CloudflareAccessServiceTokenSecret ) == false ) HttpClient.DefaultRequestHeaders.Add( "CF-Access-Client-Secret", Configuration.Config!.CloudflareAccessServiceTokenSecret );
-
 				// Call the handler
 				Collector.Collector.HandleCommand( Configuration.Config!, runOnce );
 
@@ -87,20 +76,43 @@ namespace ServerMonitor {
 				Configuration.Load( extraConfigurationFilePath );
 				logger.LogInformation( "Loaded the configuration" );
 
-				// Set the request timeout & user agent on the HTTP client
-				HttpClient.Timeout = TimeSpan.FromSeconds( Configuration.Config!.HTTPClientTimeoutSeconds );
-				HttpClient.DefaultRequestHeaders.Add( "User-Agent", Configuration.Config!.HTTPClientUserAgent );
-
-				// Add Cloudflare Access headers to the HTTP client, if configured
-				if ( string.IsNullOrWhiteSpace( Configuration.Config!.CloudflareAccessServiceTokenId ) == false ) HttpClient.DefaultRequestHeaders.Add( "CF-Access-Client-Id", Configuration.Config!.CloudflareAccessServiceTokenId );
-				if ( string.IsNullOrWhiteSpace( Configuration.Config!.CloudflareAccessServiceTokenSecret ) == false ) HttpClient.DefaultRequestHeaders.Add( "CF-Access-Client-Secret", Configuration.Config!.CloudflareAccessServiceTokenSecret );
-
 				// Call the handler
 				new Connector.Connector().HandleCommand( Configuration.Config!, runOnce, noListen );
 
 			}, extraConfigurationFilePathOption, runOnceOption, noListenOption );
 
 			return rootCommand.Invoke( arguments );
+		}
+
+		// Sets up the HTTP client
+		public static void SetupHTTPClient() {
+
+			// Do not run if already setup
+			if ( Program.IsHTTPClientSetup == true ) return;
+
+			// Set the request timeout
+			Program.HttpClient.Timeout = TimeSpan.FromSeconds( Configuration.Config!.HTTPClientTimeoutSeconds );
+
+			// Wipe all default headers
+			Program.HttpClient.DefaultRequestHeaders.Clear();
+
+			// Add headers to accept JSON & close the connection after the request
+			Program.HttpClient.DefaultRequestHeaders.Add( "Accept", "application/json, */*" );
+			Program.HttpClient.DefaultRequestHeaders.Add( "Connection", "close" );
+
+			// Add our custom user agent, without running it through the normalisation process
+			Program.HttpClient.DefaultRequestHeaders.TryAddWithoutValidation( "User-Agent", Configuration.Config!.HTTPClientUserAgent );
+
+			// Add Cloudflare Access headers to the HTTP client, if configured
+			if ( string.IsNullOrWhiteSpace( Configuration.Config!.CloudflareAccessServiceTokenId ) == false ) Program.HttpClient.DefaultRequestHeaders.Add( "CF-Access-Client-Id", Configuration.Config!.CloudflareAccessServiceTokenId );
+			if ( string.IsNullOrWhiteSpace( Configuration.Config!.CloudflareAccessServiceTokenSecret ) == false ) Program.HttpClient.DefaultRequestHeaders.Add( "CF-Access-Client-Secret", Configuration.Config!.CloudflareAccessServiceTokenSecret );
+
+			// Print all default request headers
+			foreach ( KeyValuePair<string, IEnumerable<string>> header in Program.HttpClient.DefaultRequestHeaders ) logger.LogDebug( "Default HTTP client request header: '{0}' = '{1}'", header.Key, string.Join( ", ", header.Value ) );
+
+			// Set the lock
+			Program.IsHTTPClientSetup = true;
+
 		}
 
 	}
