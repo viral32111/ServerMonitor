@@ -2,6 +2,7 @@ using System;
 using System.Web;
 using System.Net;
 using System.Text.Json.Nodes;
+using System.Threading.Tasks;
 using System.Collections.Specialized;
 using Microsoft.Extensions.Logging;
 using ServerMonitor.Connector.Helper;
@@ -14,7 +15,7 @@ namespace ServerMonitor.Connector.Route {
 
 		// TODO: Return data for a specific server
 		[ Route( "GET", "/server" ) ]
-		public static HttpListenerResponse OnGetRequest( HttpListenerRequest request, HttpListenerResponse response, HttpListenerContext context ) {
+		public static async Task<HttpListenerResponse> OnGetRequest( Config configuration, HttpListenerRequest request, HttpListenerResponse response, HttpListenerContext context ) {
 			string? queryString = request.Url?.Query;
 			if ( string.IsNullOrWhiteSpace( queryString ) ) return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.NoParameters );
 
@@ -187,7 +188,7 @@ namespace ServerMonitor.Connector.Route {
 
 		// TODO: Executing an action on a server
 		[ Route( "POST", "/server" ) ]
-		public static HttpListenerResponse OnPostRequest( HttpListenerRequest request, HttpListenerResponse response, HttpListenerContext context ) {
+		public static async Task<HttpListenerResponse> OnPostRequest( Config configuration, HttpListenerRequest request, HttpListenerResponse response, HttpListenerContext context ) {
 			string? queryString = request.Url?.Query;
 			if ( string.IsNullOrWhiteSpace( queryString ) ) return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.NoParameters );
 
