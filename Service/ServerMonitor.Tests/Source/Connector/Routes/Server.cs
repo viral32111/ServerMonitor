@@ -11,8 +11,6 @@ namespace ServerMonitor.Tests.Connector.Routes {
 	[ Collection( "WebServer" ) ]
 	public class Server {
 
-		private static readonly HttpClient httpClient = new();
-
 		[ Fact ]
 		public void TestGetWithoutParameters() {
 			ServerMonitor.Configuration.Load( Path.Combine( Directory.GetCurrentDirectory(), "config.json" ) );
@@ -31,17 +29,15 @@ namespace ServerMonitor.Tests.Connector.Routes {
 
 			HttpRequestMessage httpRequest = new() {
 				Method = HttpMethod.Get,
-				RequestUri = new( $"http://{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }/server" ),
+				RequestUri = new( $"{ ( ServerMonitor.Configuration.Config.ConnectorListenPort == 443 ? "https" : "http" ) }://{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }/server" ),
 				Headers = {
 					{ "Host", $"{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }" },
-					{ "Authorization", $"Basic { encodedCredentials }" },
-					{ "Accept", "application/json" },
-					{ "Connection", "close" }
+					{ "Authorization", $"Basic { encodedCredentials }" }
 				}
 			};
 
 			connector.OnListeningStarted += async ( object? _, EventArgs _ ) => {
-				using ( HttpResponseMessage httpResponse = await httpClient.SendAsync( httpRequest ) ) {
+				using ( HttpResponseMessage httpResponse = await Program.HttpClient.SendAsync( httpRequest ) ) {
 					string content = await httpResponse.Content.ReadAsStringAsync();
 
 					Assert.True( httpResponse.StatusCode == HttpStatusCode.BadRequest, "API response status code is incorrect" );
@@ -81,17 +77,15 @@ namespace ServerMonitor.Tests.Connector.Routes {
 
 			HttpRequestMessage httpRequest = new() {
 				Method = HttpMethod.Get,
-				RequestUri = new( $"http://{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }/server?id=example" ),
+				RequestUri = new( $"{ ( ServerMonitor.Configuration.Config.ConnectorListenPort == 443 ? "https" : "http" ) }://{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }/server?id=example" ),
 				Headers = {
 					{ "Host", $"{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }" },
-					{ "Authorization", $"Basic { encodedCredentials }" },
-					{ "Accept", "application/json" },
-					{ "Connection", "close" }
+					{ "Authorization", $"Basic { encodedCredentials }" }
 				}
 			};
 
 			connector.OnListeningStarted += async ( object? _, EventArgs _ ) => {
-				using ( HttpResponseMessage httpResponse = await httpClient.SendAsync( httpRequest ) ) {
+				using ( HttpResponseMessage httpResponse = await Program.HttpClient.SendAsync( httpRequest ) ) {
 					string content = await httpResponse.Content.ReadAsStringAsync();
 
 					Assert.True( httpResponse.StatusCode == HttpStatusCode.NotImplemented, "API response status code is incorrect" );
@@ -131,17 +125,15 @@ namespace ServerMonitor.Tests.Connector.Routes {
 
 			HttpRequestMessage httpRequest = new() {
 				Method = HttpMethod.Post,
-				RequestUri = new( $"http://{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }/server" ),
+				RequestUri = new( $"{ ( ServerMonitor.Configuration.Config.ConnectorListenPort == 443 ? "https" : "http" ) }://{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }/server" ),
 				Headers = {
 					{ "Host", $"{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }" },
-					{ "Authorization", $"Basic { encodedCredentials }" },
-					{ "Accept", "application/json" },
-					{ "Connection", "close" }
+					{ "Authorization", $"Basic { encodedCredentials }" }
 				}
 			};
 
 			connector.OnListeningStarted += async ( object? _, EventArgs _ ) => {
-				using ( HttpResponseMessage httpResponse = await httpClient.SendAsync( httpRequest ) ) {
+				using ( HttpResponseMessage httpResponse = await Program.HttpClient.SendAsync( httpRequest ) ) {
 					string content = await httpResponse.Content.ReadAsStringAsync();
 
 					Assert.True( httpResponse.StatusCode == HttpStatusCode.BadRequest, "API response status code is incorrect" );
@@ -176,17 +168,15 @@ namespace ServerMonitor.Tests.Connector.Routes {
 
 			HttpRequestMessage httpRequest = new() {
 				Method = HttpMethod.Post,
-				RequestUri = new( $"http://{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }/server?id=example&action=example" ),
+				RequestUri = new( $"{ ( ServerMonitor.Configuration.Config.ConnectorListenPort == 443 ? "https" : "http" ) }://{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }/server?id=example&action=example" ),
 				Headers = {
 					{ "Host", $"{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }" },
-					{ "Authorization", $"Basic { encodedCredentials }" },
-					{ "Accept", "application/json" },
-					{ "Connection", "close" }
+					{ "Authorization", $"Basic { encodedCredentials }" }
 				}
 			};
 
 			connector.OnListeningStarted += async ( object? _, EventArgs _ ) => {
-				using ( HttpResponseMessage httpResponse = await httpClient.SendAsync( httpRequest ) ) {
+				using ( HttpResponseMessage httpResponse = await Program.HttpClient.SendAsync( httpRequest ) ) {
 					string content = await httpResponse.Content.ReadAsStringAsync();
 
 					Assert.True( httpResponse.StatusCode == HttpStatusCode.NotImplemented, "API response status code is incorrect" );

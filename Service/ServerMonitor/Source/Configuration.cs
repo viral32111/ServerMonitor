@@ -115,6 +115,14 @@ namespace ServerMonitor {
 		public required int ConnectorPrometheusAPIPort { get; set; } = 9090;
 		public required float ConnectorPrometheusAPIVersion { get; set; } = 1f;
 
+		// Cloudflare Zero Trust options
+		public required string CloudflareAccessServiceTokenId { get; set; } = "";
+		public required string CloudflareAccessServiceTokenSecret { get; set; } = "";
+
+		// HTTP client options
+		public required int HTTPClientTimeoutSeconds { get; set; } = 30;
+		public required string HTTPClientUserAgent { get; set; } = "Server Monitor (https://viral32111.com; contact@viral32111.com)";
+
 	}
 
 	public sealed class SNMPAgent {

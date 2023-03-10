@@ -25,22 +25,19 @@ namespace ServerMonitor.Connector.Helper {
 		// Sends a request to the Prometheus API
 		public static async Task<T> Request<T>( Config configuration, string path, Dictionary<string, string?>? parameters = null ) {
 
-			// Construct the base URL & query string parameters
-			string baseUrl = $"http://{ configuration.ConnectorPrometheusAPIAddress }:{configuration.ConnectorPrometheusAPIPort }/api/v{ configuration.ConnectorPrometheusAPIVersion }";
+			// Construct the base URL & query string parameter
+			string baseUrl = $"{ ( configuration.ConnectorPrometheusAPIPort == 443 ? "https" : "http" ) }://{ configuration.ConnectorPrometheusAPIAddress }:{ configuration.ConnectorPrometheusAPIPort }/api/v{ configuration.ConnectorPrometheusAPIVersion }";
 			string queryString = CreateQueryString( parameters ?? new() );
 
 			// Create the HTTP request
 			HttpRequestMessage httpRequest = new() {
 				Method = HttpMethod.Get,
-				RequestUri = new Uri( $"{ baseUrl }/{ path }?{ queryString }" ),
-				Headers = {
-					{ "Accept", "application/json" }
-				}
+				RequestUri = new Uri( $"{ baseUrl }/{ path }?{ queryString }" )
 			};
 
 			// Send the HTTP request & wait for the response
 			logger.LogDebug( "Sending API request '{0}' '{1}' to Prometheus", httpRequest.Method, httpRequest.RequestUri );
-			HttpResponseMessage httpResponse = await Connector.HttpClient.SendAsync( httpRequest );
+			HttpResponseMessage httpResponse = await Program.HttpClient.SendAsync( httpRequest );
 			httpResponse.EnsureSuccessStatusCode();
 
 			// Decode the response as JSON

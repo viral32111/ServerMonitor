@@ -27,5 +27,9 @@
 	"ConnectorAuthenticationRealm": "Example",
 	"ConnectorPrometheusAPIAddress": "127.0.0.1",
 	"ConnectorPrometheusAPIPort": 9090,
-	"ConnectorPrometheusAPIVersion": 1
+	"ConnectorPrometheusAPIVersion": 1,
+	"CloudflareAccessServiceTokenId": "",
+	"CloudflareAccessServiceTokenSecret": "",
+	"HTTPClientTimeoutSeconds": 30,
+	"HTTPClientUserAgent": "Server Monitor (https://viral32111.com; contact@viral32111.com)"
 }

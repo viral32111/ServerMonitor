@@ -31,14 +31,6 @@ namespace ServerMonitor.Collector {
 
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Docker" );
 
-		// Setup a basic HTTP client for talking to the Docker Engine API - https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient?view=net-7.0
-		private static readonly HttpClient httpClient = new() {
-			DefaultRequestHeaders = {
-				{ "Accept", "application/json" },
-				{ "User-Agent", "Server Monitor" }
-			}
-		};
-
 		// Holds the exported Prometheus metrics
 		public readonly Gauge StatusCode;
 		public readonly Gauge ExitCode;
@@ -121,8 +113,8 @@ namespace ServerMonitor.Collector {
 			pipeStream.Write( Encoding.UTF8.GetBytes( string.Concat( string.Join( "\r\n", new[] {
 				$"{ method } { path } HTTP/1.0",
 				$"Host: localhost",
-				$"Accept: ${ httpClient.DefaultRequestHeaders.Accept }",
-				$"User-Agent: { httpClient.DefaultRequestHeaders.UserAgent }",
+				$"Accept: ${ Program.HttpClient.DefaultRequestHeaders.Accept }",
+				$"User-Agent: { Program.HttpClient.DefaultRequestHeaders.UserAgent }",
 				"Connection: close"
 			} ), "\r\n\r\n" ) ) );
 			pipeStream.WaitForPipeDrain();
@@ -181,8 +173,8 @@ namespace ServerMonitor.Collector {
 				unixSocket.Send( Encoding.UTF8.GetBytes( string.Concat( string.Join( "\r\n", new[] {
 					$"GET /v1.41/containers/json?all=true HTTP/1.0",
 					$"Host: localhost",
-					$"Accept: ${ httpClient.DefaultRequestHeaders.Accept }",
-					$"User-Agent: { httpClient.DefaultRequestHeaders.UserAgent }",
+					$"Accept: ${ Program.HttpClient.DefaultRequestHeaders.Accept }",
+					$"User-Agent: { Program.HttpClient.DefaultRequestHeaders.UserAgent }",
 					"Connection: close"
 				} ), "\r\n\r\n" ) ) );
 
@@ -236,7 +228,7 @@ namespace ServerMonitor.Collector {
 		[ SupportedOSPlatform( "windows" ) ]
 		[ SupportedOSPlatform( "linux" ) ]
 		private async Task UpdateOverTCP( string address, int port, Config configuration ) {
-			using ( HttpResponseMessage response = await httpClient.GetAsync( $"http://{ address }:{ port }/v{ configuration.DockerEngineAPIVersion }/containers/json?all=true" ) ) {
+			using ( HttpResponseMessage response = await Program.HttpClient.GetAsync( $"{ ( port == 443 ? "https" : "http" ) }://{ address }:{ port }/v{ configuration.DockerEngineAPIVersion }/containers/json?all=true" ) ) {
 				if ( response.IsSuccessStatusCode == false ) throw new Exception( $"Docker Engine API request failed with HTTP status { response.StatusCode }" );
 				UpdateUsingResponse( await response.Content.ReadAsStringAsync() );
 			}

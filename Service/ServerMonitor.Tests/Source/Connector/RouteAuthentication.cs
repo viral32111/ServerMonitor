@@ -11,8 +11,6 @@ namespace ServerMonitor.Tests.Connector {
 	[ Collection( "WebServer" ) ]
 	public class RouteAuthentication {
 
-		private static readonly HttpClient httpClient = new();
-
 		/*
 		[ Theory ]
 		[ InlineData( "GET", "/hello" ) ]
@@ -28,11 +26,9 @@ namespace ServerMonitor.Tests.Connector {
 
 			HttpRequestMessage httpRequest = new() {
 				Method = new( method ),
-				RequestUri = new( $"http://{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }{path}" ),
+				RequestUri = new( $"{ ( ServerMonitor.Configuration.Config.ConnectorListenPort == 443 ? "https" : "http" ) }://{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }{path}" ),
 				Headers = {
-					{ "Host", $"{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }" },
-					{ "Accept", "application/json" },
-					{ "Connection", "close" }
+					{ "Host", $"{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }" }
 				}
 			};
 
@@ -70,17 +66,15 @@ namespace ServerMonitor.Tests.Connector {
 
 			HttpRequestMessage httpRequest = new() {
 				Method = new( method ),
-				RequestUri = new( $"http://{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }{path}" ),
+				RequestUri = new( $"{ ( ServerMonitor.Configuration.Config.ConnectorListenPort == 443 ? "https" : "http" ) }://{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }{path}" ),
 				Headers = {
 					{ "Host", $"{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }" },
-					{ "Authorization", $"Basic { encodedCredentials }" },
-					{ "Accept", "application/json" },
-					{ "Connection", "close" }
+					{ "Authorization", $"Basic { encodedCredentials }" }
 				}
 			};
 
 			connector.OnListeningStarted += async ( object? _, EventArgs _ ) => {
-				using ( HttpResponseMessage httpResponse = await httpClient.SendAsync( httpRequest ) ) {
+				using ( HttpResponseMessage httpResponse = await Program.HttpClient.SendAsync( httpRequest ) ) {
 					string content = await httpResponse.Content.ReadAsStringAsync();
 
 					Assert.True( httpResponse.StatusCode == HttpStatusCode.Unauthorized, "API response status code is incorrect" );
@@ -120,17 +114,15 @@ namespace ServerMonitor.Tests.Connector {
 
 			HttpRequestMessage httpRequest = new() {
 				Method = new( method ),
-				RequestUri = new( $"http://{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }{path}" ),
+				RequestUri = new( $"{ ( ServerMonitor.Configuration.Config.ConnectorListenPort == 443 ? "https" : "http" ) }://{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }{path}" ),
 				Headers = {
 					{ "Host", $"{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }" },
-					{ "Authorization", $"Basic { encodedCredentials }" },
-					{ "Accept", "application/json" },
-					{ "Connection", "close" }
+					{ "Authorization", $"Basic { encodedCredentials }" }
 				}
 			};
 
 			connector.OnListeningStarted += async ( object? _, EventArgs _ ) => {
-				using ( HttpResponseMessage httpResponse = await httpClient.SendAsync( httpRequest ) ) {
+				using ( HttpResponseMessage httpResponse = await Program.HttpClient.SendAsync( httpRequest ) ) {
 					string content = await httpResponse.Content.ReadAsStringAsync();
 
 					Assert.True( httpResponse.StatusCode == HttpStatusCode.Unauthorized, "API response status code is incorrect" );

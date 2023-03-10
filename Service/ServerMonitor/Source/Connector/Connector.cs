@@ -45,9 +45,6 @@ namespace ServerMonitor.Connector {
 		public event EventHandler<EventArgs>? OnListeningStarted;
 		public delegate void OnListeningStartedEventHandler( object sender, EventArgs e );
 
-		// HTTP client for all connector-related classes to use
-		public static readonly HttpClient HttpClient = new();
-
 		// The main entry-point for this mode
 		public void HandleCommand( Config configuration, bool runOnce, bool noListen ) {
 			logger.LogInformation( "Launched in connection point mode" );
