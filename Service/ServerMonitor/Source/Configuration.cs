@@ -111,7 +111,7 @@ namespace ServerMonitor {
 
 		// Connection-point mode options
 		public required string ConnectorListenAddress { get; set; } = "127.0.0.1";
-		public required int ConnectorListenPort { get; set; } = 8080;
+		public required int ConnectorListenPort { get; set; } = 6996;
 		public required Credential[] ConnectorAuthenticationCredentials { get; set; } = Array.Empty<Credential>();
 		public required string ConnectorAuthenticationRealm { get; set; } = "Example";
 

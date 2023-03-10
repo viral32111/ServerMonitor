@@ -23,7 +23,7 @@
 	"SNMPCommunity": "public",
 	"SNMPAgents": [],
 	"ConnectorListenAddress": "127.0.0.1",
-	"ConnectorListenPort": 8080,
+	"ConnectorListenPort": 6996,
 	"ConnectorAuthenticationCredentials": [
 		{ "Username": "JohnDoe", "Password": "P4ssw0rd!" }
 	],
