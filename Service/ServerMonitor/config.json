@@ -24,5 +24,8 @@
 	"ConnectorCredentials": [
 		{ "Username": "JohnDoe", "Password": "P4ssw0rd!" }
 	],
-	"ConnectorAuthenticationRealm": "Example"
+	"ConnectorAuthenticationRealm": "Example",
+	"ConnectorPrometheusAPIAddress": "127.0.0.1",
+	"ConnectorPrometheusAPIPort": 9090,
+	"ConnectorPrometheusAPIVersion": 1
 }

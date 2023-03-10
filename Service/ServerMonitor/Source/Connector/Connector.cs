@@ -1,5 +1,6 @@
 using System;
 using System.Net;
+using System.Net.Http;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
@@ -12,7 +13,7 @@ using ServerMonitor.Connector.Helper;
 namespace ServerMonitor.Connector {
 
 	// Type alias for a route request handler, as its quite long - https://stackoverflow.com/a/161484
-	using RouteRequestHandler = Func<HttpListenerRequest, HttpListenerResponse, HttpListenerContext, HttpListenerResponse>;
+	using RouteRequestHandler = Func<Config, HttpListenerRequest, HttpListenerResponse, HttpListenerContext, Task<HttpListenerResponse>>;
 
 	public class Connector {
 
@@ -43,6 +44,9 @@ namespace ServerMonitor.Connector {
 		// Event that fires when the HTTP listener starts listening
 		public event EventHandler<EventArgs>? OnListeningStarted;
 		public delegate void OnListeningStartedEventHandler( object sender, EventArgs e );
+
+		// HTTP client for all connector-related classes to use
+		public static readonly HttpClient HttpClient = new();
 
 		// The main entry-point for this mode
 		public void HandleCommand( Config configuration, bool runOnce, bool noListen ) {
@@ -186,7 +190,7 @@ namespace ServerMonitor.Connector {
 
 			// Safely run the route request handler
 			try {
-				return routeHandler( request, response, context );
+				return routeHandler( configuration, request, response, context ).Result;
 			} catch ( Exception exception ) {
 				logger.LogError( exception, "Failed to handle API request '{0}' '{1}' from '{2}'", requestMethod, requestPath, requestAddress );
 				return Response.SendJson( response, statusCode: HttpStatusCode.InternalServerError, errorCode: ErrorCode.UncaughtServerError );

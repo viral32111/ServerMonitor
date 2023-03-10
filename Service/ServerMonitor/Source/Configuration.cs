@@ -111,6 +111,9 @@ namespace ServerMonitor {
 		public required int ConnectorListenPort { get; set; } = 8080;
 		public required Credential[] ConnectorCredentials { get; set; } = Array.Empty<Credential>();
 		public required string ConnectorAuthenticationRealm { get; set; } = "Example";
+		public required string ConnectorPrometheusAPIAddress { get; set; } = "127.0.0.1";
+		public required int ConnectorPrometheusAPIPort { get; set; } = 9090;
+		public required float ConnectorPrometheusAPIVersion { get; set; } = 1f;
 
 	}
 
