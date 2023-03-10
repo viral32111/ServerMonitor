@@ -77,31 +77,44 @@ namespace ServerMonitor.Connector.Helper {
 
 		// Gets the last date & time a target was scraped
 		public static async Task<DateTimeOffset> GetTargetLastUpdate( Config configuration, string instanceAddress ) {
+
+			// Fetch information about all configured targets
 			JsonObject targets = await Helper.Prometheus.Targets( configuration );
 
-			if ( targets.TryGetPropertyValue( "status", out JsonNode? activeTargetsNode ) == false || activeTargetsNode == null ) throw new Exception( "Prometheus API targets response does not contain active targets property" );
+			// Get all the active targets
+			if ( targets.TryGetPropertyValue( "activeTargets", out JsonNode? activeTargetsNode ) == false || activeTargetsNode == null ) throw new Exception( "Prometheus API targets response does not contain active targets property" );
 			JsonArray activeTargets = activeTargetsNode.AsArray();
 
+			// Loop trough all the active targets...
 			foreach ( JsonObject? activeTarget in activeTargets ) {
 				if ( activeTarget == null ) throw new Exception( "Prometheus API targets response contains a null active target" );
 
+				// Get the target's labels
 				if ( activeTarget.TryGetPropertyValue( "labels", out JsonNode? labelsNode ) == false || labelsNode == null ) throw new Exception( "Prometheus API targets response contains an active target without a labels property" );
 				JsonObject labels = labelsNode.AsObject();
 
+				// Get the target's instance address
 				if ( labels.TryGetPropertyValue( "instance", out JsonNode? instanceNode ) == false || instanceNode == null ) throw new Exception( "Prometheus API targets response contains active target labels without an instance property" );
 				string instance = instanceNode.AsValue().GetValue<string>();
 
+				// Skip this target if it's not the one we're looking for
 				if ( instance != instanceAddress ) continue;
 
+				// Get the target's last scrape timestamp
 				if ( activeTarget.TryGetPropertyValue( "lastScrape", out JsonNode? lastScrapeNode ) == false || lastScrapeNode == null ) throw new Exception( "Prometheus API targets response contains active target without a last scrape property" );
 				string lastScrapeTimestamp = lastScrapeNode.AsValue().GetValue<string>();
 
+				// Parse the last scrape timestamp - https://stackoverflow.com/a/36314187
 				if ( DateTimeOffset.TryParseExact( lastScrapeTimestamp, new string[] { "yyyy-MM-dd'T'HH:mm:ss.FFFFFFFFF'Z'" }, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out DateTimeOffset lastScrape ) == false ) throw new Exception( $"Failed to parse active target last scrape timestamp: '{ lastScrapeTimestamp }'" );
 
+				// Return the last scrape timestamp
 				return lastScrape;
+
 			}
 
+			// If we got here then we failed to find the target
 			throw new Exception( $"Failed to find active target with instance address: '{ instanceAddress }'" );
+
 		}
 	
 	}

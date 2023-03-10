@@ -32,7 +32,7 @@ namespace ServerMonitor.Connector.Helper {
 
 		}
 
-		// Hashes text using the SHA1 algorithm
+		// Hashes text using the SHA1 algorithm - https://stackoverflow.com/a/26558102
 		public static string SHA1( string text ) => Convert.ToHexString( System.Security.Cryptography.SHA1.Create().ComputeHash( System.Text.Encoding.UTF8.GetBytes( text ) ) ).ToLower();
 
 	}
