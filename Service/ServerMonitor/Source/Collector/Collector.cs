@@ -46,7 +46,6 @@ namespace ServerMonitor.Collector {
 			// Create instances of each resource collector
 			Memory memory = new( configuration );
 			Processor processor = new( configuration );
-			Uptime uptime = new( configuration );
 			Disk disk = new( configuration );
 			Network network = new( configuration );
 
@@ -55,6 +54,9 @@ namespace ServerMonitor.Collector {
 
 			// Create an instance of the Docker collector
 			Docker docker = new( configuration );
+
+			// Create an instance of the information collector
+			Information information = new( configuration );
 
 			do {
 				Console.WriteLine( new string( '-', 100 ) );
@@ -91,15 +93,6 @@ namespace ServerMonitor.Collector {
 						logger.LogInformation( "Processor: {0}% @ {1} MHz ({2} C)", processorUsage, processorFrequency, processorTemperature );
 					} catch ( Exception exception ) {
 						logger.LogError( exception, "Failed to collect processor metrics" );
-					}
-				}
-
-				if ( configuration.CollectUptimeMetrics == true ) {
-					try {
-						uptime.Update();
-						logger.LogInformation( "Uptime: {0} seconds", uptime.UptimeSeconds.Value );
-					} catch ( Exception exception ) {
-						logger.LogError( exception, "Failed to collect uptime metrics" );
 					}
 				}
 
@@ -213,6 +206,29 @@ namespace ServerMonitor.Collector {
 						logger.LogError( exception, "Failed to collect SNMP metrics" );
 					}
 				}
+
+				if ( configuration.CollectInformationMetrics == true ) {
+					try {
+						information.Update();
+
+						foreach ( string[] labelValues in information.UptimeSeconds.GetAllLabelValues() ) {
+							string name = labelValues[ 0 ];
+							string operatingSystem = labelValues[ 1 ];
+							string architecture = labelValues[ 2 ];
+							string version = labelValues[ 3 ];
+
+							logger.LogInformation( "--- Information ----" );
+							logger.LogInformation( "Name: '{0}'", name );
+							logger.LogInformation( "Operating System: '{0}'", operatingSystem );
+							logger.LogInformation( "Architecture: '{0}'", architecture );
+							logger.LogInformation( "Version: '{0}'", version );
+							logger.LogInformation( "Uptime: {0} seconds", information.UptimeSeconds.WithLabels( name, operatingSystem, architecture, version ).Value );
+						}
+					} catch ( Exception exception ) {
+						logger.LogError( exception, "Failed to collect information metrics" );
+					}
+				}
+
 
 				if ( singleRun == false ) Thread.Sleep( 5000 ); // 5 seconds
 			} while ( singleRun == false );

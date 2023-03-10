@@ -7,7 +7,7 @@
 	"CollectMemoryMetrics": true,
 	"CollectDiskMetrics": true,
 	"CollectNetworkMetrics": true,
-	"CollectUptimeMetrics": true,
+	"CollectInformationMetrics": true,
 	"CollectPowerMetrics": false,
 	"CollectFansMetrics": false,
 	"CollectServiceMetrics": true,

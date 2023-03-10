@@ -17,7 +17,7 @@ namespace ServerMonitor.Tests.Collector {
 			ServerMonitor.Configuration.Config.CollectMemoryMetrics = false;
 			ServerMonitor.Configuration.Config.CollectDiskMetrics = false;
 			ServerMonitor.Configuration.Config.CollectNetworkMetrics = false;
-			ServerMonitor.Configuration.Config.CollectUptimeMetrics = false;
+			ServerMonitor.Configuration.Config.CollectInformationMetrics = false;
 			ServerMonitor.Configuration.Config.CollectPowerMetrics = false;
 			ServerMonitor.Configuration.Config.CollectFanMetrics = false;
 			ServerMonitor.Configuration.Config.CollectServiceMetrics = false;

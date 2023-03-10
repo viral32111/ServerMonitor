@@ -87,7 +87,7 @@ namespace ServerMonitor {
 		public required bool CollectMemoryMetrics { get; set; } = true;
 		public required bool CollectDiskMetrics { get; set; } = true;
 		public required bool CollectNetworkMetrics { get; set; } = true;
-		public required bool CollectUptimeMetrics { get; set; } = true;
+		public required bool CollectInformationMetrics { get; set; } = true;
 		public required bool CollectPowerMetrics { get; set; } = false;
 		public required bool CollectFanMetrics { get; set; } = false;
 

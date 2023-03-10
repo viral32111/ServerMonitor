@@ -47,17 +47,6 @@ namespace ServerMonitor.Tests.Collector {
 		}
 
 		[ Fact ]
-		public void TestUptimeMetrics() {
-			ServerMonitor.Configuration.Load( Path.Combine( Environment.CurrentDirectory, "config.json" ) );
-			Assert.NotNull( ServerMonitor.Configuration.Config );
-
-			ServerMonitor.Collector.Resource.Uptime uptime = new( ServerMonitor.Configuration.Config );
-			uptime.Update();
-
-			Assert.True( uptime.UptimeSeconds.Value > 0, "Uptime is below 0 seconds" );
-		}
-
-		[ Fact ]
 		public void TestDiskMetrics() {
 			ServerMonitor.Configuration.Load( Path.Combine( Environment.CurrentDirectory, "config.json" ) );
 			Assert.NotNull( ServerMonitor.Configuration.Config );
