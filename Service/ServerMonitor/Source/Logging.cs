@@ -97,7 +97,6 @@ namespace ServerMonitor {
 				textWriter.Write( message );
 				textWriter.Write( ": " );
 				textWriter.WriteLine( logEntry.Exception.Message );
-				textWriter.WriteLine( logEntry.Exception.StackTrace );
 
 			// Otherwise, write the message normally
 			} else {
