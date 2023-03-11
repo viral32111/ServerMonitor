@@ -21,9 +21,9 @@ namespace ServerMonitor.Connector.Route {
 			JsonArray servers = new();
 
 			// Query Prometheus for all server uptimes
-			JsonObject serverUptimes = await Helper.Prometheus.Query( configuration, "server_monitor_resource_uptime_seconds" );
+			JsonObject serverUptimes = await Helper.Prometheus.Query( configuration, "server_monitor_uptime_seconds" );
 
-			// Get the result array from the query response
+			// Get the first result from the result array from the query response
 			if ( serverUptimes.TryGetPropertyValue( "result", out JsonNode? resultNode ) == false || resultNode == null ) throw new Exception( "No result property in Prometheus API query for server uptime" );
 			JsonArray results = resultNode.AsArray();
 
@@ -31,17 +31,20 @@ namespace ServerMonitor.Connector.Route {
 			foreach ( JsonObject? result in results ) {
 				if ( result == null ) throw new Exception( "Null object in Prometheus API query for server uptime" );
 
-				// Get the metric object on the result
+				// Get the labels object on the metric
 				if ( result.TryGetPropertyValue( "metric", out JsonNode? metricNode ) == false || metricNode == null ) throw new Exception( "No metric property in Prometheus API query for server uptime" );
-				JsonObject metric = metricNode.AsObject();
+				JsonObject labels = metricNode.AsObject();
 
-					// Get the target's address (server IP address)
-					if ( metric.TryGetPropertyValue( "instance", out JsonNode? instanceNode ) == false || instanceNode == null ) throw new Exception( "No instance property in Prometheus API query for server uptime" );
+					// Get the target's address (server IP address & port)
+					if ( labels.TryGetPropertyValue( "instance", out JsonNode? instanceNode ) == false || instanceNode == null ) throw new Exception( "No instance property in Prometheus API query for server uptime" );
 					string targetAddress = instanceNode.AsValue().GetValue<string>();
 
-					// Get the target name (server name/alias)
-					if ( metric.TryGetPropertyValue( "job", out JsonNode? jobNode ) == false || jobNode == null ) throw new Exception( "No job property in Prometheus API query for server uptime" );
-					string targetName = jobNode.AsValue().GetValue<string>();
+					// Get the target's hostname
+					if ( labels.TryGetPropertyValue( "name", out JsonNode? nameNode ) == false || nameNode == null ) {
+						logger.LogWarning( "No name property in Prometheus API query for server uptime! Skipping..." );
+						continue;
+					}
+					string targetName = nameNode.AsValue().GetValue<string>();
 
 				// Get the value array on the result
 				if ( result.TryGetPropertyValue( "value", out JsonNode? valueNode ) == false || valueNode == null ) throw new Exception( "No value property in Prometheus API query for server uptime" );
