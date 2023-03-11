@@ -10,6 +10,8 @@ namespace ServerMonitor.Connector.Route {
 
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Routes/Hello" );
 
+		#pragma warning disable CS1998 // Async method lacks await operators and will run synchronously
+
 		// Used to test if an instance is running & valid
 		[ Route( "GET", "/hello" ) ]
 		public static async Task<HttpListenerResponse> OnGetRequest( Config configuration, HttpListenerRequest request, HttpListenerResponse response, HttpListenerContext context ) {
@@ -19,6 +21,15 @@ namespace ServerMonitor.Connector.Route {
 				{ "message", "Hello World!" }
 			} );
 		}
+
+		// Redirect to the /hello endpoint
+		[ Route( "GET", "/" ) ]
+		public static async Task<HttpListenerResponse> OnIndexRequest( Config configuration, HttpListenerRequest request, HttpListenerResponse response, HttpListenerContext context ) {
+			response.Redirect( "/hello" );
+			return response;
+		}
+
+		#pragma warning restore CS1998 // Async method lacks await operators and will run synchronously
 
 	}
 

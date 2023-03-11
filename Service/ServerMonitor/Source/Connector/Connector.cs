@@ -34,7 +34,8 @@ namespace ServerMonitor.Connector {
 			Server.OnGetRequest, // GET /server?id=
 			Server.OnPostRequest, // POST /server?id=&action=
 			Servers.OnGetRequest, // GET /servers
-			Service.OnPostRequest // POST /service?server=&name=&action=
+			Service.OnPostRequest, // POST /service?server=&name=&action=
+			Hello.OnIndexRequest // GET /
 		};
 
 		// Signal this to arbitrarily stop the HTTP listener

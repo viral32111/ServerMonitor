@@ -13,6 +13,8 @@ namespace ServerMonitor.Connector.Route {
 
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Routes/Server" );
 
+		#pragma warning disable CS1998 // Async method lacks await operators and will run synchronously
+
 		// TODO: Return data for a specific server
 		[ Route( "GET", "/server" ) ]
 		public static async Task<HttpListenerResponse> OnGetRequest( Config configuration, HttpListenerRequest request, HttpListenerResponse response, HttpListenerContext context ) {
@@ -207,6 +209,8 @@ namespace ServerMonitor.Connector.Route {
 				{ "response", "This is the output of the action." }
 			} );
 		}
+
+		#pragma warning restore CS1998 // Async method lacks await operators and will run synchronously
 
 	}
 
