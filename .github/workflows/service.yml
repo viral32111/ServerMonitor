@@ -83,7 +83,7 @@ jobs:
       - name: Build project
         run: dotnet build --nologo --configuration Release --no-restore --no-self-contained ./ServerMonitor.Tests/ServerMonitor.Tests.csproj
 
-      - name: Run unit tests
+      - name: Run unit & integration tests
         env:
           SERVER_MONITOR_PROMETHEUSMETRICSPREFIX: github
           SERVER_MONITOR_PROMETHEUSAPIADDRESS: ${{ secrets.PROMETHEUS_DOMAIN_NAME }}
