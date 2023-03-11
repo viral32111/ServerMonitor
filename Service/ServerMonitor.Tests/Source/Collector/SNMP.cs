@@ -46,8 +46,6 @@ namespace ServerMonitor.Tests.Collector {
 			ServerMonitor.Collector.SNMP snmp = new( ServerMonitor.Configuration.Config, cancellationTokenSource.Token );
 			snmp.ListenForTraps();
 
-			Thread.Sleep( 1000 );
-
 			cancellationTokenSource.Cancel();
 			snmp.WaitForTrapListener();
 		}

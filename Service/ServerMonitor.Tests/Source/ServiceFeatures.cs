@@ -3,6 +3,9 @@ using System.IO;
 using Microsoft.Extensions.Logging;
 using Xunit;
 
+// Completely disable parallel test execution for this entire project because it just breaks everything
+[ assembly: CollectionBehavior( CollectionBehavior.CollectionPerAssembly ) ]
+
 namespace ServerMonitor.Tests {
 
 	public class ServerFeatures {

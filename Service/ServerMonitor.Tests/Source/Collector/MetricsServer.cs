@@ -1,6 +1,7 @@
+using System;
 using System.IO;
+using System.Net;
 using System.Net.Http;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace ServerMonitor.Tests.Collector {
@@ -8,7 +9,7 @@ namespace ServerMonitor.Tests.Collector {
 	public class MetricsServer {
 
 		[ Fact ]
-		public async Task TestMetricsServer() {
+		public void TestMetricsServer() {
 			ServerMonitor.Configuration.Load( Path.Combine( Directory.GetCurrentDirectory(), "config.json" ) );
 			Assert.NotNull( ServerMonitor.Configuration.Config );
 
@@ -24,11 +25,17 @@ namespace ServerMonitor.Tests.Collector {
 			ServerMonitor.Configuration.Config.CollectDockerMetrics = false;
 			ServerMonitor.Configuration.Config.CollectSNMPMetrics = false;
 
-			ServerMonitor.Collector.Collector.HandleCommand( ServerMonitor.Configuration.Config, true );
+			ServerMonitor.Collector.Collector collector = new();
 
-			HttpResponseMessage response = await Program.HttpClient.GetAsync( $"{ ( ServerMonitor.Configuration.Config.PrometheusListenPort == 443 ? "https" : "http" ) }://{ ServerMonitor.Configuration.Config.PrometheusListenAddress }:{ ServerMonitor.Configuration.Config.PrometheusListenPort }/{ ServerMonitor.Configuration.Config.PrometheusListenPath }" );
+			collector.OnMetricsServerStarted += async ( object? _, EventArgs _ ) => {
+				using ( HttpResponseMessage response = await Program.HttpClient.GetAsync( $"{ ( ServerMonitor.Configuration.Config.PrometheusListenPort == 443 ? "https" : "http" ) }://{ ServerMonitor.Configuration.Config.PrometheusListenAddress }:{ ServerMonitor.Configuration.Config.PrometheusListenPort }/{ ServerMonitor.Configuration.Config.PrometheusListenPath }" ) ) {
+					Assert.True( response.StatusCode == HttpStatusCode.OK );
+				}
 
-			Assert.True( response.IsSuccessStatusCode );
+				collector.MetricsServer!.Stop();
+			};
+
+			collector.HandleCommand( ServerMonitor.Configuration.Config, true );
 		}
 
 	}

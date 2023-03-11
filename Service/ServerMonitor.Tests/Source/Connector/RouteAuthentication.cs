@@ -8,7 +8,6 @@ using Xunit;
 
 namespace ServerMonitor.Tests.Connector {
 
-	[ Collection( "WebServer" ) ]
 	public class RouteAuthentication {
 
 		/*

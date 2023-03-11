@@ -52,7 +52,7 @@ namespace ServerMonitor {
 				logger.LogInformation( "Loaded the configuration" );
 
 				// Call the handler
-				Collector.Collector.HandleCommand( Configuration.Config!, runOnce );
+				new Collector.Collector().HandleCommand( Configuration.Config!, runOnce );
 
 			}, extraConfigurationFilePathOption, runOnceOption );
 			rootCommand.AddCommand( collectorCommand );

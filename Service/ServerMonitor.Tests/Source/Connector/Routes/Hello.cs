@@ -8,7 +8,6 @@ using Xunit;
 
 namespace ServerMonitor.Tests.Connector.Routes {
 
-	[ Collection( "WebServer" ) ]
 	public class Hello {
 
 		[ Fact ]

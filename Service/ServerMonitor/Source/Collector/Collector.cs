@@ -10,13 +10,20 @@ using ServerMonitor.Collector.Resource;
 
 namespace ServerMonitor.Collector {
 
-	public static class Collector {
+	public class Collector {
 
 		// Create the logger for this file
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Collector" );
 
+		// The metrics server
+		public MetricServer? MetricsServer { get; private set; }
+
+		// Event that fires when the Metrics Server starts listening
+		public event EventHandler<EventArgs>? OnMetricsServerStarted;
+		public delegate void OnMetricsServerStartedEventHandler( object sender, EventArgs e );
+
 		// Entry-point for the "collector" sub-command...
-		public static void HandleCommand( Config configuration, bool singleRun ) {
+		public void HandleCommand( Config configuration, bool singleRun ) {
 			logger.LogInformation( "Launched in collector mode" );
 
 			// Setup the global HTTP client
@@ -31,14 +38,15 @@ namespace ServerMonitor.Collector {
 			}
 
 			// Start the Prometheus metrics server
-			MetricServer server = new(
+			MetricsServer = new(
 				hostname: configuration.PrometheusListenAddress,
 				port: configuration.PrometheusListenPort,
 				url: configuration.PrometheusListenPath,
 				useHttps: false
 			);
-			server.Start();
+			MetricsServer.Start();
 			logger.LogInformation( "Prometheus Metrics server listening on http://{0}:{1}/{2}", configuration.PrometheusListenAddress, configuration.PrometheusListenPort, configuration.PrometheusListenPath );
+			OnMetricsServerStarted?.Invoke( null, EventArgs.Empty );
 
 			// Create the SNMP manager
 			CancellationTokenSource cancellationTokenSource = new();
@@ -233,7 +241,6 @@ namespace ServerMonitor.Collector {
 					}
 				}
 
-
 				if ( singleRun == false ) Thread.Sleep( 5000 ); // 5 seconds
 			} while ( singleRun == false );
 
@@ -242,11 +249,13 @@ namespace ServerMonitor.Collector {
 				snmp.WaitForTrapListener(); // Block until the SNMP agent has stopped
 			}
 
-			// TODO: Stop/wait for Prometheus metrics server?
+			// Stop the Prometheus metrics server
+			//MetricsServer.Stop();
+
 		}
 
 		// Checks if this application is running as administrator/root, which is required for some of the metrics we're collecting
-		private static bool IsRunningAsAdmin() {
+		private bool IsRunningAsAdmin() {
 			// Windows - https://stackoverflow.com/a/11660205
 			if ( RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) {
 				WindowsIdentity identity = WindowsIdentity.GetCurrent();
