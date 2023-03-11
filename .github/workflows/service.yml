@@ -28,6 +28,7 @@ jobs:
         working-directory: ./Service/
     permissions:
       contents: read
+      packages: read
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
@@ -78,6 +79,9 @@ jobs:
           - name: Windows
             os: windows-2022
             docker: npipe://./pipe/docker_engine
+    permissions:
+      contents: read
+      packages: read
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
