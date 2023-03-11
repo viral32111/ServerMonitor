@@ -8,6 +8,7 @@ using System.Globalization;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
+using viral32111.JsonExtensions;
 
 // https://prometheus.io/docs/prometheus/latest/querying/api/
 
@@ -73,36 +74,23 @@ namespace ServerMonitor.Connector.Helper {
 		public static Task<JsonObject> Targets( Config configuration ) => Request<JsonObject>( configuration, "targets" );
 
 		// Gets the last date & time a target was scraped
-		public static async Task<DateTimeOffset> GetTargetLastUpdate( Config configuration, string instanceAddress ) {
+		public static async Task<DateTimeOffset> GetTargetLastUpdate( Config configuration, string targetAddress ) {
 
-			// Fetch information about all configured targets
+			// Fetch all the configured targets
 			JsonObject targets = await Helper.Prometheus.Targets( configuration );
 
-			// Get all the active targets
-			if ( targets.TryGetPropertyValue( "activeTargets", out JsonNode? activeTargetsNode ) == false || activeTargetsNode == null ) throw new Exception( "Prometheus API targets response does not contain active targets property" );
-			JsonArray activeTargets = activeTargetsNode.AsArray();
+			// Loop through all the active targets...
+			foreach ( JsonObject? activeTarget in targets.NestedGet<JsonArray>( "activeTargets" ) ) {
+				if ( activeTarget == null ) throw new Exception( "Null object found in list of active targets from Prometheus API" );
 
-			// Loop trough all the active targets...
-			foreach ( JsonObject? activeTarget in activeTargets ) {
-				if ( activeTarget == null ) throw new Exception( "Prometheus API targets response contains a null active target" );
-
-				// Get the target's labels
-				if ( activeTarget.TryGetPropertyValue( "labels", out JsonNode? labelsNode ) == false || labelsNode == null ) throw new Exception( "Prometheus API targets response contains an active target without a labels property" );
-				JsonObject labels = labelsNode.AsObject();
-
-				// Get the target's instance address
-				if ( labels.TryGetPropertyValue( "instance", out JsonNode? instanceNode ) == false || instanceNode == null ) throw new Exception( "Prometheus API targets response contains active target labels without an instance property" );
-				string instance = instanceNode.AsValue().GetValue<string>();
+				// Get this target's address
+				string address = activeTarget.NestedGet<string>( "labels.instance" );
 
 				// Skip this target if it's not the one we're looking for
-				if ( instance != instanceAddress ) continue;
+				if ( address != targetAddress ) continue;
 
-				// Get the target's last scrape timestamp
-				if ( activeTarget.TryGetPropertyValue( "lastScrape", out JsonNode? lastScrapeNode ) == false || lastScrapeNode == null ) throw new Exception( "Prometheus API targets response contains active target without a last scrape property" );
-				string lastScrapeTimestamp = lastScrapeNode.AsValue().GetValue<string>();
-
-				// Parse the last scrape timestamp - https://stackoverflow.com/a/36314187
-				if ( DateTimeOffset.TryParseExact( lastScrapeTimestamp, new string[] { "yyyy-MM-dd'T'HH:mm:ss.FFFFFFFFF'Z'" }, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out DateTimeOffset lastScrape ) == false ) throw new Exception( $"Failed to parse active target last scrape timestamp: '{ lastScrapeTimestamp }'" );
+				// Parse this target's last scrape timestamp - https://stackoverflow.com/a/36314187
+				if ( DateTimeOffset.TryParse( activeTarget.NestedGet<string>( "lastScrape" ), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out DateTimeOffset lastScrape ) == false ) throw new Exception( $"Failed to parse active target last scrape timestamp: '{ activeTarget.NestedGet<string>( "lastScrape" ) }'" );
 
 				// Return the last scrape timestamp
 				return lastScrape;
@@ -110,7 +98,7 @@ namespace ServerMonitor.Connector.Helper {
 			}
 
 			// If we got here then we failed to find the target
-			throw new Exception( $"Failed to find active target with instance address: '{ instanceAddress }'" );
+			throw new Exception( $"No active target with address '{ targetAddress }'" );
 
 		}
 	

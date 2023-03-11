@@ -2,6 +2,7 @@ using System;
 using System.Net;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using ServerMonitor.Connector.Helper;
 using viral32111.JsonExtensions;
@@ -18,50 +19,90 @@ namespace ServerMonitor.Connector.Route {
 		[ Route( "GET", "/servers" ) ]
 		public static async Task<HttpListenerResponse> OnGetRequest( Config configuration, HttpListenerRequest request, HttpListenerResponse response, HttpListenerContext context ) {
 
-			// Create an array to hold information about each server
-			JsonArray servers = new();
+			// Holds information about the servers to return
+			Dictionary<string, JsonObject> servers = new();
 
-			// Query Prometheus for all server uptimes
-			JsonObject serverUptimes = await Helper.Prometheus.Query( configuration, "server_monitor_uptime_seconds" );
+			// Loop through all servers that have ever had an uptime scraped
+			JsonArray allServers = await Helper.Prometheus.Series( configuration, "server_monitor_uptime_seconds" );
+			foreach ( JsonObject? server in allServers ) {
+				if ( server == null ) throw new Exception( "Null object found in list of all servers from Prometheus API" );
 
-			// Loop through the results (i.e., servers with uptimes) from the query response
-			foreach ( JsonObject? server in serverUptimes.NestedGet<JsonArray>( "result" ) ) {
-				if ( server == null ) throw new Exception( "Null object in Prometheus API query for server uptime" );
-
-				// Get the target's address
-				string address = server.NestedGet<string>( "metric.instance" );
+				// Get this server's IP address & port
+				string address = server.NestedGet<string>( "instance" );
 
 				// Sometimes Prometheus gives back empty results, so skip those...
-				if ( server.NestedHas( "metric.name" ) == false ) {
-					logger.LogWarning( $"Result (server) '{ address }' is missing name label! Skipping..." );
+				if ( server.NestedHas( "name" ) == false ) {
+					logger.LogWarning( "Server '{0}' is missing name label! Skipping...", address );
 					continue;
 				}
 
-				// Get the target's hostname
-				string name = server.NestedGet<string>( "metric.name" );
-
-				// Get the uptime & when it was last scraped
-				JsonArray value = server.NestedGet<JsonArray>( "value" );
-				if ( value.Count != 2 ) throw new Exception( $"Invalid number of values '{ value.Count }' in Prometheus API query for server uptime" );
-				if ( double.TryParse( value[ 1 ]!.AsValue().GetValue<string>(), out double uptimeSeconds ) == false ) throw new Exception( $"Failed to parse uptime '{ value[ 1 ]!.AsValue().GetValue<string>() }' from Prometheus API query for server uptime" );
-				DateTimeOffset lastUpdate = DateTimeOffset.FromUnixTimeSeconds( ( long ) Math.Round( value[ 0 ]!.AsValue().GetValue<double>(), 0 ) );
+				// Get this server's hostname
+				string name = server.NestedGet<string>( "name" );
 
 				// Generate the ID for this server based on the address & name
-				string serverIdentifier = Hash.SHA1( $"{ address }-{ name }" );
+				string identifier = Hash.SHA1( $"{ address }-{ name }" );
 
-				// Add this server's information to the array
-				servers.Add( new JsonObject() {
-					{ "id", serverIdentifier },
+				// Get when this server was last scraped
+				DateTimeOffset lastScrape = await Helper.Prometheus.GetTargetLastUpdate( configuration, address );
+
+				// Add this server's information (as offline)
+				servers.Add( identifier, new() {
+					{ "id", identifier },
 					{ "name", name },
 					{ "address", address },
-					{ "uptimeSeconds", uptimeSeconds },
-					{ "lastUpdate", lastUpdate.ToUnixTimeSeconds() }
+					{ "uptimeSeconds", -1 },
+					{ "lastUpdate", lastScrape.ToUnixTimeSeconds() }
 				} );
 
 			}
 
-			// Return the list of servers
-			return Response.SendJson( response, data: servers );
+			// Loop through the online servers that have had an uptime scraped recently
+			JsonObject recentServers = await Helper.Prometheus.Query( configuration, "server_monitor_uptime_seconds" );
+			foreach ( JsonObject? server in recentServers.NestedGet<JsonArray>( "result" ) ) {
+				if ( server == null ) throw new Exception( "Null object found in list of recent servers from Prometheus API" );
+
+				// Get this server's IP address
+				string address = server.NestedGet<string>( "metric.instance" );
+
+				// Sometimes Prometheus gives back empty results, so skip those...
+				if ( server.NestedHas( "metric.name" ) == false ) {
+					logger.LogWarning( "Server '{0}' is missing name label! Skipping...", address );
+					continue;
+				}
+
+				// Get this server's hostname
+				string name = server.NestedGet<string>( "metric.name" );
+
+				// Generate the ID for this server based on the address & name
+				string identifier = Hash.SHA1( $"{ address }-{ name }" );
+
+				// Parse the uptime
+				JsonArray value = server.NestedGet<JsonArray>( "value" );
+				if ( value.Count != 2 ) throw new Exception( $"Invalid number of values '{ value.Count }' (expected 2) in list of recent servers from Prometheus API" );
+				if ( double.TryParse( value[ 1 ]!.AsValue().GetValue<string>(), out double uptimeSeconds ) == false ) throw new Exception( $"Failed to parse uptime '{ value[ 1 ]!.AsValue().GetValue<string>() }' from Prometheus API query for server uptime" );
+
+				// Get when this server was last scraped
+				DateTimeOffset lastScrape = await Helper.Prometheus.GetTargetLastUpdate( configuration, address );
+
+				// Get this server's information
+				servers.TryGetValue( identifier, out JsonObject? serverInformation );
+				if ( serverInformation == null ) {
+					logger.LogWarning( "Server '{0}' is missing from the list of all servers! Skipping...", address );
+					continue;
+				}
+
+				// Update this server's information
+				serverInformation[ "uptimeSeconds" ] = uptimeSeconds;
+				serverInformation[ "lastUpdate" ] = lastScrape.ToUnixTimeSeconds();
+
+			}
+
+			// Convert the dictionary to a JSON array
+			JsonArray serversArray = new();
+			foreach ( JsonObject server in servers.Values ) serversArray.Add( server );
+
+			// Return that JSON array
+			return Response.SendJson( response, data: serversArray );
 
 		}
 
