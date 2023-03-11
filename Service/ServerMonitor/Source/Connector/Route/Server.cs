@@ -3,6 +3,7 @@ using System.Web;
 using System.Net;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using Microsoft.Extensions.Logging;
 using ServerMonitor.Connector.Helper;
@@ -11,28 +12,53 @@ namespace ServerMonitor.Connector.Route {
 
 	public static class Server {
 
+		// Create the logger for this file
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Routes/Server" );
 
 		#pragma warning disable CS1998 // Async method lacks await operators and will run synchronously
 
-		// TODO: Return data for a specific server
+		// Returns all metrics data for a specific server
 		[ Route( "GET", "/server" ) ]
 		public static async Task<HttpListenerResponse> OnGetRequest( Config configuration, HttpListenerRequest request, HttpListenerResponse response, HttpListenerContext context ) {
+			
+			// Ensure query parameters were provided
 			string? queryString = request.Url?.Query;
 			if ( string.IsNullOrWhiteSpace( queryString ) ) return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.NoParameters );
 
+			// Try get the server identifier from the query parameters
 			NameValueCollection queryParameters = HttpUtility.ParseQueryString( queryString );
 			string? serverIdentifier = queryParameters.Get( "id" );
 			if ( string.IsNullOrWhiteSpace( serverIdentifier ) ) return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.MissingParameter, data: new JsonObject() {
 				{ "parameter", "id" }
 			} );
 
+			// Try fetch basic information about this server
+			Dictionary<string, JsonObject> servers = await Helper.Prometheus.GetServerInformation( configuration, "server_monitor_uptime_seconds", serverIdentifier );
+			if ( servers.TryGetValue( serverIdentifier, out JsonObject? server ) == false || server == null ) return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServerNotFound, data: new JsonObject() {
+				{ "id", serverIdentifier }
+			} );
+
+			// TODO: Fetch uptime & system information
+			// TODO: Fetch supported actions?
+			// TODO: Fetch processor metrics
+			// TODO: Fetch memory metrics
+			// TODO: Fetch drives metrics
+			// TODO: Fetch network metrics
+			// TODO: Fetch services metrics
+			// TODO: Fetch Docker containers metrics
+			// TODO: Fetch SNMP metrics
+
+			return Response.SendJson( response, statusCode: HttpStatusCode.OK, errorCode: ErrorCode.Success, data: server );
+
+			/*
 			return Response.SendJson( response, statusCode: HttpStatusCode.NotImplemented, errorCode: ErrorCode.ExampleData, data: new JsonObject() {
 				{ "id", serverIdentifier },
 				{ "name", "DEBIAN-SERVER-01" },
+				{ "address", "127.0.0.1" },
+				{ "lastUpdate", DateTimeOffset.UtcNow.ToUnixTimeSeconds() },
+
 				{ "description", "Example server for testing purposes." },
 				{ "uptimeSeconds", 60 * 60 * 24 * 7 },
-				{ "lastUpdate", DateTimeOffset.UtcNow.ToUnixTimeSeconds() },
 				{ "supportedActions", new JsonObject() {
 					{ "shutdown", false },
 					{ "reboot", false }
@@ -186,6 +212,8 @@ namespace ServerMonitor.Connector.Route {
 					}
 				} }
 			} );
+			*/
+
 		}
 
 		// TODO: Executing an action on a server

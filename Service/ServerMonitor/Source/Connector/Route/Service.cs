@@ -11,6 +11,7 @@ namespace ServerMonitor.Connector.Route {
 
 	public static class Service {
 
+		// Create the logger for this file
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Routes/Service" );
 
 		#pragma warning disable CS1998 // Async method lacks await operators and will run synchronously

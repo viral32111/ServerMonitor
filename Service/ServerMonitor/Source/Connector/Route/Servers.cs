@@ -19,42 +19,9 @@ namespace ServerMonitor.Connector.Route {
 		[ Route( "GET", "/servers" ) ]
 		public static async Task<HttpListenerResponse> OnGetRequest( Config configuration, HttpListenerRequest request, HttpListenerResponse response, HttpListenerContext context ) {
 
-			// Holds information about the servers to return
-			Dictionary<string, JsonObject> servers = new();
-
-			// Loop through all servers that have ever had an uptime scraped
-			JsonArray allServers = await Helper.Prometheus.Series( configuration, "server_monitor_uptime_seconds" );
-			foreach ( JsonObject? server in allServers ) {
-				if ( server == null ) throw new Exception( "Null object found in list of all servers from Prometheus API" );
-
-				// Get this server's IP address & port
-				string address = server.NestedGet<string>( "instance" );
-
-				// Sometimes Prometheus gives back empty results, so skip those...
-				if ( server.NestedHas( "name" ) == false ) {
-					logger.LogWarning( "Server '{0}' is missing name label! Skipping...", address );
-					continue;
-				}
-
-				// Get this server's hostname
-				string name = server.NestedGet<string>( "name" );
-
-				// Generate the ID for this server based on the address & name
-				string identifier = Hash.SHA1( $"{ address }-{ name }" );
-
-				// Get when this server was last scraped
-				DateTimeOffset lastScrape = await Helper.Prometheus.GetTargetLastUpdate( configuration, address );
-
-				// Add this server's information (as offline)
-				servers.Add( identifier, new() {
-					{ "id", identifier },
-					{ "name", name },
-					{ "address", address },
-					{ "uptimeSeconds", -1 },
-					{ "lastUpdate", lastScrape.ToUnixTimeSeconds() }
-				} );
-
-			}
+			// Fetch information about all servers that have ever had an uptime scraped
+			Dictionary<string, JsonObject> servers = await Helper.Prometheus.GetServerInformation( configuration, "server_monitor_uptime_seconds" );
+			foreach ( KeyValuePair<string, JsonObject> server in servers ) server.Value.Add( "uptimeSeconds", -1 ); // Default to offline
 
 			// Loop through the online servers that have had an uptime scraped recently
 			JsonObject recentServers = await Helper.Prometheus.Query( configuration, "server_monitor_uptime_seconds" );
@@ -82,7 +49,7 @@ namespace ServerMonitor.Connector.Route {
 				if ( double.TryParse( value[ 1 ]!.AsValue().GetValue<string>(), out double uptimeSeconds ) == false ) throw new Exception( $"Failed to parse uptime '{ value[ 1 ]!.AsValue().GetValue<string>() }' from Prometheus API query for server uptime" );
 
 				// Get when this server was last scraped
-				DateTimeOffset lastScrape = await Helper.Prometheus.GetTargetLastUpdate( configuration, address );
+				DateTimeOffset lastScrape = await Helper.Prometheus.GetTargetLastScrape( configuration, address );
 
 				// Get this server's information
 				servers.TryGetValue( identifier, out JsonObject? serverInformation );

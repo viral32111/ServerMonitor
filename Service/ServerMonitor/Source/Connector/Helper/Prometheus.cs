@@ -73,8 +73,8 @@ namespace ServerMonitor.Connector.Helper {
 		// Sends a targets query to the Prometheus API
 		public static Task<JsonObject> Targets( Config configuration ) => Request<JsonObject>( configuration, "targets" );
 
-		// Gets the last date & time a target was scraped
-		public static async Task<DateTimeOffset> GetTargetLastUpdate( Config configuration, string targetAddress ) {
+		// Gets the date & time a target was last scraped
+		public static async Task<DateTimeOffset> GetTargetLastScrape( Config configuration, string targetAddress ) {
 
 			// Fetch all the configured targets
 			JsonObject targets = await Helper.Prometheus.Targets( configuration );
@@ -99,6 +99,53 @@ namespace ServerMonitor.Connector.Helper {
 
 			// If we got here then we failed to find the target
 			throw new Exception( $"No active target with address '{ targetAddress }'" );
+
+		}
+
+		// Gets information for all servers or a specific server
+		public static async Task<Dictionary<string, JsonObject>> GetServerInformation( Config configuration, string metric, string? desiredIdentifier = null ) {
+
+			// Create the dictionary to store the server information
+			Dictionary<string, JsonObject> information = new();
+
+			// Loop through all the servers that have ever had the given metric scraped...
+			JsonArray allServers = await Helper.Prometheus.Series( configuration, metric );
+			foreach ( JsonObject? server in allServers ) {
+				if ( server == null ) throw new Exception( "Null object found in list of all servers from Prometheus API" );
+
+				// Get this server's IP address & port
+				string address = server.NestedGet<string>( "instance" );
+
+				// Sometimes Prometheus gives back empty results, so skip those...
+				if ( server.NestedHas( "name" ) == false ) {
+					logger.LogWarning( "Server '{0}' is missing name label! Skipping...", address );
+					continue;
+				}
+
+				// Get this server's hostname
+				string name = server.NestedGet<string>( "name" );
+
+				// Generate the ID for this server based on the address & name
+				string identifier = Hash.SHA1( $"{ address }-{ name }" );
+
+				// Skip this server if it's not the one we're looking for
+				if ( desiredIdentifier != null && identifier != desiredIdentifier ) continue;
+
+				// Get when this server was last scraped
+				DateTimeOffset lastScrape = await Helper.Prometheus.GetTargetLastScrape( configuration, address );
+
+				// Add this server's information
+				information.Add( identifier, new() {
+					{ "id", identifier },
+					{ "name", name },
+					{ "address", address },
+					{ "lastUpdate", lastScrape.ToUnixTimeSeconds() }
+				} );
+
+			}
+
+			// Return the information
+			return information;
 
 		}
 	
