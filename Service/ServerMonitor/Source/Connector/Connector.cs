@@ -73,7 +73,7 @@ namespace ServerMonitor.Connector {
 				if ( routes[ routeAttribute.Method ].TryAdd( routeAttribute.Path, routeRequestHandler ) == false ) throw new Exception( $"Duplicate route '{ routeAttribute.Method } { routeAttribute.Path }' found for request handler '{ routeRequestHandler.Method.Name }'" );
 
 				// Add the route path to the HTTP listener
-				httpListener.Prefixes.Add( routeAttribute.Path.EndsWith( "/" ) == true ? routeAttribute.Path : routeAttribute.Path + "/" );
+				httpListener.Prefixes.Add( string.Concat( baseUrl, routeAttribute.Path.EndsWith( "/" ) == true ? routeAttribute.Path : string.Concat( routeAttribute.Path, "/" ) ) );
 	
 				logger.LogInformation( "Registered API route '{0}' '{1}' ({2})", routeAttribute.Method, routeAttribute.Path, routeRequestHandler.Method.Name );
 
