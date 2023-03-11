@@ -87,7 +87,7 @@ namespace ServerMonitor.Tests.Connector.Routes {
 				using ( HttpResponseMessage httpResponse = await Program.HttpClient.SendAsync( httpRequest ) ) {
 					string content = await httpResponse.Content.ReadAsStringAsync();
 
-					Assert.True( httpResponse.StatusCode == HttpStatusCode.OK, "API response status code is incorrect" );
+					Assert.True( httpResponse.StatusCode == HttpStatusCode.NotFound, "API response status code is incorrect" );
 					Assert.True( httpResponse.Headers.WwwAuthenticate.Count == 0, "API response includes WWW-Authenticate header" );
 					Assert.True( content.Length > 0, "API response does not contain content" );
 
@@ -95,7 +95,7 @@ namespace ServerMonitor.Tests.Connector.Routes {
 					Assert.NotNull( jsonBody );
 
 					Assert.True( jsonBody.ContainsKey( "errorCode" ), "API response JSON content does not contain the error code property" );
-					Assert.True( ( ServerMonitor.Connector.ErrorCode ) jsonBody[ "errorCode" ]!.GetValue<int>() == ServerMonitor.Connector.ErrorCode.Success, "API response JSON content error code property is incorrect" );
+					Assert.True( ( ServerMonitor.Connector.ErrorCode ) jsonBody[ "errorCode" ]!.GetValue<int>() == ServerMonitor.Connector.ErrorCode.ServerNotFound, "API response JSON content error code property is incorrect" );
 
 					Assert.True( jsonBody.ContainsKey( "data" ), "API response JSON content does not contain the data property" );
 				}
