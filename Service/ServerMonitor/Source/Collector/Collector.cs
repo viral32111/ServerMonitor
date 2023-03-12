@@ -58,7 +58,7 @@ namespace ServerMonitor.Collector {
 			// Create instances of each resource collector
 			Memory memory = new( configuration );
 			Processor processor = new( configuration );
-			Disk disk = new( configuration );
+			Drive drive = new( configuration );
 			Network network = new( configuration );
 
 			// Create an instance of the service collector
@@ -110,31 +110,31 @@ namespace ServerMonitor.Collector {
 
 				if ( configuration.CollectDiskMetrics == true ) {
 					try {
-						disk.Update();
+						drive.Update();
 						
-						foreach ( string[] labelValues in disk.ReadBytes.GetAllLabelValues() ) {
+						foreach ( string[] labelValues in drive.ReadBytes.GetAllLabelValues() ) {
 							string driveName = labelValues[ 0 ];
 
-							double bytesRead = Math.Round( disk.ReadBytes.WithLabels( driveName ).Value / 1024 / 1024, 2 );
-							double bytesWritten = Math.Round( disk.WriteBytes.WithLabels( driveName ).Value / 1024 / 1024, 2 );
-							int healthPercentage = ( int ) disk.Health.WithLabels( driveName ).Value;
+							double bytesRead = Math.Round( drive.ReadBytes.WithLabels( driveName ).Value / 1024 / 1024, 2 );
+							double bytesWritten = Math.Round( drive.WriteBytes.WithLabels( driveName ).Value / 1024 / 1024, 2 );
+							int healthPercentage = ( int ) drive.Health.WithLabels( driveName ).Value;
 							
 							logger.LogInformation( "Drive ({0}): {1} MiB read, {2} MiB written, {3}% health", driveName, bytesRead, bytesWritten, healthPercentage );
 						}
 						
-						foreach ( string[] labelValues in disk.TotalBytes.GetAllLabelValues() ) {
+						foreach ( string[] labelValues in drive.TotalBytes.GetAllLabelValues() ) {
 							string partitionName = labelValues[ 0 ];
 							string partitionMountPath = labelValues[ 1 ];
 
-							double totalSpace = Math.Round( disk.TotalBytes.WithLabels( partitionName, partitionMountPath ).Value / 1024 / 1024 / 1024, 2 );
-							double freeSpace = Math.Round( disk.FreeBytes.WithLabels( partitionName, partitionMountPath ).Value / 1024 / 1024 / 1024, 2 );
-							double usedSpace = Math.Round( ( disk.TotalBytes.WithLabels( partitionName, partitionMountPath ).Value - disk.FreeBytes.WithLabels( partitionName, partitionMountPath ).Value ) / 1024 / 1024 / 1024, 2 );
-							double usedSpacePercentage = Math.Round( ( disk.TotalBytes.WithLabels( partitionName, partitionMountPath ).Value - disk.FreeBytes.WithLabels( partitionName, partitionMountPath ).Value ) / disk.TotalBytes.WithLabels( partitionName, partitionMountPath ).Value * 100, 0 );
+							double totalSpace = Math.Round( drive.TotalBytes.WithLabels( partitionName, partitionMountPath ).Value / 1024 / 1024 / 1024, 2 );
+							double freeSpace = Math.Round( drive.FreeBytes.WithLabels( partitionName, partitionMountPath ).Value / 1024 / 1024 / 1024, 2 );
+							double usedSpace = Math.Round( ( drive.TotalBytes.WithLabels( partitionName, partitionMountPath ).Value - drive.FreeBytes.WithLabels( partitionName, partitionMountPath ).Value ) / 1024 / 1024 / 1024, 2 );
+							double usedSpacePercentage = Math.Round( ( drive.TotalBytes.WithLabels( partitionName, partitionMountPath ).Value - drive.FreeBytes.WithLabels( partitionName, partitionMountPath ).Value ) / drive.TotalBytes.WithLabels( partitionName, partitionMountPath ).Value * 100, 0 );
 							
 							logger.LogInformation( "Partition ({0}, {1}): {2} GiB / {3} GiB ({4} GiB free, {5}% usage)", partitionName, partitionMountPath, usedSpace, totalSpace, freeSpace, usedSpacePercentage );
 						}
 					} catch ( Exception exception ) {
-						logger.LogError( exception, "Failed to collect disk metrics" );
+						logger.LogError( exception, "Failed to collect drive metrics" );
 					}
 				}
 

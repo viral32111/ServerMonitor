@@ -51,30 +51,30 @@ namespace ServerMonitor.Tests.Collector {
 			ServerMonitor.Configuration.Load( Path.Combine( Environment.CurrentDirectory, "config.json" ) );
 			Assert.NotNull( ServerMonitor.Configuration.Config );
 
-			ServerMonitor.Collector.Resource.Disk disk = new( ServerMonitor.Configuration.Config );
-			disk.Update();
+			ServerMonitor.Collector.Resource.Drive drive = new( ServerMonitor.Configuration.Config );
+			drive.Update();
 
-			foreach ( string[] labelValues in disk.ReadBytes.GetAllLabelValues() ) {
+			foreach ( string[] labelValues in drive.ReadBytes.GetAllLabelValues() ) {
 				string driveName = labelValues[ 0 ];
 
-				Assert.True( disk.ReadBytes.WithLabels( driveName ).Value >= 0, $"Total bytes read is below 0 bytes ({ driveName })" );
-				Assert.True( disk.WriteBytes.WithLabels( driveName ).Value >= 0, $"Total bytes written is below 0 bytes ({ driveName })" );
+				Assert.True( drive.ReadBytes.WithLabels( driveName ).Value >= 0, $"Total bytes read is below 0 bytes ({ driveName })" );
+				Assert.True( drive.WriteBytes.WithLabels( driveName ).Value >= 0, $"Total bytes written is below 0 bytes ({ driveName })" );
 
 				// S.M.A.R.T health is not supported yet!
-				if ( disk.Health.WithLabels( driveName ).Value != -1 ) {
-					Assert.True( disk.Health.WithLabels( driveName ).Value >= 0, $"Disk S.M.A.R.T health is below 0% ({ driveName })" );
-					Assert.True( disk.Health.WithLabels( driveName ).Value <= 100, $"Disk S.M.A.R.T health is above 100% ({ driveName })" );
+				if ( drive.Health.WithLabels( driveName ).Value != -1 ) {
+					Assert.True( drive.Health.WithLabels( driveName ).Value >= 0, $"Disk S.M.A.R.T health is below 0% ({ driveName })" );
+					Assert.True( drive.Health.WithLabels( driveName ).Value <= 100, $"Disk S.M.A.R.T health is above 100% ({ driveName })" );
 				}
 			}
 
-			foreach ( string[] labelValues in disk.TotalBytes.GetAllLabelValues() ) {
+			foreach ( string[] labelValues in drive.TotalBytes.GetAllLabelValues() ) {
 				string partitionName = labelValues[ 0 ];
 				string partitionMountPath = labelValues[ 1 ];
 
-				Assert.True( disk.TotalBytes.WithLabels( partitionName, partitionMountPath ).Value > 0, $"Total partition space is below 0 bytes ({ partitionName }, { partitionMountPath })" );
-				Assert.True( disk.FreeBytes.WithLabels( partitionName, partitionMountPath ).Value >= 0, $"Free partition space is below 0 bytes ({ partitionName }, { partitionMountPath })" );
+				Assert.True( drive.TotalBytes.WithLabels( partitionName, partitionMountPath ).Value > 0, $"Total partition space is below 0 bytes ({ partitionName }, { partitionMountPath })" );
+				Assert.True( drive.FreeBytes.WithLabels( partitionName, partitionMountPath ).Value >= 0, $"Free partition space is below 0 bytes ({ partitionName }, { partitionMountPath })" );
 
-				Assert.True( disk.FreeBytes.WithLabels( partitionName, partitionMountPath ).Value <= disk.TotalBytes.WithLabels( partitionName, partitionMountPath ).Value, $"Free partition space is greater than total partition space ({ partitionName }, { partitionMountPath })" );
+				Assert.True( drive.FreeBytes.WithLabels( partitionName, partitionMountPath ).Value <= drive.TotalBytes.WithLabels( partitionName, partitionMountPath ).Value, $"Free partition space is greater than total partition space ({ partitionName }, { partitionMountPath })" );
 			}
 
 		}

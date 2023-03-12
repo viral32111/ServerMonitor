@@ -13,10 +13,10 @@ using Prometheus;
 namespace ServerMonitor.Collector.Resource {
 
 	// Encapsulates collecting system disk metrics
-	public class Disk : Base {
+	public class Drive : Base {
 
 		// Create the logger for this file
-		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Resource/Disk" );
+		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Resource/Drive" );
 
 		// Holds the exported Prometheus metrics
 		public readonly Gauge TotalBytes;
@@ -26,20 +26,20 @@ namespace ServerMonitor.Collector.Resource {
 		public readonly Gauge Health;
 
 		// Initialise the exported Prometheus metrics
-		public Disk( Config configuration ) : base( configuration ) {
-			TotalBytes = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_disk_total_bytes", "Total disk space, in bytes.", new GaugeConfiguration {
+		public Drive( Config configuration ) : base( configuration ) {
+			TotalBytes = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_drive_total_bytes", "Total disk space, in bytes.", new GaugeConfiguration {
 				LabelNames = new[] { "partition", "mountpoint" }
 			} );
-			FreeBytes = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_disk_free_bytes", "Free disk space, in bytes.", new GaugeConfiguration {
+			FreeBytes = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_drive_free_bytes", "Free disk space, in bytes.", new GaugeConfiguration {
 				LabelNames = new[] { "partition", "mountpoint" }
 			} );
-			ReadBytes = Metrics.CreateCounter( $"{ configuration.PrometheusMetricsPrefix }_resource_disk_read_bytes", "Total read, in bytes.", new CounterConfiguration {
+			ReadBytes = Metrics.CreateCounter( $"{ configuration.PrometheusMetricsPrefix }_resource_drive_read_bytes", "Total read, in bytes.", new CounterConfiguration {
 				LabelNames = new[] { "drive" }
 			} );
-			WriteBytes = Metrics.CreateCounter( $"{ configuration.PrometheusMetricsPrefix }_resource_disk_write_bytes", "Total written, in bytes.", new CounterConfiguration {
+			WriteBytes = Metrics.CreateCounter( $"{ configuration.PrometheusMetricsPrefix }_resource_drive_write_bytes", "Total written, in bytes.", new CounterConfiguration {
 				LabelNames = new[] { "drive" }
 			} );
-			Health = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_disk_health", "S.M.A.R.T disk health", new GaugeConfiguration {
+			Health = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_resource_drive_health", "S.M.A.R.T disk health", new GaugeConfiguration {
 				LabelNames = new[] { "drive" }
 			} );
 
