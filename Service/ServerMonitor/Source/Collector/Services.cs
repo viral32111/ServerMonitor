@@ -69,7 +69,7 @@ namespace ServerMonitor.Collector {
 
 				// Update the exported Prometheus metrics
 				// NOTE: Level is always System for Windows services
-				StatusCode.WithLabels( service.ServiceName, service.DisplayName, description, "system" ).Set( ( int ) service.Status );
+				StatusCode.WithLabels( service.ServiceName, service.DisplayName, description, "system" ).Set( ( int ) service.Status ); // Stopped = 1, StartPending = 2, StopPending = 3, Running = 4, ContinuePending = 5, PausePending = 6, Paused = 7
 				ExitCode.WithLabels( service.ServiceName, service.DisplayName, description, "system" ).Set( exitCode );
 				UptimeSeconds.WithLabels( service.ServiceName, service.DisplayName, description, "system" ).IncTo( uptimeSeconds );
 			}
@@ -163,9 +163,9 @@ namespace ServerMonitor.Collector {
 				int serviceExitCode = int.Parse( serviceData[ "ExecMainStatus" ] );
 
 				// Calculate how long the process has been running for, if we have a valid process identifier - https://stackoverflow.com/a/16736599
-				long processUptimeSeconds = 0;
+				long processUptimeSeconds = -1;
 				if ( processIdentifier != 0 ) {
-					
+
 					// If the process statistics file exists...
 					string statisticsFilePath = Path.Combine( "/proc", processIdentifier.ToString(), "stat" );
 					if ( File.Exists( statisticsFilePath ) == true ) {
@@ -181,7 +181,7 @@ namespace ServerMonitor.Collector {
 
 						// Calculate the process uptime in seconds
 						processUptimeSeconds = systemUptimeSeconds - ( processStartTimeTicks / systemClockTicks );
-					
+
 					}
 
 				}
