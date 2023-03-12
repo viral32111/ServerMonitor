@@ -15,6 +15,7 @@ namespace ServerMonitor.Connector {
 		ServerNotFound = 9,
 		InvalidParameter = 10,
 		ServerOffline = 11,
+		ServiceNotFound = 12,
 	}
 
 }

@@ -140,7 +140,7 @@ namespace ServerMonitor.Connector {
 			HttpListenerResponse response = context.Response;
 			string requestMethod = request.HttpMethod;
 			string requestPath = request.Url?.AbsolutePath ?? "/";
-			string requestAddress = request.RemoteEndPoint.Address.ToString();
+			string requestAddress = request.RemoteEndPoint?.Address?.ToString() ?? throw new Exception( $"Unable to get remote endpoint address for API request '{ requestMethod }' '{ requestPath }'" );
 			logger.LogDebug( "Incoming HTTP request '{0}' '{1}' from '{2}'", requestMethod, requestPath, requestAddress );
 
 			// Ensure basic authentication was used - https://stackoverflow.com/q/570605
