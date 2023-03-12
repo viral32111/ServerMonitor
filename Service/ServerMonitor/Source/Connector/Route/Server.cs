@@ -52,7 +52,7 @@ namespace ServerMonitor.Connector.Route {
 			server[ "resources" ] = new JsonObject() {
 				{ "processor", await Helper.Prometheus.FetchProcessor( configuration, jobName, instanceAddress ) },
 				{ "memory", await Helper.Prometheus.FetchMemory( configuration, jobName, instanceAddress ) },
-				{ "drives", JSON.CreateJsonArray( await Helper.Prometheus.FetchDrives( configuration, instanceAddress, jobName ) ) }
+				{ "drives", JSON.CreateJsonArray( await Helper.Prometheus.FetchDrives( configuration, jobName, instanceAddress ) ) }
 			};
 
 			// TODO: Fetch network metrics

@@ -290,7 +290,7 @@ namespace ServerMonitor.Connector.Helper {
 		}
 
 		// Fetches all the partitions for a drive on a server
-		public static async Task<JsonObject[]> FetchDrivePartitions( Config configuration, string instanceAddress, string jobName, string driveName ) {
+		public static async Task<JsonObject[]> FetchDrivePartitions( Config configuration, string jobName, string instanceAddress, string driveName ) {
 
 			// Fetches the mountpoints for all known parttions ( Partition Name -> Mountpoint )
 			Dictionary<string, string> partitionMountpoints = ( await FetchSeries( configuration, CreatePromQL( "server_monitor_resource_drive_total_bytes", new() {
@@ -370,7 +370,7 @@ namespace ServerMonitor.Connector.Helper {
 		}
 
 		// Fetches all the drives on a server
-		public static async Task<JsonObject[]> FetchDrives( Config configuration, string instanceAddress, string jobName ) {
+		public static async Task<JsonObject[]> FetchDrives( Config configuration, string jobName, string instanceAddress ) {
 
 			// Fetches the names of all known drives
 			string[] driveNames = ( await FetchSeries( configuration, CreatePromQL( "server_monitor_resource_drive_health", new() {
@@ -448,7 +448,7 @@ namespace ServerMonitor.Connector.Helper {
 
 			// Fetches the partitions for each drive
 			Dictionary<string, JsonArray> drivePartitions = new();
-			foreach ( string driveName in driveNames ) drivePartitions.Add( driveName, JSON.CreateJsonArray( await FetchDrivePartitions( configuration, instanceAddress, jobName, driveName ) ) );
+			foreach ( string driveName in driveNames ) drivePartitions.Add( driveName, JSON.CreateJsonArray( await FetchDrivePartitions( configuration, jobName, instanceAddress, driveName ) ) );
 
 			// Combine the data into an array of JSON objects - Drives that have not been recently scraped will have -1 for bytesRead, bytesWritten & health
 			return driveNames.Aggregate( new List<JsonObject>(), ( drives, driveName ) => {
