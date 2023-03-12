@@ -171,6 +171,54 @@ namespace ServerMonitor.Connector.Helper {
 
 		}
 
+		// Gets the processor metrics for a server
+		public static async Task<JsonObject> FetchProcessor( Config configuration, string jobName, string instanceAddress ) {
+
+			// Fetch the processor usage
+			double processorUsage = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_resource_processor_usage", new() {
+				{ "job", jobName },
+				{ "instance", instanceAddress }
+			} ) ) )
+				.NestedGet<JsonArray>( "result" )
+				.Where( result => result != null )
+				.Select( result => result!.AsObject() )
+				.Where( result => result.NestedHas( "value" ) && result.NestedGet<JsonArray>( "value" ).Count == 2 )
+				.Select( result => double.Parse( result.NestedGet<JsonArray>( "value" )[ 1 ]!.GetValue<string>() ) )
+				.First();
+
+			// Fetch the processor frequency
+			double processorFrequency = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_resource_processor_frequency", new() {
+				{ "job", jobName },
+				{ "instance", instanceAddress }
+			} ) ) )
+				.NestedGet<JsonArray>( "result" )
+				.Where( result => result != null )
+				.Select( result => result!.AsObject() )
+				.Where( result => result.NestedHas( "value" ) && result.NestedGet<JsonArray>( "value" ).Count == 2 )
+				.Select( result => double.Parse( result.NestedGet<JsonArray>( "value" )[ 1 ]!.GetValue<string>() ) )
+				.First();
+
+			// Fetch the processor temperature
+			double processorTemperature = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_resource_processor_temperature", new() {
+				{ "job", jobName },
+				{ "instance", instanceAddress }
+			} ) ) )
+				.NestedGet<JsonArray>( "result" )
+				.Where( result => result != null )
+				.Select( result => result!.AsObject() )
+				.Where( result => result.NestedHas( "value" ) && result.NestedGet<JsonArray>( "value" ).Count == 2 )
+				.Select( result => double.Parse( result.NestedGet<JsonArray>( "value" )[ 1 ]!.GetValue<string>() ) )
+				.First();
+
+			// Return as a JSON object
+			return new() {
+				{ "usage", processorUsage },
+				{ "frequency", processorFrequency },
+				{ "temperature", processorTemperature }
+			};
+
+		}
+
 		// Gets all the partitions for a drive on a server
 		public static async Task<JsonObject[]> FetchDrivePartitions( Config configuration, string instanceAddress, string jobName, string driveName ) {
 

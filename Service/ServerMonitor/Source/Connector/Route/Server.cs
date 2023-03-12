@@ -51,47 +51,7 @@ namespace ServerMonitor.Connector.Route {
 
 			/****** Processor ******/
 
-			/*
-			// Get the processor usage for this server
-			JsonArray processorUsageMetrics = ( await Helper.Prometheus.Query( configuration, $"server_monitor_resource_processor_usage{{instance=\"{ server[ "instance" ] }\"}}" ) ).NestedGet<JsonArray>( "result" );
-			if ( processorUsageMetrics.Count != 1 ) return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServerNotFound, data: new JsonObject() {
-				{ "id", serverIdentifier },
-				{ "at", "processor_usage" }
-			} );
-			JsonObject processorUsageMetric = processorUsageMetrics[ 0 ]!.AsObject();
-			JsonArray processorUsageMetricValue = processorUsageMetric.NestedGet<JsonArray>( "value" );
-			if ( processorUsageMetricValue.Count != 2 ) throw new Exception( $"Invalid number of values '{ processorUsageMetricValue.Count }' (expected 2) in processor usage from Prometheus API" );
-			if ( double.TryParse( processorUsageMetricValue[ 1 ]!.AsValue().GetValue<string>(), out double processorUsage ) == false ) throw new Exception( $"Failed to parse processor usage '{ processorUsageMetricValue[ 1 ]!.AsValue().GetValue<string>() }' from Prometheus API" );
-
-			// Get the processor frequency for this server
-			JsonArray processorFrequencyMetrics = ( await Helper.Prometheus.Query( configuration, $"server_monitor_resource_processor_frequency{{instance=\"{ server[ "instance" ] }\"}}" ) ).NestedGet<JsonArray>( "result" );
-			if ( processorFrequencyMetrics.Count != 1 ) return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServerNotFound, data: new JsonObject() {
-				{ "id", serverIdentifier },
-				{ "at", "processor_frequency" }
-			} );
-			JsonObject processorFrequencyMetric = processorFrequencyMetrics[ 0 ]!.AsObject();
-			JsonArray processorFrequencyMetricValue = processorFrequencyMetric.NestedGet<JsonArray>( "value" );
-			if ( processorFrequencyMetricValue.Count != 2 ) throw new Exception( $"Invalid number of values '{ processorFrequencyMetricValue.Count }' (expected 2) in processor frequency from Prometheus API" );
-			if ( double.TryParse( processorFrequencyMetricValue[ 1 ]!.AsValue().GetValue<string>(), out double processorFrequency ) == false ) throw new Exception( $"Failed to parse processor frequency '{ processorFrequencyMetricValue[ 1 ]!.AsValue().GetValue<string>() }' from Prometheus API" );
-
-			// Get the processor temperature for this server
-			JsonArray processorTemperatureMetrics = ( await Helper.Prometheus.Query( configuration, $"server_monitor_resource_processor_temperature{{instance=\"{ server[ "instance" ] }\"}}" ) ).NestedGet<JsonArray>( "result" );
-			if ( processorTemperatureMetrics.Count != 1 ) return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServerNotFound, data: new JsonObject() {
-				{ "id", serverIdentifier },
-				{ "at", "processor_temperature" }
-			} );
-			JsonObject processorTemperatureMetric = processorTemperatureMetrics[ 0 ]!.AsObject();
-			JsonArray processorTemperatureMetricValue = processorTemperatureMetric.NestedGet<JsonArray>( "value" );
-			if ( processorTemperatureMetricValue.Count != 2 ) throw new Exception( $"Invalid number of values '{ processorTemperatureMetricValue.Count }' (expected 2) in processor temperature from Prometheus API" );
-			if ( double.TryParse( processorTemperatureMetricValue[ 1 ]!.AsValue().GetValue<string>(), out double processorTemperature ) == false ) throw new Exception( $"Failed to parse processor temperature '{ processorTemperatureMetricValue[ 1 ]!.AsValue().GetValue<string>() }' from Prometheus API" );
-
-			// Create a JSON object for these metrics
-			JsonObject processorMetrics = new() {
-				{ "usage", processorUsage },
-				{ "frequency", processorFrequency },
-				{ "temperature", processorTemperature }
-			};
-			*/
+			JsonObject processorMetrics = await Helper.Prometheus.FetchProcessor( configuration, jobName, instanceAddress );
 
 			/****** Memory ******/
 
@@ -160,7 +120,7 @@ namespace ServerMonitor.Connector.Route {
 			// TODO: Fetch SNMP metrics
 
 			server[ "resources" ] = new JsonObject() {
-				//{ "processor", processorMetrics },
+				{ "processor", processorMetrics },
 				//{ "memory", memoryMetrics },
 				{ "drives", drives }
 			};
