@@ -13,6 +13,7 @@ namespace ServerMonitor.Connector {
 		NoParameters = 7,
 		MissingParameter = 8,
 		ServerNotFound = 9,
+		InvalidParameter = 10,
 	}
 
 }

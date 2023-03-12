@@ -171,59 +171,6 @@ namespace ServerMonitor.Connector.Helper {
 
 		}
 
-		// Gets information for all servers or a specific server
-		/*
-		public static async Task<Dictionary<string, JsonObject>> GetServerInformation( Config configuration, string metric, string? desiredIdentifier = null ) {
-
-			// Create the dictionary to store the server information
-			Dictionary<string, JsonObject> information = new();
-
-			// Loop through all the servers that have ever had the given metric scraped...
-			JsonArray allServers = await Helper.Prometheus.FetchSeries( configuration, metric );
-			foreach ( JsonObject? server in allServers ) {
-				if ( server == null ) throw new Exception( "Null object found in list of all servers from Prometheus API" );
-
-				// Get this server's configured job name
-				string jobName = server.NestedGet<string>( "job" );
-
-				// Get this server's configured IP address & port
-				string instanceAddress = server.NestedGet<string>( "instance" );
-
-				// Sometimes Prometheus gives back empty results, so skip those...
-				if ( server.NestedHas( "name" ) == false ) {
-					logger.LogWarning( "Server '{0}' is missing name label! Skipping...", instanceAddress );
-					continue;
-				}
-
-				// Get this server's hostname
-				string name = server.NestedGet<string>( "name" );
-
-				// Generate the ID for this server based on the address & name
-				string identifier = Hash.SHA1( $"{ instanceAddress }-{ name }" );
-
-				// Skip this server if it's not the one we're looking for
-				if ( desiredIdentifier != null && identifier != desiredIdentifier ) continue;
-
-				// Get when this server was last scraped
-				DateTimeOffset lastScrape = await Helper.Prometheus.GetTargetLastScrape( configuration, instanceAddress );
-
-				// Add this server's information
-				information.Add( identifier, new() {
-					{ "id", identifier },
-					{ "name", name },
-					{ "instance", instanceAddress },
-					{ "job", jobName },
-					{ "lastUpdate", lastScrape.ToUnixTimeSeconds() }
-				} );
-
-			}
-
-			// Return the information
-			return information;
-
-		}
-		*/
-
 		// Gets all the partitions for a drive on a server
 		public static async Task<JsonObject[]> FetchDrivePartitions( Config configuration, string instanceAddress, string jobName, string driveName ) {
 

@@ -27,11 +27,23 @@ namespace ServerMonitor.Connector.Route {
 			string? queryString = request.Url?.Query;
 			if ( string.IsNullOrWhiteSpace( queryString ) ) return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.NoParameters );
 
-			// Try extract & decode the server identifier from the query parameters
+			// Try extract the server identifier from the query parameters
 			string? serverIdentifier = HttpUtility.ParseQueryString( queryString ).Get( "id" );
-			if ( string.IsNullOrWhiteSpace( serverIdentifier ) ) return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.MissingParameter, data: new JsonObject() { { "parameter", "id" } } );
-			string[] serverIdentifierParts = Helper.Prometheus.DecodeIdentifier( serverIdentifier );
-			string jobName = serverIdentifierParts[ 0 ], instanceAddress = serverIdentifierParts[ 1 ];
+			if ( string.IsNullOrWhiteSpace( serverIdentifier ) ) return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.MissingParameter, data: new JsonObject() {
+				{ "parameter", "id" }
+			} );
+
+			// Try decode the server identifier
+			string jobName = string.Empty, instanceAddress = string.Empty;
+			try {
+				string[] serverIdentifierParts = Helper.Prometheus.DecodeIdentifier( serverIdentifier );
+				jobName = serverIdentifierParts[ 0 ];
+				instanceAddress = serverIdentifierParts[ 1 ];
+			} catch ( FormatException ) {
+				return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.InvalidParameter, data: new JsonObject() {
+					{ "parameter", "id" }
+				} );
+			}
 
 			// Try fetch the server
 			JsonObject? server = ( await Helper.Prometheus.FetchServers( configuration ) ).FirstOrDefault( server => server.NestedGet<string>( "identifier" ) == serverIdentifier );
