@@ -171,7 +171,7 @@ namespace ServerMonitor.Connector.Helper {
 
 		}
 
-		// Gets the processor metrics for a server
+		// Fetches the processor metrics for a server
 		public static async Task<JsonObject> FetchProcessor( Config configuration, string jobName, string instanceAddress ) {
 
 			// Fetch the processor usage
@@ -219,10 +219,81 @@ namespace ServerMonitor.Connector.Helper {
 
 		}
 
-		// Gets all the partitions for a drive on a server
+		// Fetches the swap/page-file metrics for a server
+		public static async Task<JsonObject> FetchSwap( Config configuration, string jobName, string instanceAddress ) {
+
+			// Fetch the total bytes
+			long totalBytes = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_resource_memory_swap_total_bytes", new() {
+				{ "job", jobName },
+				{ "instance", instanceAddress }
+			} ) ) )
+				.NestedGet<JsonArray>( "result" )
+				.Where( result => result != null )
+				.Select( result => result!.AsObject() )
+				.Where( result => result.NestedHas( "value" ) && result.NestedGet<JsonArray>( "value" ).Count == 2 )
+				.Select( result => long.Parse( result.NestedGet<JsonArray>( "value" )[ 1 ]!.GetValue<string>() ) )
+				.First();
+
+			// Fetch the free bytes
+			long freeBytes = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_resource_memory_swap_free_bytes", new() {
+				{ "job", jobName },
+				{ "instance", instanceAddress }
+			} ) ) )
+				.NestedGet<JsonArray>( "result" )
+				.Where( result => result != null )
+				.Select( result => result!.AsObject() )
+				.Where( result => result.NestedHas( "value" ) && result.NestedGet<JsonArray>( "value" ).Count == 2 )
+				.Select( result => long.Parse( result.NestedGet<JsonArray>( "value" )[ 1 ]!.GetValue<string>() ) )
+				.First();
+
+			// Return as a JSON object
+			return new() {
+				{ "totalBytes", totalBytes },
+				{ "freeBytes", freeBytes },
+			};
+
+		}
+
+		// Fetches the memory metrics for a server
+		public static async Task<JsonObject> FetchMemory( Config configuration, string jobName, string instanceAddress ) {
+
+			// Fetch the total bytes
+			long totalBytes = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_resource_memory_total_bytes", new() {
+				{ "job", jobName },
+				{ "instance", instanceAddress }
+			} ) ) )
+				.NestedGet<JsonArray>( "result" )
+				.Where( result => result != null )
+				.Select( result => result!.AsObject() )
+				.Where( result => result.NestedHas( "value" ) && result.NestedGet<JsonArray>( "value" ).Count == 2 )
+				.Select( result => long.Parse( result.NestedGet<JsonArray>( "value" )[ 1 ]!.GetValue<string>() ) )
+				.First();
+
+			// Fetch the free bytes
+			long freeBytes = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_resource_memory_free_bytes", new() {
+				{ "job", jobName },
+				{ "instance", instanceAddress }
+			} ) ) )
+				.NestedGet<JsonArray>( "result" )
+				.Where( result => result != null )
+				.Select( result => result!.AsObject() )
+				.Where( result => result.NestedHas( "value" ) && result.NestedGet<JsonArray>( "value" ).Count == 2 )
+				.Select( result => long.Parse( result.NestedGet<JsonArray>( "value" )[ 1 ]!.GetValue<string>() ) )
+				.First();
+
+			// Return as a JSON object
+			return new() {
+				{ "totalBytes", totalBytes },
+				{ "freeBytes", freeBytes },
+				{ "swap", await FetchSwap( configuration, jobName, instanceAddress ) }
+			};
+
+		}
+
+		// Fetches all the partitions for a drive on a server
 		public static async Task<JsonObject[]> FetchDrivePartitions( Config configuration, string instanceAddress, string jobName, string driveName ) {
 
-			// Gets the mountpoints for all known parttions ( Partition Name -> Mountpoint )
+			// Fetches the mountpoints for all known parttions ( Partition Name -> Mountpoint )
 			Dictionary<string, string> partitionMountpoints = ( await FetchSeries( configuration, CreatePromQL( "server_monitor_resource_drive_total_bytes", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
@@ -239,7 +310,7 @@ namespace ServerMonitor.Connector.Helper {
 					partition => partition.NestedGet<string>( "mountpoint" )
 				);
 
-			// Gets the total bytes for recently scraped partitions ( Partition Name -> Total Bytes )
+			// Fetches the total bytes for recently scraped partitions ( Partition Name -> Total Bytes )
 			Dictionary<string, long> partitionTotalBytes = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_resource_drive_total_bytes", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
@@ -262,7 +333,7 @@ namespace ServerMonitor.Connector.Helper {
 					partition => long.Parse( partition.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() )
 				);
 
-			// Gets the total bytes for recently scraped partitions ( Partition Name -> Free Bytes )
+			// Fetches the total bytes for recently scraped partitions ( Partition Name -> Free Bytes )
 			Dictionary<string, long> partitionFreeBytes = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_resource_drive_free_bytes", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
@@ -299,10 +370,10 @@ namespace ServerMonitor.Connector.Helper {
 
 		}
 
-		// Gets all the drives on a server
+		// Fetches all the drives on a server
 		public static async Task<JsonObject[]> FetchDrives( Config configuration, string instanceAddress, string jobName ) {
 
-			// Gets the names of all known drives
+			// Fetches the names of all known drives
 			string[] driveNames = ( await FetchSeries( configuration, CreatePromQL( "server_monitor_resource_drive_health", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
@@ -313,7 +384,7 @@ namespace ServerMonitor.Connector.Helper {
 				.Select( drive => drive.NestedGet<string>( "drive" ) )
 				.ToArray();
 
-			// Gets the bytes read for recently scraped drives ( Drive Name -> Bytes Read )
+			// Fetches the bytes read for recently scraped drives ( Drive Name -> Bytes Read )
 			Dictionary<string, long> driveBytesRead = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_resource_drive_read_bytes", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
@@ -334,7 +405,7 @@ namespace ServerMonitor.Connector.Helper {
 					drive => long.Parse( drive.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() )
 				);
 
-			// Gets the bytes written for recently scraped drives ( Drive Name -> Bytes Written )
+			// Fetches the bytes written for recently scraped drives ( Drive Name -> Bytes Written )
 			Dictionary<string, long> driveBytesWritten = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_resource_drive_write_bytes", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName },
@@ -355,7 +426,7 @@ namespace ServerMonitor.Connector.Helper {
 					drive => long.Parse( drive.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() )
 				);
 
-			// Gets the health for recently scraped drives ( Drive Name -> Health )
+			// Fetches the health for recently scraped drives ( Drive Name -> Health )
 			Dictionary<string, int> driveHealth = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_resource_drive_health", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
@@ -376,7 +447,7 @@ namespace ServerMonitor.Connector.Helper {
 					drive => int.Parse( drive.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() )
 				);
 
-			// Gets the partitions for each drive
+			// Fetches the partitions for each drive
 			Dictionary<string, JsonArray> drivePartitions = new();
 			foreach ( string driveName in driveNames ) drivePartitions.Add( driveName, JSON.CreateJsonArray( await FetchDrivePartitions( configuration, instanceAddress, jobName, driveName ) ) );
 

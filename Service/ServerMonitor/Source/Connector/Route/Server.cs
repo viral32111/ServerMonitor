@@ -49,83 +49,16 @@ namespace ServerMonitor.Connector.Route {
 			JsonObject? server = ( await Helper.Prometheus.FetchServers( configuration ) ).FirstOrDefault( server => server.NestedGet<string>( "identifier" ) == serverIdentifier );
 			if ( server == null ) return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServerNotFound, data: new JsonObject() { { "id", serverIdentifier } } );
 
-			/****** Processor ******/
-
-			JsonObject processorMetrics = await Helper.Prometheus.FetchProcessor( configuration, jobName, instanceAddress );
-
-			/****** Memory ******/
-
-			/*
-			// Get the memory total bytes for this server
-			JsonArray memoryTotalBytesMetrics = ( await Helper.Prometheus.Query( configuration, $"server_monitor_resource_memory_total_bytes{{instance=\"{ server[ "instance" ] }\"}}" ) ).NestedGet<JsonArray>( "result" );
-			if ( memoryTotalBytesMetrics.Count != 1 ) return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServerNotFound, data: new JsonObject() {
-				{ "id", serverIdentifier },
-				{ "at", "memory_total_bytes" }
-			} );
-			JsonObject memoryTotalBytesMetric = memoryTotalBytesMetrics[ 0 ]!.AsObject();
-			JsonArray memoryTotalBytesMetricValue = memoryTotalBytesMetric.NestedGet<JsonArray>( "value" );
-			if ( memoryTotalBytesMetricValue.Count != 2 ) throw new Exception( $"Invalid number of values '{ memoryTotalBytesMetricValue.Count }' (expected 2) in memory total bytes from Prometheus API" );
-			if ( double.TryParse( memoryTotalBytesMetricValue[ 1 ]!.AsValue().GetValue<string>(), out double memoryTotalBytes ) == false ) throw new Exception( $"Failed to parse memory total bytes '{ memoryTotalBytesMetricValue[ 1 ]!.AsValue().GetValue<string>() }' from Prometheus API" );
-
-			// Get the memory free bytes for this server
-			JsonArray memoryFreeBytesMetrics = ( await Helper.Prometheus.Query( configuration, $"server_monitor_resource_memory_free_bytes{{instance=\"{ server[ "instance" ] }\"}}" ) ).NestedGet<JsonArray>( "result" );
-			if ( memoryFreeBytesMetrics.Count != 1 ) return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServerNotFound, data: new JsonObject() {
-				{ "id", serverIdentifier },
-				{ "at", "memory_free_bytes" }
-			} );
-			JsonObject memoryFreeBytesMetric = memoryFreeBytesMetrics[ 0 ]!.AsObject();
-			JsonArray memoryFreeBytesMetricValue = memoryFreeBytesMetric.NestedGet<JsonArray>( "value" );
-			if ( memoryFreeBytesMetricValue.Count != 2 ) throw new Exception( $"Invalid number of values '{ memoryFreeBytesMetricValue.Count }' (expected 2) in memory free bytes from Prometheus API" );
-			if ( double.TryParse( memoryFreeBytesMetricValue[ 1 ]!.AsValue().GetValue<string>(), out double memoryFreeBytes ) == false ) throw new Exception( $"Failed to parse memory free bytes '{ memoryFreeBytesMetricValue[ 1 ]!.AsValue().GetValue<string>() }' from Prometheus API" );
-
-			// Get the swap/page-file total bytes for this server
-			JsonArray swapTotalBytesMetrics = ( await Helper.Prometheus.Query( configuration, $"server_monitor_resource_memory_swap_total_bytes{{instance=\"{ server[ "instance" ] }\"}}" ) ).NestedGet<JsonArray>( "result" );
-			if ( swapTotalBytesMetrics.Count != 1 ) return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServerNotFound, data: new JsonObject() {
-				{ "id", serverIdentifier },
-				{ "at", "memory_swap_total_bytes" }
-			} );
-			JsonObject swapTotalBytesMetric = swapTotalBytesMetrics[ 0 ]!.AsObject();
-			JsonArray swapTotalBytesMetricValue = swapTotalBytesMetric.NestedGet<JsonArray>( "value" );
-			if ( swapTotalBytesMetricValue.Count != 2 ) throw new Exception( $"Invalid number of values '{ swapTotalBytesMetricValue.Count }' (expected 2) in swap/page-file total bytes from Prometheus API" );
-			if ( double.TryParse( swapTotalBytesMetricValue[ 1 ]!.AsValue().GetValue<string>(), out double swapTotalBytes ) == false ) throw new Exception( $"Failed to parse swap/page-file total bytes '{ swapTotalBytesMetricValue[ 1 ]!.AsValue().GetValue<string>() }' from Prometheus API" );
-
-			// Get the swap/page-file free bytes for this server
-			JsonArray swapFreeBytesMetrics = ( await Helper.Prometheus.Query( configuration, $"server_monitor_resource_memory_swap_free_bytes{{instance=\"{ server[ "instance" ] }\"}}" ) ).NestedGet<JsonArray>( "result" );
-			if ( swapFreeBytesMetrics.Count != 1 ) return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServerNotFound, data: new JsonObject() {
-				{ "id", serverIdentifier },
-				{ "at", "memory_swap_free_bytes" }
-			} );
-			JsonObject swapFreeBytesMetric = swapFreeBytesMetrics[ 0 ]!.AsObject();
-			JsonArray swapFreeBytesMetricValue = swapFreeBytesMetric.NestedGet<JsonArray>( "value" );
-			if ( swapFreeBytesMetricValue.Count != 2 ) throw new Exception( $"Invalid number of values '{ swapFreeBytesMetricValue.Count }' (expected 2) in swap/page-file free bytes from Prometheus API" );
-			if ( double.TryParse( swapFreeBytesMetricValue[ 1 ]!.AsValue().GetValue<string>(), out double swapFreeBytes ) == false ) throw new Exception( $"Failed to parse swap/page-file free bytes '{ swapFreeBytesMetricValue[ 1 ]!.AsValue().GetValue<string>() }' from Prometheus API" );
-
-			// Create a JSON object for these metrics
-			JsonObject memoryMetrics = new() {
-				{ "totalBytes", memoryTotalBytes },
-				{ "freeBytes", memoryFreeBytes },
-				{ "swapTotalBytes", swapTotalBytes },
-				{ "swapFreeBytes", swapFreeBytes }
-			};
-			*/
-
-			/****** Drives ******/
-
-			JsonArray drives = JSON.CreateJsonArray( await Helper.Prometheus.FetchDrives( configuration, instanceAddress, jobName ) );
-
-			// TODO: Fetch drives metrics
 			// TODO: Fetch network metrics
 			// TODO: Fetch services metrics
 			// TODO: Fetch Docker containers metrics
 			// TODO: Fetch SNMP metrics
 
-			server[ "resources" ] = new JsonObject() {
-				{ "processor", processorMetrics },
-				//{ "memory", memoryMetrics },
-				{ "drives", drives }
-			};
-
-			return Response.SendJson( response, data: server );
+			return Response.SendJson( response, data: new JsonObject() {
+				{ "processor", await Helper.Prometheus.FetchProcessor( configuration, jobName, instanceAddress ) },
+				{ "memory", await Helper.Prometheus.FetchMemory( configuration, jobName, instanceAddress ) },
+				{ "drives", JSON.CreateJsonArray( await Helper.Prometheus.FetchDrives( configuration, instanceAddress, jobName ) ) }
+			} );
 
 			/*
 			return Response.SendJson( response, statusCode: HttpStatusCode.NotImplemented, errorCode: ErrorCode.ExampleData, data: new JsonObject() {
