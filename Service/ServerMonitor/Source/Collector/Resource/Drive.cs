@@ -80,9 +80,19 @@ namespace ServerMonitor.Collector.Resource {
 				TotalBytes.WithLabels( driveName, driveMountPath ).Set( driveInformation.TotalSize );
 				FreeBytes.WithLabels( driveName, driveMountPath ).Set( driveInformation.TotalFreeSpace );
 
-				long[] stats = GetDriveStatisticsForWindows( driveMountPath );
-				ReadBytes.WithLabels( driveName ).IncTo( stats[ 0 ] );
-				WriteBytes.WithLabels( driveName ).IncTo( stats[ 1 ] );
+				try {
+					long[] stats = GetDriveStatisticsForWindows( driveMountPath );
+					
+					ReadBytes.WithLabels( driveName ).IncTo( stats[ 0 ] );
+					WriteBytes.WithLabels( driveName ).IncTo( stats[ 1 ] );
+				} catch ( Win32Exception exception ) {
+					if ( exception.ErrorCode == 2 ) {
+						logger.LogError( $"Drive statistics for drive '{ driveName }' not found (have you ran 'diskperf -Y' to enable performance counters?)" );
+						
+						ReadBytes.WithLabels( driveName ).IncTo( -1 );
+						WriteBytes.WithLabels( driveName ).IncTo( -1 );
+					} else throw exception;
+				}
 
 				// TODO: S.M.A.R.T health
 				Health.WithLabels( driveName ).Set( -1 );
