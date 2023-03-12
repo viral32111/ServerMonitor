@@ -200,6 +200,7 @@ namespace ServerMonitor.Collector {
 		private static string[] GetServiceNames( string systemOrUser ) => Directory.GetFiles( Path.Combine( "/usr/lib/systemd/", systemOrUser ), "*.service" )
 			.Select( servicePath => Path.GetFileNameWithoutExtension( servicePath ) )
 			.Where( serviceName => !serviceName.EndsWith( "@" ) ) // Skip templates
+			.Distinct() // Remove duplicates
 			.ToArray();
 
 		// Parses a systemd service file (for Linux)
