@@ -162,11 +162,12 @@ namespace ServerMonitor.Collector {
 							string service = labelValues[ 0 ];
 							string name = labelValues[ 1 ];
 							string description = labelValues[ 2 ];
+							string level = labelValues[ 3 ];
 
-							logger.LogInformation( "---- Service '{0}' ({1}, {2}) ----", service, name, description );
-							logger.LogInformation( "Status Code: {0}", services.StatusCode.WithLabels( service, name, description ).Value );
-							logger.LogInformation( "Exit Code: {0}", services.ExitCode.WithLabels( service, name, description ).Value );
-							logger.LogInformation( "Uptime: {0} seconds", services.UptimeSeconds.WithLabels( service, name, description ).Value );
+							logger.LogInformation( "---- Service '{0}/{1}' ({2}, {3}) ----", level, service, name, description );
+							logger.LogInformation( "Status Code: {0}", services.StatusCode.WithLabels( service, name, description, level ).Value );
+							logger.LogInformation( "Exit Code: {0}", services.ExitCode.WithLabels( service, name, description, level ).Value );
+							logger.LogInformation( "Uptime: {0} seconds", services.UptimeSeconds.WithLabels( service, name, description, level ).Value );
 						}
 					} catch ( Exception exception ) {
 						logger.LogError( exception, "Failed to collect service metrics" );

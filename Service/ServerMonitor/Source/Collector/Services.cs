@@ -27,13 +27,13 @@ namespace ServerMonitor.Collector {
 		// Initialise the exported Prometheus metrics
 		public Services( Config configuration ) : base( configuration ) {
 			StatusCode = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_service_status_code", "Service status code", new GaugeConfiguration {
-				LabelNames = new[] { "service", "name", "description" }
+				LabelNames = new[] { "service", "name", "description", "level" }
 			} );
 			ExitCode = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_service_exit_code", "Service exit code", new GaugeConfiguration {
-				LabelNames = new[] { "service", "name", "description" }
+				LabelNames = new[] { "service", "name", "description", "level" }
 			} );
 			UptimeSeconds = Metrics.CreateCounter( $"{ configuration.PrometheusMetricsPrefix }_service_uptime_seconds", "Service uptime, in seconds", new CounterConfiguration {
-				LabelNames = new[] { "service", "name", "description" }
+				LabelNames = new[] { "service", "name", "description", "level" }
 			} );
 
 			StatusCode.Set( -1 );
@@ -68,9 +68,10 @@ namespace ServerMonitor.Collector {
 				double uptimeSeconds = GetProcessUptime( process );
 
 				// Update the exported Prometheus metrics
-				StatusCode.WithLabels( service.ServiceName, service.DisplayName, description ).Set( ( int ) service.Status );
-				ExitCode.WithLabels( service.ServiceName, service.DisplayName, description ).Set( exitCode );
-				UptimeSeconds.WithLabels( service.ServiceName, service.DisplayName, description ).IncTo( uptimeSeconds );
+				// NOTE: Level is always System for Windows services
+				StatusCode.WithLabels( service.ServiceName, service.DisplayName, description, "system" ).Set( ( int ) service.Status );
+				ExitCode.WithLabels( service.ServiceName, service.DisplayName, description, "system" ).Set( exitCode );
+				UptimeSeconds.WithLabels( service.ServiceName, service.DisplayName, description, "system" ).IncTo( uptimeSeconds );
 			}
 
 			logger.LogDebug( "Updated Prometheus metrics" );
@@ -107,7 +108,7 @@ namespace ServerMonitor.Collector {
 
 		// Updates the metrics for all systemd services in a group (for Linux)
 		[ SupportedOSPlatform( "linux" ) ]
-		private void UpdateServicesMetrics( string systemOrUser ) {
+		private void UpdateServicesMetrics( string level ) {
 
 			// Read the system uptime from the uptime file, for calculating process uptime
 			long systemUptimeSeconds = File.ReadAllLines( "/proc/uptime" )
@@ -117,10 +118,10 @@ namespace ServerMonitor.Collector {
 				.First(); // Get the first part (the system uptime)
 
 			// Loop through all services...
-			foreach ( string serviceName in GetServiceNames( systemOrUser ) ) {
+			foreach ( string serviceName in GetServiceNames( level ) ) {
 
 				// Get information & live data about this service
-				Dictionary<string, Dictionary<string, string>> serviceInformation = ParseServiceFile( systemOrUser, serviceName );
+				Dictionary<string, Dictionary<string, string>> serviceInformation = ParseServiceFile( level, serviceName );
 				Dictionary<string, string> serviceData = GetServiceData( serviceName );
 
 				// Try to get the description of this service from the information
@@ -187,9 +188,9 @@ namespace ServerMonitor.Collector {
 
 				// Update the exported Prometheus metrics
 				// NOTE: Linux has no display names, so we use the service name for both
-				StatusCode.WithLabels( serviceName, serviceName, serviceDescription ).Set( serviceStatus );
-				ExitCode.WithLabels( serviceName, serviceName, serviceDescription ).Set( serviceExitCode );
-				UptimeSeconds.WithLabels( serviceName, serviceName, serviceDescription ).IncTo( processUptimeSeconds );
+				StatusCode.WithLabels( serviceName, serviceName, serviceDescription, level ).Set( serviceStatus );
+				ExitCode.WithLabels( serviceName, serviceName, serviceDescription, level ).Set( serviceExitCode );
+				UptimeSeconds.WithLabels( serviceName, serviceName, serviceDescription, level ).IncTo( processUptimeSeconds );
 
 			}
 
@@ -197,19 +198,18 @@ namespace ServerMonitor.Collector {
 
 		// Gets a list of systemd service names (for Linux)
 		[ SupportedOSPlatform( "linux" ) ]
-		private static string[] GetServiceNames( string systemOrUser ) => Directory.GetFiles( Path.Combine( "/usr/lib/systemd/", systemOrUser ), "*.service" )
+		private static string[] GetServiceNames( string level ) => Directory.GetFiles( Path.Combine( "/usr/lib/systemd/", level ), "*.service" )
 			.Select( servicePath => Path.GetFileNameWithoutExtension( servicePath ) )
 			.Where( serviceName => !serviceName.EndsWith( "@" ) ) // Skip templates
-			.Distinct() // Remove duplicates
 			.ToArray();
 
 		// Parses a systemd service file (for Linux)
 		[ SupportedOSPlatform( "linux" ) ]
-		private static Dictionary<string, Dictionary<string, string>> ParseServiceFile( string systemOrUser, string serviceName ) {
+		private static Dictionary<string, Dictionary<string, string>> ParseServiceFile( string level, string serviceName ) {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new PlatformNotSupportedException( "Method only available on Linux" );
 
 			// Read the service file
-			string[] fileLines = File.ReadAllLines( Path.Combine( "/usr/lib/systemd/", systemOrUser, $"{ serviceName }.service" ) )
+			string[] fileLines = File.ReadAllLines( Path.Combine( "/usr/lib/systemd/", level, $"{ serviceName }.service" ) )
 				.Where( line => !string.IsNullOrWhiteSpace( line ) ) // Skip empty lines
 				.Where( line => !line.StartsWith( "#" ) ) // Skip comments
 				.ToArray();
