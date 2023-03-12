@@ -68,11 +68,10 @@ namespace ServerMonitor.Connector.Route {
 				{ "fans", new JsonArray() } // TODO
 			};
 
-			// Add metrics for services
+			// Add metrics for services & Docker containers
 			server[ "services" ] = JSON.CreateJsonArray( await Helper.Prometheus.FetchServices( configuration, jobName, instanceAddress ) );
+			server[ "dockerContainers" ] = JSON.CreateJsonArray( await Helper.Prometheus.FetchDockerContainers( configuration, jobName, instanceAddress, server.NestedGet<long>( "lastScrape" ) ) );
 
-			// TODO: Fetch services metrics
-			// TODO: Fetch Docker containers metrics
 			// TODO: Fetch SNMP metrics
 
 			return Response.SendJson( response, data: server );

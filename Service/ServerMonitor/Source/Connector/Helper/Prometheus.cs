@@ -146,7 +146,7 @@ namespace ServerMonitor.Connector.Helper {
 					}
 				);
 
-			// Merge the data into a single array (offline servers will have -1 for uptimeSeconds)
+			// Merge the data into an array of JSON objects (offline servers will have -1 for uptimeSeconds)
 			return activeTargets.Aggregate( new List<JsonObject>(), ( servers, pair ) => {
 				if ( knownServers.ContainsKey( pair.Key ) == false ) return servers; // Skip any targets that are not exported by the Server Monitor collector (i.e., they aren't one of our servers)
 
@@ -360,8 +360,8 @@ namespace ServerMonitor.Connector.Helper {
 				partitions.Add( new() {
 					{ "name", pair.Key },
 					{ "mountpoint", pair.Value },
-					{ "totalBytes", partitionTotalBytes.ContainsKey( pair.Key ) == true ? partitionTotalBytes[ pair.Key ] : - 1 },
-					{ "freeBytes", partitionFreeBytes.ContainsKey( pair.Key ) == true ? partitionFreeBytes[ pair.Key ] : - 1 }
+					{ "totalBytes", partitionTotalBytes.ContainsKey( pair.Key ) == true ? partitionTotalBytes[ pair.Key ] : -1 },
+					{ "freeBytes", partitionFreeBytes.ContainsKey( pair.Key ) == true ? partitionFreeBytes[ pair.Key ] : -1 }
 				} );
 
 				return partitions;
@@ -454,9 +454,9 @@ namespace ServerMonitor.Connector.Helper {
 			return driveNames.Aggregate( new List<JsonObject>(), ( drives, driveName ) => {
 				drives.Add( new() {
 					{ "name", driveName },
-					{ "health", driveHealth.ContainsKey( driveName ) == true ? driveHealth[ driveName ] : - 1 },
-					{ "bytesRead", driveBytesRead.ContainsKey( driveName ) == true ? driveBytesRead[ driveName ] : - 1 },
-					{ "bytesWritten", driveBytesWritten.ContainsKey( driveName ) == true ? driveBytesWritten[ driveName ] : - 1 },
+					{ "health", driveHealth.ContainsKey( driveName ) == true ? driveHealth[ driveName ] : -1 },
+					{ "bytesRead", driveBytesRead.ContainsKey( driveName ) == true ? driveBytesRead[ driveName ] : -1 },
+					{ "bytesWritten", driveBytesWritten.ContainsKey( driveName ) == true ? driveBytesWritten[ driveName ] : -1 },
 					{ "partitions", drivePartitions.ContainsKey( driveName ) == true ? drivePartitions[ driveName ] : new JsonArray() }
 				} );
 
@@ -525,8 +525,8 @@ namespace ServerMonitor.Connector.Helper {
 			return interfaceNames.Aggregate( new List<JsonObject>(), ( interfaces, interfaceName ) => {
 				interfaces.Add( new() {
 					{ "name", interfaceName },
-					{ "bytesSent", interfaceBytesSent.ContainsKey( interfaceName ) == true ? interfaceBytesSent[ interfaceName ] : - 1 },
-					{ "bytesReceived", interfaceBytesReceived.ContainsKey( interfaceName ) == true ? interfaceBytesReceived[ interfaceName ] : - 1 }
+					{ "bytesSent", interfaceBytesSent.ContainsKey( interfaceName ) == true ? interfaceBytesSent[ interfaceName ] : -1 },
+					{ "bytesReceived", interfaceBytesReceived.ContainsKey( interfaceName ) == true ? interfaceBytesReceived[ interfaceName ] : -1 }
 				} );
 
 				return interfaces;
@@ -635,9 +635,9 @@ namespace ServerMonitor.Connector.Helper {
 					{ "name", information[ pair.Key ].NestedGet<string>( "name" ) },
 					{ "description", information[ pair.Key ].NestedGet<string>( "description" ) },
 
-					{ "statusCode", statusCodes.ContainsKey( pair.Key ) == true ? statusCodes[ pair.Key ] : - 1 },
-					{ "exitCode", exitCodes.ContainsKey( pair.Key ) == true ? exitCodes[ pair.Key ] : - 1 },
-					{ "uptimeSeconds", uptimes.ContainsKey( pair.Key ) == true ? uptimes[ pair.Key ] : - 1 },
+					{ "statusCode", statusCodes.ContainsKey( pair.Key ) == true ? statusCodes[ pair.Key ] : -1 },
+					{ "exitCode", exitCodes.ContainsKey( pair.Key ) == true ? exitCodes[ pair.Key ] : -1 },
+					{ "uptimeSeconds", uptimes.ContainsKey( pair.Key ) == true ? uptimes[ pair.Key ] : -1 },
 
 					{ "supportedActions", new JsonObject() { // TODO
 						{ "start", false },
@@ -649,6 +649,144 @@ namespace ServerMonitor.Connector.Helper {
 				} );
 
 				return services;
+			} ).ToArray();
+
+		}
+
+		// Fetches Docker container metrics on a server
+		public static async Task<JsonObject[]> FetchDockerContainers( Config configuration, string jobName, string instanceAddress, long lastScrape ) {
+
+			// Fetch information for all known Docker containers
+			Dictionary<string, JsonObject> dockerContainers = ( await FetchSeries( configuration, CreatePromQL( "server_monitor_docker_status_code", new() {
+				{ "instance", instanceAddress },
+				{ "job", jobName }
+			} ) ) )
+				.Where( container => container != null )
+				.Select( container => container!.AsObject() )
+				.Where( container =>
+					container.NestedHas( "id" ) == true &&
+					container.NestedHas( "name" ) == true &&
+					container.NestedHas( "image" ) == true
+				)
+				.ToDictionary(
+					container => container.NestedGet<string>( "id" ),
+					container => new JsonObject() {
+						{ "name", container.NestedGet<string>( "name" ) },
+						{ "image", container.NestedGet<string>( "image" ) }
+					}
+				);
+
+			// Get the status codes for recently scraped containers ( Container ID -> Status Code )
+			Dictionary<string, int> statusCodes = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_docker_status_code", new() {
+				{ "instance", instanceAddress },
+				{ "job", jobName }
+			} ) ) )
+				.NestedGet<JsonArray>( "result" )
+				.Where( container => container != null )
+				.Select( container => container!.AsObject() )
+				.Where( container =>
+					container.NestedHas( "metric" ) == true &&
+					container.NestedHas( "metric.id" ) == true
+				)
+				.Where( container =>
+					container.NestedHas( "value" ) == true &&
+					container.NestedGet<JsonArray>( "value" ).Count == 2
+				)
+				.ToDictionary(
+					container => container.NestedGet<string>( "metric.id" ),
+					container => int.Parse( container.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() )
+				);
+
+			// Get the exit codes for recently scraped containers ( Container ID -> Exit Code )
+			Dictionary<string, int> exitCodes = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_docker_exit_code", new() {
+				{ "instance", instanceAddress },
+				{ "job", jobName }
+			} ) ) )
+				.NestedGet<JsonArray>( "result" )
+				.Where( container => container != null )
+				.Select( container => container!.AsObject() )
+				.Where( container =>
+					container.NestedHas( "metric" ) == true &&
+					container.NestedHas( "metric.id" ) == true
+				)
+				.Where( container =>
+					container.NestedHas( "value" ) == true &&
+					container.NestedGet<JsonArray>( "value" ).Count == 2
+				)
+				.ToDictionary(
+					container => container.NestedGet<string>( "metric.id" ),
+					container => int.Parse( container.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() )
+				);
+
+			// Get the health status for recently scraped containers ( Container ID -> Uptime )
+			Dictionary<string, int> healthStatusCodes = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_docker_health_status_code", new() {
+				{ "instance", instanceAddress },
+				{ "job", jobName }
+			} ) ) )
+				.NestedGet<JsonArray>( "result" )
+				.Where( container => container != null )
+				.Select( container => container!.AsObject() )
+				.Where( container =>
+					container.NestedHas( "metric" ) == true &&
+					container.NestedHas( "metric.id" ) == true
+				)
+				.Where( container =>
+					container.NestedHas( "value" ) == true &&
+					container.NestedGet<JsonArray>( "value" ).Count == 2
+				)
+				.ToDictionary(
+					container => container.NestedGet<string>( "metric.id" ),
+					container => int.Parse( container.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() )
+				);
+
+			// Get the uptime for recently scraped containers ( Container ID -> Uptime )
+			// NOTE: This is the time since the container was created, not the time since it was started. It does not stop incrementing when the container is stopped!
+			Dictionary<string, long> uptimes = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_docker_created_timestamp", new() {
+				{ "instance", instanceAddress },
+				{ "job", jobName }
+			} ) ) )
+				.NestedGet<JsonArray>( "result" )
+				.Where( container => container != null )
+				.Select( container => container!.AsObject() )
+				.Where( container =>
+					container.NestedHas( "metric" ) == true &&
+					container.NestedHas( "metric.id" ) == true
+				)
+				.Where( container =>
+					container.NestedHas( "value" ) == true &&
+					container.NestedGet<JsonArray>( "value" ).Count == 2
+				)
+				.ToDictionary(
+					container => container.NestedGet<string>( "metric.id" ),
+					container => lastScrape - long.Parse( container.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() )
+				);
+
+			// Merge the data into an array of JSON objects (drives that have not been recently scraped will have -1 for statusCode, exitCode, healthStatusCode & uptimeSeconds)
+			return dockerContainers.Aggregate( new List<JsonObject>(), ( containers, pair ) => {
+				int statusCode = statusCodes.ContainsKey( pair.Key ) == true ? statusCodes[ pair.Key ] : -1;
+
+				containers.Add( new() {
+					{ "id", pair.Key },
+
+					{ "name", pair.Value.NestedGet<string>( "name" ) },
+					{ "image", pair.Value.NestedGet<string>( "image" ) },
+
+					{ "statusCode", statusCode },
+					{ "exitCode", exitCodes.ContainsKey( pair.Key ) == true ? exitCodes[ pair.Key ] : -1 },
+					{ "healthStatusCode", healthStatusCodes.ContainsKey( pair.Key ) == true ? healthStatusCodes[ pair.Key ] : -1 },
+					{ "uptimeSeconds", uptimes.ContainsKey( pair.Key ) == true && statusCode == 1 ? uptimes[ pair.Key ] : -1 },
+
+					{ "supportedActions", new JsonObject() { // TODO
+						{ "start", false },
+						{ "stop", false },
+						{ "restart", false },
+						{ "remove", false },
+					} },
+
+					{ "logs", new JsonArray() } // TODO
+				} );
+
+				return containers;
 			} ).ToArray();
 
 		}
