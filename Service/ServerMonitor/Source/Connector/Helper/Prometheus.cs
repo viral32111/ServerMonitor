@@ -146,7 +146,7 @@ namespace ServerMonitor.Connector.Helper {
 					}
 				);
 
-			// Merge the data into a single array
+			// Merge the data into a single array (offline servers will have -1 for uptimeSeconds)
 			return activeTargets.Aggregate( new List<JsonObject>(), ( servers, pair ) => {
 				if ( knownServers.ContainsKey( pair.Key ) == false ) return servers; // Skip any targets that are not exported by the Server Monitor collector (i.e., they aren't one of our servers)
 
@@ -292,7 +292,7 @@ namespace ServerMonitor.Connector.Helper {
 		// Fetches all the partitions for a drive on a server
 		public static async Task<JsonObject[]> FetchDrivePartitions( Config configuration, string jobName, string instanceAddress, string driveName ) {
 
-			// Fetches the mountpoints for all known parttions ( Partition Name -> Mountpoint )
+			// Fetch the mountpoints for all known parttions ( Partition Name -> Mountpoint )
 			Dictionary<string, string> partitionMountpoints = ( await FetchSeries( configuration, CreatePromQL( "server_monitor_resource_drive_total_bytes", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
@@ -309,7 +309,7 @@ namespace ServerMonitor.Connector.Helper {
 					partition => partition.NestedGet<string>( "mountpoint" )
 				);
 
-			// Fetches the total bytes for recently scraped partitions ( Partition Name -> Total Bytes )
+			// Fetch the total bytes for recently scraped partitions ( Partition Name -> Total Bytes )
 			Dictionary<string, long> partitionTotalBytes = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_resource_drive_total_bytes", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
@@ -332,7 +332,7 @@ namespace ServerMonitor.Connector.Helper {
 					partition => long.Parse( partition.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() )
 				);
 
-			// Fetches the total bytes for recently scraped partitions ( Partition Name -> Free Bytes )
+			// Fetch the total bytes for recently scraped partitions ( Partition Name -> Free Bytes )
 			Dictionary<string, long> partitionFreeBytes = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_resource_drive_free_bytes", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
@@ -355,7 +355,7 @@ namespace ServerMonitor.Connector.Helper {
 					partition => long.Parse( partition.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() )
 				);
 
-			// Combine the data into an array of JSON objects - Partitions that have not been recently scraped will have -1 for totalBytes & freeBytes
+			// Merge the data into an array of JSON objects (partitions that have not been recently scraped will have -1 for totalBytes & freeBytes)
 			return partitionMountpoints.Aggregate( new List<JsonObject>(), ( partitions, pair ) => {
 				partitions.Add( new() {
 					{ "name", pair.Key },
@@ -372,7 +372,7 @@ namespace ServerMonitor.Connector.Helper {
 		// Fetches all the drives on a server
 		public static async Task<JsonObject[]> FetchDrives( Config configuration, string jobName, string instanceAddress ) {
 
-			// Fetches the names of all known drives
+			// Fetch the names of all known drives
 			string[] driveNames = ( await FetchSeries( configuration, CreatePromQL( "server_monitor_resource_drive_health", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
@@ -383,7 +383,7 @@ namespace ServerMonitor.Connector.Helper {
 				.Select( drive => drive.NestedGet<string>( "drive" ) )
 				.ToArray();
 
-			// Fetches the bytes read for recently scraped drives ( Drive Name -> Bytes Read )
+			// Fetch the bytes read for recently scraped drives ( Drive Name -> Bytes Read )
 			Dictionary<string, long> driveBytesRead = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_resource_drive_read_bytes", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
@@ -404,7 +404,7 @@ namespace ServerMonitor.Connector.Helper {
 					drive => long.Parse( drive.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() )
 				);
 
-			// Fetches the bytes written for recently scraped drives ( Drive Name -> Bytes Written )
+			// Fetch the bytes written for recently scraped drives ( Drive Name -> Bytes Written )
 			Dictionary<string, long> driveBytesWritten = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_resource_drive_write_bytes", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName },
@@ -425,7 +425,7 @@ namespace ServerMonitor.Connector.Helper {
 					drive => long.Parse( drive.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() )
 				);
 
-			// Fetches the health for recently scraped drives ( Drive Name -> Health )
+			// Fetch the health for recently scraped drives ( Drive Name -> Health )
 			Dictionary<string, int> driveHealth = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_resource_drive_health", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
@@ -446,11 +446,11 @@ namespace ServerMonitor.Connector.Helper {
 					drive => int.Parse( drive.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() )
 				);
 
-			// Fetches the partitions for each drive
+			// Fetch the partitions for each drive
 			Dictionary<string, JsonArray> drivePartitions = new();
 			foreach ( string driveName in driveNames ) drivePartitions.Add( driveName, JSON.CreateJsonArray( await FetchDrivePartitions( configuration, jobName, instanceAddress, driveName ) ) );
 
-			// Combine the data into an array of JSON objects - Drives that have not been recently scraped will have -1 for bytesRead, bytesWritten & health
+			// Merge the data into an array of JSON objects (drives that have not been recently scraped will have -1 for bytesRead, bytesWritten & health)
 			return driveNames.Aggregate( new List<JsonObject>(), ( drives, driveName ) => {
 				drives.Add( new() {
 					{ "name", driveName },
@@ -461,6 +461,75 @@ namespace ServerMonitor.Connector.Helper {
 				} );
 
 				return drives;
+			} ).ToArray();
+
+		}
+
+		// Fetches network interfaces for a server
+		public static async Task<JsonObject[]> FetchNetworkInterfaces( Config configuration, string jobName, string instanceAddress ) {
+
+			// Fetch the names of all known network interfaces
+			string[] interfaceNames = ( await FetchSeries( configuration, CreatePromQL( "server_monitor_resource_network_sent_bytes", new() {
+				{ "instance", instanceAddress },
+				{ "job", jobName }
+			} ) ) )
+				.Where( netInterface => netInterface != null )
+				.Select( netInterface => netInterface!.AsObject() )
+				.Where( netInterface => netInterface.NestedHas( "interface" ) == true )
+				.Select( netInterface => netInterface.NestedGet<string>( "interface" ) )
+				.ToArray();
+
+			// Fetch the bytes sent for recently scraped network interfaces ( Interface Name -> Bytes Sent )
+			Dictionary<string, long> interfaceBytesSent = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_resource_network_sent_bytes", new() {
+				{ "instance", instanceAddress },
+				{ "job", jobName }
+			} ) ) )
+				.NestedGet<JsonArray>( "result" )
+				.Where( netInterface => netInterface != null )
+				.Select( netInterface => netInterface!.AsObject() )
+				.Where( netInterface =>
+					netInterface.NestedHas( "metric" ) == true &&
+					netInterface.NestedHas( "metric.interface" ) == true
+				)
+				.Where( netInterface =>
+					netInterface.NestedHas( "value" ) == true &&
+					netInterface.NestedGet<JsonArray>( "value" ).Count == 2
+				)
+				.ToDictionary(
+					netInterface => netInterface.NestedGet<string>( "metric.interface" ),
+					netInterface => long.Parse( netInterface.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() )
+				);
+
+			// Fetch the bytes received for recently scraped network interfaces ( Interface Name -> Bytes Received )
+			Dictionary<string, long> interfaceBytesReceived = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_resource_network_received_bytes", new() {
+				{ "instance", instanceAddress },
+				{ "job", jobName }
+			} ) ) )
+				.NestedGet<JsonArray>( "result" )
+				.Where( netInterface => netInterface != null )
+				.Select( netInterface => netInterface!.AsObject() )
+				.Where( netInterface =>
+					netInterface.NestedHas( "metric" ) == true &&
+					netInterface.NestedHas( "metric.interface" ) == true
+				)
+				.Where( netInterface =>
+					netInterface.NestedHas( "value" ) == true &&
+					netInterface.NestedGet<JsonArray>( "value" ).Count == 2
+				)
+				.ToDictionary(
+					netInterface => netInterface.NestedGet<string>( "metric.interface" ),
+					netInterface => long.Parse( netInterface.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() )
+				);
+
+			// Merge the data into an array of JSON objects (interfaces that have not been recently scraped will have -1 for bytesSent & bytesReceived)
+			return interfaceNames.Aggregate( new List<JsonObject>(), ( interfaces, interfaceName ) => {
+				interfaces.Add( new() {
+					{ "name", interfaceName },
+					{ "bytesSent", interfaceBytesSent.ContainsKey( interfaceName ) == true ? interfaceBytesSent[ interfaceName ] : - 1 },
+					{ "bytesReceived", interfaceBytesReceived.ContainsKey( interfaceName ) == true ? interfaceBytesReceived[ interfaceName ] : - 1 }
+				} );
+
+				return interfaces;
 			} ).ToArray();
 
 		}
