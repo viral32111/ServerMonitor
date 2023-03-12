@@ -534,6 +534,118 @@ namespace ServerMonitor.Connector.Helper {
 
 		}
 
+		
+
+		// Fetches services on a server
+		public static async Task<JsonObject[]> FetchServices( Config configuration, string jobName, string instanceAddress ) {
+
+			// Fetch the name & description of all known services
+			Dictionary<string, JsonObject> information = ( await FetchSeries( configuration, CreatePromQL( "server_monitor_service_status_code", new() {
+				{ "instance", instanceAddress },
+				{ "job", jobName }
+			} ) ) )
+				.Where( service => service != null )
+				.Select( service => service!.AsObject() )
+				.Where( service => service.NestedHas( "service" ) == true )
+				.Where( service => service.NestedHas( "name" ) == true )
+				.Where( service => service.NestedHas( "description" ) == true )
+				.ToDictionary(
+					service => service.NestedGet<string>( "service" ),
+					service => new JsonObject() {
+						{ "name", service.NestedGet<string>( "name" ) },
+						{ "description", service.NestedGet<string>( "description" ) }
+					}
+				);
+
+			// Get the status codes for recently scraped services ( Service Name -> Status Code )
+			Dictionary<string, int> statusCodes = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_service_status_code", new() {
+				{ "instance", instanceAddress },
+				{ "job", jobName }
+			} ) ) )
+				.NestedGet<JsonArray>( "result" )
+				.Where( service => service != null )
+				.Select( service => service!.AsObject() )
+				.Where( service =>
+					service.NestedHas( "metric" ) == true &&
+					service.NestedHas( "metric.service" ) == true
+				)
+				.Where( service =>
+					service.NestedHas( "value" ) == true &&
+					service.NestedGet<JsonArray>( "value" ).Count == 2
+				)
+				.ToDictionary(
+					service => service.NestedGet<string>( "metric.service" ),
+					service => int.Parse( service.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() )
+				);
+
+			// Get the exit codes for recently scraped services ( Service Name -> Exit Code )
+			Dictionary<string, int> exitCodes = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_service_exit_code", new() {
+				{ "instance", instanceAddress },
+				{ "job", jobName }
+			} ) ) )
+				.NestedGet<JsonArray>( "result" )
+				.Where( service => service != null )
+				.Select( service => service!.AsObject() )
+				.Where( service =>
+					service.NestedHas( "metric" ) == true &&
+					service.NestedHas( "metric.service" ) == true
+				)
+				.Where( service =>
+					service.NestedHas( "value" ) == true &&
+					service.NestedGet<JsonArray>( "value" ).Count == 2
+				)
+				.ToDictionary(
+					service => service.NestedGet<string>( "metric.service" ),
+					service => int.Parse( service.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() )
+				);
+
+			// Get the uptime for recently scraped services ( Service Name -> Uptime )
+			Dictionary<string, double> uptimes = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_service_uptime_seconds", new() {
+				{ "instance", instanceAddress },
+				{ "job", jobName }
+			} ) ) )
+				.NestedGet<JsonArray>( "result" )
+				.Where( service => service != null )
+				.Select( service => service!.AsObject() )
+				.Where( service =>
+					service.NestedHas( "metric" ) == true &&
+					service.NestedHas( "metric.service" ) == true
+				)
+				.Where( service =>
+					service.NestedHas( "value" ) == true &&
+					service.NestedGet<JsonArray>( "value" ).Count == 2
+				)
+				.ToDictionary(
+					service => service.NestedGet<string>( "metric.service" ),
+					service => double.Parse( service.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() )
+				);
+
+			// Merge the data into an array of JSON objects (services that have not been recently scraped will have -1 for statusCode, exitCode & uptimeSeconds)
+			return information.Aggregate( new List<JsonObject>(), ( services, pair ) => {
+				services.Add( new() {
+					{ "service", pair.Key },
+
+					{ "name", information[ pair.Key ].NestedGet<string>( "name" ) },
+					{ "description", information[ pair.Key ].NestedGet<string>( "description" ) },
+
+					{ "statusCode", statusCodes.ContainsKey( pair.Key ) == true ? statusCodes[ pair.Key ] : - 1 },
+					{ "exitCode", exitCodes.ContainsKey( pair.Key ) == true ? exitCodes[ pair.Key ] : - 1 },
+					{ "uptimeSeconds", uptimes.ContainsKey( pair.Key ) == true ? uptimes[ pair.Key ] : - 1 },
+
+					{ "supportedActions", new JsonObject() { // TODO
+						{ "start", false },
+						{ "stop", false },
+						{ "restart", false }
+					} },
+
+					{ "logs", new JsonArray() } // TODO
+				} );
+
+				return services;
+			} ).ToArray();
+
+		}
+
 	}
 
 }

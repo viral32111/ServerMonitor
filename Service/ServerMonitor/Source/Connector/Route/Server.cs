@@ -48,13 +48,25 @@ namespace ServerMonitor.Connector.Route {
 			JsonObject? server = ( await Helper.Prometheus.FetchServers( configuration ) ).FirstOrDefault( server => server.NestedGet<string>( "identifier" ) == serverIdentifier );
 			if ( server == null ) return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServerNotFound, data: new JsonObject() { { "id", serverIdentifier } } );
 
-			// Add metrics for processor, memory & drives
+			// TODO
+			server[ "supportedActions" ] = new JsonObject() {
+				{ "shutdown", false },
+				{ "reboot", false }
+			};
+
+			// Add metrics for resources
 			server[ "resources" ] = new JsonObject() {
 				{ "processor", await Helper.Prometheus.FetchProcessor( configuration, jobName, instanceAddress ) },
 				{ "memory", await Helper.Prometheus.FetchMemory( configuration, jobName, instanceAddress ) },
 				{ "drives", JSON.CreateJsonArray( await Helper.Prometheus.FetchDrives( configuration, jobName, instanceAddress ) ) },
-				{ "networkInterfaces", JSON.CreateJsonArray( await Helper.Prometheus.FetchNetworkInterfaces( configuration, jobName, instanceAddress ) ) }
+				{ "networkInterfaces", JSON.CreateJsonArray( await Helper.Prometheus.FetchNetworkInterfaces( configuration, jobName, instanceAddress ) ) },
+
+				{ "power", new JsonObject() }, // TODO
+				{ "fans", new JsonArray() } // TODO
 			};
+
+			// Add metrics for services
+			server[ "services" ] = JSON.CreateJsonArray( await Helper.Prometheus.FetchServices( configuration, jobName, instanceAddress ) );
 
 			// TODO: Fetch services metrics
 			// TODO: Fetch Docker containers metrics
