@@ -1,6 +1,7 @@
 using System;
 using System.Web;
 using System.Net;
+using System.Linq;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -21,7 +22,7 @@ namespace ServerMonitor.Connector.Route {
 		// Returns all metrics data for a specific server
 		[ Route( "GET", "/server" ) ]
 		public static async Task<HttpListenerResponse> OnGetRequest( Config configuration, HttpListenerRequest request, HttpListenerResponse response, HttpListenerContext context ) {
-			
+
 			// Ensure query parameters were provided
 			string? queryString = request.Url?.Query;
 			if ( string.IsNullOrWhiteSpace( queryString ) ) return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.NoParameters );
@@ -43,7 +44,7 @@ namespace ServerMonitor.Connector.Route {
 			/****** Uptime & system information ******/
 
 			// Get the uptime for this server
-			JsonArray uptimeMetrics = ( await Helper.Prometheus.Query( configuration, $"server_monitor_uptime_seconds{{instance=\"{ server[ "address" ] }\",name=\"{ server[ "name" ] }\"}}" ) ).NestedGet<JsonArray>( "result" );
+			JsonArray uptimeMetrics = ( await Helper.Prometheus.Query( configuration, $"server_monitor_uptime_seconds{{instance=\"{ server[ "instance" ] }\",name=\"{ server[ "name" ] }\"}}" ) ).NestedGet<JsonArray>( "result" );
 			if ( uptimeMetrics.Count != 1 ) return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServerNotFound, data: new JsonObject() {
 				{ "id", serverIdentifier },
 				{ "at", "uptime" }
@@ -71,7 +72,7 @@ namespace ServerMonitor.Connector.Route {
 			/****** Processor ******/
 
 			// Get the processor usage for this server
-			JsonArray processorUsageMetrics = ( await Helper.Prometheus.Query( configuration, $"server_monitor_resource_processor_usage{{instance=\"{ server[ "address" ] }\"}}" ) ).NestedGet<JsonArray>( "result" );
+			JsonArray processorUsageMetrics = ( await Helper.Prometheus.Query( configuration, $"server_monitor_resource_processor_usage{{instance=\"{ server[ "instance" ] }\"}}" ) ).NestedGet<JsonArray>( "result" );
 			if ( processorUsageMetrics.Count != 1 ) return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServerNotFound, data: new JsonObject() {
 				{ "id", serverIdentifier },
 				{ "at", "processor_usage" }
@@ -82,7 +83,7 @@ namespace ServerMonitor.Connector.Route {
 			if ( double.TryParse( processorUsageMetricValue[ 1 ]!.AsValue().GetValue<string>(), out double processorUsage ) == false ) throw new Exception( $"Failed to parse processor usage '{ processorUsageMetricValue[ 1 ]!.AsValue().GetValue<string>() }' from Prometheus API" );
 
 			// Get the processor frequency for this server
-			JsonArray processorFrequencyMetrics = ( await Helper.Prometheus.Query( configuration, $"server_monitor_resource_processor_frequency{{instance=\"{ server[ "address" ] }\"}}" ) ).NestedGet<JsonArray>( "result" );
+			JsonArray processorFrequencyMetrics = ( await Helper.Prometheus.Query( configuration, $"server_monitor_resource_processor_frequency{{instance=\"{ server[ "instance" ] }\"}}" ) ).NestedGet<JsonArray>( "result" );
 			if ( processorFrequencyMetrics.Count != 1 ) return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServerNotFound, data: new JsonObject() {
 				{ "id", serverIdentifier },
 				{ "at", "processor_frequency" }
@@ -93,7 +94,7 @@ namespace ServerMonitor.Connector.Route {
 			if ( double.TryParse( processorFrequencyMetricValue[ 1 ]!.AsValue().GetValue<string>(), out double processorFrequency ) == false ) throw new Exception( $"Failed to parse processor frequency '{ processorFrequencyMetricValue[ 1 ]!.AsValue().GetValue<string>() }' from Prometheus API" );
 
 			// Get the processor temperature for this server
-			JsonArray processorTemperatureMetrics = ( await Helper.Prometheus.Query( configuration, $"server_monitor_resource_processor_temperature{{instance=\"{ server[ "address" ] }\"}}" ) ).NestedGet<JsonArray>( "result" );
+			JsonArray processorTemperatureMetrics = ( await Helper.Prometheus.Query( configuration, $"server_monitor_resource_processor_temperature{{instance=\"{ server[ "instance" ] }\"}}" ) ).NestedGet<JsonArray>( "result" );
 			if ( processorTemperatureMetrics.Count != 1 ) return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServerNotFound, data: new JsonObject() {
 				{ "id", serverIdentifier },
 				{ "at", "processor_temperature" }
@@ -113,7 +114,7 @@ namespace ServerMonitor.Connector.Route {
 			/****** Memory ******/
 
 			// Get the memory total bytes for this server
-			JsonArray memoryTotalBytesMetrics = ( await Helper.Prometheus.Query( configuration, $"server_monitor_resource_memory_total_bytes{{instance=\"{ server[ "address" ] }\"}}" ) ).NestedGet<JsonArray>( "result" );
+			JsonArray memoryTotalBytesMetrics = ( await Helper.Prometheus.Query( configuration, $"server_monitor_resource_memory_total_bytes{{instance=\"{ server[ "instance" ] }\"}}" ) ).NestedGet<JsonArray>( "result" );
 			if ( memoryTotalBytesMetrics.Count != 1 ) return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServerNotFound, data: new JsonObject() {
 				{ "id", serverIdentifier },
 				{ "at", "memory_total_bytes" }
@@ -124,7 +125,7 @@ namespace ServerMonitor.Connector.Route {
 			if ( double.TryParse( memoryTotalBytesMetricValue[ 1 ]!.AsValue().GetValue<string>(), out double memoryTotalBytes ) == false ) throw new Exception( $"Failed to parse memory total bytes '{ memoryTotalBytesMetricValue[ 1 ]!.AsValue().GetValue<string>() }' from Prometheus API" );
 
 			// Get the memory free bytes for this server
-			JsonArray memoryFreeBytesMetrics = ( await Helper.Prometheus.Query( configuration, $"server_monitor_resource_memory_free_bytes{{instance=\"{ server[ "address" ] }\"}}" ) ).NestedGet<JsonArray>( "result" );
+			JsonArray memoryFreeBytesMetrics = ( await Helper.Prometheus.Query( configuration, $"server_monitor_resource_memory_free_bytes{{instance=\"{ server[ "instance" ] }\"}}" ) ).NestedGet<JsonArray>( "result" );
 			if ( memoryFreeBytesMetrics.Count != 1 ) return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServerNotFound, data: new JsonObject() {
 				{ "id", serverIdentifier },
 				{ "at", "memory_free_bytes" }
@@ -135,7 +136,7 @@ namespace ServerMonitor.Connector.Route {
 			if ( double.TryParse( memoryFreeBytesMetricValue[ 1 ]!.AsValue().GetValue<string>(), out double memoryFreeBytes ) == false ) throw new Exception( $"Failed to parse memory free bytes '{ memoryFreeBytesMetricValue[ 1 ]!.AsValue().GetValue<string>() }' from Prometheus API" );
 
 			// Get the swap/page-file total bytes for this server
-			JsonArray swapTotalBytesMetrics = ( await Helper.Prometheus.Query( configuration, $"server_monitor_resource_memory_swap_total_bytes{{instance=\"{ server[ "address" ] }\"}}" ) ).NestedGet<JsonArray>( "result" );
+			JsonArray swapTotalBytesMetrics = ( await Helper.Prometheus.Query( configuration, $"server_monitor_resource_memory_swap_total_bytes{{instance=\"{ server[ "instance" ] }\"}}" ) ).NestedGet<JsonArray>( "result" );
 			if ( swapTotalBytesMetrics.Count != 1 ) return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServerNotFound, data: new JsonObject() {
 				{ "id", serverIdentifier },
 				{ "at", "memory_swap_total_bytes" }
@@ -146,7 +147,7 @@ namespace ServerMonitor.Connector.Route {
 			if ( double.TryParse( swapTotalBytesMetricValue[ 1 ]!.AsValue().GetValue<string>(), out double swapTotalBytes ) == false ) throw new Exception( $"Failed to parse swap/page-file total bytes '{ swapTotalBytesMetricValue[ 1 ]!.AsValue().GetValue<string>() }' from Prometheus API" );
 
 			// Get the swap/page-file free bytes for this server
-			JsonArray swapFreeBytesMetrics = ( await Helper.Prometheus.Query( configuration, $"server_monitor_resource_memory_swap_free_bytes{{instance=\"{ server[ "address" ] }\"}}" ) ).NestedGet<JsonArray>( "result" );
+			JsonArray swapFreeBytesMetrics = ( await Helper.Prometheus.Query( configuration, $"server_monitor_resource_memory_swap_free_bytes{{instance=\"{ server[ "instance" ] }\"}}" ) ).NestedGet<JsonArray>( "result" );
 			if ( swapFreeBytesMetrics.Count != 1 ) return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServerNotFound, data: new JsonObject() {
 				{ "id", serverIdentifier },
 				{ "at", "memory_swap_free_bytes" }
@@ -164,6 +165,13 @@ namespace ServerMonitor.Connector.Route {
 				{ "swapFreeBytes", swapFreeBytes }
 			};
 
+			/****** Drives ******/
+
+			string instanceAddress = server[ "instance" ]!.GetValue<string>();
+			string jobName = server[ "job" ]!.GetValue<string>();
+
+			JsonArray drives = JSON.CreateJsonArray( await Helper.Prometheus.GetDrives( configuration, instanceAddress, jobName ) );
+
 			// TODO: Fetch drives metrics
 			// TODO: Fetch network metrics
 			// TODO: Fetch services metrics
@@ -172,7 +180,8 @@ namespace ServerMonitor.Connector.Route {
 
 			server[ "resources" ] = new JsonObject() {
 				{ "processor", processorMetrics },
-				{ "memory", memoryMetrics }
+				{ "memory", memoryMetrics },
+				{ "drives", drives }
 			};
 
 			return Response.SendJson( response, data: server );
