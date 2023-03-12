@@ -27,50 +27,19 @@ namespace ServerMonitor.Connector.Route {
 			string? queryString = request.Url?.Query;
 			if ( string.IsNullOrWhiteSpace( queryString ) ) return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.NoParameters );
 
-			// Try get the server identifier from the query parameters
-			NameValueCollection queryParameters = HttpUtility.ParseQueryString( queryString );
-			string? serverIdentifier = queryParameters.Get( "id" );
-			if ( string.IsNullOrWhiteSpace( serverIdentifier ) ) return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.MissingParameter, data: new JsonObject() {
-				{ "parameter", "id" }
-			} );
+			// Try extract & decode the server identifier from the query parameters
+			string? serverIdentifier = HttpUtility.ParseQueryString( queryString ).Get( "id" );
+			if ( string.IsNullOrWhiteSpace( serverIdentifier ) ) return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.MissingParameter, data: new JsonObject() { { "parameter", "id" } } );
+			string[] serverIdentifierParts = Helper.Prometheus.DecodeIdentifier( serverIdentifier );
+			string jobName = serverIdentifierParts[ 0 ], instanceAddress = serverIdentifierParts[ 1 ];
 
-			// Try fetch basic information about this server
-			Dictionary<string, JsonObject> servers = await Helper.Prometheus.GetServerInformation( configuration, "server_monitor_uptime_seconds", serverIdentifier );
-			if ( servers.TryGetValue( serverIdentifier, out JsonObject? server ) == false || server == null ) return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServerNotFound, data: new JsonObject() {
-				{ "id", serverIdentifier },
-				{ "at", "basic_information" }
-			} );
-
-			/****** Uptime & system information ******/
-
-			// Get the uptime for this server
-			JsonArray uptimeMetrics = ( await Helper.Prometheus.Query( configuration, $"server_monitor_uptime_seconds{{instance=\"{ server[ "instance" ] }\",name=\"{ server[ "name" ] }\"}}" ) ).NestedGet<JsonArray>( "result" );
-			if ( uptimeMetrics.Count != 1 ) return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServerNotFound, data: new JsonObject() {
-				{ "id", serverIdentifier },
-				{ "at", "uptime" }
-			} );
-			JsonObject uptimeMetric = uptimeMetrics[ 0 ]!.AsObject();
-
-			// Get basic information about this server
-			string operatingSystem = uptimeMetric.NestedGet<string>( "metric.os" );
-			string version = uptimeMetric.NestedGet<string>( "metric.version" );
-			string architecture = uptimeMetric.NestedGet<string>( "metric.architecture" );
-
-			// Parse the uptime
-			JsonArray uptimeMetricValue = uptimeMetric.NestedGet<JsonArray>( "value" );
-			if ( uptimeMetricValue.Count != 2 ) throw new Exception( $"Invalid number of values '{ uptimeMetricValue.Count }' (expected 2) in uptime from Prometheus API" );
-			if ( double.TryParse( uptimeMetricValue[ 1 ]!.AsValue().GetValue<string>(), out double uptimeSeconds ) == false ) throw new Exception( $"Failed to parse uptime '{ uptimeMetricValue[ 1 ]!.AsValue().GetValue<string>() }' from Prometheus API" );
-
-			// Update this server's information
-			server[ "operatingSystem" ] = operatingSystem;
-			server[ "version" ] = version;
-			server[ "architecture" ] = architecture;
-			server[ "uptimeSeconds" ] = uptimeSeconds;
-
-			// TODO: Fetch supported actions?
+			// Try fetch the server
+			JsonObject? server = ( await Helper.Prometheus.FetchServers( configuration ) ).FirstOrDefault( server => server.NestedGet<string>( "identifier" ) == serverIdentifier );
+			if ( server == null ) return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServerNotFound, data: new JsonObject() { { "id", serverIdentifier } } );
 
 			/****** Processor ******/
 
+			/*
 			// Get the processor usage for this server
 			JsonArray processorUsageMetrics = ( await Helper.Prometheus.Query( configuration, $"server_monitor_resource_processor_usage{{instance=\"{ server[ "instance" ] }\"}}" ) ).NestedGet<JsonArray>( "result" );
 			if ( processorUsageMetrics.Count != 1 ) return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServerNotFound, data: new JsonObject() {
@@ -110,9 +79,11 @@ namespace ServerMonitor.Connector.Route {
 				{ "frequency", processorFrequency },
 				{ "temperature", processorTemperature }
 			};
+			*/
 
 			/****** Memory ******/
 
+			/*
 			// Get the memory total bytes for this server
 			JsonArray memoryTotalBytesMetrics = ( await Helper.Prometheus.Query( configuration, $"server_monitor_resource_memory_total_bytes{{instance=\"{ server[ "instance" ] }\"}}" ) ).NestedGet<JsonArray>( "result" );
 			if ( memoryTotalBytesMetrics.Count != 1 ) return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServerNotFound, data: new JsonObject() {
@@ -164,13 +135,11 @@ namespace ServerMonitor.Connector.Route {
 				{ "swapTotalBytes", swapTotalBytes },
 				{ "swapFreeBytes", swapFreeBytes }
 			};
+			*/
 
 			/****** Drives ******/
 
-			string instanceAddress = server[ "instance" ]!.GetValue<string>();
-			string jobName = server[ "job" ]!.GetValue<string>();
-
-			JsonArray drives = JSON.CreateJsonArray( await Helper.Prometheus.GetDrives( configuration, instanceAddress, jobName ) );
+			JsonArray drives = JSON.CreateJsonArray( await Helper.Prometheus.FetchDrives( configuration, instanceAddress, jobName ) );
 
 			// TODO: Fetch drives metrics
 			// TODO: Fetch network metrics
@@ -179,8 +148,8 @@ namespace ServerMonitor.Connector.Route {
 			// TODO: Fetch SNMP metrics
 
 			server[ "resources" ] = new JsonObject() {
-				{ "processor", processorMetrics },
-				{ "memory", memoryMetrics },
+				//{ "processor", processorMetrics },
+				//{ "memory", memoryMetrics },
 				{ "drives", drives }
 			};
 
