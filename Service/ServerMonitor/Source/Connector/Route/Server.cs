@@ -54,6 +54,9 @@ namespace ServerMonitor.Connector.Route {
 				{ "reboot", false }
 			};
 
+			// Stop here if the server is offline
+			if ( server.NestedGet<double>( "uptimeSeconds" ) == -1 ) return Response.SendJson( response, statusCode: HttpStatusCode.ServiceUnavailable, errorCode: ErrorCode.ServerOffline, data: server );
+
 			// Add metrics for resources
 			server[ "resources" ] = new JsonObject() {
 				{ "processor", await Helper.Prometheus.FetchProcessor( configuration, jobName, instanceAddress ) },

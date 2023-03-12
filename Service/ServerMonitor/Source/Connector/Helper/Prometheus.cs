@@ -174,7 +174,7 @@ namespace ServerMonitor.Connector.Helper {
 		public static async Task<JsonObject> FetchProcessor( Config configuration, string jobName, string instanceAddress ) {
 
 			// Fetch the processor usage
-			double processorUsage = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_processor_usage", new() {
+			double? processorUsage = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_processor_usage", new() {
 				{ "job", jobName },
 				{ "instance", instanceAddress }
 			} ) ) )
@@ -183,10 +183,10 @@ namespace ServerMonitor.Connector.Helper {
 				.Select( result => result!.AsObject() )
 				.Where( result => result.NestedHas( "value" ) && result.NestedGet<JsonArray>( "value" ).Count == 2 )
 				.Select( result => double.Parse( result.NestedGet<JsonArray>( "value" )[ 1 ]!.GetValue<string>() ) )
-				.First();
+				.FirstOrDefault();
 
 			// Fetch the processor frequency
-			double processorFrequency = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_processor_frequency", new() {
+			double? processorFrequency = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_processor_frequency", new() {
 				{ "job", jobName },
 				{ "instance", instanceAddress }
 			} ) ) )
@@ -195,10 +195,10 @@ namespace ServerMonitor.Connector.Helper {
 				.Select( result => result!.AsObject() )
 				.Where( result => result.NestedHas( "value" ) && result.NestedGet<JsonArray>( "value" ).Count == 2 )
 				.Select( result => double.Parse( result.NestedGet<JsonArray>( "value" )[ 1 ]!.GetValue<string>() ) )
-				.First();
+				.FirstOrDefault();
 
 			// Fetch the processor temperature
-			double processorTemperature = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_processor_temperature", new() {
+			double? processorTemperature = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_processor_temperature", new() {
 				{ "job", jobName },
 				{ "instance", instanceAddress }
 			} ) ) )
@@ -207,7 +207,7 @@ namespace ServerMonitor.Connector.Helper {
 				.Select( result => result!.AsObject() )
 				.Where( result => result.NestedHas( "value" ) && result.NestedGet<JsonArray>( "value" ).Count == 2 )
 				.Select( result => double.Parse( result.NestedGet<JsonArray>( "value" )[ 1 ]!.GetValue<string>() ) )
-				.First();
+				.FirstOrDefault();
 
 			// Return as a JSON object
 			return new() {
@@ -222,7 +222,7 @@ namespace ServerMonitor.Connector.Helper {
 		public static async Task<JsonObject> FetchSwap( Config configuration, string jobName, string instanceAddress ) {
 
 			// Fetch the total bytes
-			long totalBytes = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_memory_swap_total_bytes", new() {
+			long? totalBytes = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_memory_swap_total_bytes", new() {
 				{ "job", jobName },
 				{ "instance", instanceAddress }
 			} ) ) )
@@ -231,10 +231,10 @@ namespace ServerMonitor.Connector.Helper {
 				.Select( result => result!.AsObject() )
 				.Where( result => result.NestedHas( "value" ) && result.NestedGet<JsonArray>( "value" ).Count == 2 )
 				.Select( result => long.Parse( result.NestedGet<JsonArray>( "value" )[ 1 ]!.GetValue<string>() ) )
-				.First();
+				.FirstOrDefault();
 
 			// Fetch the free bytes
-			long freeBytes = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_memory_swap_free_bytes", new() {
+			long? freeBytes = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_memory_swap_free_bytes", new() {
 				{ "job", jobName },
 				{ "instance", instanceAddress }
 			} ) ) )
@@ -243,7 +243,7 @@ namespace ServerMonitor.Connector.Helper {
 				.Select( result => result!.AsObject() )
 				.Where( result => result.NestedHas( "value" ) && result.NestedGet<JsonArray>( "value" ).Count == 2 )
 				.Select( result => long.Parse( result.NestedGet<JsonArray>( "value" )[ 1 ]!.GetValue<string>() ) )
-				.First();
+				.FirstOrDefault();
 
 			// Return as a JSON object
 			return new() {
@@ -257,7 +257,7 @@ namespace ServerMonitor.Connector.Helper {
 		public static async Task<JsonObject> FetchMemory( Config configuration, string jobName, string instanceAddress ) {
 
 			// Fetch the total bytes
-			long totalBytes = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_memory_total_bytes", new() {
+			long? totalBytes = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_memory_total_bytes", new() {
 				{ "job", jobName },
 				{ "instance", instanceAddress }
 			} ) ) )
@@ -266,10 +266,10 @@ namespace ServerMonitor.Connector.Helper {
 				.Select( result => result!.AsObject() )
 				.Where( result => result.NestedHas( "value" ) && result.NestedGet<JsonArray>( "value" ).Count == 2 )
 				.Select( result => long.Parse( result.NestedGet<JsonArray>( "value" )[ 1 ]!.GetValue<string>() ) )
-				.First();
+				.FirstOrDefault();
 
 			// Fetch the free bytes
-			long freeBytes = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_memory_free_bytes", new() {
+			long? freeBytes = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_memory_free_bytes", new() {
 				{ "job", jobName },
 				{ "instance", instanceAddress }
 			} ) ) )
@@ -278,7 +278,7 @@ namespace ServerMonitor.Connector.Helper {
 				.Select( result => result!.AsObject() )
 				.Where( result => result.NestedHas( "value" ) && result.NestedGet<JsonArray>( "value" ).Count == 2 )
 				.Select( result => long.Parse( result.NestedGet<JsonArray>( "value" )[ 1 ]!.GetValue<string>() ) )
-				.First();
+				.FirstOrDefault();
 
 			// Return as a JSON object
 			return new() {
@@ -534,8 +534,6 @@ namespace ServerMonitor.Connector.Helper {
 
 		}
 
-		
-
 		// Fetches services on a server
 		public static async Task<JsonObject[]> FetchServices( Config configuration, string jobName, string instanceAddress ) {
 
@@ -546,11 +544,14 @@ namespace ServerMonitor.Connector.Helper {
 			} ) ) )
 				.Where( service => service != null )
 				.Select( service => service!.AsObject() )
-				.Where( service => service.NestedHas( "service" ) == true )
-				.Where( service => service.NestedHas( "name" ) == true )
-				.Where( service => service.NestedHas( "description" ) == true )
+				.Where( service =>
+					service.NestedHas( "service" ) == true &&
+					service.NestedHas( "name" ) == true &&
+					service.NestedHas( "description" ) == true &&
+					service.NestedHas( "level" ) == true
+				)
 				.ToDictionary(
-					service => service.NestedGet<string>( "service" ),
+					service => string.Concat( service.NestedGet<string>( "level" ), "/", service.NestedGet<string>( "service" ) ),
 					service => new JsonObject() {
 						{ "name", service.NestedGet<string>( "name" ) },
 						{ "description", service.NestedGet<string>( "description" ) }
@@ -567,14 +568,15 @@ namespace ServerMonitor.Connector.Helper {
 				.Select( service => service!.AsObject() )
 				.Where( service =>
 					service.NestedHas( "metric" ) == true &&
-					service.NestedHas( "metric.service" ) == true
+					service.NestedHas( "metric.service" ) == true &&
+					service.NestedHas( "metric.level" ) == true
 				)
 				.Where( service =>
 					service.NestedHas( "value" ) == true &&
 					service.NestedGet<JsonArray>( "value" ).Count == 2
 				)
 				.ToDictionary(
-					service => service.NestedGet<string>( "metric.service" ),
+					service => string.Concat( service.NestedGet<string>( "metric.level" ), "/", service.NestedGet<string>( "metric.service" ) ),
 					service => int.Parse( service.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() )
 				);
 
@@ -588,14 +590,15 @@ namespace ServerMonitor.Connector.Helper {
 				.Select( service => service!.AsObject() )
 				.Where( service =>
 					service.NestedHas( "metric" ) == true &&
-					service.NestedHas( "metric.service" ) == true
+					service.NestedHas( "metric.service" ) == true &&
+					service.NestedHas( "metric.level" ) == true
 				)
 				.Where( service =>
 					service.NestedHas( "value" ) == true &&
 					service.NestedGet<JsonArray>( "value" ).Count == 2
 				)
 				.ToDictionary(
-					service => service.NestedGet<string>( "metric.service" ),
+					service => string.Concat( service.NestedGet<string>( "metric.level" ), "/", service.NestedGet<string>( "metric.service" ) ),
 					service => int.Parse( service.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() )
 				);
 
@@ -609,21 +612,25 @@ namespace ServerMonitor.Connector.Helper {
 				.Select( service => service!.AsObject() )
 				.Where( service =>
 					service.NestedHas( "metric" ) == true &&
-					service.NestedHas( "metric.service" ) == true
+					service.NestedHas( "metric.service" ) == true &&
+					service.NestedHas( "metric.level" ) == true
 				)
 				.Where( service =>
 					service.NestedHas( "value" ) == true &&
 					service.NestedGet<JsonArray>( "value" ).Count == 2
 				)
 				.ToDictionary(
-					service => service.NestedGet<string>( "metric.service" ),
+					service => string.Concat( service.NestedGet<string>( "metric.level" ), "/", service.NestedGet<string>( "metric.service" ) ),
 					service => double.Parse( service.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() )
 				);
 
 			// Merge the data into an array of JSON objects (services that have not been recently scraped will have -1 for statusCode, exitCode & uptimeSeconds)
 			return information.Aggregate( new List<JsonObject>(), ( services, pair ) => {
+				string[] parts = pair.Key.Split( '/', 2 );
+
 				services.Add( new() {
-					{ "service", pair.Key },
+					{ "service", parts[ 0 ] },
+					{ "level", parts[ 1 ] },
 
 					{ "name", information[ pair.Key ].NestedGet<string>( "name" ) },
 					{ "description", information[ pair.Key ].NestedGet<string>( "description" ) },
