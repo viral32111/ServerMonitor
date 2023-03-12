@@ -4,7 +4,6 @@ using System.Net;
 using System.Linq;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 using System.Collections.Specialized;
 using Microsoft.Extensions.Logging;
 using ServerMonitor.Connector.Helper;
@@ -49,16 +48,19 @@ namespace ServerMonitor.Connector.Route {
 			JsonObject? server = ( await Helper.Prometheus.FetchServers( configuration ) ).FirstOrDefault( server => server.NestedGet<string>( "identifier" ) == serverIdentifier );
 			if ( server == null ) return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServerNotFound, data: new JsonObject() { { "id", serverIdentifier } } );
 
+			// Add metrics for processor, memory & drives
+			server[ "resources" ] = new JsonObject() {
+				{ "processor", await Helper.Prometheus.FetchProcessor( configuration, jobName, instanceAddress ) },
+				{ "memory", await Helper.Prometheus.FetchMemory( configuration, jobName, instanceAddress ) },
+				{ "drives", JSON.CreateJsonArray( await Helper.Prometheus.FetchDrives( configuration, instanceAddress, jobName ) ) }
+			};
+
 			// TODO: Fetch network metrics
 			// TODO: Fetch services metrics
 			// TODO: Fetch Docker containers metrics
 			// TODO: Fetch SNMP metrics
 
-			return Response.SendJson( response, data: new JsonObject() {
-				{ "processor", await Helper.Prometheus.FetchProcessor( configuration, jobName, instanceAddress ) },
-				{ "memory", await Helper.Prometheus.FetchMemory( configuration, jobName, instanceAddress ) },
-				{ "drives", JSON.CreateJsonArray( await Helper.Prometheus.FetchDrives( configuration, instanceAddress, jobName ) ) }
-			} );
+			return Response.SendJson( response, data: server );
 
 			/*
 			return Response.SendJson( response, statusCode: HttpStatusCode.NotImplemented, errorCode: ErrorCode.ExampleData, data: new JsonObject() {

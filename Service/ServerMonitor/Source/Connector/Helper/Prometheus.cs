@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Globalization;
@@ -92,7 +91,7 @@ namespace ServerMonitor.Connector.Helper {
 					target => new JsonObject() {
 						{ "jobName", target.NestedGet<string>( "labels.job" ) },
 						{ "instanceAddress", target.NestedGet<string>( "labels.instance" ) },
-						{ "lastScrape", DateTimeOffset.Parse( target.NestedGet<string>( "lastScrape" ), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal ) } // https://stackoverflow.com/a/36314187
+						{ "lastScrape", DateTimeOffset.Parse( target.NestedGet<string>( "lastScrape" ), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal ).ToUnixTimeSeconds() } // https://stackoverflow.com/a/36314187
 					}
 				);
 
@@ -156,7 +155,7 @@ namespace ServerMonitor.Connector.Helper {
 
 					{ "jobName", activeTargets[ pair.Key ].NestedGet<string>( "jobName" ) },
 					{ "instanceAddress", activeTargets[ pair.Key ].NestedGet<string>( "instanceAddress" ) },
-					{ "lastScrape", activeTargets[ pair.Key ].NestedGet<DateTimeOffset>( "lastScrape" ) },
+					{ "lastScrape", activeTargets[ pair.Key ].NestedGet<long>( "lastScrape" ) },
 					
 					{ "hostName", recentServers.ContainsKey( pair.Key ) == true ? recentServers[ pair.Key ].NestedGet<string>( "hostName" ) : knownServers[ pair.Key ].NestedGet<string>( "hostName" ) },
 					{ "operatingSystem", recentServers.ContainsKey( pair.Key ) == true ? recentServers[ pair.Key ].NestedGet<string>( "operatingSystem" ) : knownServers[ pair.Key ].NestedGet<string>( "operatingSystem" ) },
