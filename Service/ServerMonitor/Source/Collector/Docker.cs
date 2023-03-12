@@ -40,16 +40,16 @@ namespace ServerMonitor.Collector {
 		// Initialise the exported Prometheus metrics
 		public Docker( Config configuration ) : base( configuration ) {
 			StatusCode = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_docker_status_code", "Docker container status code", new GaugeConfiguration {
-				LabelNames = new[] { "name", "id", "image" }
+				LabelNames = new[] { "id", "name", "image" }
 			} );
 			ExitCode = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_docker_exit_code", "Docker container exit code", new GaugeConfiguration {
-				LabelNames = new[] { "name", "id", "image" }
+				LabelNames = new[] { "id", "name", "image" }
 			} );
 			CreatedTimestamp = Metrics.CreateCounter( $"{ configuration.PrometheusMetricsPrefix }_docker_created_timestamp", "Docker container creation unix timestamp", new CounterConfiguration {
-				LabelNames = new[] { "name", "id", "image" }
+				LabelNames = new[] { "id", "name", "image" }
 			} );
 			HealthStatusCode = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_docker_health_status_code", "Docker container healthcheck status code", new GaugeConfiguration {
-				LabelNames = new[] { "name", "id", "image" }
+				LabelNames = new[] { "id", "name", "image" }
 			} );
 
 			StatusCode.Set( -1 );
