@@ -96,7 +96,7 @@ namespace ServerMonitor.Connector.Helper {
 				);
 
 			// Fetch all the known servers (does not mean they are online, just that they have been scraped at least once)
-			Dictionary<string, JsonObject> knownServers = ( await FetchSeries( configuration, "server_monitor_uptime_seconds" ) )
+			Dictionary<string, JsonObject> knownServers = ( await FetchSeries( configuration, $"{ configuration.PrometheusMetricsPrefix }_uptime_seconds" ) )
 				.Where( server => server != null )
 				.Select( server => server!.AsObject() )
 				.Where( server =>
@@ -118,7 +118,7 @@ namespace ServerMonitor.Connector.Helper {
 				);
 
 			// Fetch all the recent servers (means they are online)
-			Dictionary<string, JsonObject> recentServers = ( await FetchQuery( configuration, "server_monitor_uptime_seconds" ) )
+			Dictionary<string, JsonObject> recentServers = ( await FetchQuery( configuration, $"{ configuration.PrometheusMetricsPrefix }_uptime_seconds" ) )
 				.NestedGet<JsonArray>( "result" )
 				.Where( server => server != null )
 				.Select( server => server!.AsObject() )
@@ -174,7 +174,7 @@ namespace ServerMonitor.Connector.Helper {
 		public static async Task<JsonObject> FetchProcessor( Config configuration, string jobName, string instanceAddress ) {
 
 			// Fetch the processor usage
-			double processorUsage = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_resource_processor_usage", new() {
+			double processorUsage = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_processor_usage", new() {
 				{ "job", jobName },
 				{ "instance", instanceAddress }
 			} ) ) )
@@ -186,7 +186,7 @@ namespace ServerMonitor.Connector.Helper {
 				.First();
 
 			// Fetch the processor frequency
-			double processorFrequency = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_resource_processor_frequency", new() {
+			double processorFrequency = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_processor_frequency", new() {
 				{ "job", jobName },
 				{ "instance", instanceAddress }
 			} ) ) )
@@ -198,7 +198,7 @@ namespace ServerMonitor.Connector.Helper {
 				.First();
 
 			// Fetch the processor temperature
-			double processorTemperature = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_resource_processor_temperature", new() {
+			double processorTemperature = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_processor_temperature", new() {
 				{ "job", jobName },
 				{ "instance", instanceAddress }
 			} ) ) )
@@ -222,7 +222,7 @@ namespace ServerMonitor.Connector.Helper {
 		public static async Task<JsonObject> FetchSwap( Config configuration, string jobName, string instanceAddress ) {
 
 			// Fetch the total bytes
-			long totalBytes = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_resource_memory_swap_total_bytes", new() {
+			long totalBytes = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_memory_swap_total_bytes", new() {
 				{ "job", jobName },
 				{ "instance", instanceAddress }
 			} ) ) )
@@ -234,7 +234,7 @@ namespace ServerMonitor.Connector.Helper {
 				.First();
 
 			// Fetch the free bytes
-			long freeBytes = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_resource_memory_swap_free_bytes", new() {
+			long freeBytes = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_memory_swap_free_bytes", new() {
 				{ "job", jobName },
 				{ "instance", instanceAddress }
 			} ) ) )
@@ -257,7 +257,7 @@ namespace ServerMonitor.Connector.Helper {
 		public static async Task<JsonObject> FetchMemory( Config configuration, string jobName, string instanceAddress ) {
 
 			// Fetch the total bytes
-			long totalBytes = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_resource_memory_total_bytes", new() {
+			long totalBytes = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_memory_total_bytes", new() {
 				{ "job", jobName },
 				{ "instance", instanceAddress }
 			} ) ) )
@@ -269,7 +269,7 @@ namespace ServerMonitor.Connector.Helper {
 				.First();
 
 			// Fetch the free bytes
-			long freeBytes = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_resource_memory_free_bytes", new() {
+			long freeBytes = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_memory_free_bytes", new() {
 				{ "job", jobName },
 				{ "instance", instanceAddress }
 			} ) ) )
@@ -293,7 +293,7 @@ namespace ServerMonitor.Connector.Helper {
 		public static async Task<JsonObject[]> FetchDrivePartitions( Config configuration, string jobName, string instanceAddress, string driveName ) {
 
 			// Fetch the mountpoints for all known parttions ( Partition Name -> Mountpoint )
-			Dictionary<string, string> partitionMountpoints = ( await FetchSeries( configuration, CreatePromQL( "server_monitor_resource_drive_total_bytes", new() {
+			Dictionary<string, string> partitionMountpoints = ( await FetchSeries( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_drive_total_bytes", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
 			} ) ) )
@@ -310,7 +310,7 @@ namespace ServerMonitor.Connector.Helper {
 				);
 
 			// Fetch the total bytes for recently scraped partitions ( Partition Name -> Total Bytes )
-			Dictionary<string, long> partitionTotalBytes = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_resource_drive_total_bytes", new() {
+			Dictionary<string, long> partitionTotalBytes = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_drive_total_bytes", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
 			} ) ) )
@@ -333,7 +333,7 @@ namespace ServerMonitor.Connector.Helper {
 				);
 
 			// Fetch the total bytes for recently scraped partitions ( Partition Name -> Free Bytes )
-			Dictionary<string, long> partitionFreeBytes = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_resource_drive_free_bytes", new() {
+			Dictionary<string, long> partitionFreeBytes = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_drive_free_bytes", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
 			} ) ) )
@@ -373,7 +373,7 @@ namespace ServerMonitor.Connector.Helper {
 		public static async Task<JsonObject[]> FetchDrives( Config configuration, string jobName, string instanceAddress ) {
 
 			// Fetch the names of all known drives
-			string[] driveNames = ( await FetchSeries( configuration, CreatePromQL( "server_monitor_resource_drive_health", new() {
+			string[] driveNames = ( await FetchSeries( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_drive_health", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
 			} ) ) )
@@ -384,7 +384,7 @@ namespace ServerMonitor.Connector.Helper {
 				.ToArray();
 
 			// Fetch the bytes read for recently scraped drives ( Drive Name -> Bytes Read )
-			Dictionary<string, long> driveBytesRead = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_resource_drive_read_bytes", new() {
+			Dictionary<string, long> driveBytesRead = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_drive_read_bytes", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
 			} ) ) )
@@ -405,7 +405,7 @@ namespace ServerMonitor.Connector.Helper {
 				);
 
 			// Fetch the bytes written for recently scraped drives ( Drive Name -> Bytes Written )
-			Dictionary<string, long> driveBytesWritten = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_resource_drive_write_bytes", new() {
+			Dictionary<string, long> driveBytesWritten = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_drive_write_bytes", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName },
 			} ) ) )
@@ -426,7 +426,7 @@ namespace ServerMonitor.Connector.Helper {
 				);
 
 			// Fetch the health for recently scraped drives ( Drive Name -> Health )
-			Dictionary<string, int> driveHealth = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_resource_drive_health", new() {
+			Dictionary<string, int> driveHealth = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_drive_health", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
 			} ) ) )
@@ -469,7 +469,7 @@ namespace ServerMonitor.Connector.Helper {
 		public static async Task<JsonObject[]> FetchNetworkInterfaces( Config configuration, string jobName, string instanceAddress ) {
 
 			// Fetch the names of all known network interfaces
-			string[] interfaceNames = ( await FetchSeries( configuration, CreatePromQL( "server_monitor_resource_network_sent_bytes", new() {
+			string[] interfaceNames = ( await FetchSeries( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_network_sent_bytes", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
 			} ) ) )
@@ -480,7 +480,7 @@ namespace ServerMonitor.Connector.Helper {
 				.ToArray();
 
 			// Fetch the bytes sent for recently scraped network interfaces ( Interface Name -> Bytes Sent )
-			Dictionary<string, long> interfaceBytesSent = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_resource_network_sent_bytes", new() {
+			Dictionary<string, long> interfaceBytesSent = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_network_sent_bytes", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
 			} ) ) )
@@ -501,7 +501,7 @@ namespace ServerMonitor.Connector.Helper {
 				);
 
 			// Fetch the bytes received for recently scraped network interfaces ( Interface Name -> Bytes Received )
-			Dictionary<string, long> interfaceBytesReceived = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_resource_network_received_bytes", new() {
+			Dictionary<string, long> interfaceBytesReceived = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_network_received_bytes", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
 			} ) ) )
