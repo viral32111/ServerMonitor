@@ -72,8 +72,13 @@ namespace ServerMonitor.Connector.Route {
 			server[ "services" ] = JSON.CreateJsonArray( await Helper.Prometheus.FetchServices( configuration, jobName, instanceAddress ) );
 			server[ "dockerContainers" ] = JSON.CreateJsonArray( await Helper.Prometheus.FetchDockerContainers( configuration, jobName, instanceAddress, server.NestedGet<long>( "lastScrape" ) ) );
 
-			// TODO: Fetch SNMP metrics
+			// Add metrics for SNMP
+			server[ "snmp" ] = new JsonObject() {
+				{ "community", configuration.SNMPCommunity },
+				{ "agents", JSON.CreateJsonArray( await Helper.Prometheus.FetchSNMPAgents( configuration, jobName, instanceAddress ) ) }
+			};
 
+			// Return all this data
 			return Response.SendJson( response, data: server );
 
 			/*

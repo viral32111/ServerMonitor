@@ -791,6 +791,126 @@ namespace ServerMonitor.Connector.Helper {
 
 		}
 
+		// Fetches SNMP agent metrics on a server
+		public static async Task<JsonObject[]> FetchSNMPAgents( Config configuration, string jobName, string instanceAddress ) {
+
+			// Fetch all known SNMP agents
+			Dictionary<string, JsonObject> snmpAgents = ( await FetchSeries( configuration, CreatePromQL( "server_monitor_snmp_uptime_seconds", new() {
+				{ "job", jobName },
+				{ "instance", instanceAddress }
+			} ) ) )
+				.Where( agent => agent != null )
+				.Select( agent => agent!.AsObject() )
+				.Where( agent =>
+					agent.NestedHas( "address" ) == true &&
+					agent.NestedHas( "port" ) == true &&
+					agent.NestedHas( "name" ) == true &&
+					agent.NestedHas( "description" ) == true &&
+					agent.NestedHas( "location" ) == true &&
+					agent.NestedHas( "contact" ) == true
+				)
+				.ToDictionary(
+					agent => string.Concat( agent.NestedGet<string>( "address" ), ":", agent.NestedGet<string>( "port" ) ),
+					agent => new JsonObject() {
+						{ "name", agent.NestedGet<string>( "name" ) },
+						{ "description", agent.NestedGet<string>( "description" ) },
+						{ "location", agent.NestedGet<string>( "location" ) },
+						{ "contact", agent.NestedGet<string>( "contact" ) }
+					}
+				);
+
+			// Fetch the uptime for recently scraped SNMP agents ( Address:Port -> Uptime )
+			Dictionary<string, double> uptimes = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_snmp_uptime_seconds", new() {
+				{ "job", jobName },
+				{ "instance", instanceAddress }
+			} ) ) )
+				.NestedGet<JsonArray>( "result" )
+				.Where( agent => agent != null )
+				.Select( agent => agent!.AsObject() )
+				.Where( agent =>
+					agent.NestedHas( "metric" ) == true &&
+					agent.NestedHas( "metric.address" ) == true &&
+					agent.NestedHas( "metric.port" ) == true
+				)
+				.Where( agent =>
+					agent.NestedHas( "value" ) == true &&
+					agent.NestedGet<JsonArray>( "value" ).Count == 2
+				)
+				.ToDictionary(
+					agent => string.Concat( agent.NestedGet<string>( "metric.address" ), ":", agent.NestedGet<string>( "metric.port" ) ),
+					agent => double.Parse( agent.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() )
+				);
+
+			// Fetch the service count for recently scraped SNMP agents ( Address:Port -> Service Count )
+			Dictionary<string, long> serviceCounts = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_snmp_service_count", new() {
+				{ "job", jobName },
+				{ "instance", instanceAddress }
+			} ) ) )
+				.NestedGet<JsonArray>( "result" )
+				.Where( agent => agent != null )
+				.Select( agent => agent!.AsObject() )
+				.Where( agent =>
+					agent.NestedHas( "metric" ) == true &&
+					agent.NestedHas( "metric.address" ) == true &&
+					agent.NestedHas( "metric.port" ) == true
+				)
+				.Where( agent =>
+					agent.NestedHas( "value" ) == true &&
+					agent.NestedGet<JsonArray>( "value" ).Count == 2
+				)
+				.ToDictionary(
+					agent => string.Concat( agent.NestedGet<string>( "metric.address" ), ":", agent.NestedGet<string>( "metric.port" ) ),
+					agent => long.Parse( agent.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() )
+				);
+
+			// Fetch the traps received count for recently scraped SNMP agents ( Address:Port -> Received Traps )
+			Dictionary<string, long> receivedTraps = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_snmp_traps_received", new() {
+				{ "job", jobName },
+				{ "instance", instanceAddress }
+			} ) ) )
+				.NestedGet<JsonArray>( "result" )
+				.Where( agent => agent != null )
+				.Select( agent => agent!.AsObject() )
+				.Where( agent =>
+					agent.NestedHas( "metric" ) == true &&
+					agent.NestedHas( "metric.address" ) == true &&
+					agent.NestedHas( "metric.port" ) == true
+				)
+				.Where( agent =>
+					agent.NestedHas( "value" ) == true &&
+					agent.NestedGet<JsonArray>( "value" ).Count == 2
+				)
+				.ToDictionary(
+					agent => string.Concat( agent.NestedGet<string>( "metric.address" ), ":", agent.NestedGet<string>( "metric.port" ) ),
+					agent => long.Parse( agent.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() )
+				);
+
+			// Merge the data into an array of JSON objects (drives that have not been recently scraped will have -1 for statusCode, exitCode, healthStatusCode & uptimeSeconds)
+			return snmpAgents.Aggregate( new List<JsonObject>(), ( containers, pair ) => {
+				string[] parts = pair.Key.Split( ':', 2 );
+
+				containers.Add( new() {
+					{ "address", parts[ 0 ] },
+					{ "port", int.Parse( parts[ 1 ] ) },
+
+					{ "name", pair.Value.NestedGet<string>( "name" ) },
+					{ "description", pair.Value.NestedGet<string>( "description" ) },
+					{ "location", pair.Value.NestedGet<string>( "location" ) },
+					{ "contact", pair.Value.NestedGet<string>( "contact" ) },
+
+					{ "uptimeSeconds", uptimes.ContainsKey( pair.Key ) == true ? uptimes[ pair.Key ] : -1 },
+					{ "serviceCount", serviceCounts.ContainsKey( pair.Key ) == true ? serviceCounts[ pair.Key ] : -1 },
+					{ "receivedTraps", new JsonObject() {
+						{ "count", receivedTraps.ContainsKey( pair.Key ) == true ? receivedTraps[ pair.Key ] : -1 },
+						{ "logs", new JsonArray() } // TODO
+					} }
+				} );
+
+				return containers;
+			} ).ToArray();
+
+		}
+
 	}
 
 }
