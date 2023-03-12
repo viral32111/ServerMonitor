@@ -152,7 +152,7 @@ namespace ServerMonitor.Tests.Connector.Routes {
 
 			HttpRequestMessage httpRequest = new() {
 				Method = HttpMethod.Post,
-				RequestUri = new( $"{ ( ServerMonitor.Configuration.Config.ConnectorListenPort == 443 ? "https" : "http" ) }://{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }/server?id=example&action=example" ),
+				RequestUri = new( $"{ ( ServerMonitor.Configuration.Config.ConnectorListenPort == 443 ? "https" : "http" ) }://{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }/server?id=x&action=example" ),
 				Headers = {
 					{ "Host", $"{ ServerMonitor.Configuration.Config.ConnectorListenAddress }:{ ServerMonitor.Configuration.Config.ConnectorListenPort }" },
 					{ "Authorization", $"Basic { encodedCredentials }" }
@@ -163,7 +163,7 @@ namespace ServerMonitor.Tests.Connector.Routes {
 				using ( HttpResponseMessage httpResponse = await Program.HttpClient.SendAsync( httpRequest ) ) {
 					string content = await httpResponse.Content.ReadAsStringAsync();
 
-					Assert.True( httpResponse.StatusCode == HttpStatusCode.NotImplemented, "API response status code is incorrect" );
+					Assert.True( httpResponse.StatusCode == HttpStatusCode.BadRequest, "API response status code is incorrect" );
 					Assert.True( httpResponse.Headers.WwwAuthenticate.Count == 0, "API response includes WWW-Authenticate header" );
 					Assert.True( content.Length > 0, "API response does not contain content" );
 
@@ -171,7 +171,7 @@ namespace ServerMonitor.Tests.Connector.Routes {
 					Assert.NotNull( jsonBody );
 
 					Assert.True( jsonBody.ContainsKey( "errorCode" ), "API response JSON content does not contain the error code property" );
-					Assert.True( ( ServerMonitor.Connector.ErrorCode ) jsonBody[ "errorCode" ]!.GetValue<int>() == ServerMonitor.Connector.ErrorCode.ExampleData, "API response JSON content error code property is incorrect" );
+					Assert.True( ( ServerMonitor.Connector.ErrorCode ) jsonBody[ "errorCode" ]!.GetValue<int>() == ServerMonitor.Connector.ErrorCode.InvalidParameter, "API response JSON content error code property is incorrect" );
 
 					Assert.True( jsonBody.ContainsKey( "data" ), "API response JSON content does not contain the data property" );
 				}
