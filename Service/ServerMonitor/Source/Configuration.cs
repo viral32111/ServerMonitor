@@ -91,8 +91,8 @@ namespace ServerMonitor {
 		public required bool CollectDiskMetrics { get; set; } = true;
 		public required bool CollectNetworkMetrics { get; set; } = true;
 		public required bool CollectInformationMetrics { get; set; } = true;
-		public required bool CollectPowerMetrics { get; set; } = false; // Not implemented yet!
-		public required bool CollectFanMetrics { get; set; } = false; // Not implemented yet!
+		public required bool CollectPowerMetrics { get; set; } = false; // TODO
+		public required bool CollectFanMetrics { get; set; } = false; // TODO
 
 		// Service metrics options
 		public required bool CollectServiceMetrics { get; set; } = true;
@@ -109,7 +109,7 @@ namespace ServerMonitor {
 		public required string SNMPCommunity { get; set; } = "public";
 		public required SNMPAgent[] SNMPAgents { get; set; } = Array.Empty<SNMPAgent>();
 
-		// Connection-point mode options
+		// Connector options
 		public required string ConnectorListenAddress { get; set; } = "127.0.0.1";
 		public required int ConnectorListenPort { get; set; } = 6996;
 		public required Credential[] ConnectorAuthenticationCredentials { get; set; } = Array.Empty<Credential>();
@@ -123,11 +123,16 @@ namespace ServerMonitor {
 		public required int HTTPClientTimeoutSeconds { get; set; } = 30;
 		public required string HTTPClientUserAgent { get; set; } = "ServerMonitor/0.0.0 (https://viral32111.com; contact@viral32111.com)";
 
+		// Collector options
+		public required string CollectorActionListenAddress { get; set; } = "127.0.0.1";
+		public required int CollectorActionListenPort { get; set; } = 6997;
+		public required string CollectorActionAuthenticationKey { get; set; } = "";
+
 	}
 
 	// Address & port combination for an SNMP agent
 	public sealed class SNMPAgent {
-		public required string Address { get; set; } = "localhost";
+		public required string Address { get; set; } = "127.0.0.1";
 		public required int Port { get; set; } = 161;
 	}
 

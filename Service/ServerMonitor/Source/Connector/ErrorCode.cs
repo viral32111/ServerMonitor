@@ -16,6 +16,13 @@ namespace ServerMonitor.Connector {
 		InvalidParameter = 10,
 		ServerOffline = 11,
 		ServiceNotFound = 12,
+		MethodNotAllowed = 13,
+		InvalidAuthentication = 14,
+		IncorrectAuthentication = 15,
+		NoPayload = 16,
+		NoContentType = 17,
+		InvalidContentType = 18,
+		InvalidPayload = 19,
 	}
 
 }

@@ -48,6 +48,11 @@ namespace ServerMonitor.Collector {
 			logger.LogInformation( "Prometheus Metrics server listening on http://{0}:{1}/{2}", configuration.PrometheusListenAddress, configuration.PrometheusListenPort, configuration.PrometheusListenPath );
 			OnMetricsServerStarted?.Invoke( null, EventArgs.Empty );
 
+			// Start the action server
+			Action action = new( configuration );
+			action.StartListening();
+			logger.LogInformation( "Action server listening on http://{0}:{1}", configuration.CollectorActionListenAddress, configuration.CollectorActionListenPort );
+
 			// Create the SNMP manager
 			CancellationTokenSource cancellationTokenSource = new();
 			SNMP snmp = new( configuration, cancellationTokenSource.Token );
@@ -252,6 +257,9 @@ namespace ServerMonitor.Collector {
 
 			// Stop the Prometheus metrics server
 			//MetricsServer.Stop();
+
+			// Stop the action server
+			action.StopListening();
 
 		}
 

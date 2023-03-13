@@ -31,5 +31,8 @@
 	"CloudflareAccessServiceTokenId": "",
 	"CloudflareAccessServiceTokenSecret": "",
 	"HTTPClientTimeoutSeconds": 30,
-	"HTTPClientUserAgent": "ServerMonitor/0.0.0 (https://viral32111.com; contact@viral32111.com)"
+	"HTTPClientUserAgent": "ServerMonitor/0.0.0 (https://viral32111.com; contact@viral32111.com)",
+	"CollectorActionListenAddress": "127.0.0.1",
+	"CollectorActionListenPort": 6997,
+	"CollectorActionAuthenticationKey": ""
 }
