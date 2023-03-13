@@ -63,6 +63,7 @@ namespace ServerMonitor.Connector.Route {
 			} );
 			string actionServerAddress = actionServer.NestedGet<string>( "address" );
 			int actionServerPort = actionServer.NestedGet<int>( "port" );
+			logger.LogTrace( "Action server address: '{0}', port: '{1}'", actionServerAddress, actionServerPort );
 
 			// Add the supported actions
 			server[ "supportedActions" ] = await FetchSupportedActions( configuration, actionServerAddress, actionServerPort, serverIdentifier );
@@ -219,6 +220,7 @@ namespace ServerMonitor.Connector.Route {
 			}
 
 			// Send the HTTP request...
+			logger.LogDebug( "Sending fetch supported actions for server '{0}' ('{1}' '{2}')", serverIdentifier, httpRequest.Method, httpRequest.RequestUri );
 			using ( HttpResponseMessage httpResponse = await Program.HttpClient.SendAsync( httpRequest ) ) {
 				// TODO: httpResponse.EnsureSuccessStatusCode();
 

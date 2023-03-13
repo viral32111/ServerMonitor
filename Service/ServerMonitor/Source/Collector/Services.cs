@@ -91,7 +91,17 @@ namespace ServerMonitor.Collector {
 					DisplayName = service.DisplayName,
 					Description = description,
 					Level = "system", // Level is always System for Windows services
-					StatusCode = ( int ) service.Status, // Stopped = 1, StartPending = 2, StopPending = 3, Running = 4, ContinuePending = 5, PausePending = 6, Paused = 7
+					StatusCode = service.Status switch {
+						ServiceControllerStatus.Stopped => 0, // Linux equivalent: inactive
+						ServiceControllerStatus.Running => 1, // Linux equivalent: active
+						ServiceControllerStatus.StartPending => 2, // Linux equivalent: reloading
+						ServiceControllerStatus.StopPending => 2, // Linux equivalent: reloading
+						// Skip 3 & 4 as they are for Linux only
+						ServiceControllerStatus.ContinuePending => 5, // No Linux equivalent
+						ServiceControllerStatus.PausePending => 6, // No Linux equivalent
+						ServiceControllerStatus.Paused => 7, // No Linux equivalent
+						_ => throw new Exception( $"Unknown service status '{ service.Status }' for service '{ service.ServiceName }'" )
+					},
 					ExitCode = exitCode,
 					UptimeSeconds = uptimeSeconds
 				} );
@@ -194,11 +204,12 @@ namespace ServerMonitor.Collector {
 				// Parse the status text from the service data, if we have a valid process identifier
 				int serviceStatus = 0; // Default to inactive
 				if ( processIdentifier != 0 ) serviceStatus = serviceData[ "ActiveState" ] switch {
-					"inactive" => 0,
-					"active" => 1,
-					"reloading" => 2,
-					"failed" => 3,
-					"exited" => 4,
+					"inactive" => 0, // Windows equivalent: Stopped
+					"active" => 1, // Windows equivalent: Running
+					"reloading" => 2, // Windows equivalent: StartPending, StopPending
+					"failed" => 3, // No Windows equivalent
+					"exited" => 4, // No Windows equivalent
+					// Skip 5, 6 & 7 as they are for Windows only
 					_ => throw new Exception( $"Unrecognised status '{ serviceData[ "ActiveState" ] }' for service '{ serviceName }'" )
 				};
 

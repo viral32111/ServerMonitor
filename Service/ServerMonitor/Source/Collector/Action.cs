@@ -320,7 +320,6 @@ namespace ServerMonitor.Collector {
 
 		// Executes the specified action on the server
 		private HttpListenerResponse ExecuteServerAction( HttpListenerResponse response, string actionName ) {
-
 			// Create the command
 			Process command = new() {
 				StartInfo = new() {
@@ -358,6 +357,7 @@ namespace ServerMonitor.Collector {
 			} else throw new PlatformNotSupportedException( $"Unsupported operating system '{ RuntimeInformation.OSDescription }'" );
 
 			// Run the command & store all output
+			logger.LogInformation( "Executing command '{0}' '{1}' for server action '{2}'", command.StartInfo.FileName, command.StartInfo.Arguments, actionName );
 			command.Start();
 			string outputText = command.StandardOutput.ReadToEnd();
 			string errorText = command.StandardError.ReadToEnd();
@@ -415,29 +415,33 @@ namespace ServerMonitor.Collector {
 
 					// Start the service..
 					if ( actionName == "start" ) {
-						logger.LogDebug( "Starting service '{0}'", serviceController.ServiceName );
+						logger.LogInformation( "Starting service '{0}'", serviceController.ServiceName );
 						serviceController.Start();
+						logger.LogDebug( "Waiting for service '{0}' to start", serviceController.ServiceName );
 						serviceController.WaitForStatus( ServiceControllerStatus.Running, timeout );
-						logger.LogDebug( "Started service '{0}'", serviceController.ServiceName );
+						logger.LogInformation( "Started service '{0}'", serviceController.ServiceName );
 
 					// Stop the service...
 					} else if ( actionName == "stop" ) {
-						logger.LogDebug( "Stopping service '{0}'", serviceController.ServiceName );
+						logger.LogInformation( "Stopping service '{0}'", serviceController.ServiceName );
 						serviceController.Stop();
+						logger.LogDebug( "Waiting for service '{0}' to stop", serviceController.ServiceName );
 						serviceController.WaitForStatus( ServiceControllerStatus.Stopped, timeout );
-						logger.LogDebug( "Stopped service '{0}'", serviceController.ServiceName );
+						logger.LogInformation( "Stopped service '{0}'", serviceController.ServiceName );
 
 					// Restart the service...
 					} else if ( actionName == "restart" ) {
-						logger.LogDebug( "Starting service '{0}'", serviceController.ServiceName );
+						logger.LogInformation( "Starting service '{0}'", serviceController.ServiceName );
 						serviceController.Start();
+						logger.LogDebug( "Waiting for service '{0}' to start", serviceController.ServiceName );
 						serviceController.WaitForStatus( ServiceControllerStatus.Running, timeout );
-						logger.LogDebug( "Started service '{0}'", serviceController.ServiceName );
+						logger.LogInformation( "Started service '{0}'", serviceController.ServiceName );
 
-						logger.LogDebug( "Stopping service '{0}'", serviceController.ServiceName );
+						logger.LogInformation( "Stopping service '{0}'", serviceController.ServiceName );
 						serviceController.Stop();
+						logger.LogDebug( "Waiting for service '{0}' to stop", serviceController.ServiceName );
 						serviceController.WaitForStatus( ServiceControllerStatus.Stopped, timeout );
-						logger.LogDebug( "Stopped service '{0}'", serviceController.ServiceName );
+						logger.LogInformation( "Stopped service '{0}'", serviceController.ServiceName );
 
 					// Unknown action
 					} else {
@@ -482,6 +486,7 @@ namespace ServerMonitor.Collector {
 				};
 
 				// Run the command & store all output
+				logger.LogInformation( "Executing command '{0}' '{1}' for service action '{2}' on service '{3}'", command.StartInfo.FileName, command.StartInfo.Arguments, actionName, serviceName );
 				command.Start();
 				string outputText = command.StandardOutput.ReadToEnd();
 				string errorText = command.StandardError.ReadToEnd();
