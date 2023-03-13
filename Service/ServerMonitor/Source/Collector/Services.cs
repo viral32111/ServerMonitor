@@ -47,10 +47,28 @@ namespace ServerMonitor.Collector {
 		public override void UpdateOnWindows( Config configuration ) {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new PlatformNotSupportedException( "Method only available on Windows" );
 
+			// Get the services & update the exported Prometheus metrics
+			foreach ( Service service in GetServicesForWindows( configuration ) ) {
+				StatusCode.WithLabels( service.Name, service.DisplayName, service.Description, service.Level ).Set( service.StatusCode );
+				ExitCode.WithLabels( service.Name, service.DisplayName, service.Description, service.Level ).Set( service.ExitCode );
+				UptimeSeconds.WithLabels( service.Name, service.DisplayName, service.Description, service.Level ).IncTo( service.UptimeSeconds );
+			}
+
+			logger.LogDebug( "Updated Prometheus metrics" );
+		}
+
+		// Gets a list of services (for Windows)
+		[ SupportedOSPlatform( "windows" ) ]
+		public static Service[] GetServicesForWindows( Config configuration ) {
+			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new PlatformNotSupportedException( "Method only available on Windows" );
+
+			// Create a list to hold the services
+			List<Service> services = new();
+
 			// Loop through all non-driver services - https://learn.microsoft.com/en-us/dotnet/api/system.serviceprocess.servicecontroller?view=dotnet-plat-ext-7.0
 			foreach ( ServiceController service in ServiceController.GetServices() ) {
 
-				// Get other information about this service, if it has one - https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-service, https://stackoverflow.com/a/989866, https://stackoverflow.com/a/1574184
+				// Get information about this service - https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-service, https://stackoverflow.com/a/989866, https://stackoverflow.com/a/1574184
 				ManagementObject serviceManagementObject = new( $"Win32_Service.Name='{ service.ServiceName }'" );
 				string description = serviceManagementObject[ "Description" ]?.ToString() ?? "";
 				if ( int.TryParse( serviceManagementObject[ "ProcessId" ]?.ToString(), out int processId ) == false ) {
@@ -67,19 +85,27 @@ namespace ServerMonitor.Collector {
 				if ( process == null ) throw new Exception( $"No process with process ID '{ processId }' for service '{ service.ServiceName }'" );
 				double uptimeSeconds = GetProcessUptime( process );
 
-				// Update the exported Prometheus metrics
-				// NOTE: Level is always System for Windows services
-				StatusCode.WithLabels( service.ServiceName, service.DisplayName, description, "system" ).Set( ( int ) service.Status ); // Stopped = 1, StartPending = 2, StopPending = 3, Running = 4, ContinuePending = 5, PausePending = 6, Paused = 7
-				ExitCode.WithLabels( service.ServiceName, service.DisplayName, description, "system" ).Set( exitCode );
-				UptimeSeconds.WithLabels( service.ServiceName, service.DisplayName, description, "system" ).IncTo( uptimeSeconds );
+				// Add this service to the list
+				services.Add( new Service {
+					Name = service.ServiceName,
+					DisplayName = service.DisplayName,
+					Description = description,
+					Level = "system", // Level is always System for Windows services
+					StatusCode = ( int ) service.Status, // Stopped = 1, StartPending = 2, StopPending = 3, Running = 4, ContinuePending = 5, PausePending = 6, Paused = 7
+					ExitCode = exitCode,
+					UptimeSeconds = uptimeSeconds
+				} );
+
 			}
 
-			logger.LogDebug( "Updated Prometheus metrics" );
+			// Convert the list to an array before returning
+			return services.ToArray();
+
 		}
 
 		// Gets the uptime of a process, in seconds (for Windows)
 		[ SupportedOSPlatform( "windows" ) ]
-		private double GetProcessUptime( Process process ) {
+		private static double GetProcessUptime( Process process ) {
 			// First try using the start time property...
 			try {
 				return ( DateTime.Now - process.StartTime ).TotalSeconds;
@@ -109,6 +135,23 @@ namespace ServerMonitor.Collector {
 		// Updates the metrics for all systemd services in a group (for Linux)
 		[ SupportedOSPlatform( "linux" ) ]
 		private void UpdateServicesMetrics( string level ) {
+
+			// Loop through all services & update the exported Prometheus metrics
+			foreach ( Service service in GetServicesForLinux( level ) ) {
+				StatusCode.WithLabels( service.Name, service.DisplayName, service.Description, service.Level ).Set( service.StatusCode );
+				ExitCode.WithLabels( service.Name, service.DisplayName, service.Description, service.Level ).Set( service.ExitCode );
+				UptimeSeconds.WithLabels( service.Name, service.DisplayName, service.Description, service.Level ).IncTo( service.UptimeSeconds );
+			}
+
+		}
+
+		// Gets a list of services (for Linux)
+		[ SupportedOSPlatform( "linux" ) ]
+		public static Service[] GetServicesForLinux( string level ) {
+			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) throw new PlatformNotSupportedException( "Method only available on Linux" );
+
+			// Create a list to hold the services
+			List<Service> services = new();
 
 			// Read the system uptime from the uptime file, for calculating process uptime
 			long systemUptimeSeconds = File.ReadAllLines( "/proc/uptime" )
@@ -186,13 +229,21 @@ namespace ServerMonitor.Collector {
 
 				}
 
-				// Update the exported Prometheus metrics
-				// NOTE: Linux has no display names, so we use the service name for both
-				StatusCode.WithLabels( serviceName, serviceName, serviceDescription, level ).Set( serviceStatus );
-				ExitCode.WithLabels( serviceName, serviceName, serviceDescription, level ).Set( serviceExitCode );
-				UptimeSeconds.WithLabels( serviceName, serviceName, serviceDescription, level ).IncTo( processUptimeSeconds );
+				// Add this service to the list
+				services.Add( new() {
+					Name = serviceName,
+					DisplayName = serviceName, // Linux has no display name, so we use the service name
+					Description = serviceDescription,
+					Level = level,
+					StatusCode = serviceStatus,
+					ExitCode = serviceExitCode,
+					UptimeSeconds = processUptimeSeconds
+				} );
 
 			}
+
+			// Convert the list to an array before returning
+			return services.ToArray();
 
 		}
 
@@ -247,7 +298,7 @@ namespace ServerMonitor.Collector {
 
 		// Gets current data about a systemd service (for Linux)
 		[ SupportedOSPlatform( "linux" ) ]
-		private Dictionary<string, string> GetServiceData( string serviceName ) {
+		private static Dictionary<string, string> GetServiceData( string serviceName ) {
 
 			// Create the 'systemctl show' command for this service to get all the data
 			Process command = new() {
@@ -281,5 +332,17 @@ namespace ServerMonitor.Collector {
 
 		}
 
+		// Service information
+		public struct Service {
+			public string Name;
+			public string DisplayName;
+			public string Description;
+			public string Level;
+			public int StatusCode;
+			public int ExitCode;
+			public double UptimeSeconds;
+		}
+
 	}
+
 }

@@ -13,6 +13,9 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
+using System.Diagnostics;
+using System.ServiceProcess;
+using System.Security;
 using Microsoft.Extensions.Logging;
 using viral32111.JsonExtensions;
 using ServerMonitor.Connector.Helper;
@@ -261,10 +264,15 @@ namespace ServerMonitor.Collector {
 			}
 
 			// Handle the request appropriately
-			if ( requestMethod == "GET" && requestPath == "/server" ) return ReturnServerActions( response );
-			else if ( requestMethod == "GET" && requestPath == "/service" ) return ReturnServiceActions( response, serviceName! );
-			else if ( requestMethod == "POST" && requestPath == "/server" ) return ExecuteServerAction( response, actionName! );
-			else if ( requestMethod == "POST" && requestPath == "/service" ) return ExecuteServiceAction( response, serviceName!, actionName! );
+			try {
+				if ( requestMethod == "GET" && requestPath == "/server" ) return ReturnServerActions( response );
+				else if ( requestMethod == "GET" && requestPath == "/service" ) return ReturnServiceActions( response, serviceName! );
+				else if ( requestMethod == "POST" && requestPath == "/server" ) return ExecuteServerAction( response, actionName! );
+				else if ( requestMethod == "POST" && requestPath == "/service" ) return ExecuteServiceAction( response, serviceName!, actionName! );
+			} catch ( Exception exception ) {
+				logger.LogError( exception, "Error handling HTTP request '{0}' '{1}' from '{2}'", requestMethod, requestPath, requestAddress );
+				return Response.SendJson( response, statusCode: HttpStatusCode.InternalServerError, errorCode: ErrorCode.UncaughtServerError );
+			}
 
 			// Unknown route
 			logger.LogWarning( "Unknown route for HTTP request '{0}' '{1}' from '{2}'", requestMethod, requestPath, requestAddress );
@@ -272,37 +280,214 @@ namespace ServerMonitor.Collector {
 
 		}
 
-		// TODO: Return a list of actions this server supports
-		private HttpListenerResponse ReturnServerActions( HttpListenerResponse response ) {
-			return Response.SendJson( response, statusCode: HttpStatusCode.NotImplemented, errorCode: ErrorCode.ExampleData, data: new JsonObject() {
+		// Returns a list of actions this server supports
+		// NOTE: These are always true, because if this code is running then the server is obviously running too
+		private HttpListenerResponse ReturnServerActions( HttpListenerResponse response ) =>
+			Response.SendJson( response, statusCode: HttpStatusCode.NotImplemented, errorCode: ErrorCode.ExampleData, data: new JsonObject() {
 				{ "shutdown", true },
 				{ "reboot", true }
 			} );
-		}
 
-		// TODO: Return a list of actions the service supports
+		// Returns a list of actions the service supports
 		private HttpListenerResponse ReturnServiceActions( HttpListenerResponse response, string serviceName ) {
-			return Response.SendJson( response, statusCode: HttpStatusCode.NotImplemented, errorCode: ErrorCode.ExampleData, data: new JsonObject() {
-				{ "start", false },
-				{ "stop", true },
-				{ "restart", true }
+
+			// Get services for the current operating system
+			List<Services.Service> services = new();
+			if ( RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) {
+				services = Services.GetServicesForWindows( configuration ).ToList();
+			} else if ( RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) {
+				services.AddRange( Services.GetServicesForLinux( "system" ) );
+				services.AddRange( Services.GetServicesForLinux( "user" ) );
+			} else throw new PlatformNotSupportedException( $"Unsupported operating system '{ RuntimeInformation.OSDescription }'" );
+
+			// Try to find the service
+			Services.Service? service = services.FirstOrDefault( service => service.Name == serviceName );
+			if ( service == null ) {
+				logger.LogWarning( "Unknown service '{0}'", serviceName );
+				return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServiceNotFound, data: new JsonObject() {
+					{ "service", serviceName }
+				} );
+			}
+
+			// Return the actions
+			return Response.SendJson( response, data: new JsonObject() {
+				{ "start", service?.StatusCode != 0 },
+				{ "stop", service?.StatusCode == 1 },
+				{ "restart", service?.StatusCode != 0 }
 			} );
+
 		}
 
-		// TODO: Execute the specified action on the server
+		// Executes the specified action on the server
 		private HttpListenerResponse ExecuteServerAction( HttpListenerResponse response, string actionName ) {
-			return Response.SendJson( response, statusCode: HttpStatusCode.NotImplemented, errorCode: ErrorCode.ExampleData, data: new JsonObject() {
-				{ "success", false },
-				{ "message", "Hello World" }
+
+			// Create the command
+			Process command = new() {
+				StartInfo = new() {
+					FileName = "shutdown", // Always the same on Windows & Linux, even for reboot
+					UseShellExecute = false,
+					RedirectStandardOutput = true,
+					RedirectStandardError = true,
+					CreateNoWindow = true
+				}
+			};
+
+			// Set the arguments for the command for Windows - https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/shutdown
+			if ( RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) == true ) {
+				if ( actionName == "shutdown" ) command.StartInfo.Arguments = "/s /t 60"; // Delay of 1 minute
+				else if ( actionName == "reboot" ) command.StartInfo.Arguments = "/r /t 60"; // Delay of 1 minute
+				else {
+					logger.LogWarning( "Unknown server action '{0}'", actionName );
+					return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.UnknownAction, data: new JsonObject() {
+						{ "action", actionName }
+					} );
+				}
+
+			// Set the arguments for the command for Linux - https://linux.die.net/man/8/shutdown
+			} else if ( RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) == true ) {
+				if ( actionName == "shutdown" ) command.StartInfo.Arguments = "-P +1m"; // Delay of 1 minute
+				else if ( actionName == "reboot" ) command.StartInfo.Arguments = "-r +1m"; // Delay of 1 minute
+				else {
+					logger.LogWarning( "Unknown server action '{0}'", actionName );
+					return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.UnknownAction, data: new JsonObject() {
+						{ "action", actionName }
+					} );
+				}
+			
+			// Fail if unsupported operating system
+			} else throw new PlatformNotSupportedException( $"Unsupported operating system '{ RuntimeInformation.OSDescription }'" );
+
+			// Run the command & store all output
+			command.Start();
+			string outputText = command.StandardOutput.ReadToEnd();
+			string errorText = command.StandardError.ReadToEnd();
+			command.WaitForExit();
+
+			// Respond with the results
+			return Response.SendJson( response, data: new JsonObject() {
+				{ "exitCode", command.ExitCode },
+				{ "outputText", outputText },
+				{ "errorText", errorText }
 			} );
+
 		}
 
-		// TODO: Execute the specified action on the service
+		// Executes the specified action on the service
 		private HttpListenerResponse ExecuteServiceAction( HttpListenerResponse response, string serviceName, string actionName ) {
-			return Response.SendJson( response, statusCode: HttpStatusCode.NotImplemented, errorCode: ErrorCode.ExampleData, data: new JsonObject() {
-				{ "success", false },
-				{ "message", "Hello World" }
-			} );
+
+			// Get services for the current operating system
+			List<Services.Service> services = new();
+			if ( RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) {
+				services = Services.GetServicesForWindows( configuration ).ToList();
+			} else if ( RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) {
+				services.AddRange( Services.GetServicesForLinux( "system" ) );
+				services.AddRange( Services.GetServicesForLinux( "user" ) );
+			} else throw new PlatformNotSupportedException( $"Unsupported operating system '{ RuntimeInformation.OSDescription }'" );
+
+			// Try to find the service
+			Services.Service? service = services.FirstOrDefault( service => service.Name == serviceName );
+			if ( service == null ) {
+				logger.LogWarning( "Unknown service '{0}'", serviceName );
+				return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServiceNotFound, data: new JsonObject() {
+					{ "service", serviceName }
+				} );
+			}
+
+			// Windows...
+			if ( RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) == true ) {
+
+				#pragma warning disable CA1416 // IDE thinks we aren't running on Windows here, despite the check above!
+
+				// Find the service controller
+				ServiceController? serviceController = ServiceController.GetServices().FirstOrDefault( serviceController => serviceController.ServiceName == serviceName );
+
+				if ( serviceController == null ) {
+					logger.LogWarning( "Unknown service '{0}'", serviceName );
+					return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServiceNotFound, data: new JsonObject() {
+						{ "service", serviceName }
+					} );
+				}
+
+				// Try to execute the action
+				try {
+					TimeSpan timeout = TimeSpan.FromSeconds( 10 );
+
+					// Start the service..
+					if ( actionName == "start" ) {
+						serviceController.Start();
+						serviceController.WaitForStatus( ServiceControllerStatus.Running, timeout );
+
+					// Stop the service...
+					} else if ( actionName == "stop" ) {
+						serviceController.Stop();
+						serviceController.WaitForStatus( ServiceControllerStatus.Stopped, timeout );
+
+					// Restart the service...
+					} else if ( actionName == "restart" ) {
+						serviceController.Stop();
+						serviceController.WaitForStatus( ServiceControllerStatus.Stopped, timeout );
+
+						serviceController.Start();
+						serviceController.WaitForStatus( ServiceControllerStatus.Running, timeout );
+
+					// Unknown action
+					} else {
+						logger.LogWarning( "Unknown service action '{0}'", actionName );
+						return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.UnknownAction, data: new JsonObject() {
+							{ "action", actionName }
+						} );
+					}
+
+				// Something bad happened...
+				} catch ( Exception exception ) {
+					logger.LogError( exception, "Failed to execute service action '{0}' on service '{1}'", actionName, serviceName );
+					return Response.SendJson( response, data: new JsonObject() {
+						{ "exitCode", 1 },
+						{ "outputText", string.Empty },
+						{ "errorText", exception.Message }
+					} );
+				}
+
+				// If we got here, the action was successful
+				return Response.SendJson( response, data: new JsonObject() {
+					{ "exitCode", 0 },
+					{ "outputText", string.Empty },
+					{ "errorText", string.Empty }
+				} );
+
+				#pragma warning restore CA1416
+
+			// Linux...
+			} else if ( RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) == true ) {
+
+				// Create the command
+				Process command = new() {
+					StartInfo = new() {
+						FileName = "systemctl",
+						Arguments = $"{ actionName } ${ serviceName }",
+						UseShellExecute = false,
+						RedirectStandardOutput = true,
+						RedirectStandardError = true,
+						CreateNoWindow = true
+					}
+				};
+
+				// Run the command & store all output
+				command.Start();
+				string outputText = command.StandardOutput.ReadToEnd();
+				string errorText = command.StandardError.ReadToEnd();
+				command.WaitForExit();
+
+				// Respond with the results
+				return Response.SendJson( response, data: new JsonObject() {
+					{ "exitCode", command.ExitCode },
+					{ "outputText", outputText },
+					{ "errorText", errorText }
+				} );
+
+			// Fail if unsupported operating system
+			} else throw new PlatformNotSupportedException( $"Unsupported operating system '{ RuntimeInformation.OSDescription }'" );
+
 		}
 
 	}

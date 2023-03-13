@@ -67,7 +67,7 @@ namespace ServerMonitor.Connector.Route {
 			} );
 
 			// Fetch the service
-			JsonObject? service = ( await Helper.Prometheus.FetchServices( configuration, jobName, instanceAddress ) ).FirstOrDefault( service => service.NestedGet<string>( "name" ) == serviceName );
+			JsonObject? service = ( await Helper.Prometheus.FetchServices( configuration, jobName, instanceAddress ) ).FirstOrDefault( service => service.NestedGet<string>( "service" ) == serviceName );
 
 			// Ensure the service exists
 			if ( service == null ) return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServiceNotFound, data: new JsonObject() {

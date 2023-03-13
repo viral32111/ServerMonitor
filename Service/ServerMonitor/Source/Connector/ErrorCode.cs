@@ -26,6 +26,7 @@ namespace ServerMonitor.Connector {
 		WrongServer = 20,
 		ActionNotExecutable = 21,
 		ActionServerUnknown = 22,
+		UnknownAction = 23,
 	}
 
 }
