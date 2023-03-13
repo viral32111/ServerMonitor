@@ -275,21 +275,17 @@ namespace ServerMonitor.Collector {
 		// TODO: Return a list of actions this server supports
 		private HttpListenerResponse ReturnServerActions( HttpListenerResponse response ) {
 			return Response.SendJson( response, statusCode: HttpStatusCode.NotImplemented, errorCode: ErrorCode.ExampleData, data: new JsonObject() {
-				{ "actions", new JsonObject() {
-					{ "shutdown", false },
-					{ "reboot", false }
-				} }
+				{ "shutdown", true },
+				{ "reboot", true }
 			} );
 		}
 
 		// TODO: Return a list of actions the service supports
 		private HttpListenerResponse ReturnServiceActions( HttpListenerResponse response, string serviceName ) {
 			return Response.SendJson( response, statusCode: HttpStatusCode.NotImplemented, errorCode: ErrorCode.ExampleData, data: new JsonObject() {
-				{ "actions", new JsonObject() {
-					{ "start", false },
-					{ "stop", false },
-					{ "restart", false }
-				} }
+				{ "start", false },
+				{ "stop", true },
+				{ "restart", true }
 			} );
 		}
 

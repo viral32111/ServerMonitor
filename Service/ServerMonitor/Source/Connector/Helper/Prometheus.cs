@@ -913,11 +913,9 @@ namespace ServerMonitor.Connector.Helper {
 
 		}
 
-		// Fetches the supported actions on a server
-		public static async Task<JsonObject> FetchSupportedActions( Config configuration, string jobName, string instanceAddress ) {
-
-			// Fetch information about the actions server
-			JsonObject actionServer = ( await FetchSeries( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_action_listening", new() {
+		// Fetches the action server IP address & port on a server
+		public static async Task<JsonObject?> FetchActionServer( Config configuration, string jobName, string instanceAddress ) =>
+			( await FetchSeries( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_action_listening", new() {
 				{ "job", jobName },
 				{ "instance", instanceAddress }
 			} ) ) )
@@ -928,53 +926,7 @@ namespace ServerMonitor.Connector.Helper {
 					{ "address", result.NestedGet<string>( "address" ) },
 					{ "port", int.Parse( result.NestedGet<string>( "port" ) ) }
 				} )
-				.FirstOrDefault() ?? throw new Exception( $"Unable to find action server for '{ jobName }' '{ instanceAddress }'" );
-
-			// Easy access to the IP address & port number
-			string actionServerAddress = actionServer.NestedGet<string>( "address" );
-			int actionServerPort = actionServer.NestedGet<int>( "port" );
-
-			// Create the HTTP request
-			HttpRequestMessage httpRequest = new() {
-				Method = HttpMethod.Get,
-				RequestUri = new Uri( $"{ ( actionServerPort == 443 ? "https" : "http" ) }://{ actionServerAddress }:{ actionServerPort }/server" ),
-				Content = new StringContent( ( new JsonObject() {
-					{ "server", EncodeIdentifier( jobName, instanceAddress ) }
-				} ).ToJsonString(), Encoding.UTF8, "application/json" )
-			};
-
-			// Add the authentication key, if configured
-			if ( string.IsNullOrWhiteSpace( configuration.CollectorActionAuthenticationKey ) == false ) {
-				httpRequest.Headers.Authorization = new AuthenticationHeaderValue( "Key", configuration.CollectorActionAuthenticationKey );
-			}
-
-			// Send the HTTP request...
-			using ( HttpResponseMessage httpResponse = await Program.HttpClient.SendAsync( httpRequest ) ) {
-				//httpResponse.EnsureSuccessStatusCode();
-
-				// Parse the response
-				string responseContent = await httpResponse.Content.ReadAsStringAsync();
-				JsonObject? responsePayload = JsonSerializer.Deserialize<JsonObject>( responseContent );
-				if ( responsePayload == null ) throw new Exception( $"Failed to parse response '{ responseContent }' as JSON" );
-
-				// Ensure required properties exist
-				if ( responsePayload.NestedHas( "errorCode" ) == false ) throw new Exception( $"Missing error code property in response payload" );
-				if ( responsePayload.NestedHas( "data" ) == false ) throw new Exception( $"Missing data property in response payload" );
-
-				// Easy access to properties
-				int errorCode = responsePayload.NestedGet<int>( "errorCode" );
-				JsonObject data = responsePayload.NestedGet<JsonObject>( "data" );
-				logger.LogDebug( "Error Code: '{0}', Data: '{1}'", errorCode, data.ToJsonString() );
-
-				// Ensure success
-				//if ( responsePayload.NestedGet<int>( "errorCode" ) != ( int ) ErrorCode.Success ) throw new Exception( "Failed to fetch supported actions" );
-
-				// Return the data (as a copy, not a reference)
-				return data.Clone()!.AsObject();
-
-			}
-
-		}
+				.FirstOrDefault();
 
 	}
 

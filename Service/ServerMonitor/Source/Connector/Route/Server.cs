@@ -1,7 +1,11 @@
 using System;
 using System.Web;
 using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Linq;
+using System.Text;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using System.Collections.Specialized;
@@ -49,10 +53,20 @@ namespace ServerMonitor.Connector.Route {
 			} );
 
 			// Stop here if the server is offline
-			if ( server.NestedGet<double>( "uptimeSeconds" ) == -1 ) return Response.SendJson( response, statusCode: HttpStatusCode.ServiceUnavailable, errorCode: ErrorCode.ServerOffline, data: server );
+			if ( server.NestedGet<double>( "uptimeSeconds" ) == -1 ) return Response.SendJson( response, statusCode: HttpStatusCode.ServiceUnavailable, errorCode: ErrorCode.ServerOffline, data: new JsonObject() {
+				{ "id", serverIdentifier }
+			} );
+
+			// Fetch information about the action server
+			JsonObject? actionServer = await Helper.Prometheus.FetchActionServer( configuration, jobName, instanceAddress );
+			if ( actionServer == null ) return Response.SendJson( response, statusCode: HttpStatusCode.ServiceUnavailable, errorCode: ErrorCode.ActionServerUnknown, data: new JsonObject() {
+				{ "id", serverIdentifier }
+			} );
+			string actionServerAddress = actionServer.NestedGet<string>( "address" );
+			int actionServerPort = actionServer.NestedGet<int>( "port" );
 
 			// Add the supported actions
-			server[ "supportedActions" ] = await Helper.Prometheus.FetchSupportedActions( configuration, jobName, instanceAddress );
+			server[ "supportedActions" ] = await FetchSupportedActions( configuration, actionServerAddress, actionServerPort, serverIdentifier );
 
 			// Add metrics for resources
 			server[ "resources" ] = new JsonObject() {
@@ -122,17 +136,114 @@ namespace ServerMonitor.Connector.Route {
 				{ "id", serverIdentifier }
 			} );
 
+			// Fetch information about the action server
+			JsonObject? actionServer = await Helper.Prometheus.FetchActionServer( configuration, jobName, instanceAddress );
+			if ( actionServer == null ) return Response.SendJson( response, statusCode: HttpStatusCode.ServiceUnavailable, errorCode: ErrorCode.ActionServerUnknown, data: new JsonObject() {
+				{ "id", serverIdentifier }
+			} );
+			string actionServerAddress = actionServer.NestedGet<string>( "address" );
+			int actionServerPort = actionServer.NestedGet<int>( "port" );
+
+			// Fetch the supported actions
+			JsonObject supportedActions = await FetchSupportedActions( configuration, actionServerAddress, actionServerPort, serverIdentifier );
+
 			// Ensure the action is valid
-			// TODO: Check the array of supportedActions for the service
-			if ( actionName != "reboot" && actionName != "shutdown" ) return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.InvalidParameter, data: new JsonObject() {
-				{ "parameter", "action" }
+			if ( supportedActions.ContainsKey( actionName ) == false ) return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.InvalidParameter, data: new JsonObject() {
+				{ "parameter", "action" },
+				{ "supportedActions", supportedActions }
 			} );
 
-			// TODO: Execute the action
-			return Response.SendJson( response, statusCode: HttpStatusCode.NotImplemented, errorCode: ErrorCode.ExampleData, data: new JsonObject() {
-				{ "success", true },
-				{ "response", "This is the output of the action." }
+			// Ensure the action can be executed
+			if ( supportedActions.NestedGet<bool>( actionName ) == false ) return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.ActionNotExecutable, data: new JsonObject() {
+				{ "action", actionName }
 			} );
+
+			// Create the HTTP request to send to the action server
+			HttpRequestMessage httpRequest = new() {
+				Method = HttpMethod.Post,
+				RequestUri = new Uri( $"{ ( actionServerPort == 443 ? "https" : "http" ) }://{ actionServerAddress }:{ actionServerPort }/server" ),
+				Content = new StringContent( ( new JsonObject() {
+					{ "server", serverIdentifier },
+					{ "action", actionName }
+				} ).ToJsonString(), Encoding.UTF8, "application/json" )
+			};
+
+			// Add the authentication key, if configured
+			if ( string.IsNullOrWhiteSpace( configuration.CollectorActionAuthenticationKey ) == false ) {
+				httpRequest.Headers.Authorization = new AuthenticationHeaderValue( "Key", configuration.CollectorActionAuthenticationKey );
+			}
+
+			// Send the HTTP request...
+			using ( HttpResponseMessage httpResponse = await Program.HttpClient.SendAsync( httpRequest ) ) {
+				logger.LogDebug( "Sent execute action HTTP request '{0}' '{1}'", httpRequest.Method, httpRequest.RequestUri );
+				//httpResponse.EnsureSuccessStatusCode();
+
+				// Parse the response
+				string responseContent = await httpResponse.Content.ReadAsStringAsync();
+				JsonObject? responsePayload = JsonSerializer.Deserialize<JsonObject>( responseContent );
+				if ( responsePayload == null ) throw new Exception( $"Failed to parse execute action response '{ responseContent }' as JSON" );
+
+				// Ensure the required properties exist
+				if ( responsePayload.NestedHas( "errorCode" ) == false ) throw new Exception( $"Missing error code property in execute action response payload" );
+				if ( responsePayload.NestedHas( "data" ) == false ) throw new Exception( $"Missing data property in execute action response payload" );
+
+				// Easy access to the required properties
+				int errorCode = responsePayload.NestedGet<int>( "errorCode" );
+				JsonObject data = responsePayload.NestedGet<JsonObject>( "data" );
+				logger.LogDebug( "Error Code: '{0}', Data: '{1}'", errorCode, data.ToJsonString() );
+
+				// Ensure success
+				//if ( responsePayload.NestedGet<int>( "errorCode" ) != ( int ) ErrorCode.Success ) throw new Exception( $"Failed to execute action '{ actionName }'" );
+
+				// Respond with the data (as a copy, not a reference)
+				return Response.SendJson( response, statusCode: HttpStatusCode.OK, errorCode: ErrorCode.Success, data: data.Clone()!.AsObject() );
+
+			}
+
+		}
+
+		// Fetches the supported actions for a server
+		private static async Task<JsonObject> FetchSupportedActions( Config configuration, string actionServerAddress, int actionServerPort, string serverIdentifier ) {
+
+			// Create the HTTP request
+			HttpRequestMessage httpRequest = new() {
+				Method = HttpMethod.Get,
+				RequestUri = new Uri( $"{ ( actionServerPort == 443 ? "https" : "http" ) }://{ actionServerAddress }:{ actionServerPort }/server" ),
+				Content = new StringContent( ( new JsonObject() {
+					{ "server", serverIdentifier }
+				} ).ToJsonString(), Encoding.UTF8, "application/json" )
+			};
+
+			// Add the authentication key, if configured
+			if ( string.IsNullOrWhiteSpace( configuration.CollectorActionAuthenticationKey ) == false ) {
+				httpRequest.Headers.Authorization = new AuthenticationHeaderValue( "Key", configuration.CollectorActionAuthenticationKey );
+			}
+
+			// Send the HTTP request...
+			using ( HttpResponseMessage httpResponse = await Program.HttpClient.SendAsync( httpRequest ) ) {
+				//httpResponse.EnsureSuccessStatusCode();
+
+				// Parse the response
+				string responseContent = await httpResponse.Content.ReadAsStringAsync();
+				JsonObject? responsePayload = JsonSerializer.Deserialize<JsonObject>( responseContent );
+				if ( responsePayload == null ) throw new Exception( $"Failed to parse response '{ responseContent }' as JSON" );
+
+				// Ensure the required properties exist
+				if ( responsePayload.NestedHas( "errorCode" ) == false ) throw new Exception( $"Missing error code property in response payload" );
+				if ( responsePayload.NestedHas( "data" ) == false ) throw new Exception( $"Missing data property in response payload" );
+
+				// Easy access to the required properties
+				int errorCode = responsePayload.NestedGet<int>( "errorCode" );
+				JsonObject data = responsePayload.NestedGet<JsonObject>( "data" );
+				logger.LogDebug( "Error Code: '{0}', Data: '{1}'", errorCode, data.ToJsonString() );
+
+				// Ensure success
+				//if ( responsePayload.NestedGet<int>( "errorCode" ) != ( int ) ErrorCode.Success ) throw new Exception( "Failed to fetch supported actions" );
+
+				// Return the data (as a copy, not a reference)
+				return data.Clone()!.AsObject();
+
+			}
 
 		}
 

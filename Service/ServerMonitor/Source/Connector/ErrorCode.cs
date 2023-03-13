@@ -24,6 +24,8 @@ namespace ServerMonitor.Connector {
 		InvalidContentType = 18,
 		InvalidPayload = 19,
 		WrongServer = 20,
+		ActionNotExecutable = 21,
+		ActionServerUnknown = 22,
 	}
 
 }
