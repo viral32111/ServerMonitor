@@ -332,6 +332,7 @@ namespace ServerMonitor.Collector {
 			};
 
 			// Set the arguments for the command for Windows - https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/shutdown
+			// NOTE: Run 'shutdown /a' to cancel pending shutdown/reboot
 			if ( RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) == true ) {
 				if ( actionName == "shutdown" ) command.StartInfo.Arguments = "/s /t 60"; // Delay of 1 minute
 				else if ( actionName == "reboot" ) command.StartInfo.Arguments = "/r /t 60"; // Delay of 1 minute
@@ -343,16 +344,17 @@ namespace ServerMonitor.Collector {
 				}
 
 			// Set the arguments for the command for Linux - https://linux.die.net/man/8/shutdown
+			// NOTE: Use 'shutdown -c' to cancel pending shutdown/reboot
 			} else if ( RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) == true ) {
-				if ( actionName == "shutdown" ) command.StartInfo.Arguments = "-P +1m"; // Delay of 1 minute
-				else if ( actionName == "reboot" ) command.StartInfo.Arguments = "-r +1m"; // Delay of 1 minute
+				if ( actionName == "shutdown" ) command.StartInfo.Arguments = "-P +1"; // Delay of 1 minute
+				else if ( actionName == "reboot" ) command.StartInfo.Arguments = "-r +1"; // Delay of 1 minute
 				else {
 					logger.LogWarning( "Unknown server action '{0}'", actionName );
 					return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.UnknownAction, data: new JsonObject() {
 						{ "action", actionName }
 					} );
 				}
-			
+
 			// Fail if unsupported operating system
 			} else throw new PlatformNotSupportedException( $"Unsupported operating system '{ RuntimeInformation.OSDescription }'" );
 
@@ -366,7 +368,7 @@ namespace ServerMonitor.Collector {
 			// Respond with the results
 			return Response.SendJson( response, data: new JsonObject() {
 				{ "exitCode", command.ExitCode },
-				{ "outputText", outputText },
+				{ "outputText", string.IsNullOrWhiteSpace( outputText ) == true ? "System will shutdown/reboot in 1 minute." : outputText },
 				{ "errorText", errorText }
 			} );
 
