@@ -46,7 +46,7 @@ namespace ServerMonitor.Collector {
 			configuration = config;
 
 			// Initialise the Prometheus metric
-			Listening = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_collector_action_listening", "IP address & port of the HTTP listener", new GaugeConfiguration {
+			Listening = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_action_listening", "IP address & port of the HTTP listener", new GaugeConfiguration {
 				LabelNames = new string[] { "address", "port" }
 			} );
 			Listening.Set( -1 );

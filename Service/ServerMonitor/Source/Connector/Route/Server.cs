@@ -48,14 +48,11 @@ namespace ServerMonitor.Connector.Route {
 				{ "id", serverIdentifier }
 			} );
 
-			// TODO
-			server[ "supportedActions" ] = new JsonObject() {
-				{ "shutdown", false },
-				{ "reboot", false }
-			};
-
 			// Stop here if the server is offline
 			if ( server.NestedGet<double>( "uptimeSeconds" ) == -1 ) return Response.SendJson( response, statusCode: HttpStatusCode.ServiceUnavailable, errorCode: ErrorCode.ServerOffline, data: server );
+
+			// Add the supported actions
+			server[ "supportedActions" ] = await Helper.Prometheus.FetchSupportedActions( configuration, jobName, instanceAddress );
 
 			// Add metrics for resources
 			server[ "resources" ] = new JsonObject() {

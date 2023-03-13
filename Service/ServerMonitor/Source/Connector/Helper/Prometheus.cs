@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Globalization;
@@ -538,7 +540,7 @@ namespace ServerMonitor.Connector.Helper {
 		public static async Task<JsonObject[]> FetchServices( Config configuration, string jobName, string instanceAddress ) {
 
 			// Fetch the name & description of all known services
-			Dictionary<string, JsonObject> information = ( await FetchSeries( configuration, CreatePromQL( "server_monitor_service_status_code", new() {
+			Dictionary<string, JsonObject> information = ( await FetchSeries( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_service_status_code", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
 			} ) ) )
@@ -559,7 +561,7 @@ namespace ServerMonitor.Connector.Helper {
 				);
 
 			// Get the status codes for recently scraped services ( Service Name -> Status Code )
-			Dictionary<string, int> statusCodes = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_service_status_code", new() {
+			Dictionary<string, int> statusCodes = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_service_status_code", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
 			} ) ) )
@@ -581,7 +583,7 @@ namespace ServerMonitor.Connector.Helper {
 				);
 
 			// Get the exit codes for recently scraped services ( Service Name -> Exit Code )
-			Dictionary<string, int> exitCodes = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_service_exit_code", new() {
+			Dictionary<string, int> exitCodes = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_service_exit_code", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
 			} ) ) )
@@ -603,7 +605,7 @@ namespace ServerMonitor.Connector.Helper {
 				);
 
 			// Get the uptime for recently scraped services ( Service Name -> Uptime )
-			Dictionary<string, double> uptimes = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_service_uptime_seconds", new() {
+			Dictionary<string, double> uptimes = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_service_uptime_seconds", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
 			} ) ) )
@@ -657,7 +659,7 @@ namespace ServerMonitor.Connector.Helper {
 		public static async Task<JsonObject[]> FetchDockerContainers( Config configuration, string jobName, string instanceAddress, long lastScrape ) {
 
 			// Fetch information for all known Docker containers
-			Dictionary<string, JsonObject> dockerContainers = ( await FetchSeries( configuration, CreatePromQL( "server_monitor_docker_status_code", new() {
+			Dictionary<string, JsonObject> dockerContainers = ( await FetchSeries( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_docker_status_code", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
 			} ) ) )
@@ -677,7 +679,7 @@ namespace ServerMonitor.Connector.Helper {
 				);
 
 			// Get the status codes for recently scraped containers ( Container ID -> Status Code )
-			Dictionary<string, int> statusCodes = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_docker_status_code", new() {
+			Dictionary<string, int> statusCodes = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_docker_status_code", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
 			} ) ) )
@@ -698,7 +700,7 @@ namespace ServerMonitor.Connector.Helper {
 				);
 
 			// Get the exit codes for recently scraped containers ( Container ID -> Exit Code )
-			Dictionary<string, int> exitCodes = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_docker_exit_code", new() {
+			Dictionary<string, int> exitCodes = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_docker_exit_code", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
 			} ) ) )
@@ -719,7 +721,7 @@ namespace ServerMonitor.Connector.Helper {
 				);
 
 			// Get the health status for recently scraped containers ( Container ID -> Uptime )
-			Dictionary<string, int> healthStatusCodes = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_docker_health_status_code", new() {
+			Dictionary<string, int> healthStatusCodes = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_docker_health_status_code", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
 			} ) ) )
@@ -741,7 +743,7 @@ namespace ServerMonitor.Connector.Helper {
 
 			// Get the uptime for recently scraped containers ( Container ID -> Uptime )
 			// NOTE: This is the time since the container was created, not the time since it was started. It does not stop incrementing when the container is stopped!
-			Dictionary<string, long> uptimes = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_docker_created_timestamp", new() {
+			Dictionary<string, long> uptimes = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_docker_created_timestamp", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
 			} ) ) )
@@ -795,7 +797,7 @@ namespace ServerMonitor.Connector.Helper {
 		public static async Task<JsonObject[]> FetchSNMPAgents( Config configuration, string jobName, string instanceAddress ) {
 
 			// Fetch all known SNMP agents
-			Dictionary<string, JsonObject> snmpAgents = ( await FetchSeries( configuration, CreatePromQL( "server_monitor_snmp_uptime_seconds", new() {
+			Dictionary<string, JsonObject> snmpAgents = ( await FetchSeries( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_snmp_uptime_seconds", new() {
 				{ "job", jobName },
 				{ "instance", instanceAddress }
 			} ) ) )
@@ -820,7 +822,7 @@ namespace ServerMonitor.Connector.Helper {
 				);
 
 			// Fetch the uptime for recently scraped SNMP agents ( Address:Port -> Uptime )
-			Dictionary<string, double> uptimes = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_snmp_uptime_seconds", new() {
+			Dictionary<string, double> uptimes = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_snmp_uptime_seconds", new() {
 				{ "job", jobName },
 				{ "instance", instanceAddress }
 			} ) ) )
@@ -842,7 +844,7 @@ namespace ServerMonitor.Connector.Helper {
 				);
 
 			// Fetch the service count for recently scraped SNMP agents ( Address:Port -> Service Count )
-			Dictionary<string, long> serviceCounts = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_snmp_service_count", new() {
+			Dictionary<string, long> serviceCounts = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_snmp_service_count", new() {
 				{ "job", jobName },
 				{ "instance", instanceAddress }
 			} ) ) )
@@ -864,7 +866,7 @@ namespace ServerMonitor.Connector.Helper {
 				);
 
 			// Fetch the traps received count for recently scraped SNMP agents ( Address:Port -> Received Traps )
-			Dictionary<string, long> receivedTraps = ( await FetchQuery( configuration, CreatePromQL( "server_monitor_snmp_traps_received", new() {
+			Dictionary<string, long> receivedTraps = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_snmp_traps_received", new() {
 				{ "job", jobName },
 				{ "instance", instanceAddress }
 			} ) ) )
@@ -908,6 +910,69 @@ namespace ServerMonitor.Connector.Helper {
 
 				return containers;
 			} ).ToArray();
+
+		}
+
+		// Fetches the supported actions on a server
+		public static async Task<JsonObject> FetchSupportedActions( Config configuration, string jobName, string instanceAddress ) {
+
+			// Fetch information about the actions server
+			JsonObject actionServer = ( await FetchSeries( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_action_listening", new() {
+				{ "job", jobName },
+				{ "instance", instanceAddress }
+			} ) ) )
+				.Where( result => result != null )
+				.Select( result => result!.AsObject() )
+				.Where( result => result.NestedHas( "address" ) == true && result.NestedHas( "port" ) == true )
+				.Select( result => new JsonObject() {
+					{ "address", result.NestedGet<string>( "address" ) },
+					{ "port", int.Parse( result.NestedGet<string>( "port" ) ) }
+				} )
+				.FirstOrDefault() ?? throw new Exception( $"Unable to find action server for '{ jobName }' '{ instanceAddress }'" );
+
+			// Easy access to the IP address & port number
+			string actionServerAddress = actionServer.NestedGet<string>( "address" );
+			int actionServerPort = actionServer.NestedGet<int>( "port" );
+
+			// Create the HTTP request
+			HttpRequestMessage httpRequest = new() {
+				Method = HttpMethod.Get,
+				RequestUri = new Uri( $"{ ( actionServerPort == 443 ? "https" : "http" ) }://{ actionServerAddress }:{ actionServerPort }/server" ),
+				Content = new StringContent( ( new JsonObject() {
+					{ "server", EncodeIdentifier( jobName, instanceAddress ) }
+				} ).ToJsonString(), Encoding.UTF8, "application/json" )
+			};
+
+			// Add the authentication key, if configured
+			if ( string.IsNullOrWhiteSpace( configuration.CollectorActionAuthenticationKey ) == false ) {
+				httpRequest.Headers.Authorization = new AuthenticationHeaderValue( "Key", configuration.CollectorActionAuthenticationKey );
+			}
+
+			// Send the HTTP request...
+			using ( HttpResponseMessage httpResponse = await Program.HttpClient.SendAsync( httpRequest ) ) {
+				//httpResponse.EnsureSuccessStatusCode();
+
+				// Parse the response
+				string responseContent = await httpResponse.Content.ReadAsStringAsync();
+				JsonObject? responsePayload = JsonSerializer.Deserialize<JsonObject>( responseContent );
+				if ( responsePayload == null ) throw new Exception( $"Failed to parse response '{ responseContent }' as JSON" );
+
+				// Ensure required properties exist
+				if ( responsePayload.NestedHas( "errorCode" ) == false ) throw new Exception( $"Missing error code property in response payload" );
+				if ( responsePayload.NestedHas( "data" ) == false ) throw new Exception( $"Missing data property in response payload" );
+
+				// Easy access to properties
+				int errorCode = responsePayload.NestedGet<int>( "errorCode" );
+				JsonObject data = responsePayload.NestedGet<JsonObject>( "data" );
+				logger.LogDebug( "Error Code: '{0}', Data: '{1}'", errorCode, data.ToJsonString() );
+
+				// Ensure success
+				//if ( responsePayload.NestedGet<int>( "errorCode" ) != ( int ) ErrorCode.Success ) throw new Exception( "Failed to fetch supported actions" );
+
+				// Return the data (as a copy, not a reference)
+				return data.Clone()!.AsObject();
+
+			}
 
 		}
 
