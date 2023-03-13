@@ -26,16 +26,20 @@ namespace ServerMonitor.Collector {
 		// Create the logger for this file
 		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Action" );
 
+		// The configuration
+		private readonly Config configuration;
+
 		// Everything for the HTTP listener
-		private static readonly HttpListener httpListener = new();
-		private static TaskCompletionSource httpListenerLoopCompletionSource = new();
-		private static Task? httpListenerLoopTask = null;
+		private readonly HttpListener httpListener = new();
+		private TaskCompletionSource httpListenerLoopCompletionSource = new();
+		private Task? httpListenerLoopTask = null;
 
 		// The configured authentication key, if any
-		private static string? authenticationKey = null;
+		private string? authenticationKey = null;
 
 		// Setup everything when instantiated
-		public Action( Config configuration ) {
+		public Action( Config config ) {
+			configuration = config;
 
 			// Set the authentication key, if one is configured
 			authenticationKey = string.IsNullOrWhiteSpace( configuration.CollectorActionAuthenticationKey ) == false ? configuration.CollectorActionAuthenticationKey : null;
@@ -117,7 +121,7 @@ namespace ServerMonitor.Collector {
 				// Ensure the authentication is not malformed
 				if ( authorizationHeader.Length != 2 ) {
 					logger.LogWarning( "Invalid authentication '{0}' for HTTP request '{1}' '{2}' from '{3}'", string.Join( ' ', authorizationHeader ), requestMethod, requestPath, requestAddress );
-					Response.SendJson( response, statusCode: HttpStatusCode.Unauthorized, errorCode: ErrorCode.InvalidAuthentication );
+					return Response.SendJson( response, statusCode: HttpStatusCode.Unauthorized, errorCode: ErrorCode.InvalidAuthentication );
 				}
 
 				// Ensure the authentication type is valid
@@ -135,11 +139,11 @@ namespace ServerMonitor.Collector {
 				}
 			}
 
-			// Ensure the request is POST
-			if ( requestMethod != "POST" ) {
+			// Ensure the request is either GET or POST
+			if ( requestMethod != "GET" && requestMethod != "POST" ) {
 				logger.LogWarning( "Bad method '{0}' for HTTP request '{1}' '{2}' from '{3}'", requestMethod, requestMethod, requestPath, requestAddress );
 				return Response.SendJson( response, statusCode: HttpStatusCode.MethodNotAllowed, errorCode: ErrorCode.MethodNotAllowed, data: new JsonObject() {
-					{ "expected", "GET" }
+					{ "expected", new JsonArray() { "GET", "POST" } }
 				} );
 			};
 
@@ -195,8 +199,8 @@ namespace ServerMonitor.Collector {
 				} );
 			}
 
-			// Ensure the request payload contains the action name
-			if ( requestPayload.ContainsKey( "action" ) == false || string.IsNullOrWhiteSpace( requestPayload[ "action" ]?.GetValue<string?>() ) == true ) {
+			// Ensure the request payload contains the action name, if applicable
+			if ( requestMethod == "POST" && ( requestPayload.ContainsKey( "action" ) == false || string.IsNullOrWhiteSpace( requestPayload[ "action" ]?.GetValue<string?>() ) == true ) ) {
 				logger.LogWarning( "Missing action property in payload for HTTP request '{0}' '{1}' from '{2}'", requestMethod, requestPath, requestAddress );
 				return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.MissingParameter, data: new JsonObject() {
 					{ "property", "action" }
@@ -213,17 +217,80 @@ namespace ServerMonitor.Collector {
 
 			// Store each of the properties for later use
 			string serverIdentifier = requestPayload[ "server" ]!.GetValue<string>();
-			string actionName = requestPayload[ "action" ]!.GetValue<string>();
+			string? actionName = requestMethod == "POST" ? requestPayload[ "action" ]!.GetValue<string>() : null;
 			string? serviceName = requestPath == "/service" ? requestPayload[ "service" ]!.GetValue<string>() : null;
 			logger.LogDebug( "Server: '{0}', Action: '{1}', Service: '{2}'", serverIdentifier, actionName, serviceName );
 
-			// TODO: Implement the rest of the API
-			response.StatusCode = ( int ) HttpStatusCode.NotImplemented;
-			response.OutputStream.Write( Encoding.UTF8.GetBytes( "Example" ) );
-			response.Close();
+			// Decode the server identifier
+			string jobName = string.Empty, instanceAddress = string.Empty;
+			try {
+				string[] identifierParts = Connector.Helper.Prometheus.DecodeIdentifier( serverIdentifier );
+				jobName = identifierParts[ 0 ];
+				instanceAddress = identifierParts[ 1 ];
+			} catch ( Exception ) {
+				logger.LogError( "Failed to decode server identifier '{0}' for HTTP request '{1}' '{2}' from '{3}'", serverIdentifier, requestMethod, requestPath, requestAddress );
+				return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.InvalidParameter, data: new JsonObject() {
+					{ "property", "server" }
+				} );
+			}
+			logger.LogDebug( "Job: '{0}', Instance: '{1}'", jobName, instanceAddress );
 
-			return response;
+			// Ensure this request is for this server
+			string myInstanceAddress = string.Concat( configuration.PrometheusListenAddress, ":", configuration.PrometheusListenPort );
+			if ( instanceAddress != myInstanceAddress ) {
+				logger.LogWarning( "Mismatching server instance address '{0}' (expected '{1}') for HTTP request '{1}' '{2}' from '{3}'", instanceAddress, myInstanceAddress, requestMethod, requestPath, requestAddress );
+				return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.WrongServer, data: new JsonObject() {
+					{ "address", myInstanceAddress }
+				} );
+			}
 
+			// Handle the request appropriately
+			if ( requestMethod == "GET" && requestPath == "/server" ) return ReturnServerActions( response );
+			else if ( requestMethod == "GET" && requestPath == "/service" ) return ReturnServiceActions( response, serviceName! );
+			else if ( requestMethod == "POST" && requestPath == "/server" ) return ExecuteServerAction( response, actionName! );
+			else if ( requestMethod == "POST" && requestPath == "/service" ) return ExecuteServiceAction( response, serviceName!, actionName! );
+
+			// Unknown route
+			logger.LogWarning( "Unknown route for HTTP request '{0}' '{1}' from '{2}'", requestMethod, requestPath, requestAddress );
+			return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.UnknownRoute );
+
+		}
+
+		// TODO: Return a list of actions this server supports
+		private HttpListenerResponse ReturnServerActions( HttpListenerResponse response ) {
+			return Response.SendJson( response, statusCode: HttpStatusCode.NotImplemented, errorCode: ErrorCode.ExampleData, data: new JsonObject() {
+				{ "actions", new JsonObject() {
+					{ "shutdown", false },
+					{ "reboot", false }
+				} }
+			} );
+		}
+
+		// TODO: Return a list of actions the service supports
+		private HttpListenerResponse ReturnServiceActions( HttpListenerResponse response, string serviceName ) {
+			return Response.SendJson( response, statusCode: HttpStatusCode.NotImplemented, errorCode: ErrorCode.ExampleData, data: new JsonObject() {
+				{ "actions", new JsonObject() {
+					{ "start", false },
+					{ "stop", false },
+					{ "restart", false }
+				} }
+			} );
+		}
+
+		// TODO: Execute the specified action on the server
+		private HttpListenerResponse ExecuteServerAction( HttpListenerResponse response, string actionName ) {
+			return Response.SendJson( response, statusCode: HttpStatusCode.NotImplemented, errorCode: ErrorCode.ExampleData, data: new JsonObject() {
+				{ "success", false },
+				{ "message", "Hello World" }
+			} );
+		}
+
+		// TODO: Execute the specified action on the service
+		private HttpListenerResponse ExecuteServiceAction( HttpListenerResponse response, string serviceName, string actionName ) {
+			return Response.SendJson( response, statusCode: HttpStatusCode.NotImplemented, errorCode: ErrorCode.ExampleData, data: new JsonObject() {
+				{ "success", false },
+				{ "message", "Hello World" }
+			} );
 		}
 
 	}

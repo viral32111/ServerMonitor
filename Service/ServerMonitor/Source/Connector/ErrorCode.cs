@@ -23,6 +23,7 @@ namespace ServerMonitor.Connector {
 		NoContentType = 17,
 		InvalidContentType = 18,
 		InvalidPayload = 19,
+		WrongServer = 20,
 	}
 
 }
