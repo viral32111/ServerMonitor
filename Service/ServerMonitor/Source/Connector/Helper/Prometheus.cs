@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -629,6 +630,7 @@ namespace ServerMonitor.Connector.Helper {
 			// Merge the data into an array of JSON objects (services that have not been recently scraped will have -1 for statusCode, exitCode & uptimeSeconds)
 			return information.Aggregate( new List<JsonObject>(), ( services, pair ) => {
 				string[] parts = pair.Key.Split( '/', 2 );
+				int statusCode = statusCodes.ContainsKey( pair.Key ) == true ? statusCodes[ pair.Key ] : -1;
 
 				services.Add( new() {
 					{ "service", parts[ 0 ] },
@@ -637,14 +639,15 @@ namespace ServerMonitor.Connector.Helper {
 					{ "name", information[ pair.Key ].NestedGet<string>( "name" ) },
 					{ "description", information[ pair.Key ].NestedGet<string>( "description" ) },
 
-					{ "statusCode", statusCodes.ContainsKey( pair.Key ) == true ? statusCodes[ pair.Key ] : -1 },
+					{ "statusCode", statusCode },
 					{ "exitCode", exitCodes.ContainsKey( pair.Key ) == true ? exitCodes[ pair.Key ] : -1 },
 					{ "uptimeSeconds", uptimes.ContainsKey( pair.Key ) == true ? uptimes[ pair.Key ] : -1 },
 
-					{ "supportedActions", new JsonObject() { // TODO
-						{ "start", false },
-						{ "stop", false },
-						{ "restart", false }
+					// NOTE: This is not fetched from the action server because it would cause hundreds of requests...
+					{ "supportedActions", new JsonObject() {
+						{ "start", statusCode != 0 },
+						{ "stop", statusCode == 1 },
+						{ "restart", statusCode != 0 }
 					} },
 
 					{ "logs", new JsonArray() } // TODO

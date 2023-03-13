@@ -8,7 +8,6 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
-using System.Collections.Specialized;
 using Microsoft.Extensions.Logging;
 using ServerMonitor.Connector.Helper;
 using viral32111.JsonExtensions;
@@ -176,7 +175,7 @@ namespace ServerMonitor.Connector.Route {
 			// Send the HTTP request...
 			using ( HttpResponseMessage httpResponse = await Program.HttpClient.SendAsync( httpRequest ) ) {
 				logger.LogDebug( "Sent execute action HTTP request '{0}' '{1}'", httpRequest.Method, httpRequest.RequestUri );
-				//httpResponse.EnsureSuccessStatusCode();
+				// TODO: httpResponse.EnsureSuccessStatusCode();
 
 				// Parse the response
 				string responseContent = await httpResponse.Content.ReadAsStringAsync();
@@ -192,7 +191,7 @@ namespace ServerMonitor.Connector.Route {
 				JsonObject data = responsePayload.NestedGet<JsonObject>( "data" );
 				logger.LogDebug( "Error Code: '{0}', Data: '{1}'", errorCode, data.ToJsonString() );
 
-				// Ensure success
+				// TODO: Ensure success
 				//if ( responsePayload.NestedGet<int>( "errorCode" ) != ( int ) ErrorCode.Success ) throw new Exception( $"Failed to execute action '{ actionName }'" );
 
 				// Respond with the data (as a copy, not a reference)
@@ -221,7 +220,7 @@ namespace ServerMonitor.Connector.Route {
 
 			// Send the HTTP request...
 			using ( HttpResponseMessage httpResponse = await Program.HttpClient.SendAsync( httpRequest ) ) {
-				//httpResponse.EnsureSuccessStatusCode();
+				// TODO: httpResponse.EnsureSuccessStatusCode();
 
 				// Parse the response
 				string responseContent = await httpResponse.Content.ReadAsStringAsync();
@@ -237,7 +236,7 @@ namespace ServerMonitor.Connector.Route {
 				JsonObject data = responsePayload.NestedGet<JsonObject>( "data" );
 				logger.LogDebug( "Error Code: '{0}', Data: '{1}'", errorCode, data.ToJsonString() );
 
-				// Ensure success
+				// TODO: Ensure success
 				//if ( responsePayload.NestedGet<int>( "errorCode" ) != ( int ) ErrorCode.Success ) throw new Exception( "Failed to fetch supported actions" );
 
 				// Return the data (as a copy, not a reference)
