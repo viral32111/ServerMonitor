@@ -17,6 +17,7 @@ using Microsoft.Extensions.Logging;
 using viral32111.JsonExtensions;
 using ServerMonitor.Connector.Helper;
 using ServerMonitor.Connector;
+using Prometheus;
 
 namespace ServerMonitor.Collector {
 
@@ -37,9 +38,19 @@ namespace ServerMonitor.Collector {
 		// The configured authentication key, if any
 		private string? authenticationKey = null;
 
+		// Prometheus metric mainly to publish the IP address & port of the HTTP listener
+		public readonly Gauge Listening;
+
 		// Setup everything when instantiated
 		public Action( Config config ) {
 			configuration = config;
+
+			// Initialise the Prometheus metric
+			Listening = Metrics.CreateGauge( $"{ configuration.PrometheusMetricsPrefix }_collector_action_listening", "IP address & port of the HTTP listener", new GaugeConfiguration {
+				LabelNames = new string[] { "address", "port" }
+			} );
+			Listening.Set( -1 );
+			logger.LogDebug( "Initalised Prometheus metric" );
 
 			// Set the authentication key, if one is configured
 			authenticationKey = string.IsNullOrWhiteSpace( configuration.CollectorActionAuthenticationKey ) == false ? configuration.CollectorActionAuthenticationKey : null;
@@ -48,6 +59,7 @@ namespace ServerMonitor.Collector {
 			// Setup the API routes for the HTTP listener
 			string baseUrl = $"http://{ configuration.CollectorActionListenAddress }:{ configuration.CollectorActionListenPort }";
 			foreach ( string route in new string[] { "/server", "/service" } ) httpListener.Prefixes.Add( string.Concat( baseUrl, route, "/" ) );
+			logger.LogDebug( "Setup API routes" );
 
 		}
 
@@ -58,6 +70,8 @@ namespace ServerMonitor.Collector {
 			httpListener.Start();
 			httpListenerLoopTask = Task.Run( ListenerLoop ); // Start in the background
 			logger.LogDebug( "Started HTTP listener" );
+
+			Listening.WithLabels( configuration.CollectorActionListenAddress, configuration.CollectorActionListenPort.ToString() ).Set( 1 );
 		}
 
 		// Stops the HTTP listener
@@ -70,6 +84,8 @@ namespace ServerMonitor.Collector {
 			httpListenerLoopTask?.Wait();
 			httpListenerLoopCompletionSource = new(); // Reset for next time
 			logger.LogDebug( "Stopped HTTP listener" );
+
+			Listening.WithLabels( configuration.CollectorActionListenAddress, configuration.CollectorActionListenPort.ToString() ).Set( 0 );
 		}
 
 		// Main receive loop that should be ran in the background
