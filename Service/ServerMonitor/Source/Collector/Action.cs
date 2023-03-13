@@ -82,9 +82,9 @@ namespace ServerMonitor.Collector {
 			if ( httpListener.IsListening == false ) throw new Exception( "HTTP listener is not listening" );
 
 			logger.LogDebug( "Stopping HTTP listener" );
-			httpListener.Stop();
 			httpListenerLoopCompletionSource.SetResult();
 			httpListenerLoopTask?.Wait();
+			httpListener.Stop();
 			httpListenerLoopCompletionSource = new(); // Reset for next time
 			logger.LogDebug( "Stopped HTTP listener" );
 
