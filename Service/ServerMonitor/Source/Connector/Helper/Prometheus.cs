@@ -633,8 +633,8 @@ namespace ServerMonitor.Connector.Helper {
 				int statusCode = statusCodes.ContainsKey( pair.Key ) == true ? statusCodes[ pair.Key ] : -1;
 
 				services.Add( new() {
-					{ "service", parts[ 0 ] },
-					{ "level", parts[ 1 ] },
+					{ "level", parts[ 0 ] },
+					{ "service", parts[ 1 ] },
 
 					{ "name", information[ pair.Key ].NestedGet<string>( "name" ) },
 					{ "description", information[ pair.Key ].NestedGet<string>( "description" ) },
@@ -645,7 +645,7 @@ namespace ServerMonitor.Connector.Helper {
 
 					// NOTE: This is not fetched from the action server because it would cause hundreds of requests...
 					{ "supportedActions", new JsonObject() {
-						{ "start", statusCode != 0 },
+						{ "start", statusCode != 1 },
 						{ "stop", statusCode == 1 },
 						{ "restart", statusCode != 0 }
 					} },

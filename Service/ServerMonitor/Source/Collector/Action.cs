@@ -392,6 +392,7 @@ namespace ServerMonitor.Collector {
 					{ "service", serviceName }
 				} );
 			}
+			logger.LogTrace( "Found service '{0}'", service?.Name );
 
 			// Windows...
 			if ( RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) == true ) {
@@ -399,7 +400,7 @@ namespace ServerMonitor.Collector {
 				#pragma warning disable CA1416 // IDE thinks we aren't running on Windows here, despite the check above!
 
 				// Find the service controller
-				ServiceController? serviceController = ServiceController.GetServices().FirstOrDefault( serviceController => serviceController.ServiceName == serviceName );
+				ServiceController? serviceController = ServiceController.GetServices().FirstOrDefault( serviceController => serviceController.ServiceName == service?.Name );
 
 				if ( serviceController == null ) {
 					logger.LogWarning( "Unknown service '{0}'", serviceName );
@@ -414,21 +415,29 @@ namespace ServerMonitor.Collector {
 
 					// Start the service..
 					if ( actionName == "start" ) {
+						logger.LogDebug( "Starting service '{0}'", serviceController.ServiceName );
 						serviceController.Start();
 						serviceController.WaitForStatus( ServiceControllerStatus.Running, timeout );
+						logger.LogDebug( "Started service '{0}'", serviceController.ServiceName );
 
 					// Stop the service...
 					} else if ( actionName == "stop" ) {
+						logger.LogDebug( "Stopping service '{0}'", serviceController.ServiceName );
 						serviceController.Stop();
 						serviceController.WaitForStatus( ServiceControllerStatus.Stopped, timeout );
+						logger.LogDebug( "Stopped service '{0}'", serviceController.ServiceName );
 
 					// Restart the service...
 					} else if ( actionName == "restart" ) {
-						serviceController.Stop();
-						serviceController.WaitForStatus( ServiceControllerStatus.Stopped, timeout );
-
+						logger.LogDebug( "Starting service '{0}'", serviceController.ServiceName );
 						serviceController.Start();
 						serviceController.WaitForStatus( ServiceControllerStatus.Running, timeout );
+						logger.LogDebug( "Started service '{0}'", serviceController.ServiceName );
+
+						logger.LogDebug( "Stopping service '{0}'", serviceController.ServiceName );
+						serviceController.Stop();
+						serviceController.WaitForStatus( ServiceControllerStatus.Stopped, timeout );
+						logger.LogDebug( "Stopped service '{0}'", serviceController.ServiceName );
 
 					// Unknown action
 					} else {
@@ -464,7 +473,7 @@ namespace ServerMonitor.Collector {
 				Process command = new() {
 					StartInfo = new() {
 						FileName = "systemctl",
-						Arguments = $"{ actionName } ${ serviceName }",
+						Arguments = $"{ actionName } { serviceName }",
 						UseShellExecute = false,
 						RedirectStandardOutput = true,
 						RedirectStandardError = true,
