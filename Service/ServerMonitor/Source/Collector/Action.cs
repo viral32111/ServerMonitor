@@ -411,7 +411,7 @@ namespace ServerMonitor.Collector {
 
 				// Try to execute the action
 				try {
-					TimeSpan timeout = TimeSpan.FromSeconds( 10 );
+					TimeSpan timeout = TimeSpan.FromSeconds( 30 ); // Sometimes Windows can take its time...
 
 					// Start the service..
 					if ( actionName == "start" ) {
@@ -431,17 +431,17 @@ namespace ServerMonitor.Collector {
 
 					// Restart the service...
 					} else if ( actionName == "restart" ) {
-						logger.LogInformation( "Starting service '{0}'", serviceController.ServiceName );
-						serviceController.Start();
-						logger.LogDebug( "Waiting for service '{0}' to start", serviceController.ServiceName );
-						serviceController.WaitForStatus( ServiceControllerStatus.Running, timeout );
-						logger.LogInformation( "Started service '{0}'", serviceController.ServiceName );
-
 						logger.LogInformation( "Stopping service '{0}'", serviceController.ServiceName );
 						serviceController.Stop();
 						logger.LogDebug( "Waiting for service '{0}' to stop", serviceController.ServiceName );
 						serviceController.WaitForStatus( ServiceControllerStatus.Stopped, timeout );
 						logger.LogInformation( "Stopped service '{0}'", serviceController.ServiceName );
+
+						logger.LogInformation( "Starting service '{0}'", serviceController.ServiceName );
+						serviceController.Start();
+						logger.LogDebug( "Waiting for service '{0}' to start", serviceController.ServiceName );
+						serviceController.WaitForStatus( ServiceControllerStatus.Running, timeout );
+						logger.LogInformation( "Started service '{0}'", serviceController.ServiceName );
 
 					// Unknown action
 					} else {
