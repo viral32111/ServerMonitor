@@ -2,11 +2,9 @@ package com.viral32111.servermonitor
 
 import android.content.Context
 import android.content.Intent
-import android.opengl.Visibility
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.view.WindowManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ProgressBar
@@ -17,6 +15,7 @@ import com.google.android.material.appbar.MaterialToolbar
 
 class SetupActivity : AppCompatActivity() {
 
+	// UI
 	private lateinit var instanceUrlEditText: EditText
 	private lateinit var credentialsUsernameEditText: EditText
 	private lateinit var credentialsPasswordEditText: EditText
@@ -129,8 +128,8 @@ class SetupActivity : AppCompatActivity() {
 			}
 
 			// Test if a connector instance is running on this URL
-			API.getHello( instanceUrl, credentialsUsername, credentialsPassword, { data ->
-				Log.d( Shared.logTag, "Instance '${ instanceUrl }' is running! (Message: '${ data?.get( "message" )?.asString }')" )
+			API.getHello( instanceUrl, credentialsUsername, credentialsPassword, { helloData ->
+				Log.d( Shared.logTag, "Instance '${ instanceUrl }' is running! (Message: '${ helloData?.get( "message" )?.asString }')" )
 
 				// Enable UI & hide loading spinner
 				setLoading( false )
@@ -144,8 +143,8 @@ class SetupActivity : AppCompatActivity() {
 				}
 				Log.d( Shared.logTag, "Saved values to shared preferences (URL: '${ instanceUrl }', Username: '${ credentialsUsername }', Password: '${ credentialsPassword }')" )
 
-				// Change to the Servers activity
-				switchActivity( 0 ) // TODO: Get number of servers
+				// Change to the appropriate activity
+				switchActivity( instanceUrl, credentialsUsername, credentialsPassword )
 
 			// Show message if the test fails
 			}, { error, statusCode, errorCode ->
@@ -195,10 +194,10 @@ class SetupActivity : AppCompatActivity() {
 		val credentialsUsername = sharedPreferences.getString( "credentialsUsername", null )
 		val credentialsPassword = sharedPreferences.getString( "credentialsPassword", null )
 
-		// Change to the next activity if we are already setup
+		// Change to the appropriate activity if we are already setup
 		if ( !instanceUrl.isNullOrEmpty() && !credentialsUsername.isNullOrEmpty() && !credentialsPassword.isNullOrEmpty() ) {
 			Log.d( Shared.logTag, "We're already setup! ('${ instanceUrl }', '${ credentialsUsername }', '${ credentialsPassword }')" )
-			switchActivity( 0 ) // TODO: Get number of servers
+			switchActivity( instanceUrl, credentialsUsername, credentialsPassword )
 		} else {
 			Log.d( Shared.logTag, "We're not setup yet! ('${ instanceUrl }', '${ credentialsUsername }', '${ credentialsPassword }')" )
 		}
@@ -212,16 +211,27 @@ class SetupActivity : AppCompatActivity() {
 	}
 
 	// Switches to the next activity
-	private fun switchActivity( serverCount: Int ) {
+	private fun switchActivity( instanceUrl: String, credentialsUsername: String, credentialsPassword: String ) {
+		API.getServers( instanceUrl, credentialsUsername, credentialsPassword, { serversData ->
+			val servers = serversData?.get( "servers" )?.asJsonArray
+			Log.d( Shared.logTag, "Got '${ serversData?.size() }' servers from API: '${ servers.toString() }'" )
 
-		// Switch to the Servers activity if there's more than 1 server, otherwise switch to the Server activity
-		startActivity( Intent( this, if ( serverCount > 1 ) ServersActivity::class.java else ServerActivity::class.java ) )
-		overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
-		Log.d( Shared.logTag, "Switching to next activity..." )
+			// Fallback to 2 servers, as that will show the Servers activity which can display only 1
+			val serverCount = serversData?.size() ?: 2
 
-		// Remove this activity from the back button history
-		finish()
+			// Switch to the Servers activity if there's more than 1 server, otherwise switch to the Server activity
+			startActivity( Intent( this, if ( serverCount > 1 ) ServersActivity::class.java else ServerActivity::class.java ) )
+			overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
+			Log.d( Shared.logTag, "Switching to next activity..." )
 
+			// Remove this activity from the back button history
+			finish()
+
+		}, { error, statusCode, errorCode ->
+			Log.e( Shared.logTag, "Failed to get servers from API due to '${ error }' (Status Code: '${ statusCode }', Error Code: '${ errorCode }')" )
+
+			// TODO: Handle possible errors...
+		} )
 	}
 
 	private fun setLoading( isLoading: Boolean ) {

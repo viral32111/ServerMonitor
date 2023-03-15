@@ -15,7 +15,7 @@ import com.google.android.material.materialswitch.MaterialSwitch
 
 class SettingsActivity : AppCompatActivity() {
 
-	// Will hold all the UI
+	// UI
 	private lateinit var instanceUrlEditText: EditText
 	private lateinit var credentialsUsernameEditText: EditText
 	private lateinit var credentialsPasswordEditText: EditText
@@ -38,8 +38,13 @@ class SettingsActivity : AppCompatActivity() {
 		supportActionBar?.setCustomView( R.layout.action_bar )
 		Log.d( Shared.logTag, "Switched to Material Toolbar" )
 
-		// Get all the UI controls
+		// Set the title on the toolbar
 		val materialToolbar = supportActionBar?.customView?.findViewById<MaterialToolbar>( R.id.actionBarMaterialToolbar )
+		materialToolbar?.title = getString( R.string.settingsActionBarTitle )
+		materialToolbar?.isTitleCentered = true
+		Log.d( Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered })" )
+
+		// Get all the UI controls
 		val saveButton = findViewById<Button>( R.id.settingsSaveButton )
 		instanceUrlEditText = findViewById( R.id.settingsInstanceUrlEditText )
 		credentialsUsernameEditText = findViewById( R.id.settingsCredentialsUsernameEditText )
@@ -50,11 +55,6 @@ class SettingsActivity : AppCompatActivity() {
 		notificationsAlwaysOngoingSwitch = findViewById( R.id.settingsNotificationsAlwaysOngoingSwitch )
 		notificationsWhenIssueArisesSwitch = findViewById( R.id.settingsNotificationsWhenIssueArisesSwitch )
 		Log.d( Shared.logTag, "Got UI controls" )
-
-		// Set the title on the toolbar
-		materialToolbar?.title = getString( R.string.settingsActionBarTitle )
-		materialToolbar?.isTitleCentered = true
-		Log.d( Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered })" )
 
 		// Enable the back button on the toolbar
 		materialToolbar?.navigationIcon = AppCompatResources.getDrawable( this, R.drawable.ic_baseline_arrow_back_24 )
