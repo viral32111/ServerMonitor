@@ -38,6 +38,7 @@ jobs:
         with:
           java-version: 17
           distribution: temurin
+          cache: gradle
 
       - name: Set Gradle permissions
         run: chmod +x ./gradlew
@@ -45,10 +46,10 @@ jobs:
       - name: Build project
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: assemble${{ matrix.variant }}
+          arguments: assemble${{ matrix.variant }} --scan
           build-root-directory: ./App/
 
-      - name: Run tests
+      - name: Run instrumented tests
         run: ./gradlew test
 
       - name: Upload build artifact
