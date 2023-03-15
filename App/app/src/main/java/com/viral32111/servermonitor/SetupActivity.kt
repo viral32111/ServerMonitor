@@ -3,18 +3,34 @@ package com.viral32111.servermonitor
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.JsonReader
 import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
+import com.android.volley.AuthFailureError
+import com.android.volley.DefaultRetryPolicy
+import com.android.volley.NetworkError
+import com.android.volley.NoConnectionError
+import com.android.volley.ParseError
 import com.android.volley.Request
 import com.android.volley.RequestQueue
+import com.android.volley.RetryPolicy
+import com.android.volley.ServerError
+import com.android.volley.TimeoutError
+import com.android.volley.VolleyError
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.gson.JsonElement
+import com.google.gson.JsonParseException
+import com.google.gson.JsonParser
+import com.google.gson.JsonSyntaxException
 import org.json.JSONObject
+import java.nio.charset.Charset
 import java.util.*
+import kotlin.reflect.typeOf
 
 class SetupActivity : AppCompatActivity() {
 
@@ -46,7 +62,7 @@ class SetupActivity : AppCompatActivity() {
 		// Set the title on the toolbar
 		materialToolbar?.title = getString( R.string.setupActionBarTitle )
 		materialToolbar?.isTitleCentered = true
-		Log.d( Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered } )" )
+		Log.d( Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered })" )
 
 		// Get the persistent settings - https://developer.android.com/training/data-storage/shared-preferences
 		val sharedPreferences = getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE )
@@ -134,9 +150,43 @@ class SetupActivity : AppCompatActivity() {
 				switchActivity( 0 ) // TODO: Get number of servers
 
 			// Show message if the test errors
-			}, { reason ->
-				Log.e( Shared.logTag, "Failed to test instance '${ instanceUrl }' (${ reason })" )
-				showBriefMessage( this, R.string.setupToastInstanceUnavailable )
+			}, { error ->
+				val statusCode = error.networkResponse?.statusCode
+				val responseBody = error.networkResponse?.data?.toString( Charset.defaultCharset() )
+				Log.e( Shared.logTag, "Failed to test instance '${ instanceUrl }' due to '${ error }' ('${ statusCode }', '${ responseBody }')" )
+
+				var errorCode: Int? = null
+				if ( responseBody != null ) {
+					try {
+						val responsePayload =  JsonParser.parseString( responseBody ).asJsonObject
+						if ( responsePayload.has( "errorCode" ) ) errorCode = responsePayload.get( "errorCode" ).asInt
+					} catch ( exception: java.lang.Exception ) {
+						Log.e( Shared.logTag, "Failed to parse HTTP response body '${ responseBody }' as JSON during error callback (${ exception }, ${ exception.message })" )
+					}
+				}
+
+				when ( error ) {
+					// Bad authentication
+					is AuthFailureError -> when ( errorCode ) {
+						ErrorCode.UnknownUser.code -> showBriefMessage( this, R.string.setupToastInstanceTestAuthenticationUnknownUser )
+						ErrorCode.IncorrectPassword.code -> showBriefMessage( this, R.string.setupToastInstanceTestAuthenticationIncorrectPassword )
+						else -> showBriefMessage( this, R.string.setupToastInstanceTestAuthenticationFailure )
+					}
+
+					// No Internet connection
+					is NoConnectionError -> showBriefMessage( this, R.string.setupToastInstanceTestNoConnection )
+					is NetworkError -> showBriefMessage( this, R.string.setupToastInstanceTestNoConnection )
+
+					// Connection timed out
+					is TimeoutError -> showBriefMessage( this, R.string.setupToastInstanceTestTimeout )
+
+					// Couldn't parse as JSON
+					is ParseError -> showBriefMessage( this, R.string.setupToastInstanceTestParseFailure )
+
+					// Internal server error
+					is ServerError -> showBriefMessage( this, R.string.setupToastInstanceTestServerFailure )
+					else -> showBriefMessage( this, R.string.setupToastInstanceTestFailure )
+				}
 			} )
 
 		}
@@ -165,13 +215,13 @@ class SetupActivity : AppCompatActivity() {
 	}
 
 	// Sends a HTTP request to a URL to validate if the connector service is running on it
-	private fun testInstance(url: String, username: String, password: String, successCallback: (payload: JSONObject ) -> Unit, errorCallback: (reason: String ) -> Unit ) {
+	private fun testInstance(url: String, username: String, password: String, successCallback: (payload: JSONObject ) -> Unit, errorCallback: ( error: VolleyError ) -> Unit ) {
 
 		// Create the request to the given URL
-		val httpRequest = object: JsonObjectRequest( Request.Method.GET, "$url/hello", null, { responsePayload ->
+		val httpRequest = object: JsonObjectRequest( Method.GET, "$url/hello", null, { responsePayload ->
 			successCallback.invoke( responsePayload )
 		}, { error ->
-			errorCallback.invoke( error.message ?: error.toString() )
+			errorCallback.invoke( error )
 		} ) {
 			// Override the request headers - https://stackoverflow.com/a/53141982
 			override fun getHeaders(): MutableMap<String, String> {
@@ -188,6 +238,9 @@ class SetupActivity : AppCompatActivity() {
 			}
 		}
 		Log.d( Shared.logTag, "Created HTTP request to '${ url }'" )
+
+		// Disable automatic retrying on failure
+		httpRequest.retryPolicy = DefaultRetryPolicy( DefaultRetryPolicy.DEFAULT_TIMEOUT_MS, 0, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT )
 
 		// Send the request
 		httpRequest.tag = requestQueueTag

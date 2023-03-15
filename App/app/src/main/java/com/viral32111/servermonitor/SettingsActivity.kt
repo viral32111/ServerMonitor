@@ -54,7 +54,7 @@ class SettingsActivity : AppCompatActivity() {
 		// Set the title on the toolbar
 		materialToolbar?.title = getString( R.string.settingsActionBarTitle )
 		materialToolbar?.isTitleCentered = true
-		Log.d( Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered } )" )
+		Log.d( Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered })" )
 
 		// Enable the back button on the toolbar
 		materialToolbar?.navigationIcon = AppCompatResources.getDrawable( this, R.drawable.ic_baseline_arrow_back_24 )

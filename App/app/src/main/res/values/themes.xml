@@ -24,7 +24,7 @@
 
 		<!-- Status bar -->
 		<item name="android:statusBarColor">@color/toolbar_white</item>
-		<item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
+		<item name="android:windowLightStatusBar">true</item>
 
 		<!-- Action bar -->
 		<item name="actionBarTheme">@style/ThemeOverlay.ServerMonitor.ActionBar</item>

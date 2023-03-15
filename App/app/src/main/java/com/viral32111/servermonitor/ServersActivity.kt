@@ -29,7 +29,7 @@ class ServersActivity : AppCompatActivity() {
 		// Set the title on the toolbar
 		materialToolbar?.title = getString( R.string.serversActionBarTitle )
 		materialToolbar?.isTitleCentered = true
-		Log.d( Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered } )" )
+		Log.d( Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered })" )
 
 		// Open settings when its action bar menu item is clicked
 		materialToolbar?.setOnMenuItemClickListener { menuItem ->

@@ -13,7 +13,6 @@
 	<string name="setupEditTextInstanceUrlHint">https://example.com/my-instance-name…</string>
 	<string name="setupToastInstanceUrlEmpty">Provide an instance URL.</string>
 	<string name="setupToastInstanceUrlInvalid">The provided instance URL is invalid.</string>
-	<string name="setupToastInstanceUnavailable">There is not an instance running at the provided URL.</string>
 
 	<!-- Label for credentials section -->
 	<string name="setupTextViewCredentialsLabel">Authentication Credentials:</string>
@@ -30,5 +29,15 @@
 
 	<!-- Continue button -->
 	<string name="setup_button_continue">Continue</string>
+
+	<!-- Toasts for instance test -->
+	<string name="setupToastInstanceTestAuthenticationUnknownUser">No credentials exist with the provided username.</string>
+	<string name="setupToastInstanceTestAuthenticationIncorrectPassword">The provided password is incorrect.</string>
+	<string name="setupToastInstanceTestAuthenticationFailure">The provided credentials are incorrect.</string>
+	<string name="setupToastInstanceTestNoConnection">Unable to test instance. Are you connected to the Internet?</string>
+	<string name="setupToastInstanceTestTimeout">Connection timed out while testing instance. Are you connected to the Internet?</string>
+	<string name="setupToastInstanceTestParseFailure">Failed to parse instance response as JSON. Is the URL correct?</string>
+	<string name="setupToastInstanceTestServerFailure">The instance encountered an error processing the request.</string>
+	<string name="setupToastInstanceTestFailure">There is not an instance running on the provided URL.</string>
 
 </resources>
