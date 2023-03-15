@@ -95,7 +95,7 @@ class API {
 			// Send the request
 			httpRequest.tag = requestQueueTag
 			requestQueue.add( httpRequest )
-			Log.d( Shared.logTag, "Sending HTTP request to URL '${ url }' (Method: '${ method }', Username: '${ username }', Password: '${ password }')..." )
+			Log.d( Shared.logTag, "Sending HTTP request to URL '${ url }' (Method: '${ requestMethodToName( method ) }', Username: '${ username }', Password: '${ password }')..." )
 
 		}
 
