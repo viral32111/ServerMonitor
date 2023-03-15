@@ -40,7 +40,6 @@ jobs:
         run: chmod +x ./App/gradlew
 
       - name: Create key store
-        if: ${{ matrix.variant == 'Release' }}
         id: keystore
         run: |
           echo "${{ secrets.ANDROID_KEY_STORE }}" | base64 -d > $HOME/android-key-store.apk
