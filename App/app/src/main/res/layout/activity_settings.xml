@@ -30,14 +30,16 @@
 		android:autofillHints=""
 		android:ems="10"
 		android:enabled="false"
-		android:hint="@string/settingsEditTextSetupHint"
+		android:hint="@string/settingsEditTextInstanceUrlSetupHint"
 		android:inputType="textUri"
 		android:minHeight="48dp"
+		android:textColorHint="@color/textColorHint"
 		android:textSize="@dimen/text_size"
 		app:layout_constraintEnd_toEndOf="parent"
 		app:layout_constraintHorizontal_bias="0.0"
 		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toTopOf="parent" />
+		app:layout_constraintTop_toTopOf="parent"
+		tools:ignore="VisualLintTextFieldSize" />
 
 	<TextView
 		android:id="@+id/settingsCredentialsLabelTextView"
@@ -62,14 +64,16 @@
 		android:autofillHints=""
 		android:ems="10"
 		android:enabled="false"
-		android:hint="@string/settingsEditTextSetupHint"
+		android:hint="@string/settingsEditTextCredentialsUsernameSetupHint"
 		android:inputType="textPersonName"
 		android:minHeight="48dp"
+		android:textColorHint="@color/textColorHint"
 		android:textSize="@dimen/text_size"
 		app:layout_constraintEnd_toEndOf="parent"
 		app:layout_constraintHorizontal_bias="0.0"
 		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toBottomOf="@+id/settingsInstanceUrlEditText" />
+		app:layout_constraintTop_toBottomOf="@+id/settingsInstanceUrlEditText"
+		tools:ignore="VisualLintTextFieldSize" />
 
 	<EditText
 		android:id="@+id/settingsCredentialsPasswordEditText"
@@ -80,14 +84,16 @@
 		android:autofillHints=""
 		android:ems="10"
 		android:enabled="false"
-		android:hint="@string/settingsEditTextSetupHint"
+		android:hint="@string/settingsEditTextCredentialsPasswordSetupHint"
 		android:inputType="textPassword"
 		android:minHeight="48dp"
+		android:textColorHint="@color/textColorHint"
 		android:textSize="@dimen/text_size"
 		app:layout_constraintEnd_toEndOf="parent"
 		app:layout_constraintHorizontal_bias="0.0"
 		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toBottomOf="@+id/settingsCredentialsUsernameEditText" />
+		app:layout_constraintTop_toBottomOf="@+id/settingsCredentialsUsernameEditText"
+		tools:ignore="VisualLintTextFieldSize" />
 
 	<com.google.android.material.materialswitch.MaterialSwitch
 		android:id="@+id/settingsAutomaticRefreshSwitch"
@@ -102,7 +108,8 @@
 		android:textSize="@dimen/text_size"
 		app:layout_constraintEnd_toEndOf="parent"
 		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toBottomOf="@+id/settingsCredentialsPasswordEditText" />
+		app:layout_constraintTop_toBottomOf="@+id/settingsCredentialsPasswordEditText"
+		tools:ignore="VisualLintButtonSize" />
 
 	<TextView
 		android:id="@+id/settingsAutomaticRefreshIntervalTextView"
@@ -128,11 +135,13 @@
 		android:hint="@string/settingsEditTextIntervalHint"
 		android:inputType="number"
 		android:minHeight="48dp"
+		android:textColorHint="@color/textColorHint"
 		android:textSize="@dimen/text_size"
 		app:layout_constraintEnd_toEndOf="parent"
 		app:layout_constraintHorizontal_bias="1.0"
 		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toBottomOf="@+id/settingsAutomaticRefreshSwitch" />
+		app:layout_constraintTop_toBottomOf="@+id/settingsAutomaticRefreshSwitch"
+		tools:ignore="VisualLintTextFieldSize" />
 
 	<TextView
 		android:id="@+id/settingsThemeTextView"
@@ -188,7 +197,8 @@
 		app:layout_constraintEnd_toEndOf="parent"
 		app:layout_constraintHorizontal_bias="0.0"
 		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toBottomOf="@+id/settingsThemeSpinner" />
+		app:layout_constraintTop_toBottomOf="@+id/settingsThemeSpinner"
+		tools:ignore="VisualLintButtonSize" />
 
 	<com.google.android.material.materialswitch.MaterialSwitch
 		android:id="@+id/settingsNotificationsWhenIssueArisesSwitch"
@@ -203,7 +213,8 @@
 		app:layout_constraintEnd_toEndOf="parent"
 		app:layout_constraintHorizontal_bias="0.0"
 		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toBottomOf="@+id/settingsNotificationsAlwaysOngoingSwitch" />
+		app:layout_constraintTop_toBottomOf="@+id/settingsNotificationsAlwaysOngoingSwitch"
+		tools:ignore="VisualLintButtonSize" />
 
 	<Button
 		android:id="@+id/settingsSaveButton"

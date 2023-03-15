@@ -5,7 +5,7 @@
 	<string name="setupActionBarTitle">Setup</string>
 
 	<!-- Instructions -->
-	<string name="setupTextViewInstruction">Enter the publicly-accessible URL to the primary server monitoring instance below, along with your credentials to access it.</string>
+	<string name="setupTextViewInstruction">Enter the public URL to the primary Server Monitor connector instance below, along with your credentials.</string>
 	<string name="SetupTextViewSecureNotice">The instance must be served over HTTPs.</string>
 
 	<!-- Instance URL input -->

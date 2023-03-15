@@ -59,10 +59,12 @@
 		android:hint="@string/setupEditTextInstanceUrlHint"
 		android:inputType="textUri"
 		android:minHeight="48dp"
+		android:textColorHint="@color/textColorHint"
 		android:textSize="@dimen/text_size"
 		app:layout_constraintEnd_toEndOf="parent"
 		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toBottomOf="@+id/setupNoticeSecureTextView" />
+		app:layout_constraintTop_toBottomOf="@+id/setupNoticeSecureTextView"
+		tools:ignore="VisualLintTextFieldSize" />
 
 	<TextView
 		android:id="@+id/setupCredentialsLabelTextView"
@@ -88,10 +90,12 @@
 		android:hint="@string/setupEditTextCredentialsUsernameHint"
 		android:inputType="textPersonName"
 		android:minHeight="48dp"
+		android:textColorHint="@color/textColorHint"
 		android:textSize="@dimen/text_size"
 		app:layout_constraintEnd_toEndOf="parent"
 		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toBottomOf="@+id/settingsInstanceUrlEditText" />
+		app:layout_constraintTop_toBottomOf="@+id/settingsInstanceUrlEditText"
+		tools:ignore="VisualLintTextFieldSize" />
 
 	<EditText
 		android:id="@+id/setupCredentialsPasswordEditText"
@@ -104,10 +108,12 @@
 		android:hint="@string/setupEditTextCredentialsPasswordHint"
 		android:inputType="textPassword"
 		android:minHeight="48dp"
+		android:textColorHint="@color/textColorHint"
 		android:textSize="@dimen/text_size"
 		app:layout_constraintEnd_toEndOf="parent"
 		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toBottomOf="@+id/setupCredentialsUsernameEditText" />
+		app:layout_constraintTop_toBottomOf="@+id/setupCredentialsUsernameEditText"
+		tools:ignore="VisualLintTextFieldSize" />
 
 	<Button
 		android:id="@+id/settingsSaveButton"

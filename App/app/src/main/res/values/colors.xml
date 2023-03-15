@@ -27,4 +27,6 @@
 	<color name="background_dark">#1E1E1E</color>
 	<color name="toolbar_dark">#282828</color>
 
+	<color name="textColorHint">#A1887F</color>
+
 </resources>
