@@ -9,19 +9,11 @@ import android.widget.EditText
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
 import com.android.volley.*
-import com.android.volley.toolbox.JsonObjectRequest
-import com.android.volley.toolbox.Volley
 import com.google.android.material.appbar.MaterialToolbar
-import com.google.gson.JsonParser
-import org.json.JSONObject
-import java.nio.charset.Charset
-import java.util.*
 
 class SetupActivity : AppCompatActivity() {
 
-	// HTTP request queue
-	private lateinit var requestQueue: RequestQueue
-	private val requestQueueTag = Shared.logTag
+
 
 	// Runs when the activity is created...
 	override fun onCreate( savedInstanceState: Bundle? ) {
@@ -53,8 +45,8 @@ class SetupActivity : AppCompatActivity() {
 		val sharedPreferences = getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE )
 		Log.d( Shared.logTag, "Got shared preferences for '${ Shared.sharedPreferencesName }'" )
 
-		// Initialise the HTTP request queue - https://google.github.io/volley/simple.html#use-newrequestqueue
-		requestQueue = Volley.newRequestQueue( applicationContext )
+		// Initialise our RESTful API class
+		API.initializeQueue( applicationContext )
 
 		// Open settings when its action bar menu item is clicked
 		materialToolbar?.setOnMenuItemClickListener { menuItem ->
@@ -118,16 +110,9 @@ class SetupActivity : AppCompatActivity() {
 				return@setOnClickListener
 			}
 
-			// Test if a Server Monitor instance is running on this URL
-			testInstance( instanceUrl, credentialsUsername, credentialsPassword, { payload ->
-				val errorCode = if ( payload.has( "errorCode" ) ) payload.getInt( "errorCode" ) else null
-				Log.d( Shared.logTag, "Instance test was successful! ('${ errorCode }', '${ payload }')" )
-
-				// Do not continue if the error code is non-successful
-				if ( errorCode != ErrorCode.Success.code ) {
-					showBriefMessage( this, R.string.setupToastInstanceTestServerFailure )
-					return@testInstance
-				}
+			// Test if a connector instance is running on this URL
+			API.getHello( instanceUrl, credentialsUsername, credentialsPassword, { data ->
+				Log.d( Shared.logTag, "Instance '${ instanceUrl }' is running! (Message: '${ data?.get( "message" )?.asString }')" )
 
 				// Save the values to the shared preferences - https://developer.android.com/training/data-storage/shared-preferences#WriteSharedPreference
 				with ( sharedPreferences.edit() ) {
@@ -136,28 +121,17 @@ class SetupActivity : AppCompatActivity() {
 					putString( "credentialsPassword", credentialsPassword )
 					apply()
 				}
-				Log.d( Shared.logTag, "Saved values to shared preferences ('${ instanceUrl }', '${ credentialsUsername }', '${ credentialsPassword }')" )
+				Log.d( Shared.logTag, "Saved values to shared preferences (URL: '${ instanceUrl }', Username: '${ credentialsUsername }', Password: '${ credentialsPassword }')" )
 
 				// Change to the Servers activity
 				switchActivity( 0 ) // TODO: Get number of servers
 
-			// Show message if the test errors
-			}, { error ->
-				val statusCode = error.networkResponse?.statusCode
-				val responseBody = error.networkResponse?.data?.toString( Charset.defaultCharset() )
-				Log.e( Shared.logTag, "Failed to test instance '${ instanceUrl }' due to '${ error }' ('${ statusCode }', '${ responseBody }')" )
-
-				var errorCode: Int? = null
-				if ( responseBody != null ) {
-					try {
-						val responsePayload =  JsonParser.parseString( responseBody ).asJsonObject
-						errorCode = if ( responsePayload.has( "errorCode" ) ) responsePayload.get( "errorCode" ).asInt else null
-					} catch ( exception: java.lang.Exception ) {
-						Log.e( Shared.logTag, "Failed to parse HTTP response body '${ responseBody }' as JSON during error callback (${ exception }, ${ exception.message })" )
-					}
-				}
+			// Show message if the test fails
+			}, { error, statusCode, errorCode ->
+				Log.e( Shared.logTag, "Instance '${ instanceUrl }' is NOT running! (Error: '${ error }', Status Code: '${ statusCode }', Error Code: '${ errorCode }')" )
 
 				when ( error ) {
+
 					// Bad authentication
 					is AuthFailureError -> when ( errorCode ) {
 						ErrorCode.UnknownUser.code -> showBriefMessage( this, R.string.setupToastInstanceTestAuthenticationUnknownUser )
@@ -165,7 +139,16 @@ class SetupActivity : AppCompatActivity() {
 						else -> showBriefMessage( this, R.string.setupToastInstanceTestAuthenticationFailure )
 					}
 
-					// No Internet connection
+					// HTTP 4xx
+					is ClientError -> when ( statusCode ) {
+						404 -> showBriefMessage( this, R.string.setupToastInstanceTestNotFound )
+						else -> showBriefMessage( this, R.string.setupToastInstanceTestFailure )
+					}
+
+					// HTTP 5xx
+					is ServerError -> showBriefMessage( this, R.string.setupToastInstanceTestServerFailure )
+
+					// No Internet connection, malformed domain
 					is NoConnectionError -> showBriefMessage( this, R.string.setupToastInstanceTestNoConnection )
 					is NetworkError -> showBriefMessage( this, R.string.setupToastInstanceTestNoConnection )
 
@@ -175,9 +158,9 @@ class SetupActivity : AppCompatActivity() {
 					// Couldn't parse as JSON
 					is ParseError -> showBriefMessage( this, R.string.setupToastInstanceTestParseFailure )
 
-					// Internal server error
-					is ServerError -> showBriefMessage( this, R.string.setupToastInstanceTestServerFailure )
+					// ¯\_(ツ)_/¯
 					else -> showBriefMessage( this, R.string.setupToastInstanceTestFailure )
+
 				}
 			} )
 
@@ -198,47 +181,10 @@ class SetupActivity : AppCompatActivity() {
 
 	}
 
-	// Cancel all HTTP requests when the app is closed - https://google.github.io/volley/simple.html#cancel-a-request
+	// Cancels pending HTTP requests when the app is closed
 	override fun onStop() {
 		super.onStop()
-
-		Log.d( Shared.logTag, "Cancelling all HTTP requests in the queue..." )
-		requestQueue.cancelAll( requestQueueTag )
-	}
-
-	// Sends a HTTP request to a URL to validate if the connector service is running on it
-	private fun testInstance(url: String, username: String, password: String, successCallback: (payload: JSONObject ) -> Unit, errorCallback: ( error: VolleyError ) -> Unit ) {
-
-		// Create the request to the given URL
-		val httpRequest = object: JsonObjectRequest( Method.GET, "$url/hello", null, { responsePayload ->
-			successCallback.invoke( responsePayload )
-		}, { error ->
-			errorCallback.invoke( error )
-		} ) {
-			// Override the request headers - https://stackoverflow.com/a/53141982
-			override fun getHeaders(): MutableMap<String, String> {
-				val headers = HashMap<String, String>()
-
-				// Expect a JSON response
-				headers[ "Accept" ] = "application/json, */*"
-
-				// Add the authentication - https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication, https://developer.android.com/reference/kotlin/java/util/Base64
-				headers[ "Authorization" ] = "Basic ${ Base64.getEncoder().encodeToString( "${ username }:${ password }".toByteArray() ) }"
-				Log.d( Shared.logTag, "Added authentication '${ headers[ "Authorization" ] }' to HTTP request" )
-
-				return headers
-			}
-		}
-		Log.d( Shared.logTag, "Created HTTP request to '${ url }'" )
-
-		// Disable automatic retrying on failure
-		httpRequest.retryPolicy = DefaultRetryPolicy( DefaultRetryPolicy.DEFAULT_TIMEOUT_MS, 0, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT )
-
-		// Send the request
-		httpRequest.tag = requestQueueTag
-		requestQueue.add( httpRequest )
-		Log.d( Shared.logTag, "Sending HTTP request..." )
-
+		API.cancelQueue()
 	}
 
 	// Switches to the next activity
