@@ -107,6 +107,16 @@ namespace ServerMonitor.Connector {
 			OnListeningStarted?.Invoke( null, EventArgs.Empty );
 			logger.LogInformation( "Listening for API requests on '{0}'", baseUrl );
 
+			// Stop everything when CTRL+C is pressed - https://stackoverflow.com/a/929717
+			Console.CancelKeyPress += delegate ( object? sender, ConsoleCancelEventArgs e ) {
+				logger.LogInformation( "CTRL+C pressed! Stopping..." );
+
+				logger.LogDebug( "Stopping HTTP listener..." );
+				StopServerCompletionSource.SetResult();
+				httpListener.Stop();
+				logger.LogDebug( "Stopped HTTP listener" );
+			};
+
 			// Loop forever...
 			while ( httpListener.IsListening == true && noListen == false ) {
 

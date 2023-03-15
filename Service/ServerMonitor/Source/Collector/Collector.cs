@@ -60,6 +60,26 @@ namespace ServerMonitor.Collector {
 			// Start the SNMP manager
 			if ( configuration.CollectSNMPMetrics == true ) snmp.ListenForTraps();
 
+			// Stop everything when CTRL+C is pressed - https://stackoverflow.com/a/929717
+			Console.CancelKeyPress += delegate ( object? sender, ConsoleCancelEventArgs e ) {
+				logger.LogInformation( "CTRL+C pressed! Stopping..." );
+
+				logger.LogDebug( "Stopping Prometheus Metrics server..." );
+				MetricsServer.Stop();
+				logger.LogDebug( "Prometheus Metrics server stopped" );
+	
+				if ( configuration.CollectSNMPMetrics == true ) {
+					logger.LogDebug( "Stopping SNMP manager..." );
+					cancellationTokenSource.Cancel();
+					snmp.WaitForTrapListener();
+					logger.LogDebug( "SNMP manager stopped" );
+				}
+
+				logger.LogDebug( "Stopping action server..." );
+				action.StopListening();
+				logger.LogDebug( "Action server stopped" );
+			};
+
 			// Create instances of each resource collector
 			Memory memory = new( configuration );
 			Processor processor = new( configuration );
