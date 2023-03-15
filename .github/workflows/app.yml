@@ -35,12 +35,12 @@ jobs:
         with:
           java-version: 17
           distribution: temurin
-          cache: gradle
 
       - name: Set Gradle permissions
         run: chmod +x ./App/gradlew
 
       - name: Create key store
+        if: ${{ matrix.variant == 'Release' }}
         id: keystore
         run: |
           echo "${{ secrets.ANDROID_KEY_STORE }}" | base64 -d > $HOME/android-key-store.apk
@@ -56,6 +56,7 @@ jobs:
         with:
           arguments: assemble${{ matrix.variant }} --scan
           build-root-directory: ./App/
+          cache-disabled: true
 
       - name: Run instrumented tests
         env:
@@ -67,6 +68,7 @@ jobs:
         with:
           arguments: test --scan
           build-root-directory: ./App/
+          cache-disabled: true
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v3
