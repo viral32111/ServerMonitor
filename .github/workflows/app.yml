@@ -38,7 +38,7 @@ jobs:
           cache: gradle
 
       - name: Set Gradle permissions
-        run: chmod +x ./gradlew
+        run: chmod +x ./App/gradlew
 
       - name: Create key store
         id: keystore
