@@ -2,10 +2,14 @@ package com.viral32111.servermonitor
 
 import android.content.Context
 import android.content.Intent
+import android.opengl.Visibility
 import android.os.Bundle
 import android.util.Log
+import android.view.View
+import android.view.WindowManager
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ProgressBar
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
 import com.android.volley.*
@@ -13,7 +17,11 @@ import com.google.android.material.appbar.MaterialToolbar
 
 class SetupActivity : AppCompatActivity() {
 
-
+	private lateinit var instanceUrlEditText: EditText
+	private lateinit var credentialsUsernameEditText: EditText
+	private lateinit var credentialsPasswordEditText: EditText
+	private lateinit var continueButton: Button
+	private lateinit var progressBar: ProgressBar
 
 	// Runs when the activity is created...
 	override fun onCreate( savedInstanceState: Bundle? ) {
@@ -28,18 +36,19 @@ class SetupActivity : AppCompatActivity() {
 		supportActionBar?.setCustomView( R.layout.action_bar )
 		Log.d( Shared.logTag, "Switched to Material Toolbar" )
 
-		// Get all UI controls
-		val materialToolbar = supportActionBar?.customView?.findViewById<MaterialToolbar>( R.id.actionBarMaterialToolbar )
-		val instanceUrlEditText = findViewById<EditText>( R.id.settingsInstanceUrlEditText )
-		val credentialsUsernameEditText = findViewById<EditText>( R.id.setupCredentialsUsernameEditText )
-		val credentialsPasswordEditText = findViewById<EditText>( R.id.setupCredentialsPasswordEditText )
-		val continueButton = findViewById<Button>( R.id.settingsSaveButton )
-		Log.d( Shared.logTag, "Got UI controls" )
-
 		// Set the title on the toolbar
+		val materialToolbar = supportActionBar?.customView?.findViewById<MaterialToolbar>( R.id.actionBarMaterialToolbar )
 		materialToolbar?.title = getString( R.string.setupActionBarTitle )
 		materialToolbar?.isTitleCentered = true
 		Log.d( Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered })" )
+
+		// Get all UI controls
+		instanceUrlEditText = findViewById( R.id.settingsInstanceUrlEditText )
+		credentialsUsernameEditText = findViewById( R.id.setupCredentialsUsernameEditText )
+		credentialsPasswordEditText = findViewById( R.id.setupCredentialsPasswordEditText )
+		continueButton = findViewById( R.id.settingsSaveButton )
+		progressBar = findViewById( R.id.setupProgressBar )
+		Log.d( Shared.logTag, "Got UI controls" )
 
 		// Get the persistent settings - https://developer.android.com/training/data-storage/shared-preferences
 		val sharedPreferences = getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE )
@@ -62,6 +71,9 @@ class SetupActivity : AppCompatActivity() {
 		// When the the continue button is pressed...
 		continueButton.setOnClickListener {
 
+			// Disable UI & show loading spinner
+			setLoading( true )
+
 			// Get the values in the text inputs
 			val instanceUrl = instanceUrlEditText.text.toString()
 			val credentialsUsername = credentialsUsernameEditText.text.toString()
@@ -70,6 +82,7 @@ class SetupActivity : AppCompatActivity() {
 
 			// Do not continue if an instance URL wasn't provided
 			if ( instanceUrl.isBlank() ) {
+				setLoading( false )
 				showBriefMessage( this, R.string.setupToastInstanceUrlEmpty )
 				Log.w( Shared.logTag, "Instance URL is empty" )
 				return@setOnClickListener
@@ -77,6 +90,7 @@ class SetupActivity : AppCompatActivity() {
 
 			// Do not continue if the URL isn't valid
 			if ( !validateInstanceUrl( instanceUrl ) ) {
+				setLoading( false )
 				showBriefMessage( this, R.string.setupToastInstanceUrlInvalid )
 				Log.w( Shared.logTag, "Instance URL is invalid" )
 				return@setOnClickListener
@@ -84,6 +98,7 @@ class SetupActivity : AppCompatActivity() {
 
 			// Do not continue if a username wasn't provided
 			if ( credentialsUsername.isBlank() ) {
+				setLoading( false )
 				showBriefMessage( this, R.string.setupToastCredentialsUsernameEmpty )
 				Log.w( Shared.logTag, "Username is empty" )
 				return@setOnClickListener
@@ -91,6 +106,7 @@ class SetupActivity : AppCompatActivity() {
 
 			// Do not continue if the username isn't valid
 			if ( !validateCredentialsUsername( credentialsUsername ) ) {
+				setLoading( false )
 				showBriefMessage( this, R.string.setupToastCredentialsUsernameInvalid )
 				Log.w( Shared.logTag, "Username is invalid" )
 				return@setOnClickListener
@@ -98,6 +114,7 @@ class SetupActivity : AppCompatActivity() {
 
 			// Do not continue if a password wasn't provided
 			if ( credentialsPassword.isBlank() ) {
+				setLoading( false )
 				showBriefMessage( this, R.string.setupToastCredentialsPasswordEmpty )
 				Log.w( Shared.logTag, "Password is empty" )
 				return@setOnClickListener
@@ -105,6 +122,7 @@ class SetupActivity : AppCompatActivity() {
 
 			// Do not continue if the password isn't valid
 			if ( !validateCredentialsPassword( credentialsPassword ) ) {
+				setLoading( false )
 				showBriefMessage( this, R.string.setupToastCredentialsPasswordInvalid )
 				Log.w( Shared.logTag, "Password is invalid" )
 				return@setOnClickListener
@@ -113,6 +131,9 @@ class SetupActivity : AppCompatActivity() {
 			// Test if a connector instance is running on this URL
 			API.getHello( instanceUrl, credentialsUsername, credentialsPassword, { data ->
 				Log.d( Shared.logTag, "Instance '${ instanceUrl }' is running! (Message: '${ data?.get( "message" )?.asString }')" )
+
+				// Enable UI & hide loading spinner
+				setLoading( false )
 
 				// Save the values to the shared preferences - https://developer.android.com/training/data-storage/shared-preferences#WriteSharedPreference
 				with ( sharedPreferences.edit() ) {
@@ -129,6 +150,9 @@ class SetupActivity : AppCompatActivity() {
 			// Show message if the test fails
 			}, { error, statusCode, errorCode ->
 				Log.e( Shared.logTag, "Instance '${ instanceUrl }' is NOT running! (Error: '${ error }', Status Code: '${ statusCode }', Error Code: '${ errorCode }')" )
+
+				// Enable UI & hide loading spinner
+				setLoading( false )
 
 				when ( error ) {
 
@@ -197,6 +221,19 @@ class SetupActivity : AppCompatActivity() {
 
 		// Remove this activity from the back button history
 		finish()
+
+	}
+
+	private fun setLoading( isLoading: Boolean ) {
+
+		// Enable/disable user input
+		instanceUrlEditText.isEnabled = !isLoading
+		credentialsUsernameEditText.isEnabled = !isLoading
+		credentialsPasswordEditText.isEnabled = !isLoading
+		continueButton.isEnabled = !isLoading
+
+		// Show/hide progress spinner
+		progressBar.visibility = if ( isLoading ) View.VISIBLE else View.GONE
 
 	}
 
