@@ -25,6 +25,12 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v3
 
+      - name: Create key store
+        id: keystore
+        run: |
+          echo "${{ secrets.ANDROID_KEY_STORE }}" | base64 -d > $HOME/android-key-store.apk
+          echo "path=$HOME/android-key-store.apk" >> "$GITHUB_OUTPUT"
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
         with:
@@ -33,6 +39,11 @@ jobs:
           tools: latest
 
       - name: Auto-build
+        env:
+          ANDROID_KEY_STORE_PATH: ${{ steps.keystore.outputs.path }}
+          ANDROID_KEY_STORE_PASSWORD: ${{ secrets.ANDROID_KEY_STORE_PASSWORD }}
+          ANDROID_KEY_STORE_KEY_ALIAS: ${{ secrets.ANDROID_KEY_STORE_KEY_ALIAS }}
+          ANDROID_KEY_STORE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_STORE_KEY_PASSWORD }}
         uses: github/codeql-action/autobuild@v2
         with:
           working-directory: ./App/
