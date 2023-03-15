@@ -3,34 +3,19 @@ package com.viral32111.servermonitor
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.util.JsonReader
 import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
-import com.android.volley.AuthFailureError
-import com.android.volley.DefaultRetryPolicy
-import com.android.volley.NetworkError
-import com.android.volley.NoConnectionError
-import com.android.volley.ParseError
-import com.android.volley.Request
-import com.android.volley.RequestQueue
-import com.android.volley.RetryPolicy
-import com.android.volley.ServerError
-import com.android.volley.TimeoutError
-import com.android.volley.VolleyError
+import com.android.volley.*
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.google.android.material.appbar.MaterialToolbar
-import com.google.gson.JsonElement
-import com.google.gson.JsonParseException
 import com.google.gson.JsonParser
-import com.google.gson.JsonSyntaxException
 import org.json.JSONObject
 import java.nio.charset.Charset
 import java.util.*
-import kotlin.reflect.typeOf
 
 class SetupActivity : AppCompatActivity() {
 
@@ -135,7 +120,14 @@ class SetupActivity : AppCompatActivity() {
 
 			// Test if a Server Monitor instance is running on this URL
 			testInstance( instanceUrl, credentialsUsername, credentialsPassword, { payload ->
-				Log.d( Shared.logTag, "Instance test was successful! (${ payload })" )
+				val errorCode = if ( payload.has( "errorCode" ) ) payload.getInt( "errorCode" ) else null
+				Log.d( Shared.logTag, "Instance test was successful! ('${ errorCode }', '${ payload }')" )
+
+				// Do not continue if the error code is non-successful
+				if ( errorCode != ErrorCode.Success.code ) {
+					showBriefMessage( this, R.string.setupToastInstanceTestServerFailure )
+					return@testInstance
+				}
 
 				// Save the values to the shared preferences - https://developer.android.com/training/data-storage/shared-preferences#WriteSharedPreference
 				with ( sharedPreferences.edit() ) {
@@ -159,7 +151,7 @@ class SetupActivity : AppCompatActivity() {
 				if ( responseBody != null ) {
 					try {
 						val responsePayload =  JsonParser.parseString( responseBody ).asJsonObject
-						if ( responsePayload.has( "errorCode" ) ) errorCode = responsePayload.get( "errorCode" ).asInt
+						errorCode = if ( responsePayload.has( "errorCode" ) ) responsePayload.get( "errorCode" ).asInt else null
 					} catch ( exception: java.lang.Exception ) {
 						Log.e( Shared.logTag, "Failed to parse HTTP response body '${ responseBody }' as JSON during error callback (${ exception }, ${ exception.message })" )
 					}
