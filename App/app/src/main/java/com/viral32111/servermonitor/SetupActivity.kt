@@ -2,20 +2,30 @@ package com.viral32111.servermonitor
 
 import android.content.Context
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import androidx.appcompat.app.ActionBar
+import androidx.appcompat.app.AppCompatActivity
+import com.android.volley.Request
+import com.android.volley.RequestQueue
+import com.android.volley.toolbox.JsonObjectRequest
+import com.android.volley.toolbox.Volley
 import com.google.android.material.appbar.MaterialToolbar
+import org.json.JSONObject
+import java.util.*
 
 class SetupActivity : AppCompatActivity() {
+
+	// HTTP request queue
+	private lateinit var requestQueue: RequestQueue
+	private val requestQueueTag = Shared.logTag
 
 	// Runs when the activity is created...
 	override fun onCreate( savedInstanceState: Bundle? ) {
 
-		// Run default action & display the relevant layout file
+		// Display the layout
 		super.onCreate( savedInstanceState )
 		setContentView( R.layout.activity_setup )
 		Log.d( Shared.logTag, "Creating activity..." )
@@ -42,10 +52,13 @@ class SetupActivity : AppCompatActivity() {
 		val sharedPreferences = getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE )
 		Log.d( Shared.logTag, "Got shared preferences for '${ Shared.sharedPreferencesName }'" )
 
+		// Initialise the HTTP request queue - https://google.github.io/volley/simple.html#use-newrequestqueue
+		requestQueue = Volley.newRequestQueue( applicationContext )
+
 		// Open settings when its action bar menu item is clicked
 		materialToolbar?.setOnMenuItemClickListener { menuItem ->
 			if ( menuItem.title?.equals( getString( R.string.action_bar_menu_settings ) ) == true ) {
-				Log.i( Shared.logTag, "Opening Settings activity..." )
+				Log.d( Shared.logTag, "Opening Settings activity..." )
 				startActivity( Intent( this, SettingsActivity::class.java ) )
 				overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
 			}
@@ -63,7 +76,7 @@ class SetupActivity : AppCompatActivity() {
 			Log.d( Shared.logTag, "Continue button pressed ('${ instanceUrl }', '${ credentialsUsername }', '${ credentialsPassword }')" )
 
 			// Do not continue if an instance URL wasn't provided
-			if ( instanceUrl.isEmpty() ) {
+			if ( instanceUrl.isBlank() ) {
 				showBriefMessage( this, R.string.setupToastInstanceUrlEmpty )
 				Log.w( Shared.logTag, "Instance URL is empty" )
 				return@setOnClickListener
@@ -77,7 +90,7 @@ class SetupActivity : AppCompatActivity() {
 			}
 
 			// Do not continue if a username wasn't provided
-			if ( credentialsUsername.isEmpty() ) {
+			if ( credentialsUsername.isBlank() ) {
 				showBriefMessage( this, R.string.setupToastCredentialsUsernameEmpty )
 				Log.w( Shared.logTag, "Username is empty" )
 				return@setOnClickListener
@@ -91,7 +104,7 @@ class SetupActivity : AppCompatActivity() {
 			}
 
 			// Do not continue if a password wasn't provided
-			if ( credentialsPassword.isEmpty() ) {
+			if ( credentialsPassword.isBlank() ) {
 				showBriefMessage( this, R.string.setupToastCredentialsPasswordEmpty )
 				Log.w( Shared.logTag, "Password is empty" )
 				return@setOnClickListener
@@ -104,51 +117,96 @@ class SetupActivity : AppCompatActivity() {
 				return@setOnClickListener
 			}
 
-			if ( !testInstance( instanceUrl ) ) {
-				showBriefMessage( this, R.string.setupToastCredentialsPasswordInvalid )
-				return@setOnClickListener
-			}
+			// Test if a Server Monitor instance is running on this URL
+			testInstance( instanceUrl, credentialsUsername, credentialsPassword, { payload ->
+				Log.d( Shared.logTag, "Instance test was successful! (${ payload })" )
 
-			// Save values to shared preferences - https://developer.android.com/training/data-storage/shared-preferences#WriteSharedPreference
-			with ( sharedPreferences.edit() ) {
-				putString( "instanceUrl", instanceUrl )
-				putString( "credentialsUsername", credentialsUsername )
-				putString( "credentialsPassword", credentialsPassword )
-				apply()
-			}
-			Log.d( Shared.logTag, "Saved to shared preferences ('${ instanceUrl }', '${ credentialsUsername }', '${ credentialsPassword }')" )
+				// Save the values to the shared preferences - https://developer.android.com/training/data-storage/shared-preferences#WriteSharedPreference
+				with ( sharedPreferences.edit() ) {
+					putString( "instanceUrl", instanceUrl )
+					putString( "credentialsUsername", credentialsUsername )
+					putString( "credentialsPassword", credentialsPassword )
+					apply()
+				}
+				Log.d( Shared.logTag, "Saved values to shared preferences ('${ instanceUrl }', '${ credentialsUsername }', '${ credentialsPassword }')" )
 
-			// Change to the next activity, whatever it may be
-			switchActivity()
+				// Change to the Servers activity
+				switchActivity( 0 ) // TODO: Get number of servers
+
+			// Show message if the test errors
+			}, { reason ->
+				Log.e( Shared.logTag, "Failed to test instance '${ instanceUrl }' (${ reason })" )
+				showBriefMessage( this, R.string.setupToastInstanceUnavailable )
+			} )
 
 		}
 
-		// Change to the next activity if we have already gone through the setup
+		// Get the current values from shared preferences - they may be null if we're not setup yet
 		val instanceUrl = sharedPreferences.getString( "instanceUrl", null )
 		val credentialsUsername = sharedPreferences.getString( "credentialsUsername", null )
 		val credentialsPassword = sharedPreferences.getString( "credentialsPassword", null )
+
+		// Change to the next activity if we are already setup
 		if ( !instanceUrl.isNullOrEmpty() && !credentialsUsername.isNullOrEmpty() && !credentialsPassword.isNullOrEmpty() ) {
 			Log.d( Shared.logTag, "We're already setup! ('${ instanceUrl }', '${ credentialsUsername }', '${ credentialsPassword }')" )
-			switchActivity()
+			switchActivity( 0 ) // TODO: Get number of servers
 		} else {
 			Log.d( Shared.logTag, "We're not setup yet! ('${ instanceUrl }', '${ credentialsUsername }', '${ credentialsPassword }')" )
 		}
 
 	}
 
-	// TODO: Attempt connection to URL and validate the connection point service is running on it
-	private fun testInstance( instanceUrl: String ): Boolean {
-		Log.d( Shared.logTag, "TODO: Test instance connection" )
-		return true
+	// Cancel all HTTP requests when the app is closed - https://google.github.io/volley/simple.html#cancel-a-request
+	override fun onStop() {
+		super.onStop()
+
+		Log.d( Shared.logTag, "Cancelling all HTTP requests in the queue..." )
+		requestQueue.cancelAll( requestQueueTag )
 	}
 
-	// TODO: Is there multiple servers? If so, switch to Servers activity. If not, switch to Server activity.
-	private fun switchActivity() {
-		Log.i( Shared.logTag, "Switching to Servers activity..." )
-		startActivity( Intent( this, ServersActivity::class.java ) )
-		overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
+	// Sends a HTTP request to a URL to validate if the connector service is running on it
+	private fun testInstance(url: String, username: String, password: String, successCallback: (payload: JSONObject ) -> Unit, errorCallback: (reason: String ) -> Unit ) {
 
-		finish() // Remove Setup activity from history
+		// Create the request to the given URL
+		val httpRequest = object: JsonObjectRequest( Request.Method.GET, "$url/hello", null, { responsePayload ->
+			successCallback.invoke( responsePayload )
+		}, { error ->
+			errorCallback.invoke( error.message ?: error.toString() )
+		} ) {
+			// Override the request headers - https://stackoverflow.com/a/53141982
+			override fun getHeaders(): MutableMap<String, String> {
+				val headers = HashMap<String, String>()
+
+				// Expect a JSON response
+				headers[ "Accept" ] = "application/json, */*"
+
+				// Add the authentication - https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication, https://developer.android.com/reference/kotlin/java/util/Base64
+				headers[ "Authorization" ] = "Basic ${ Base64.getEncoder().encodeToString( "${ username }:${ password }".toByteArray() ) }"
+				Log.d( Shared.logTag, "Added authentication '${ headers[ "Authorization" ] }' to HTTP request" )
+
+				return headers
+			}
+		}
+		Log.d( Shared.logTag, "Created HTTP request to '${ url }'" )
+
+		// Send the request
+		httpRequest.tag = requestQueueTag
+		requestQueue.add( httpRequest )
+		Log.d( Shared.logTag, "Sending HTTP request..." )
+
+	}
+
+	// Switches to the next activity
+	private fun switchActivity( serverCount: Int ) {
+
+		// Switch to the Servers activity if there's more than 1 server, otherwise switch to the Server activity
+		startActivity( Intent( this, if ( serverCount > 1 ) ServersActivity::class.java else ServerActivity::class.java ) )
+		overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
+		Log.d( Shared.logTag, "Switching to next activity..." )
+
+		// Remove this activity from the back button history
+		finish()
+
 	}
 
 }

@@ -21,12 +21,12 @@
 	<!-- Username input for authentication -->
 	<string name="setupEditTextCredentialsUsernameHint">JohnDoe</string>
 	<string name="setupToastCredentialsUsernameEmpty">Provide a username for authentication.</string>
-	<string name="setupToastCredentialsUsernameInvalid">The provided username is invalid.</string>
+	<string name="setupToastCredentialsUsernameInvalid">The provided username does not meet minimum requirements.</string>
 
 	<!-- Password input for authentication -->
 	<string name="setupEditTextCredentialsPasswordHint">Sup3r_Go0d_P4ssw0rd!</string>
 	<string name="setupToastCredentialsPasswordEmpty">Provide a password for authentication.</string>
-	<string name="setupToastCredentialsPasswordInvalid">The provided password is invalid.</string>
+	<string name="setupToastCredentialsPasswordInvalid">The provided password does not meet minimum requirements.</string>
 
 	<!-- Continue button -->
 	<string name="setup_button_continue">Continue</string>
