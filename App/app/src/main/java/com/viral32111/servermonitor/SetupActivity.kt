@@ -165,7 +165,7 @@ class SetupActivity : AppCompatActivity() {
 					// HTTP 4xx
 					is ClientError -> when ( statusCode ) {
 						404 -> showBriefMessage( this, R.string.setupToastInstanceTestNotFound )
-						else -> showBriefMessage( this, R.string.setupToastInstanceTestFailure )
+						else -> showBriefMessage( this, R.string.setupToastInstanceTestClientFailure )
 					}
 
 					// HTTP 5xx
@@ -195,7 +195,7 @@ class SetupActivity : AppCompatActivity() {
 		val credentialsPassword = sharedPreferences.getString( "credentialsPassword", null )
 
 		// Change to the appropriate activity if we are already setup
-		if ( !instanceUrl.isNullOrEmpty() && !credentialsUsername.isNullOrEmpty() && !credentialsPassword.isNullOrEmpty() ) {
+		if ( !instanceUrl.isNullOrBlank() && !credentialsUsername.isNullOrBlank() && !credentialsPassword.isNullOrBlank() ) {
 			Log.d( Shared.logTag, "We're already setup! ('${ instanceUrl }', '${ credentialsUsername }', '${ credentialsPassword }')" )
 			switchActivity( instanceUrl, credentialsUsername, credentialsPassword )
 		} else {
@@ -230,7 +230,26 @@ class SetupActivity : AppCompatActivity() {
 		}, { error, statusCode, errorCode ->
 			Log.e( Shared.logTag, "Failed to get servers from API due to '${ error }' (Status Code: '${ statusCode }', Error Code: '${ errorCode }')" )
 
-			// TODO: Handle possible errors...
+			when ( error ) {
+
+				// HTTP 4xx, HTTP 5xx
+				is ClientError -> showBriefMessage( this, R.string.setupToastInstanceTestClientFailure )
+				is ServerError -> showBriefMessage( this, R.string.setupToastInstanceTestServerFailure )
+
+				// No Internet connection, malformed domain
+				is NoConnectionError -> showBriefMessage( this, R.string.setupToastInstanceTestNoConnection )
+				is NetworkError -> showBriefMessage( this, R.string.setupToastInstanceTestNoConnection )
+
+				// Connection timed out
+				is TimeoutError -> showBriefMessage( this, R.string.setupToastInstanceTestTimeout )
+
+				// Couldn't parse as JSON
+				is ParseError -> showBriefMessage( this, R.string.setupToastInstanceTestParseFailure )
+
+				// ¯\_(ツ)_/¯
+				else -> showBriefMessage( this, R.string.setupToastInstanceTestFailure )
+
+			}
 		} )
 	}
 

@@ -38,6 +38,7 @@
 	<string name="setupToastInstanceTestTimeout">Connection timed out while testing instance. Are you connected to the Internet?</string>
 	<string name="setupToastInstanceTestParseFailure">Failed to parse instance response as JSON. Is the URL correct?</string>
 	<string name="setupToastInstanceTestServerFailure">The instance encountered an error processing the request.</string>
+	<string name="setupToastInstanceTestClientFailure">The device encountered an error sending the request.</string>
 	<string name="setupToastInstanceTestNotFound">There is not an instance running on the provided URL.</string>
 	<string name="setupToastInstanceTestFailure">An unknown error occurred while testing the instance. Is everything correct?</string>
 
