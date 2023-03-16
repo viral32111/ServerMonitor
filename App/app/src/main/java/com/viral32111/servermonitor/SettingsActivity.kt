@@ -5,17 +5,21 @@ import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ProgressBar
 import android.widget.Spinner
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.content.res.AppCompatResources
+import com.android.volley.*
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.materialswitch.MaterialSwitch
 
 class SettingsActivity : AppCompatActivity() {
 
 	// UI
+	private lateinit var saveButton: Button
 	private lateinit var instanceUrlEditText: EditText
 	private lateinit var credentialsUsernameEditText: EditText
 	private lateinit var credentialsPasswordEditText: EditText
@@ -24,6 +28,7 @@ class SettingsActivity : AppCompatActivity() {
 	private lateinit var themeSpinner: Spinner
 	private lateinit var notificationsAlwaysOngoingSwitch: MaterialSwitch
 	private lateinit var notificationsWhenIssueArisesSwitch: MaterialSwitch
+	private lateinit var progressBar: ProgressBar
 
 	// Runs when the activity is created...
 	override fun onCreate( savedInstanceState: Bundle? ) {
@@ -45,7 +50,7 @@ class SettingsActivity : AppCompatActivity() {
 		Log.d( Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered })" )
 
 		// Get all the UI controls
-		val saveButton = findViewById<Button>( R.id.settingsSaveButton )
+		saveButton = findViewById( R.id.settingsSaveButton )
 		instanceUrlEditText = findViewById( R.id.settingsInstanceUrlEditText )
 		credentialsUsernameEditText = findViewById( R.id.settingsCredentialsUsernameEditText )
 		credentialsPasswordEditText = findViewById( R.id.settingsCredentialsPasswordEditText )
@@ -54,6 +59,7 @@ class SettingsActivity : AppCompatActivity() {
 		themeSpinner = findViewById( R.id.settingsThemeSpinner )
 		notificationsAlwaysOngoingSwitch = findViewById( R.id.settingsNotificationsAlwaysOngoingSwitch )
 		notificationsWhenIssueArisesSwitch = findViewById( R.id.settingsNotificationsWhenIssueArisesSwitch )
+		progressBar = findViewById( R.id.settingsProgressBar )
 		Log.d( Shared.logTag, "Got UI controls" )
 
 		// Enable the back button on the toolbar
@@ -81,19 +87,9 @@ class SettingsActivity : AppCompatActivity() {
 		readSettings( sharedPreferences )
 		saveSettings( sharedPreferences )
 
-		// Validate & save settings when the save button is pressed, will show toast if there was an issue
+		// Validate & save settings when the save button is pressed
 		saveButton.setOnClickListener {
-			saveSettings( sharedPreferences ).let {
-				if ( it != null ) {
-					showBriefMessage( this, it )
-					Log.w( Shared.logTag, "Error '${ getString( it ) }' saving settings" )
-					return@setOnClickListener
-				}
-			}
-
-			// Return to the setup activity
-			finish()
-			overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
+			saveSettings( sharedPreferences )
 		}
 
 		// Disable interval input when automatic refresh is switched off
@@ -147,8 +143,11 @@ class SettingsActivity : AppCompatActivity() {
 	}
 
 	// Saves the values in the UI to the persistent settings
-	private fun saveSettings( sharedPreferences: SharedPreferences ): Int? {
+	private fun saveSettings( sharedPreferences: SharedPreferences ) {
 		Log.d( Shared.logTag, "Saving UI values to shared preferences..." )
+
+		// Disable input & show loading
+		setLoading( true )
 
 		// Get the values from all the UI inputs
 		val instanceUrl = instanceUrlEditText.text.toString()
@@ -160,33 +159,137 @@ class SettingsActivity : AppCompatActivity() {
 		val notificationAlwaysOngoing = notificationsAlwaysOngoingSwitch.isChecked
 		val notificationWhenIssueArises = notificationsWhenIssueArisesSwitch.isChecked
 
-		// Do not continue if an instance URL wasn't provided/isn't valid
-		if ( instanceUrl.isEmpty() ) return R.string.settingsToastInstanceUrlEmpty
-		if ( !validateInstanceUrl( instanceUrl ) ) return R.string.settingsToastInstanceUrlInvalid
-
-		// Do not continue if a username wasn't provided/isn't valid
-		if ( credentialsUsername.isEmpty() ) return R.string.settingsToastCredentialsUsernameEmpty
-		if ( !validateCredentialsUsername( credentialsUsername ) ) return R.string.settingsToastCredentialsUsernameInvalid
-
-		// Do not continue if a password wasn't provided/isn't valid
-		if ( credentialsPassword.isEmpty() ) return R.string.settingsToastCredentialsPasswordEmpty
-		if ( !validateCredentialsPassword( credentialsPassword ) ) return R.string.settingsToastCredentialsPasswordInvalid
-
-		// Save those values to shared preferences - https://developer.android.com/training/data-storage/shared-preferences#WriteSharedPreference
-		with ( sharedPreferences.edit() ) {
-			putString( "instanceUrl", instanceUrl )
-			putString( "credentialsUsername", credentialsUsername )
-			putString( "credentialsPassword", credentialsPassword )
-			putBoolean( "automaticRefresh", automaticRefresh )
-			putInt( "automaticRefreshInterval", automaticRefreshInterval )
-			putInt( "theme", theme )
-			putBoolean( "notificationAlwaysOngoing", notificationAlwaysOngoing )
-			putBoolean( "notificationWhenIssueArises", notificationWhenIssueArises )
-			apply()
+		// Do not continue if an instance URL wasn't provided
+		if ( instanceUrl.isBlank() ) {
+			setLoading( false )
+			showBriefMessage( this, R.string.settingsToastInstanceUrlEmpty )
+			Log.w( Shared.logTag, "Instance URL is empty" )
+			return
 		}
 
-		// All was good, so no string resource ID
-		return null
+		// Do not continue if the URL isn't valid
+		if ( !validateInstanceUrl( instanceUrl ) ) {
+			setLoading( false )
+			showBriefMessage( this, R.string.settingsToastInstanceUrlInvalid )
+			Log.w( Shared.logTag, "Instance URL '${ instanceUrl }' is invalid" )
+			return
+		}
+
+		// Do not continue if a username wasn't provided
+		if ( credentialsUsername.isBlank() ) {
+			setLoading( false )
+			showBriefMessage( this, R.string.settingsToastCredentialsUsernameEmpty )
+			Log.w( Shared.logTag, "Username is empty" )
+			return
+		}
+
+		// Do not continue if the username isn't valid
+		if ( !validateCredentialsUsername( credentialsUsername ) ) {
+			setLoading( false )
+			showBriefMessage( this, R.string.settingsToastCredentialsUsernameInvalid )
+			Log.w( Shared.logTag, "Username '${ credentialsUsername }' is invalid" )
+			return
+		}
+
+		// Do not continue if a password wasn't provided
+		if ( credentialsPassword.isBlank() ) {
+			setLoading( false )
+			showBriefMessage( this, R.string.settingsToastCredentialsPasswordEmpty )
+			Log.w( Shared.logTag, "Password is empty" )
+			return
+		}
+
+		// Do not continue if the password isn't valid
+		if ( !validateCredentialsPassword( credentialsPassword ) ) {
+			setLoading( false )
+			showBriefMessage( this, R.string.settingsToastCredentialsPasswordInvalid )
+			Log.w( Shared.logTag, "Password '${ credentialsPassword }' is invalid" )
+			return
+		}
+
+		// Test if a connector instance is running on this URL
+		API.getHello( instanceUrl, credentialsUsername, credentialsPassword, { helloData ->
+			Log.d( Shared.logTag, "Instance '${ instanceUrl }' is running! (Message: '${ helloData?.get( "message" )?.asString }')" )
+
+			// Enable input & hide loading
+			setLoading( false )
+
+			// Save those values to shared preferences - https://developer.android.com/training/data-storage/shared-preferences#WriteSharedPreference
+			with ( sharedPreferences.edit() ) {
+				putString( "instanceUrl", instanceUrl )
+				putString( "credentialsUsername", credentialsUsername )
+				putString( "credentialsPassword", credentialsPassword )
+				putBoolean( "automaticRefresh", automaticRefresh )
+				putInt( "automaticRefreshInterval", automaticRefreshInterval )
+				putInt( "theme", theme )
+				putBoolean( "notificationAlwaysOngoing", notificationAlwaysOngoing )
+				putBoolean( "notificationWhenIssueArises", notificationWhenIssueArises )
+				apply()
+			}
+			Log.d( Shared.logTag, "Saved values to shared preferences" )
+
+			// Return to the previous activity
+			finish()
+			overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
+
+		// Show message if the test fails
+		}, { error, statusCode, errorCode ->
+			Log.e( Shared.logTag, "Instance '${ instanceUrl }' is NOT running! (Error: '${ error }', Status Code: '${ statusCode }', Error Code: '${ errorCode }')" )
+
+			// Enable input & hide loading
+			setLoading( false )
+
+			when ( error ) {
+
+				// Bad authentication
+				is AuthFailureError -> when ( errorCode ) {
+					ErrorCode.UnknownUser.code -> showBriefMessage( this, R.string.settingsToastInstanceTestAuthenticationUnknownUser )
+					ErrorCode.IncorrectPassword.code -> showBriefMessage( this, R.string.settingsToastInstanceTestAuthenticationIncorrectPassword )
+					else -> showBriefMessage( this, R.string.settingsToastInstanceTestAuthenticationFailure )
+				}
+
+				// HTTP 4xx
+				is ClientError -> when ( statusCode ) {
+					404 -> showBriefMessage( this, R.string.settingsToastInstanceTestNotFound )
+					else -> showBriefMessage( this, R.string.settingsToastInstanceTestClientFailure )
+				}
+
+				// HTTP 5xx
+				is ServerError -> showBriefMessage( this, R.string.settingsToastInstanceTestServerFailure )
+
+				// No Internet connection, malformed domain
+				is NoConnectionError -> showBriefMessage( this, R.string.settingsToastInstanceTestNoConnection )
+				is NetworkError -> showBriefMessage( this, R.string.settingsToastInstanceTestNoConnection )
+
+				// Connection timed out
+				is TimeoutError -> showBriefMessage( this, R.string.settingsToastInstanceTestTimeout )
+
+				// Couldn't parse as JSON
+				is ParseError -> showBriefMessage( this, R.string.settingsToastInstanceTestParseFailure )
+
+				// ¯\_(ツ)_/¯
+				else -> showBriefMessage( this, R.string.settingsToastInstanceTestFailure )
+
+			}
+		} )
+
+	}
+
+	private fun setLoading( isLoading: Boolean ) {
+
+		// Enable/disable user input
+		instanceUrlEditText.isEnabled = !isLoading
+		credentialsUsernameEditText.isEnabled = !isLoading
+		credentialsPasswordEditText.isEnabled = !isLoading
+		automaticRefreshSwitch.isEnabled = !isLoading
+		automaticRefreshIntervalEditText.isEnabled = !isLoading
+		themeSpinner.isEnabled = !isLoading
+		notificationsAlwaysOngoingSwitch.isEnabled = !isLoading
+		notificationsWhenIssueArisesSwitch.isEnabled = !isLoading
+		saveButton.isEnabled = !isLoading
+
+		// Show/hide progress spinner
+		progressBar.visibility = if ( isLoading ) View.VISIBLE else View.GONE
 
 	}
 

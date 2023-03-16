@@ -7,7 +7,7 @@
 	<!-- Instance URL input -->
 	<string name="settingsTextViewInstanceUrlLabel">Instance URL:</string>
 	<string name="settingsEditTextInstanceUrlHint">https://example.com/my-instance-name…</string>
-	<string name="settingsEditTextInstanceUrlSetupHint">Return to Setup to set instance URL…</string>
+	<string name="settingsEditTextInstanceUrlSetupHint">Return to settings to set instance URL…</string>
 	<string name="settingsToastInstanceUrlEmpty">Provide an instance URL.</string>
 	<string name="settingsToastInstanceUrlInvalid">The provided instance URL is invalid.</string>
 
@@ -16,13 +16,13 @@
 
 	<!-- Username input for authentication -->
 	<string name="settingsEditTextCredentialsUsernameHint">JohnDoe</string>
-	<string name="settingsEditTextCredentialsUsernameSetupHint">Return to Setup to set username…</string>
+	<string name="settingsEditTextCredentialsUsernameSetupHint">Return to settings to set username…</string>
 	<string name="settingsToastCredentialsUsernameEmpty">Provide a username for authentication.</string>
 	<string name="settingsToastCredentialsUsernameInvalid">The provided username does not meet minimum requirements.</string>
 
 	<!-- Password input for authentication -->
 	<string name="settingsEditTextCredentialsPasswordHint">Sup3r_Go0d_P4ssw0rd!</string>
-	<string name="settingsEditTextCredentialsPasswordSetupHint">Return to Setup to set password…</string>
+	<string name="settingsEditTextCredentialsPasswordSetupHint">Return to settings to set password…</string>
 	<string name="settingsToastCredentialsPasswordEmpty">Provide a password for authentication.</string>
 	<string name="settingsToastCredentialsPasswordInvalid">The provided password does not meet minimum requirements.</string>
 
@@ -46,5 +46,17 @@
 
 	<!-- Save button -->
 	<string name="settingsButtonSave">Save</string>
+
+	<!-- Toasts for instance test -->
+	<string name="settingsToastInstanceTestAuthenticationUnknownUser">No credentials exist with the provided username.</string>
+	<string name="settingsToastInstanceTestAuthenticationIncorrectPassword">The provided password is incorrect.</string>
+	<string name="settingsToastInstanceTestAuthenticationFailure">The provided credentials are incorrect.</string>
+	<string name="settingsToastInstanceTestNoConnection">Unable to test instance. Is the domain correct and are you connected to the Internet?</string>
+	<string name="settingsToastInstanceTestTimeout">Connection timed out while testing instance. Are you connected to the Internet?</string>
+	<string name="settingsToastInstanceTestParseFailure">Failed to parse instance response as JSON. Is the URL correct?</string>
+	<string name="settingsToastInstanceTestServerFailure">The instance encountered an error processing the request.</string>
+	<string name="settingsToastInstanceTestClientFailure">The device encountered an error sending the request.</string>
+	<string name="settingsToastInstanceTestNotFound">There is not an instance running on the provided URL.</string>
+	<string name="settingsToastInstanceTestFailure">An unknown error occurred while testing the instance. Is everything correct?</string>
 
 </resources>
