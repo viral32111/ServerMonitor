@@ -172,7 +172,7 @@ class SetupActivity : AppCompatActivity() {
 					is ServerError -> showBriefMessage( this, R.string.setupToastInstanceTestServerFailure )
 
 					// No Internet connection, malformed domain
-					is NoConnectionError -> showBriefMessage( this, R.string.setupToastInstanceTestNoConnection )
+					is NoConnectionError -> showBriefMessage( this, R.string.setupToastServerCountNoConnection )
 					is NetworkError -> showBriefMessage( this, R.string.setupToastInstanceTestNoConnection )
 
 					// Connection timed out
@@ -214,13 +214,11 @@ class SetupActivity : AppCompatActivity() {
 	private fun switchActivity( instanceUrl: String, credentialsUsername: String, credentialsPassword: String ) {
 		API.getServers( instanceUrl, credentialsUsername, credentialsPassword, { serversData ->
 			val servers = serversData?.get( "servers" )?.asJsonArray
-			Log.d( Shared.logTag, "Got '${ serversData?.size() }' servers from API: '${ servers.toString() }'" )
-
-			// Fallback to 2 servers, as that will show the Servers activity which can display only 1
-			val serverCount = serversData?.size() ?: 2
+			Log.d( Shared.logTag, "Got '${ servers?.size() }' servers from API ('${ servers.toString() }')" )
 
 			// Switch to the Servers activity if there's more than 1 server, otherwise switch to the Server activity
-			startActivity( Intent( this, if ( serverCount > 1 ) ServersActivity::class.java else ServerActivity::class.java ) )
+			// NOTE: This will fallback to 2 servers, as that will show the Servers activity which is capable of displaying only 1 server
+			startActivity( Intent( this, if ( ( servers?.size() ?: 2 ) > 1) ServersActivity::class.java else ServerActivity::class.java ) )
 			overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
 			Log.d( Shared.logTag, "Switching to next activity..." )
 
@@ -232,22 +230,34 @@ class SetupActivity : AppCompatActivity() {
 
 			when ( error ) {
 
-				// HTTP 4xx, HTTP 5xx
-				is ClientError -> showBriefMessage( this, R.string.setupToastInstanceTestClientFailure )
-				is ServerError -> showBriefMessage( this, R.string.setupToastInstanceTestServerFailure )
+				// Bad authentication
+				is AuthFailureError -> when ( errorCode ) {
+					ErrorCode.UnknownUser.code -> showBriefMessage( this, R.string.setupToastServerCountAuthenticationUnknownUser )
+					ErrorCode.IncorrectPassword.code -> showBriefMessage( this, R.string.setupToastServerCountAuthenticationIncorrectPassword )
+					else -> showBriefMessage( this, R.string.setupToastServerCountAuthenticationFailure )
+				}
+
+				// HTTP 4xx
+				is ClientError -> when ( statusCode ) {
+					404 -> showBriefMessage( this, R.string.setupToastServerCountNotFound )
+					else -> showBriefMessage( this, R.string.setupToastServerCountClientFailure )
+				}
+
+				// HTTP 5xx
+				is ServerError -> showBriefMessage( this, R.string.setupToastServerCountServerFailure )
 
 				// No Internet connection, malformed domain
-				is NoConnectionError -> showBriefMessage( this, R.string.setupToastInstanceTestNoConnection )
-				is NetworkError -> showBriefMessage( this, R.string.setupToastInstanceTestNoConnection )
+				is NoConnectionError -> showBriefMessage( this, R.string.setupToastServerCountNoConnection )
+				is NetworkError -> showBriefMessage( this, R.string.setupToastServerCountNoConnection )
 
 				// Connection timed out
-				is TimeoutError -> showBriefMessage( this, R.string.setupToastInstanceTestTimeout )
+				is TimeoutError -> showBriefMessage( this, R.string.setupToastServerCountTimeout )
 
 				// Couldn't parse as JSON
-				is ParseError -> showBriefMessage( this, R.string.setupToastInstanceTestParseFailure )
+				is ParseError -> showBriefMessage( this, R.string.setupToastServerCountParseFailure )
 
 				// ¯\_(ツ)_/¯
-				else -> showBriefMessage( this, R.string.setupToastInstanceTestFailure )
+				else -> showBriefMessage( this, R.string.setupToastServerCountFailure )
 
 			}
 		} )
