@@ -128,8 +128,7 @@ class SetupActivity : AppCompatActivity() {
 			}
 
 			// Test if a connector instance is running on this URL
-			API.getHello( instanceUrl, credentialsUsername, credentialsPassword, { helloData ->
-				Log.d( Shared.logTag, "Instance '${ instanceUrl }' is running! (Message: '${ helloData?.get( "message" )?.asString }')" )
+			testInstance( instanceUrl, credentialsUsername, credentialsPassword, {
 
 				// Enable UI & hide loading spinner
 				setLoading( false )
@@ -146,45 +145,11 @@ class SetupActivity : AppCompatActivity() {
 				// Change to the appropriate activity
 				switchActivity( instanceUrl, credentialsUsername, credentialsPassword )
 
-			// Show message if the test fails
-			}, { error, statusCode, errorCode ->
-				Log.e( Shared.logTag, "Instance '${ instanceUrl }' is NOT running! (Error: '${ error }', Status Code: '${ statusCode }', Error Code: '${ errorCode }')" )
+			}, {
 
 				// Enable UI & hide loading spinner
 				setLoading( false )
 
-				when ( error ) {
-
-					// Bad authentication
-					is AuthFailureError -> when ( errorCode ) {
-						ErrorCode.UnknownUser.code -> showBriefMessage( this, R.string.setupToastInstanceTestAuthenticationUnknownUser )
-						ErrorCode.IncorrectPassword.code -> showBriefMessage( this, R.string.setupToastInstanceTestAuthenticationIncorrectPassword )
-						else -> showBriefMessage( this, R.string.setupToastInstanceTestAuthenticationFailure )
-					}
-
-					// HTTP 4xx
-					is ClientError -> when ( statusCode ) {
-						404 -> showBriefMessage( this, R.string.setupToastInstanceTestNotFound )
-						else -> showBriefMessage( this, R.string.setupToastInstanceTestClientFailure )
-					}
-
-					// HTTP 5xx
-					is ServerError -> showBriefMessage( this, R.string.setupToastInstanceTestServerFailure )
-
-					// No Internet connection, malformed domain
-					is NoConnectionError -> showBriefMessage( this, R.string.setupToastServerCountNoConnection )
-					is NetworkError -> showBriefMessage( this, R.string.setupToastInstanceTestNoConnection )
-
-					// Connection timed out
-					is TimeoutError -> showBriefMessage( this, R.string.setupToastInstanceTestTimeout )
-
-					// Couldn't parse as JSON
-					is ParseError -> showBriefMessage( this, R.string.setupToastInstanceTestParseFailure )
-
-					// ¯\_(ツ)_/¯
-					else -> showBriefMessage( this, R.string.setupToastInstanceTestFailure )
-
-				}
 			} )
 
 		}
@@ -197,7 +162,15 @@ class SetupActivity : AppCompatActivity() {
 		// Change to the appropriate activity if we are already setup
 		if ( !instanceUrl.isNullOrBlank() && !credentialsUsername.isNullOrBlank() && !credentialsPassword.isNullOrBlank() ) {
 			Log.d( Shared.logTag, "We're already setup! ('${ instanceUrl }', '${ credentialsUsername }', '${ credentialsPassword }')" )
-			switchActivity( instanceUrl, credentialsUsername, credentialsPassword )
+			setLoading( true )
+
+			testInstance( instanceUrl, credentialsUsername, credentialsPassword, {
+				setLoading( false )
+				switchActivity( instanceUrl, credentialsUsername, credentialsPassword )
+			}, {
+				Log.e( Shared.logTag, "We may already be setup, but the instance is offline?" )
+				setLoading( false )
+			} )
 		} else {
 			Log.d( Shared.logTag, "We're not setup yet! ('${ instanceUrl }', '${ credentialsUsername }', '${ credentialsPassword }')" )
 		}
@@ -208,6 +181,56 @@ class SetupActivity : AppCompatActivity() {
 	override fun onStop() {
 		super.onStop()
 		API.cancelQueue()
+	}
+
+	// Tests if a connector instance is running on a given URL
+	private fun testInstance( instanceUrl: String, credentialsUsername: String, credentialsPassword: String, successCallback: () -> Unit, errorCallback: () -> Unit ) {
+		API.getHello( instanceUrl, credentialsUsername, credentialsPassword, { helloData ->
+			Log.d( Shared.logTag, "Instance '${ instanceUrl }' is running! (Message: '${ helloData?.get( "message" )?.asString }')" )
+			successCallback.invoke()
+
+		}, { error, statusCode, errorCode ->
+			Log.e( Shared.logTag, "Instance '${ instanceUrl }' is NOT running! (Error: '${ error }', Status Code: '${ statusCode }', Error Code: '${ errorCode }')" )
+			errorCallback.invoke()
+
+			when ( error ) {
+
+				// Bad authentication
+				is AuthFailureError -> when ( errorCode ) {
+					ErrorCode.UnknownUser.code -> showBriefMessage( this, R.string.setupToastInstanceTestAuthenticationUnknownUser )
+					ErrorCode.IncorrectPassword.code -> showBriefMessage( this, R.string.setupToastInstanceTestAuthenticationIncorrectPassword )
+					else -> showBriefMessage( this, R.string.setupToastInstanceTestAuthenticationFailure )
+				}
+
+				// HTTP 4xx
+				is ClientError -> when ( statusCode ) {
+					404 -> showBriefMessage( this, R.string.setupToastInstanceTestNotFound )
+					else -> showBriefMessage( this, R.string.setupToastInstanceTestClientFailure )
+				}
+
+				// HTTP 5xx
+				is ServerError -> when ( statusCode ) {
+					502 -> showBriefMessage( this, R.string.setupToastInstanceTestUnavailable )
+					503 -> showBriefMessage( this, R.string.setupToastInstanceTestUnavailable )
+					504 -> showBriefMessage( this, R.string.setupToastInstanceTestUnavailable )
+					else -> showBriefMessage( this, R.string.setupToastInstanceTestServerFailure )
+				}
+
+				// No Internet connection, malformed domain
+				is NoConnectionError -> showBriefMessage( this, R.string.setupToastServerCountNoConnection )
+				is NetworkError -> showBriefMessage( this, R.string.setupToastInstanceTestNoConnection )
+
+				// Connection timed out
+				is TimeoutError -> showBriefMessage( this, R.string.setupToastInstanceTestTimeout )
+
+				// Couldn't parse as JSON
+				is ParseError -> showBriefMessage( this, R.string.setupToastInstanceTestParseFailure )
+
+				// ¯\_(ツ)_/¯
+				else -> showBriefMessage( this, R.string.setupToastInstanceTestFailure )
+
+			}
+		} )
 	}
 
 	// Switches to the next activity
@@ -244,7 +267,12 @@ class SetupActivity : AppCompatActivity() {
 				}
 
 				// HTTP 5xx
-				is ServerError -> showBriefMessage( this, R.string.setupToastServerCountServerFailure )
+				is ServerError -> when ( statusCode ) {
+					502 -> showBriefMessage( this, R.string.setupToastServerCountUnavailable )
+					503 -> showBriefMessage( this, R.string.setupToastServerCountUnavailable )
+					504 -> showBriefMessage( this, R.string.setupToastServerCountUnavailable )
+					else -> showBriefMessage( this, R.string.setupToastServerCountServerFailure )
+				}
 
 				// No Internet connection, malformed domain
 				is NoConnectionError -> showBriefMessage( this, R.string.setupToastServerCountNoConnection )
