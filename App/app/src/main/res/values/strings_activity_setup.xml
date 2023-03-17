@@ -30,19 +30,6 @@
 	<!-- Continue button -->
 	<string name="setup_button_continue">Continue</string>
 
-	<!-- Toasts for instance test (when setting up) -->
-	<string name="setupToastInstanceTestAuthenticationUnknownUser">No credentials exist with the provided username.</string>
-	<string name="setupToastInstanceTestAuthenticationIncorrectPassword">The provided password is incorrect.</string>
-	<string name="setupToastInstanceTestAuthenticationFailure">The provided credentials are incorrect.</string>
-	<string name="setupToastInstanceTestNotFound">There is not an instance running on the provided URL.</string>
-	<string name="setupToastInstanceTestClientFailure">The device encountered an error sending the request.</string>
-	<string name="setupToastInstanceTestUnavailable">The instance is unavailable at the moment.</string>
-	<string name="setupToastInstanceTestServerFailure">The instance encountered an error processing the request.</string>
-	<string name="setupToastInstanceTestNoConnection">Unable to test instance. Is the domain correct and are you connected to the Internet?</string>
-	<string name="setupToastInstanceTestTimeout">Connection timed out while testing instance. Are you connected to the Internet?</string>
-	<string name="setupToastInstanceTestParseFailure">Failed to parse instance response as JSON. Is the URL correct?</string>
-	<string name="setupToastInstanceTestFailure">An unknown issue occurred while testing the instance. Is everything correct?</string>
-
 	<!-- Toasts for get server count -->
 	<string name="setupToastServerCountAuthenticationUnknownUser">No credentials exist with the configured instance username.</string>
 	<string name="setupToastServerCountAuthenticationIncorrectPassword">The configured instance password is incorrect.</string>

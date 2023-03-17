@@ -202,37 +202,37 @@ class SetupActivity : AppCompatActivity() {
 
 				// Bad authentication
 				is AuthFailureError -> when ( errorCode ) {
-					ErrorCode.UnknownUser.code -> showBriefMessage( this, R.string.setupToastInstanceTestAuthenticationUnknownUser )
-					ErrorCode.IncorrectPassword.code -> showBriefMessage( this, R.string.setupToastInstanceTestAuthenticationIncorrectPassword )
-					else -> showBriefMessage( this, R.string.setupToastInstanceTestAuthenticationFailure )
+					ErrorCode.UnknownUser.code -> showBriefMessage( this, R.string.toastInstanceTestAuthenticationUnknownUser )
+					ErrorCode.IncorrectPassword.code -> showBriefMessage( this, R.string.toastInstanceTestAuthenticationIncorrectPassword )
+					else -> showBriefMessage( this, R.string.toastInstanceTestAuthenticationFailure )
 				}
 
 				// HTTP 4xx
 				is ClientError -> when ( statusCode ) {
-					404 -> showBriefMessage( this, R.string.setupToastInstanceTestNotFound )
-					else -> showBriefMessage( this, R.string.setupToastInstanceTestClientFailure )
+					404 -> showBriefMessage( this, R.string.toastInstanceTestNotFound )
+					else -> showBriefMessage( this, R.string.toastInstanceTestClientFailure )
 				}
 
 				// HTTP 5xx
 				is ServerError -> when ( statusCode ) {
-					502 -> showBriefMessage( this, R.string.setupToastInstanceTestUnavailable )
-					503 -> showBriefMessage( this, R.string.setupToastInstanceTestUnavailable )
-					504 -> showBriefMessage( this, R.string.setupToastInstanceTestUnavailable )
-					else -> showBriefMessage( this, R.string.setupToastInstanceTestServerFailure )
+					502 -> showBriefMessage( this, R.string.toastInstanceTestUnavailable )
+					503 -> showBriefMessage( this, R.string.toastInstanceTestUnavailable )
+					504 -> showBriefMessage( this, R.string.toastInstanceTestUnavailable )
+					else -> showBriefMessage( this, R.string.toastInstanceTestServerFailure )
 				}
 
 				// No Internet connection, malformed domain
-				is NoConnectionError -> showBriefMessage( this, R.string.setupToastServerCountNoConnection )
-				is NetworkError -> showBriefMessage( this, R.string.setupToastInstanceTestNoConnection )
+				is NoConnectionError -> showBriefMessage( this, R.string.toastInstanceTestNoConnection )
+				is NetworkError -> showBriefMessage( this, R.string.toastInstanceTestNoConnection )
 
 				// Connection timed out
-				is TimeoutError -> showBriefMessage( this, R.string.setupToastInstanceTestTimeout )
+				is TimeoutError -> showBriefMessage( this, R.string.toastInstanceTestTimeout )
 
 				// Couldn't parse as JSON
-				is ParseError -> showBriefMessage( this, R.string.setupToastInstanceTestParseFailure )
+				is ParseError -> showBriefMessage( this, R.string.toastInstanceTestParseFailure )
 
 				// ¯\_(ツ)_/¯
-				else -> showBriefMessage( this, R.string.setupToastInstanceTestFailure )
+				else -> showBriefMessage( this, R.string.toastInstanceTestFailure )
 
 			}
 		} )

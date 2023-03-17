@@ -256,37 +256,37 @@ class SettingsActivity : AppCompatActivity() {
 
 				// Bad authentication
 				is AuthFailureError -> when ( errorCode ) {
-					ErrorCode.UnknownUser.code -> showBriefMessage( this, R.string.settingsToastInstanceTestAuthenticationUnknownUser )
-					ErrorCode.IncorrectPassword.code -> showBriefMessage( this, R.string.settingsToastInstanceTestAuthenticationIncorrectPassword )
-					else -> showBriefMessage( this, R.string.settingsToastInstanceTestAuthenticationFailure )
+					ErrorCode.UnknownUser.code -> showBriefMessage( this, R.string.toastInstanceTestAuthenticationUnknownUser )
+					ErrorCode.IncorrectPassword.code -> showBriefMessage( this, R.string.toastInstanceTestAuthenticationIncorrectPassword )
+					else -> showBriefMessage( this, R.string.toastInstanceTestAuthenticationFailure )
 				}
 
 				// HTTP 4xx
 				is ClientError -> when ( statusCode ) {
-					404 -> showBriefMessage( this, R.string.settingsToastInstanceTestNotFound )
-					else -> showBriefMessage( this, R.string.settingsToastInstanceTestClientFailure )
+					404 -> showBriefMessage( this, R.string.toastInstanceTestNotFound )
+					else -> showBriefMessage( this, R.string.toastInstanceTestClientFailure )
 				}
 
 				// HTTP 5xx
 				is ServerError -> when ( statusCode ) {
-					502 -> showBriefMessage( this, R.string.settingsToastInstanceTestUnavailable )
-					503 -> showBriefMessage( this, R.string.settingsToastInstanceTestUnavailable )
-					504 -> showBriefMessage( this, R.string.settingsToastInstanceTestUnavailable )
-					else -> showBriefMessage( this, R.string.settingsToastInstanceTestServerFailure )
+					502 -> showBriefMessage( this, R.string.toastInstanceTestUnavailable )
+					503 -> showBriefMessage( this, R.string.toastInstanceTestUnavailable )
+					504 -> showBriefMessage( this, R.string.toastInstanceTestUnavailable )
+					else -> showBriefMessage( this, R.string.toastInstanceTestServerFailure )
 				}
 
 				// No Internet connection, malformed domain
-				is NoConnectionError -> showBriefMessage( this, R.string.settingsToastInstanceTestNoConnection )
-				is NetworkError -> showBriefMessage( this, R.string.settingsToastInstanceTestNoConnection )
+				is NoConnectionError -> showBriefMessage( this, R.string.toastInstanceTestNoConnection )
+				is NetworkError -> showBriefMessage( this, R.string.toastInstanceTestNoConnection )
 
 				// Connection timed out
-				is TimeoutError -> showBriefMessage( this, R.string.settingsToastInstanceTestTimeout )
+				is TimeoutError -> showBriefMessage( this, R.string.toastInstanceTestTimeout )
 
 				// Couldn't parse as JSON
-				is ParseError -> showBriefMessage( this, R.string.settingsToastInstanceTestParseFailure )
+				is ParseError -> showBriefMessage( this, R.string.toastInstanceTestParseFailure )
 
 				// ¯\_(ツ)_/¯
-				else -> showBriefMessage( this, R.string.settingsToastInstanceTestFailure )
+				else -> showBriefMessage( this, R.string.toastInstanceTestFailure )
 
 			}
 		} )

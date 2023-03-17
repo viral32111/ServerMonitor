@@ -1,1 +1,16 @@
-<resources></resources>
+<resources>
+
+	<!-- Toasts for instance test errors -->
+	<string name="toastInstanceTestAuthenticationUnknownUser">No credentials exist with the provided username.</string>
+	<string name="toastInstanceTestAuthenticationIncorrectPassword">The provided password is incorrect.</string>
+	<string name="toastInstanceTestAuthenticationFailure">The provided credentials are incorrect.</string>
+	<string name="toastInstanceTestNotFound">There is not an instance running on the provided URL.</string>
+	<string name="toastInstanceTestClientFailure">The device encountered an error sending the request.</string>
+	<string name="toastInstanceTestUnavailable">The instance is unavailable at the moment.</string>
+	<string name="toastInstanceTestServerFailure">The instance encountered an error processing the request.</string>
+	<string name="toastInstanceTestNoConnection">Unable to test instance. Is the domain correct and are you connected to the Internet?</string>
+	<string name="toastInstanceTestTimeout">Connection timed out while testing instance. Are you connected to the Internet?</string>
+	<string name="toastInstanceTestParseFailure">Failed to parse instance response as JSON. Is the URL correct?</string>
+	<string name="toastInstanceTestFailure">An unknown issue occurred while testing the instance. Is everything correct?</string>
+
+</resources>
