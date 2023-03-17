@@ -229,17 +229,4 @@
 		app:layout_constraintBottom_toBottomOf="parent"
 		app:layout_constraintEnd_toEndOf="parent" />
 
-	<ProgressBar
-		android:id="@+id/settingsProgressBar"
-		style="?android:attr/progressBarStyle"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:layout_marginEnd="5dp"
-		android:layout_marginBottom="@dimen/margin_bottom"
-		android:visibility="gone"
-		app:layout_constraintBottom_toBottomOf="parent"
-		app:layout_constraintEnd_toStartOf="@+id/settingsSaveButton"
-		app:layout_constraintHorizontal_bias="1.0"
-		app:layout_constraintStart_toStartOf="parent" />
-
 </androidx.constraintlayout.widget.ConstraintLayout>

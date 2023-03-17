@@ -41,6 +41,9 @@ fun createProgressDialog( activity: Activity, titleId: Int, messageId: Int, canc
 			Log.d( Shared.logTag, "Progress dialog cancelled via dismiss/system back button" )
 			cancelCallback.invoke()
 		}
+		.setOnDismissListener {
+			Log.d( Shared.logTag, "Progress dialog dismissed" )
+		}
 		.create()
 
 }

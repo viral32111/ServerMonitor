@@ -1,6 +1,5 @@
 package com.viral32111.servermonitor
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -21,8 +20,7 @@ class SetupActivity : AppCompatActivity() {
 	private lateinit var continueButton: Button
 
 	// Runs when the activity is created...
-	@SuppressLint("InflateParams")
-	override fun onCreate(savedInstanceState: Bundle? ) {
+	override fun onCreate( savedInstanceState: Bundle? ) {
 
 		// Display the layout
 		super.onCreate( savedInstanceState )
@@ -68,8 +66,8 @@ class SetupActivity : AppCompatActivity() {
 		// When the the continue button is pressed...
 		continueButton.setOnClickListener {
 
-			// Disable UI
-			enableInputs( true )
+			// Disable input
+			enableInputs( false )
 
 			// Get the values in the text inputs
 			val instanceUrl = instanceUrlEditText.text.toString()
@@ -79,7 +77,7 @@ class SetupActivity : AppCompatActivity() {
 
 			// Do not continue if an instance URL wasn't provided
 			if ( instanceUrl.isBlank() ) {
-				enableInputs( false )
+				enableInputs( true )
 				showBriefMessage( this, R.string.setupToastInstanceUrlEmpty )
 				Log.w( Shared.logTag, "Instance URL is empty" )
 				return@setOnClickListener
@@ -87,7 +85,7 @@ class SetupActivity : AppCompatActivity() {
 
 			// Do not continue if the URL isn't valid
 			if ( !validateInstanceUrl( instanceUrl ) ) {
-				enableInputs( false )
+				enableInputs( true )
 				showBriefMessage( this, R.string.setupToastInstanceUrlInvalid )
 				Log.w( Shared.logTag, "Instance URL is invalid" )
 				return@setOnClickListener
@@ -95,7 +93,7 @@ class SetupActivity : AppCompatActivity() {
 
 			// Do not continue if a username wasn't provided
 			if ( credentialsUsername.isBlank() ) {
-				enableInputs( false )
+				enableInputs( true )
 				showBriefMessage( this, R.string.setupToastCredentialsUsernameEmpty )
 				Log.w( Shared.logTag, "Username is empty" )
 				return@setOnClickListener
@@ -103,7 +101,7 @@ class SetupActivity : AppCompatActivity() {
 
 			// Do not continue if the username isn't valid
 			if ( !validateCredentialsUsername( credentialsUsername ) ) {
-				enableInputs( false )
+				enableInputs( true )
 				showBriefMessage( this, R.string.setupToastCredentialsUsernameInvalid )
 				Log.w( Shared.logTag, "Username is invalid" )
 				return@setOnClickListener
@@ -111,7 +109,7 @@ class SetupActivity : AppCompatActivity() {
 
 			// Do not continue if a password wasn't provided
 			if ( credentialsPassword.isBlank() ) {
-				enableInputs( false )
+				enableInputs( true )
 				showBriefMessage( this, R.string.setupToastCredentialsPasswordEmpty )
 				Log.w( Shared.logTag, "Password is empty" )
 				return@setOnClickListener
@@ -119,7 +117,7 @@ class SetupActivity : AppCompatActivity() {
 
 			// Do not continue if the password isn't valid
 			if ( !validateCredentialsPassword( credentialsPassword ) ) {
-				enableInputs( false )
+				enableInputs( true )
 				showBriefMessage( this, R.string.setupToastCredentialsPasswordInvalid )
 				Log.w( Shared.logTag, "Password is invalid" )
 				return@setOnClickListener
@@ -128,7 +126,7 @@ class SetupActivity : AppCompatActivity() {
 			// Create a progress dialog for the connector test
 			val progressDialog = createProgressDialog( this, R.string.dialogProgressInstanceTestTitle, R.string.dialogProgressInstanceTestMessage ) {
 				API.cancelQueue() // Cancel all pending HTTP requests
-				enableInputs( false ) // Enable UI
+				enableInputs( true ) // Enable input
 				showBriefMessage( this, R.string.toastInstanceTestCancel )
 			}
 
@@ -136,8 +134,8 @@ class SetupActivity : AppCompatActivity() {
 			testInstance( instanceUrl, credentialsUsername, credentialsPassword, {
 
 				// Hide the progress dialog & enable UI
-				progressDialog.hide()
-				enableInputs( false )
+				progressDialog.dismiss()
+				enableInputs( true )
 
 				// Save the values to the shared preferences - https://developer.android.com/training/data-storage/shared-preferences#WriteSharedPreference
 				with ( sharedPreferences.edit() ) {
@@ -152,8 +150,8 @@ class SetupActivity : AppCompatActivity() {
 				switchActivity( instanceUrl, credentialsUsername, credentialsPassword )
 
 			}, {
-				progressDialog.hide() // Hide the progress dialog
-				enableInputs( false ) // Enable UI
+				progressDialog.dismiss() // Hide the progress dialog
+				enableInputs( true ) // Enable input
 			} )
 
 			// Show the progress dialog
@@ -176,16 +174,29 @@ class SetupActivity : AppCompatActivity() {
 			credentialsPasswordEditText.setText( credentialsPassword )
 
 			// Disable input
-			enableInputs( true )
+			enableInputs( false )
+
+			// Create a progress dialog
+			val progressDialog = createProgressDialog( this, R.string.dialogProgressInstanceTestTitle, R.string.dialogProgressInstanceTestMessage ) {
+				API.cancelQueue() // Cancel all pending HTTP requests
+				enableInputs( true ) // Enable input
+				showBriefMessage( this, R.string.toastInstanceTestCancel )
+			}
 
 			// Test if this instance is running...
 			testInstance( instanceUrl, credentialsUsername, credentialsPassword, {
-				enableInputs( false ) // Enable UI
+				progressDialog.dismiss() // Hide the progress dialog
+				enableInputs( true ) // Enable input
 				switchActivity( instanceUrl, credentialsUsername, credentialsPassword ) // Change to the next appropriate activity
 			}, {
 				Log.e( Shared.logTag, "We may already be setup, but the instance is offline?" )
-				enableInputs( false ) // Enable UI
+				progressDialog.dismiss() // Hide the progress dialog
+				enableInputs( true ) // Enable input
 			} )
+
+			// Show the progress dialog
+			progressDialog.show()
+
 		} else {
 			Log.d( Shared.logTag, "We're not setup yet! ('${ instanceUrl }', '${ credentialsUsername }', '${ credentialsPassword }')" )
 		}
@@ -199,8 +210,8 @@ class SetupActivity : AppCompatActivity() {
 		// Cancel all pending HTTP requests
 		API.cancelQueue()
 
-		// Enable UI
-		enableInputs( false )
+		// Enable input
+		enableInputs( true )
 
 	}
 
@@ -257,18 +268,22 @@ class SetupActivity : AppCompatActivity() {
 	// Switches to the next activity
 	private fun switchActivity( instanceUrl: String, credentialsUsername: String, credentialsPassword: String ) {
 
+		// Disable input
+		enableInputs( false )
+
 		// Create a progress dialog
 		val progressDialog = createProgressDialog( this, R.string.setupDialogProgressServerCountTitle, R.string.setupDialogProgressServerCountMessage ) {
 			API.cancelQueue() // Cancel all pending HTTP requests
-			enableInputs( false ) // Enable UI
+			enableInputs( true ) // Enable input
 			showBriefMessage( this, R.string.setupToastServerCountCancel )
 		}
 
 		// Fetch the list of servers
 		API.getServers( instanceUrl, credentialsUsername, credentialsPassword, { serversData ->
 
-			// Hide the progress dialog
-			progressDialog.hide()
+			// Hide the progress dialog & enable input
+			progressDialog.dismiss()
+			enableInputs( true )
 
 			// Get the array
 			val servers = serversData?.get( "servers" )?.asJsonArray
@@ -286,8 +301,9 @@ class SetupActivity : AppCompatActivity() {
 		}, { error, statusCode, errorCode ->
 			Log.e( Shared.logTag, "Failed to get servers from API due to '${ error }' (Status Code: '${ statusCode }', Error Code: '${ errorCode }')" )
 
-			// Hide the progress dialog
-			progressDialog.hide()
+			// Hide the progress dialog & enable input
+			progressDialog.dismiss()
+			enableInputs( true )
 
 			when ( error ) {
 
@@ -334,11 +350,11 @@ class SetupActivity : AppCompatActivity() {
 	}
 
 	// Enables/disables user input
-	private fun enableInputs( isLoading: Boolean ) {
-		instanceUrlEditText.isEnabled = !isLoading
-		credentialsUsernameEditText.isEnabled = !isLoading
-		credentialsPasswordEditText.isEnabled = !isLoading
-		continueButton.isEnabled = !isLoading
+	private fun enableInputs( shouldEnable: Boolean ) {
+		instanceUrlEditText.isEnabled = shouldEnable
+		credentialsUsernameEditText.isEnabled = shouldEnable
+		credentialsPasswordEditText.isEnabled = shouldEnable
+		continueButton.isEnabled = shouldEnable
 	}
 
 }
