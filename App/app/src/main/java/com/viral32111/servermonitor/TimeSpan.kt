@@ -3,12 +3,14 @@ package com.viral32111.servermonitor
 import java.math.BigInteger
 
 // Converts seconds into days, hours, minutes & seconds.
+
 class TimeSpan( totalSeconds: Long ) {
 	val Days: Long;
 	val Hours: Long;
 	val Minutes: Long;
 	val Seconds: Long;
 
+	// https://www.geeksforgeeks.org/converting-seconds-into-days-hours-minutes-and-seconds/
 	init {
 		var remainder = totalSeconds
 

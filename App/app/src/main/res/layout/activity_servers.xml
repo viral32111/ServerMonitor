@@ -1,58 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- https://www.geeksforgeeks.org/android-pull-to-refresh-with-recyclerview-in-kotlin/ -->
+<androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res-auto"
 	xmlns:tools="http://schemas.android.com/tools"
-	android:id="@+id/serversConstraintLayout"
+	android:id="@+id/serversSwipeRefreshLayout"
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
+	android:orientation="vertical"
 	tools:context=".ServersActivity">
 
-	<TextView
-		android:id="@+id/serversStatusTitleTextView"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:layout_marginStart="@dimen/margin_left"
-		android:layout_marginTop="@dimen/margin_top"
-		android:layout_marginEnd="@dimen/margin_right"
-		android:text="@string/serversTextViewStatusTitleDead"
-		android:textColor="@color/statusDead"
-		android:textSize="24sp"
-		android:textStyle="bold"
-		app:layout_constraintEnd_toEndOf="parent"
-		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toTopOf="parent"
-		tools:ignore="TextContrastCheck" />
+	<androidx.constraintlayout.widget.ConstraintLayout
+		android:id="@+id/serversConstraintLayout"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent">
 
-	<TextView
-		android:id="@+id/serversStatusDescriptionTextView"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:layout_marginStart="@dimen/margin_top"
-		android:layout_marginEnd="@dimen/margin_right"
-		android:text="@string/serversTextViewStatusDescriptionDead"
-		app:layout_constraintEnd_toEndOf="parent"
-		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toBottomOf="@+id/serversStatusTitleTextView" />
-
-	<ScrollView
-		android:id="@+id/serversScrollView"
-		android:layout_width="0dp"
-		android:layout_height="0dp"
-		android:layout_marginTop="16dp"
-		android:contentDescription="@string/serversScrollViewSpeakableText"
-		app:layout_constraintBottom_toBottomOf="parent"
-		app:layout_constraintEnd_toEndOf="parent"
-		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toBottomOf="@+id/serversStatusDescriptionTextView">
-
-		<LinearLayout
-			android:id="@+id/serversLinearLayout"
-			android:layout_width="match_parent"
+		<TextView
+			android:id="@+id/serversStatusTitleTextView"
+			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
-			android:divider="@drawable/shape_divider"
-			android:orientation="vertical"
-			android:paddingHorizontal="@dimen/serversListPadding"
-			android:showDividers="middle" />
-	</ScrollView>
+			android:layout_marginStart="@dimen/margin_left"
+			android:layout_marginTop="@dimen/margin_top"
+			android:layout_marginEnd="@dimen/margin_right"
+			android:text="@string/serversTextViewStatusTitleDead"
+			android:textColor="@color/statusDead"
+			android:textSize="24sp"
+			android:textStyle="bold"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toTopOf="parent"
+			tools:ignore="TextContrastCheck" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+		<TextView
+			android:id="@+id/serversStatusDescriptionTextView"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginStart="@dimen/margin_top"
+			android:layout_marginEnd="@dimen/margin_right"
+			android:text="@string/serversTextViewStatusDescriptionDead"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toBottomOf="@+id/serversStatusTitleTextView" />
+
+		<ScrollView
+			android:id="@+id/serversScrollView"
+			android:layout_width="0dp"
+			android:layout_height="0dp"
+			android:layout_marginTop="16dp"
+			android:contentDescription="@string/serversScrollViewSpeakableText"
+			app:layout_constraintBottom_toBottomOf="parent"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toBottomOf="@+id/serversStatusDescriptionTextView">
+
+			<androidx.recyclerview.widget.RecyclerView
+				android:id="@+id/serversRecyclerView"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:divider="@drawable/shape_divider"
+				android:orientation="vertical"
+				android:paddingHorizontal="@dimen/serversListPadding"
+				android:scrollbars="horizontal"
+				android:showDividers="middle"
+				tools:itemCount="0"
+				tools:listitem="@layout/server"/>
+		</ScrollView>
+
+	</androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

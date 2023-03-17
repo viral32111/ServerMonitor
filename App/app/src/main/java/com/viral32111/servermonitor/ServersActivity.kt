@@ -5,13 +5,20 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.android.volley.*
 import com.google.android.material.appbar.MaterialToolbar
-import kotlin.math.round
+
+// TODO: Use real IP header on server instead of remote endpoint address wherever possible, cus of Cloudflare Tunnel
+// TODO: Update Docker collector command on README to include mounts for dbus system socket, privileged mode, systemd directories
+// TODO: Install systemctl in Ubuntu Docker image
 
 class ServersActivity : AppCompatActivity() {
 
@@ -50,7 +57,8 @@ class ServersActivity : AppCompatActivity() {
 		}
 
 		// Get all the UI
-		val linearLayout = findViewById<LinearLayout>( R.id.serversLinearLayout )
+		val swipeRefreshLayout = findViewById<SwipeRefreshLayout>( R.id.serversSwipeRefreshLayout )
+		val recyclerView = findViewById<RecyclerView>( R.id.serversRecyclerView )
 		val statusTitleTextView = findViewById<TextView>( R.id.serversStatusTitleTextView )
 		val statusDescriptionTextView = findViewById<TextView>( R.id.serversStatusDescriptionTextView )
 
@@ -72,97 +80,93 @@ class ServersActivity : AppCompatActivity() {
 			return
 		}
 
+		// Create a linear layout manager for the recycler view
+		val linearLayoutManager = LinearLayoutManager( this, LinearLayoutManager.VERTICAL, false )
+		recyclerView.layoutManager = linearLayoutManager
+
+		// Set the divider between servers in the recycler view - https://stackoverflow.com/q/40528012
+		val dividerItemDecoration = DividerItemDecoration( this, linearLayoutManager.orientation )
+		dividerItemDecoration.setDrawable( ContextCompat.getDrawable( this, R.drawable.shape_divider )!! )
+		recyclerView.addItemDecoration( dividerItemDecoration )
+
+		// Initially fetch the servers...
+		fetchServers( instanceUrl, credentialsUsername, credentialsPassword, { servers ->
+
+			// Set the overall status
+			statusTitleTextView.text = getString( R.string.serversTextViewStatusTitleGood )
+			statusTitleTextView.setTextColor( getColor( R.color.statusGood ) )
+			statusDescriptionTextView.text = getString( R.string.serversTextViewStatusDescriptionGood )
+
+			// Create the adapter for the recycler view - https://www.geeksforgeeks.org/android-pull-to-refresh-with-recyclerview-in-kotlin/
+			val serverAdapter = ServerAdapter( servers, this ) { server ->
+				Log.d( Shared.logTag, "Server '${ server.HostName }' ('${ server.Identifier }', '${ server.JobName }', '${ server.InstanceAddress }') pressed" )
+			}
+			recyclerView.adapter = serverAdapter
+
+			// Update the recycler view - IDE doesn't like .notifyDataSetChanged()
+			serverAdapter.notifyItemRangeChanged( 0, servers.size )
+
+		} )
+
+		// When we're pulled down to refresh...
+		swipeRefreshLayout.setOnRefreshListener {
+			Log.d( Shared.logTag, "Swipe refreshed!" )
+
+			// Fetch the servers...
+			fetchServers( instanceUrl, credentialsUsername, credentialsPassword, { servers ->
+
+				// Set the overall status
+				statusTitleTextView.text = getString( R.string.serversTextViewStatusTitleGood )
+				statusTitleTextView.setTextColor( getColor( R.color.statusGood ) )
+				statusDescriptionTextView.text = getString( R.string.serversTextViewStatusDescriptionGood )
+
+				// Create a new adapter for the recycler view
+				val serverAdapter = ServerAdapter( servers, this ) { server ->
+					Log.d( Shared.logTag, "Server '${ server.HostName }' ('${ server.Identifier }', '${ server.JobName }', '${ server.InstanceAddress }') pressed" )
+				}
+				recyclerView.swapAdapter( serverAdapter, true )
+
+				// Update the recycler view & finish loading
+				serverAdapter.notifyItemRangeChanged( 0, servers.size )
+				swipeRefreshLayout.isRefreshing = false
+
+			}, false )
+
+		}
+
+	}
+
+	// Cancel pending HTTP requests when the activity is closed
+	override fun onStop() {
+		super.onStop()
+		API.cancelQueue()
+	}
+
+	// Fetches the servers
+	private fun fetchServers( instanceUrl: String, credentialsUsername: String, credentialsPassword: String, successCallback: ( servers: Array<Server> ) -> Unit, useProgressDialog: Boolean = false ) {
+
 		// Create a progress dialog
 		val progressDialog = createProgressDialog( this, R.string.serversDialogProgressServersTitle, R.string.serversDialogProgressServersMessage ) {
 			API.cancelQueue()
 			showBriefMessage( this, R.string.serversToastServersCancel )
 		}
 
-		// TODO: Use real IP header on server instead of remote endpoint address wherever possible, cus of Cloudflare Tunnel
-		// TODO: Update Docker collector command on README to include mounts for dbus system socket, privileged mode, systemd directories
-		// TODO: Install systemctl in Ubuntu Docker image
-
-		// Fetch the list of servers
+		// Fetch the servers
 		API.getServers( instanceUrl, credentialsUsername, credentialsPassword, { serversData ->
 
 			// Hide the progress dialog
-			progressDialog.dismiss()
+			if ( useProgressDialog ) progressDialog.dismiss()
 
 			// Get the array
 			val servers = serversData?.get( "servers" )?.asJsonArray
 			Log.d( Shared.logTag, "Got '${ servers?.size() }' servers from API ('${ servers.toString() }')" )
 
 			if ( servers != null ) {
-				statusTitleTextView.text = getString( R.string.serversTextViewStatusTitleGood )
-				statusTitleTextView.setTextColor( getColor( R.color.statusGood ) )
+				// https://www.geeksforgeeks.org/kotlin-list-arraylist/
+				val serverList = ArrayList<Server>()
+				for ( arrayItem in servers ) serverList.add( Server( arrayItem.asJsonObject ) )
+				successCallback.invoke( serverList.toTypedArray() )
 
-				statusDescriptionTextView.text = getString( R.string.serversTextViewStatusDescriptionGood )
-
-				for ( _server in servers ) {
-					val server = _server.asJsonObject
-
-					val identifier = server.get( "identifier" ).asString
-					val jobName = server.get( "jobName" ).asString
-					val instanceAddress = server.get( "instanceAddress" ).asString
-					val lastScrape = server.get( "lastScrape" ).asBigInteger
-					val hostName = server.get( "hostName" ).asString
-					val operatingSystem = server.get( "operatingSystem" ).asString
-					val architecture = server.get( "architecture" ).asString
-					val version = server.get( "version" ).asString
-					val uptimeSeconds = round( server.get( "uptimeSeconds" ).asDouble ).toLong()
-
-					Log.d( Shared.logTag, "Identifier: '${ identifier }'" )
-					Log.d( Shared.logTag, "Job Name: '${ jobName }'" )
-					Log.d( Shared.logTag, "Instance Address: '${ instanceAddress }'" )
-					Log.d( Shared.logTag, "Last Scrape: '${ lastScrape }'" )
-					Log.d( Shared.logTag, "Host Name: '${ hostName }'" )
-					Log.d( Shared.logTag, "Operating System: '${ operatingSystem }'" )
-					Log.d( Shared.logTag, "Architecture: '${ architecture }'" )
-					Log.d( Shared.logTag, "Version: '${ version }'" )
-					Log.d( Shared.logTag, "Uptime: '${ uptimeSeconds }' seconds" )
-
-					val serverView = layoutInflater.inflate( R.layout.server, null )
-					val serverViewTitleTextView = serverView.findViewById<TextView>( R.id.serverTitleTextView )
-					val serverViewStatusTextView = serverView.findViewById<TextView>( R.id.serverStatusTextView )
-					val serverViewProcessorTextView = serverView.findViewById<TextView>( R.id.serverProcessorUsageTextView )
-					val serverViewMemoryTextView = serverView.findViewById<TextView>( R.id.serverMemoryUsageTextView )
-					val serverViewTemperatureTextView = serverView.findViewById<TextView>( R.id.serverTemperatureValueTextView )
-					val serverViewServiceTextView = serverView.findViewById<TextView>( R.id.serverServicesCountTextView )
-					val serverViewNetworkTextView = serverView.findViewById<TextView>( R.id.serverNetworkUsageTextView )
-					val serverViewDiskTextView = serverView.findViewById<TextView>( R.id.serverDiskUsageTextView )
-					val serverViewUptimeTextView = serverView.findViewById<TextView>( R.id.serverUptimeTextView )
-
-					serverView.setOnClickListener {
-						Log.d( Shared.logTag, "Server '${ hostName }' ('${ identifier }', '${ jobName }', '${ instanceAddress }') pressed" )
-
-						// TODO: Switch to Server activity
-					}
-
-					serverViewTitleTextView.text = hostName.uppercase()
-
-					if ( uptimeSeconds >= 0 ) {
-						serverViewStatusTextView.text = getString( R.string.serversTextViewServerStatusOnline )
-						serverViewStatusTextView.setTextColor( getColor( R.color.statusGood ) )
-
-						serverViewUptimeTextView.text = String.format( getString( R.string.serversTextViewServerUptime ), TimeSpan( uptimeSeconds ).toString( false ) )
-
-						// TODO: API call for GET /server, then populate text views with relevant data
-
-					} else {
-						serverViewStatusTextView.text = getString( R.string.serversTextViewServerStatusOffline )
-						serverViewProcessorTextView.text = String.format( getString( R.string.serversTextViewServerProcessorUsage ), 0 )
-						serverViewMemoryTextView.text = String.format( getString( R.string.serversTextViewServerMemoryUsage ), 0, "K" )
-						serverViewTemperatureTextView.text = String.format( getString( R.string.serversTextViewServerTemperatureValue ), 0 )
-						serverViewServiceTextView.text = String.format( getString( R.string.serversTextViewServerServicesCount ), 0 )
-						serverViewNetworkTextView.text = String.format( getString( R.string.serversTextViewServerNetworkUsage ), 0, "K" )
-						serverViewDiskTextView.text = String.format( getString( R.string.serversTextViewServerDiskUsage ), 0, "K" )
-						serverViewUptimeTextView.text = getString( R.string.serversTextViewServerUptimeOffline )
-					}
-
-					// TODO: Test the scrolling functionality
-					linearLayout.addView( serverView ) // https://stackoverflow.com/a/8956861
-
-				}
 			} else {
 				Log.e( Shared.logTag, "Servers array from API is null?!" )
 				showBriefMessage( this, R.string.serversToastServersNull )
@@ -172,7 +176,7 @@ class ServersActivity : AppCompatActivity() {
 			Log.e( Shared.logTag, "Failed to get servers from API due to '${ error }' (Status Code: '${ statusCode }', Error Code: '${ errorCode }')" )
 
 			// Hide the progress dialog
-			progressDialog.dismiss()
+			if ( useProgressDialog ) progressDialog.dismiss()
 
 			when ( error ) {
 
@@ -214,14 +218,8 @@ class ServersActivity : AppCompatActivity() {
 		} )
 
 		// Show the progress dialog
-		progressDialog.show()
+		if ( useProgressDialog ) progressDialog.show()
 
-	}
-
-	// Cancel pending HTTP requests when the activity is closed
-	override fun onStop() {
-		super.onStop()
-		API.cancelQueue()
 	}
 
 }
