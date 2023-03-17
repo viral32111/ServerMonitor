@@ -16,7 +16,7 @@ namespace ServerMonitor.Connector.Helper {
 			response.Close();
 		}
 
-		public static HttpListenerResponse SendJson( HttpListenerResponse response, HttpStatusCode? statusCode = null, JsonNode? data = null, ErrorCode? errorCode = null ) {
+		public static HttpListenerResponse SendJson( HttpListenerResponse response, HttpStatusCode? statusCode = null, JsonObject? data = null, ErrorCode? errorCode = null ) {
 			JsonObject payload = new() {
 				{ "errorCode", ( int ) ( errorCode ?? ErrorCode.Success ) },
 				{ "data", data }

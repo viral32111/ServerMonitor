@@ -59,10 +59,12 @@
 		android:hint="@string/setupEditTextInstanceUrlHint"
 		android:inputType="textUri"
 		android:minHeight="48dp"
+		android:textColorHint="@color/textColorHint"
 		android:textSize="@dimen/text_size"
 		app:layout_constraintEnd_toEndOf="parent"
 		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toBottomOf="@+id/setupNoticeSecureTextView" />
+		app:layout_constraintTop_toBottomOf="@+id/setupNoticeSecureTextView"
+		tools:ignore="VisualLintTextFieldSize" />
 
 	<TextView
 		android:id="@+id/setupCredentialsLabelTextView"
@@ -88,10 +90,12 @@
 		android:hint="@string/setupEditTextCredentialsUsernameHint"
 		android:inputType="textPersonName"
 		android:minHeight="48dp"
+		android:textColorHint="@color/textColorHint"
 		android:textSize="@dimen/text_size"
 		app:layout_constraintEnd_toEndOf="parent"
 		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toBottomOf="@+id/settingsInstanceUrlEditText" />
+		app:layout_constraintTop_toBottomOf="@+id/settingsInstanceUrlEditText"
+		tools:ignore="VisualLintTextFieldSize" />
 
 	<EditText
 		android:id="@+id/setupCredentialsPasswordEditText"
@@ -104,16 +108,18 @@
 		android:hint="@string/setupEditTextCredentialsPasswordHint"
 		android:inputType="textPassword"
 		android:minHeight="48dp"
+		android:textColorHint="@color/textColorHint"
 		android:textSize="@dimen/text_size"
 		app:layout_constraintEnd_toEndOf="parent"
 		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toBottomOf="@+id/setupCredentialsUsernameEditText" />
+		app:layout_constraintTop_toBottomOf="@+id/setupCredentialsUsernameEditText"
+		tools:ignore="VisualLintTextFieldSize" />
 
 	<Button
 		android:id="@+id/settingsSaveButton"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-		android:layout_marginEnd="@dimen/margin_right"
+		android:layout_marginEnd="@dimen/margin_left"
 		android:layout_marginBottom="@dimen/margin_bottom"
 		android:backgroundTint="@color/blue_400"
 		android:paddingStart="@dimen/button_padding_start"
@@ -121,4 +127,5 @@
 		android:text="@string/setup_button_continue"
 		app:layout_constraintBottom_toBottomOf="parent"
 		app:layout_constraintEnd_toEndOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

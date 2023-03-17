@@ -21,9 +21,6 @@ jobs:
   build-test:
     name: Build & Test
     runs-on: ubuntu-22.04
-    defaults:
-      run:
-        working-directory: ./App/
     strategy:
       matrix:
         variant: [ 'Debug', 'Release' ]
@@ -40,16 +37,37 @@ jobs:
           distribution: temurin
 
       - name: Set Gradle permissions
-        run: chmod +x ./gradlew
+        run: chmod +x ./App/gradlew
+
+      - name: Create key store
+        id: keystore
+        run: |
+          echo "${{ secrets.ANDROID_KEY_STORE }}" | base64 -d > $HOME/android-key-store.apk
+          echo "path=$HOME/android-key-store.apk" >> "$GITHUB_OUTPUT"
 
       - name: Build project
+        env:
+          ANDROID_KEY_STORE_PATH: ${{ steps.keystore.outputs.path }}
+          ANDROID_KEY_STORE_PASSWORD: ${{ secrets.ANDROID_KEY_STORE_PASSWORD }}
+          ANDROID_KEY_STORE_KEY_ALIAS: ${{ secrets.ANDROID_KEY_STORE_KEY_ALIAS }}
+          ANDROID_KEY_STORE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_STORE_KEY_PASSWORD }}
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: assemble${{ matrix.variant }}
+          arguments: assemble${{ matrix.variant }} --scan
           build-root-directory: ./App/
+          cache-disabled: true
 
-      - name: Run tests
-        run: ./gradlew test
+      - name: Run instrumented tests
+        env:
+          ANDROID_KEY_STORE_PATH: ${{ steps.keystore.outputs.path }}
+          ANDROID_KEY_STORE_PASSWORD: ${{ secrets.ANDROID_KEY_STORE_PASSWORD }}
+          ANDROID_KEY_STORE_KEY_ALIAS: ${{ secrets.ANDROID_KEY_STORE_KEY_ALIAS }}
+          ANDROID_KEY_STORE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_STORE_KEY_PASSWORD }}
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: test --scan
+          build-root-directory: ./App/
+          cache-disabled: true
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v3

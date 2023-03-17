@@ -351,7 +351,7 @@ jobs:
             -o 'IdentitiesOnly Yes' \
             -o 'ProxyCommand cloudflared access ssh --hostname %h --service-token-id ${{ secrets.CLOUDFLARE_ACCESS_ID }} --service-token-secret ${{ secrets.CLOUDFLARE_ACCESS_SECRET }}' \
             ${{ secrets.SSH_USER_NAME }}@${{ matrix.ssh }}.${{ secrets.SSH_DOMAIN_NAME }} \
-            'docker image pull ${{ env.DOCKER_REGISTRY_DOMAIN }}/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}:main-${{ matrix.suffix }}'
+            'docker image pull ${{ env.DOCKER_REGISTRY_DOMAIN }}/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}:main-${{ matrix.suffix }}; docker image prune --force'
 
       - name: Transfer build artifact (Ubuntu)
         if: ${{ matrix.name == 'Ubuntu' }}

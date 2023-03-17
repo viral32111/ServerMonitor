@@ -5,7 +5,7 @@
 	<string name="setupActionBarTitle">Setup</string>
 
 	<!-- Instructions -->
-	<string name="setupTextViewInstruction">Enter the publicly-accessible URL to the primary server monitoring instance below, along with your credentials to access it.</string>
+	<string name="setupTextViewInstruction">Enter the public URL to the primary Server Monitor connector instance below, along with your credentials.</string>
 	<string name="SetupTextViewSecureNotice">The instance must be served over HTTPs.</string>
 
 	<!-- Instance URL input -->
@@ -13,7 +13,6 @@
 	<string name="setupEditTextInstanceUrlHint">https://example.com/my-instance-name…</string>
 	<string name="setupToastInstanceUrlEmpty">Provide an instance URL.</string>
 	<string name="setupToastInstanceUrlInvalid">The provided instance URL is invalid.</string>
-	<string name="setupToastInstanceUnavailable">There is not an instance running at the provided URL.</string>
 
 	<!-- Label for credentials section -->
 	<string name="setupTextViewCredentialsLabel">Authentication Credentials:</string>
@@ -21,14 +20,32 @@
 	<!-- Username input for authentication -->
 	<string name="setupEditTextCredentialsUsernameHint">JohnDoe</string>
 	<string name="setupToastCredentialsUsernameEmpty">Provide a username for authentication.</string>
-	<string name="setupToastCredentialsUsernameInvalid">The provided username is invalid.</string>
+	<string name="setupToastCredentialsUsernameInvalid">The provided username does not meet minimum requirements.</string>
 
 	<!-- Password input for authentication -->
 	<string name="setupEditTextCredentialsPasswordHint">Sup3r_Go0d_P4ssw0rd!</string>
 	<string name="setupToastCredentialsPasswordEmpty">Provide a password for authentication.</string>
-	<string name="setupToastCredentialsPasswordInvalid">The provided password is invalid.</string>
+	<string name="setupToastCredentialsPasswordInvalid">The provided password does not meet minimum requirements.</string>
 
 	<!-- Continue button -->
 	<string name="setup_button_continue">Continue</string>
+
+	<!-- Toasts for fetch server count -->
+	<string name="setupToastServerCountAuthenticationUnknownUser">No credentials exist with the configured username.</string>
+	<string name="setupToastServerCountAuthenticationIncorrectPassword">The configured instance password is incorrect.</string>
+	<string name="setupToastServerCountAuthenticationFailure">The configured instance credentials are incorrect.</string>
+	<string name="setupToastServerCountNotFound">Unable to find the fetch servers API route.</string>
+	<string name="setupToastServerCountClientFailure">The device encountered an error sending the request.</string>
+	<string name="setupToastServerCountUnavailable">The configured instance is unavailable at the moment.</string>
+	<string name="setupToastServerCountServerFailure">The API encountered an error processing the request.</string>
+	<string name="setupToastServerCountNoConnection">Unable to connect to API. Is the instance URL correct and are you connected to the Internet?</string>
+	<string name="setupToastServerCountTimeout">Connection to API timed out. Are you connected to the Internet?</string>
+	<string name="setupToastServerCountParseFailure">Failed to parse API response as JSON. Is the URL correct?</string>
+	<string name="setupToastServerCountFailure">An unknown issue occurred while fetching the number of servers.</string>
+	<string name="setupToastServerCountCancel">The API request was cancelled.</string>
+
+	<!-- Progress dialog for fetch server count  -->
+	<string name="setupDialogProgressServerCountTitle">Server Count</string>
+	<string name="setupDialogProgressServerCountMessage">Fetching the list of servers…</string>
 
 </resources>

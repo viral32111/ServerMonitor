@@ -7,6 +7,7 @@
 	<!-- Instance URL input -->
 	<string name="settingsTextViewInstanceUrlLabel">Instance URL:</string>
 	<string name="settingsEditTextInstanceUrlHint">https://example.com/my-instance-name…</string>
+	<string name="settingsEditTextInstanceUrlSetupHint">Return to settings to set instance URL…</string>
 	<string name="settingsToastInstanceUrlEmpty">Provide an instance URL.</string>
 	<string name="settingsToastInstanceUrlInvalid">The provided instance URL is invalid.</string>
 
@@ -15,13 +16,15 @@
 
 	<!-- Username input for authentication -->
 	<string name="settingsEditTextCredentialsUsernameHint">JohnDoe</string>
+	<string name="settingsEditTextCredentialsUsernameSetupHint">Return to settings to set username…</string>
 	<string name="settingsToastCredentialsUsernameEmpty">Provide a username for authentication.</string>
-	<string name="settingsToastCredentialsUsernameInvalid">The provided username is invalid.</string>
+	<string name="settingsToastCredentialsUsernameInvalid">The provided username does not meet minimum requirements.</string>
 
 	<!-- Password input for authentication -->
 	<string name="settingsEditTextCredentialsPasswordHint">Sup3r_Go0d_P4ssw0rd!</string>
+	<string name="settingsEditTextCredentialsPasswordSetupHint">Return to settings to set password…</string>
 	<string name="settingsToastCredentialsPasswordEmpty">Provide a password for authentication.</string>
-	<string name="settingsToastCredentialsPasswordInvalid">The provided password is invalid.</string>
+	<string name="settingsToastCredentialsPasswordInvalid">The provided password does not meet minimum requirements.</string>
 
 	<!-- Label for automatic refresh section -->
 	<string name="settingsCheckBoxAutomaticRefresh">Automatic Refresh</string>
@@ -41,10 +44,13 @@
 	<string name="settingsCheckBoxNotificationsAlwaysOngoing">Always ongoing</string>
 	<string name="settingsCheckBoxNotificationsWhenIssueArises">When an issue arises</string>
 
-	<!-- Label for instance url & credentials inputs when app not yet setup -->
-	<string name="settingsEditTextSetupHint">Return to Setup…</string>
-
 	<!-- Save button -->
 	<string name="settingsButtonSave">Save</string>
+
+	<!-- Back confirmation alert dialog -->
+	<string name="settingsDialogConfirmBackTitle">Confirm</string>
+	<string name="settingsDialogConfirmBackMessage">Are you sure you wish to go back without saving?</string>
+	<string name="settingsDialogConfirmBackPositiveButton">Yes</string>
+	<string name="settingsDialogConfirmBackNegativeButton">No</string>
 
 </resources>

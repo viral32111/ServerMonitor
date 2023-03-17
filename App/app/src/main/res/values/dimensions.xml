@@ -14,4 +14,8 @@
     <dimen name="button_padding_start">48dp</dimen>
     <dimen name="button_padding_end">48dp</dimen>
 
+    <!-- Servers list -->
+    <dimen name="serversListPadding">16dp</dimen>
+    <dimen name="serversListDividerSpace">16dp</dimen>
+
 </resources>

@@ -29,7 +29,7 @@ namespace ServerMonitor.Connector.Route {
 
 			// Try extract the server identifier from the query parameters
 			string? serverIdentifier = HttpUtility.ParseQueryString( queryString ).Get( "id" );
-			if ( string.IsNullOrWhiteSpace( serverIdentifier ) ) return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.MissingParameter, data: new JsonObject() {
+			if ( string.IsNullOrWhiteSpace( serverIdentifier ) ) return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.MissingParameter, data: new() {
 				{ "parameter", "id" }
 			} );
 
@@ -40,25 +40,25 @@ namespace ServerMonitor.Connector.Route {
 				jobName = serverIdentifierParts[ 0 ];
 				instanceAddress = serverIdentifierParts[ 1 ];
 			} catch ( FormatException ) {
-				return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.InvalidParameter, data: new JsonObject() {
+				return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.InvalidParameter, data: new() {
 					{ "parameter", "id" }
 				} );
 			}
 
 			// Try fetch the server
 			JsonObject? server = ( await Helper.Prometheus.FetchServers( configuration ) ).FirstOrDefault( server => server.NestedGet<string>( "identifier" ) == serverIdentifier );
-			if ( server == null ) return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServerNotFound, data: new JsonObject() {
+			if ( server == null ) return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServerNotFound, data: new() {
 				{ "id", serverIdentifier }
 			} );
 
 			// Stop here if the server is offline
-			if ( server.NestedGet<double>( "uptimeSeconds" ) == -1 ) return Response.SendJson( response, statusCode: HttpStatusCode.ServiceUnavailable, errorCode: ErrorCode.ServerOffline, data: new JsonObject() {
+			if ( server.NestedGet<double>( "uptimeSeconds" ) == -1 ) return Response.SendJson( response, statusCode: HttpStatusCode.ServiceUnavailable, errorCode: ErrorCode.ServerOffline, data: new() {
 				{ "id", serverIdentifier }
 			} );
 
 			// Fetch information about the action server
 			JsonObject? actionServer = await Helper.Prometheus.FetchActionServer( configuration, jobName, instanceAddress );
-			if ( actionServer == null ) return Response.SendJson( response, statusCode: HttpStatusCode.ServiceUnavailable, errorCode: ErrorCode.ActionServerUnknown, data: new JsonObject() {
+			if ( actionServer == null ) return Response.SendJson( response, statusCode: HttpStatusCode.ServiceUnavailable, errorCode: ErrorCode.ActionServerUnknown, data: new() {
 				{ "id", serverIdentifier }
 			} );
 			string actionServerAddress = actionServer.NestedGet<string>( "address" );
@@ -104,12 +104,12 @@ namespace ServerMonitor.Connector.Route {
 
 			// Try extract the server identifier & action name from the query parameters
 			string? serverIdentifier = HttpUtility.ParseQueryString( queryString ).Get( "id" );
-			if ( string.IsNullOrWhiteSpace( serverIdentifier ) ) return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.MissingParameter, data: new JsonObject() {
+			if ( string.IsNullOrWhiteSpace( serverIdentifier ) ) return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.MissingParameter, data: new() {
 				{ "parameter", "id" }
 			} );
 
 			string? actionName = HttpUtility.ParseQueryString( queryString ).Get( "action" );
-			if ( string.IsNullOrWhiteSpace( actionName ) ) return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.MissingParameter, data: new JsonObject() {
+			if ( string.IsNullOrWhiteSpace( actionName ) ) return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.MissingParameter, data: new() {
 				{ "parameter", "action" }
 			} );
 
@@ -120,25 +120,25 @@ namespace ServerMonitor.Connector.Route {
 				jobName = serverIdentifierParts[ 0 ];
 				instanceAddress = serverIdentifierParts[ 1 ];
 			} catch ( FormatException ) {
-				return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.InvalidParameter, data: new JsonObject() {
+				return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.InvalidParameter, data: new() {
 					{ "parameter", "id" }
 				} );
 			}
 
 			// Try fetch the server
 			JsonObject? server = ( await Helper.Prometheus.FetchServers( configuration ) ).FirstOrDefault( server => server.NestedGet<string>( "identifier" ) == serverIdentifier );
-			if ( server == null ) return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServerNotFound, data: new JsonObject() {
+			if ( server == null ) return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServerNotFound, data: new() {
 				{ "id", serverIdentifier }
 			} );
 
 			// Stop here if the server is offline
-			if ( server.NestedGet<double>( "uptimeSeconds" ) == -1 ) return Response.SendJson( response, statusCode: HttpStatusCode.ServiceUnavailable, errorCode: ErrorCode.ServerOffline, data: new JsonObject() {
+			if ( server.NestedGet<double>( "uptimeSeconds" ) == -1 ) return Response.SendJson( response, statusCode: HttpStatusCode.ServiceUnavailable, errorCode: ErrorCode.ServerOffline, data: new() {
 				{ "id", serverIdentifier }
 			} );
 
 			// Fetch information about the action server
 			JsonObject? actionServer = await Helper.Prometheus.FetchActionServer( configuration, jobName, instanceAddress );
-			if ( actionServer == null ) return Response.SendJson( response, statusCode: HttpStatusCode.ServiceUnavailable, errorCode: ErrorCode.ActionServerUnknown, data: new JsonObject() {
+			if ( actionServer == null ) return Response.SendJson( response, statusCode: HttpStatusCode.ServiceUnavailable, errorCode: ErrorCode.ActionServerUnknown, data: new() {
 				{ "id", serverIdentifier }
 			} );
 			string actionServerAddress = actionServer.NestedGet<string>( "address" );
@@ -148,13 +148,13 @@ namespace ServerMonitor.Connector.Route {
 			JsonObject supportedActions = await FetchSupportedActions( configuration, actionServerAddress, actionServerPort, serverIdentifier );
 
 			// Ensure the action is valid
-			if ( supportedActions.ContainsKey( actionName ) == false ) return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.InvalidParameter, data: new JsonObject() {
+			if ( supportedActions.ContainsKey( actionName ) == false ) return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.InvalidParameter, data: new() {
 				{ "parameter", "action" },
 				{ "supportedActions", supportedActions }
 			} );
 
 			// Ensure the action can be executed
-			if ( supportedActions.NestedGet<bool>( actionName ) == false ) return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.ActionNotExecutable, data: new JsonObject() {
+			if ( supportedActions.NestedGet<bool>( actionName ) == false ) return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.ActionNotExecutable, data: new() {
 				{ "action", actionName }
 			} );
 

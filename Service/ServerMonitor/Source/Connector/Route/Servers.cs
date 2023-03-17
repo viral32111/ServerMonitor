@@ -14,7 +14,9 @@ namespace ServerMonitor.Connector.Route {
 		// Returns a list of all servers
 		[ Route( "GET", "/servers" ) ]
 		public static async Task<HttpListenerResponse> OnGetRequest( Config configuration, HttpListenerRequest request, HttpListenerResponse response, HttpListenerContext context ) {
-			return Response.SendJson( response, data: JSON.CreateJsonArray( await Helper.Prometheus.FetchServers( configuration ) ) );
+			return Response.SendJson( response, data: new() {
+				{ "servers", JSON.CreateJsonArray( await Helper.Prometheus.FetchServers( configuration ) ) }
+			} );
 		}
 
 	}

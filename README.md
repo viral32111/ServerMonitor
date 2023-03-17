@@ -2,24 +2,59 @@
 
 [![App](https://github.com/viral32111/ServerMonitor/actions/workflows/app.yml/badge.svg)](https://github.com/viral32111/ServerMonitor/actions/workflows/app.yml) [![Service](https://github.com/viral32111/ServerMonitor/actions/workflows/service.yml/badge.svg)](https://github.com/viral32111/ServerMonitor/actions/workflows/service.yml) [![CodeQL](https://github.com/viral32111/ServerMonitor/actions/workflows/codeql.yml/badge.svg)](https://github.com/viral32111/ServerMonitor/actions/workflows/codeql.yml) [![MVP](https://img.shields.io/github/v/release/viral32111/ServerMonitor?include_prereleases&label=Latest%20MVP)](https://github.com/viral32111/ServerMonitor/releases/latest) [![Issues](https://img.shields.io/github/issues-raw/viral32111/ServerMonitor?label=Issues)](https://github.com/viral32111/ServerMonitor/issues) [![Size](https://img.shields.io/github/repo-size/viral32111/ServerMonitor?label=Size)](https://github.com/viral32111/ServerMonitor) [![Commits](https://img.shields.io/github/commit-activity/w/viral32111/ServerMonitor?label=Commits)](https://github.com/viral32111/ServerMonitor/commits/main)
 
-This is a modern [Material 3](https://m3.material.io/) [Android app](/App) written in Kotlin for monitoring servers in real-time.
+A mobile app for monitoring server metrics & status information in real-time.
 
-The [backend API](/Service) is a [.NET Core 7.0](https://dotnet.microsoft.com/) console application written in C#.
+The [front-end client](/App/) is a modern [Material 3](https://m3.material.io/) Android application written in Kotlin for displaying, and the [back-end server service](/Service/) is a [.NET Core 7.0](https://dotnet.microsoft.com/) console application written in C# that acts as either a RESTful API or a Prometheus metrics exporter.
 
 **NOTE: This project is currently under development, so functionality is not guaranteed!**
 
 ## Usage
 
-A [Prometheus time-series database](https://prometheus.io/) is required for storing the metrics data. Additionally, a [Cloudflare Tunnel](https://www.cloudflare.com/en-gb/products/tunnel/) (or other secure HTTP tunnel) is highly recommended to protect the service and allow secure access to it from the mobile app.
+A [Prometheus time-series database](https://prometheus.io/) is required for storing the metrics data. Additionally, a [Cloudflare Tunnel](https://www.cloudflare.com/en-gb/products/tunnel/) (or other secure HTTP tunnel) is highly recommended to expose the RESTful API service to the Internet, allowing secure access to it from the Android application.
 
-1. Download the [latest release](https://github.com/viral32111/ServerMonitor/releases/latest) of the mobile app and server service.
-2. Install the service on all the servers you wish to manage.
-   * One server must be designated as the *"connection point"* for the mobile app to connect to & fetch metrics data from Prometheus. Start the service with the `connection` argument to run in this mode.
-   * All other servers must run in the *"collection"* mode for gathering metrics data for Prometheus to scrape. Start the service with the `collector` argument to run in this mode.
-3. Configure the service appropriately using the JSON configuration file or environment variables.
-4. Install the mobile app on your Android device & connect to the *"connection point"* service URL using any configured credentials.
+1. Download the [latest release](https://github.com/viral32111/ServerMonitor/releases/latest) of the Android application (`Server-Monitor-App.apk`) & server service (`Server-Monitor-Service.zip`).
+2. Install the server service on all the servers you wish to manage (the [.NET Core 7.0 Runtime](https://dotnet.microsoft.com/download/dotnet/7.0) is required).
+   * One server must be designated as the *"connector"* (RESTful API) for the Android application to fetch metrics data from. Start the service with the `connector` command-line argument to run in this mode.
+   * All other servers must run in the *"collection"* mode for gathering & exporting metrics data for Prometheus to scrape. Start the service with the `collector` command-line argument to run in this mode.
+3. Configure the server service appropriately using the JSON configuration file or environment variables ([see configuration](#Configuration)).
+4. Install the Android application on your device & connect to the publicly-accessible URL of the *"connector"* service using any of the configured credentials.
 
-Alternatively, use the [premade Docker image](https://github.com/users/viral32111/packages/container/package/server-monitor) by running `docker pull ghcr.io/viral32111/server-monitor:latest`. The configuration file is located at `/etc/server-monitor/config.json`.
+### Docker
+
+Alternatively, a [premade Docker image](https://github.com/users/viral32111/packages/container/package/server-monitor) of the back-end server service is available to simplify the process of deployment.
+
+Download & start the *"collector*" by running the following command:
+```
+docker container run \
+  --name server-monitor-collector \
+  --mount type=bind,source=/path/to/your/config.json,target=/etc/server-monitor/config.json \
+  --publish published=127.0.0.1:5000,target=5000,protocol=tcp \
+  --publish published=127.0.0.1:6997,target=6997,protocol=tcp \
+  --restart on-failure \
+  --pull always \
+  ghcr.io/viral32111/server-monitor:main-ubuntu
+  collector
+```
+
+* Use the `main-windows` image tag Windows-based Docker installations.
+* The JSON configuration file should be mounted at `/etc/server-monitor/config.json`.
+* By default the Prometheus metrics exporter uses port `5000`, and the action server uses port `6997`.
+
+Download & start the *"connector*" by running the following command:
+```
+docker container run \
+  --name server-monitor-connector \
+  --mount type=bind,source=/path/to/your/config.json,target=/etc/server-monitor/config.json \
+  --publish published=127.0.0.1:6996,target=6996,protocol=tcp \
+  --restart on-failure \
+  --pull always \
+  ghcr.io/viral32111/server-monitor:main-ubuntu
+  connector
+```
+
+* Use the `main-windows` image tag Windows-based Docker installations.
+* The JSON configuration file should be mounted at `/etc/server-monitor/config.json`.
+* By default the RESTful API uses port `6996`.
 
 ## Configuration
 
@@ -41,11 +76,15 @@ The configuration priority is as follows (higher entries will override previousl
 3. User-specific configuration file.
 4. System-wide configuration file.
 
+See [config.json](/Service/ServerMonitor/config.json) for an example configuration file.
+
 ## Building
 
-Build the mobile app with Gradle using `./gradlew assembleRelease` and optionally run tests using `./gradlew test` in the [`App`](/App) directory. The resulting APK file will be created at `App/app/build/outputs/apk/release/app-release.apk`.
+Build the Android application with Gradle using `./gradlew assembleRelease` and optionally run tests using `./gradlew test` in the [`App`](/App) directory. The resulting APK file will be created at `App/app/build/outputs/apk/release/app-release.apk`.
 
-Build the server service with .NET using `dotnet build --configuration Release` and optionally run tests using `dotnet test --configuration Release` in the [`Service`](/Service) directory. The resulting DLL file will be created at `Service/ServerMonitor/bin/Release/net7.0/ServerMonitor.dll`.
+Build the server service with .NET using `dotnet build --configuration Release` and optionally run tests using `dotnet test --configuration Release` in the [`Service`](/Service) directory. The resulting DLL file & dependencies will be created at `Service/ServerMonitor/bin/Release/net7.0/ServerMonitor.dll`.
+
+**NOTE**: You will need to add `https://nuget.pkg.github.com/viral32111/index.json` as a NuGet packages source, as one of the dependencies is my personal [JSON Extensions](https://github.com/viral32111/JsonExtensions) package.
 
 ## Progress
 

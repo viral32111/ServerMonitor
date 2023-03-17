@@ -147,7 +147,7 @@ namespace ServerMonitor.Collector {
 				// Ensure the authentication type is valid
 				if ( authorizationHeader[ 0 ] != "Key" ) {
 					logger.LogWarning( "Incorrect authentication type '{0}' (expected 'Key') for HTTP request '{1}' '{2}' from '{3}'", authorizationHeader[ 0 ], requestMethod, requestPath, requestAddress );
-					return Response.SendJson( response, statusCode: HttpStatusCode.Unauthorized, errorCode: ErrorCode.IncorrectAuthentication, data: new JsonObject() {
+					return Response.SendJson( response, statusCode: HttpStatusCode.Unauthorized, errorCode: ErrorCode.IncorrectAuthentication, data: new() {
 						{ "expected", "Key" }
 					} );
 				}
@@ -162,7 +162,7 @@ namespace ServerMonitor.Collector {
 			// Ensure the request is either GET or POST
 			if ( requestMethod != "GET" && requestMethod != "POST" ) {
 				logger.LogWarning( "Bad method '{0}' for HTTP request '{1}' '{2}' from '{3}'", requestMethod, requestMethod, requestPath, requestAddress );
-				return Response.SendJson( response, statusCode: HttpStatusCode.MethodNotAllowed, errorCode: ErrorCode.MethodNotAllowed, data: new JsonObject() {
+				return Response.SendJson( response, statusCode: HttpStatusCode.MethodNotAllowed, errorCode: ErrorCode.MethodNotAllowed, data: new() {
 					{ "expected", new JsonArray() { "GET", "POST" } }
 				} );
 			};
@@ -173,7 +173,7 @@ namespace ServerMonitor.Collector {
 			// Ensure a content type is provided
 			if ( contentType == null ) {
 				logger.LogWarning( "No content type for HTTP request '{0}' '{1}' from '{2}'", requestMethod, requestPath, requestAddress );
-				return Response.SendJson( response, statusCode: HttpStatusCode.UnsupportedMediaType, errorCode: ErrorCode.NoContentType, data: new JsonObject() {
+				return Response.SendJson( response, statusCode: HttpStatusCode.UnsupportedMediaType, errorCode: ErrorCode.NoContentType, data: new() {
 					{ "expected", "application/json" }
 				} );
 			}
@@ -181,7 +181,7 @@ namespace ServerMonitor.Collector {
 			// Ensure the content type is JSON
 			if ( contentType?.Contains( "application/json" ) == false ) {
 				logger.LogWarning( "Invalid content type '{0}' for HTTP request '{1}' '{2}' from '{3}'", contentType, requestMethod, requestPath, requestAddress );
-				return Response.SendJson( response, statusCode: HttpStatusCode.UnsupportedMediaType, errorCode: ErrorCode.InvalidContentType, data: new JsonObject() {
+				return Response.SendJson( response, statusCode: HttpStatusCode.UnsupportedMediaType, errorCode: ErrorCode.InvalidContentType, data: new() {
 					{ "expected", "application/json" }
 				} );
 			}
@@ -214,7 +214,7 @@ namespace ServerMonitor.Collector {
 			// Ensure the request payload contains the server identifier
 			if ( requestPayload.ContainsKey( "server" ) == false || string.IsNullOrWhiteSpace( requestPayload[ "server" ]?.GetValue<string?>() ) == true ) {
 				logger.LogWarning( "Missing server identifier property in payload for HTTP request '{0}' '{1}' from '{2}'", requestMethod, requestPath, requestAddress );
-				return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.MissingParameter, data: new JsonObject() {
+				return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.MissingParameter, data: new() {
 					{ "property", "server" }
 				} );
 			}
@@ -222,7 +222,7 @@ namespace ServerMonitor.Collector {
 			// Ensure the request payload contains the action name, if applicable
 			if ( requestMethod == "POST" && ( requestPayload.ContainsKey( "action" ) == false || string.IsNullOrWhiteSpace( requestPayload[ "action" ]?.GetValue<string?>() ) == true ) ) {
 				logger.LogWarning( "Missing action property in payload for HTTP request '{0}' '{1}' from '{2}'", requestMethod, requestPath, requestAddress );
-				return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.MissingParameter, data: new JsonObject() {
+				return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.MissingParameter, data: new() {
 					{ "property", "action" }
 				} );
 			}
@@ -230,7 +230,7 @@ namespace ServerMonitor.Collector {
 			// Ensure the request payload contains the service name, if applicable
 			if ( requestPath == "/service" && ( requestPayload.ContainsKey( "service" ) == false || string.IsNullOrWhiteSpace( requestPayload[ "service" ]?.GetValue<string?>() ) == true ) ) {
 				logger.LogWarning( "Missing service property in payload for HTTP request '{0}' '{1}' from '{2}'", requestMethod, requestPath, requestAddress );
-				return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.MissingParameter, data: new JsonObject() {
+				return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.MissingParameter, data: new() {
 					{ "property", "service" }
 				} );
 			}
@@ -249,7 +249,7 @@ namespace ServerMonitor.Collector {
 				instanceAddress = identifierParts[ 1 ];
 			} catch ( Exception ) {
 				logger.LogError( "Failed to decode server identifier '{0}' for HTTP request '{1}' '{2}' from '{3}'", serverIdentifier, requestMethod, requestPath, requestAddress );
-				return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.InvalidParameter, data: new JsonObject() {
+				return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.InvalidParameter, data: new() {
 					{ "property", "server" }
 				} );
 			}
@@ -259,7 +259,7 @@ namespace ServerMonitor.Collector {
 			string myInstanceAddress = string.Concat( configuration.PrometheusListenAddress, ":", configuration.PrometheusListenPort );
 			if ( instanceAddress != myInstanceAddress ) {
 				logger.LogWarning( "Mismatching server instance address '{0}' (expected '{1}') for HTTP request '{1}' '{2}' from '{3}'", instanceAddress, myInstanceAddress, requestMethod, requestPath, requestAddress );
-				return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.WrongServer, data: new JsonObject() {
+				return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.WrongServer, data: new() {
 					{ "address", myInstanceAddress }
 				} );
 			}
@@ -284,7 +284,7 @@ namespace ServerMonitor.Collector {
 		// Returns a list of actions this server supports
 		// NOTE: These are always true, because if this code is running then the server is obviously running too
 		private HttpListenerResponse ReturnServerActions( HttpListenerResponse response ) =>
-			Response.SendJson( response, statusCode: HttpStatusCode.NotImplemented, errorCode: ErrorCode.ExampleData, data: new JsonObject() {
+			Response.SendJson( response, statusCode: HttpStatusCode.NotImplemented, errorCode: ErrorCode.ExampleData, data: new() {
 				{ "shutdown", true },
 				{ "reboot", true }
 			} );
@@ -305,13 +305,13 @@ namespace ServerMonitor.Collector {
 			Services.Service? service = services.FirstOrDefault( service => service.Name == serviceName );
 			if ( service == null ) {
 				logger.LogWarning( "Unknown service '{0}'", serviceName );
-				return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServiceNotFound, data: new JsonObject() {
+				return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServiceNotFound, data: new() {
 					{ "service", serviceName }
 				} );
 			}
 
 			// Return the actions
-			return Response.SendJson( response, data: new JsonObject() {
+			return Response.SendJson( response, data: new() {
 				{ "start", service?.StatusCode != 0 },
 				{ "stop", service?.StatusCode == 1 },
 				{ "restart", service?.StatusCode != 0 }
@@ -339,7 +339,7 @@ namespace ServerMonitor.Collector {
 				else if ( actionName == "reboot" ) command.StartInfo.Arguments = "/r /t 60"; // Delay of 1 minute
 				else {
 					logger.LogWarning( "Unknown server action '{0}'", actionName );
-					return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.UnknownAction, data: new JsonObject() {
+					return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.UnknownAction, data: new() {
 						{ "action", actionName }
 					} );
 				}
@@ -351,7 +351,7 @@ namespace ServerMonitor.Collector {
 				else if ( actionName == "reboot" ) command.StartInfo.Arguments = "-r +1"; // Delay of 1 minute
 				else {
 					logger.LogWarning( "Unknown server action '{0}'", actionName );
-					return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.UnknownAction, data: new JsonObject() {
+					return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.UnknownAction, data: new() {
 						{ "action", actionName }
 					} );
 				}
@@ -367,7 +367,7 @@ namespace ServerMonitor.Collector {
 			command.WaitForExit();
 
 			// Respond with the results
-			return Response.SendJson( response, data: new JsonObject() {
+			return Response.SendJson( response, data: new() {
 				{ "exitCode", command.ExitCode },
 				{ "outputText", string.IsNullOrWhiteSpace( outputText ) == true ? "System will shutdown/reboot in 1 minute." : outputText },
 				{ "errorText", errorText }
@@ -391,7 +391,7 @@ namespace ServerMonitor.Collector {
 			Services.Service? service = services.FirstOrDefault( service => service.Name == serviceName );
 			if ( service == null ) {
 				logger.LogWarning( "Unknown service '{0}'", serviceName );
-				return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServiceNotFound, data: new JsonObject() {
+				return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServiceNotFound, data: new() {
 					{ "service", serviceName }
 				} );
 			}
@@ -407,7 +407,7 @@ namespace ServerMonitor.Collector {
 
 				if ( serviceController == null ) {
 					logger.LogWarning( "Unknown service '{0}'", serviceName );
-					return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServiceNotFound, data: new JsonObject() {
+					return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.ServiceNotFound, data: new() {
 						{ "service", serviceName }
 					} );
 				}
@@ -449,7 +449,7 @@ namespace ServerMonitor.Collector {
 					// Unknown action
 					} else {
 						logger.LogWarning( "Unknown service action '{0}'", actionName );
-						return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.UnknownAction, data: new JsonObject() {
+						return Response.SendJson( response, statusCode: HttpStatusCode.NotFound, errorCode: ErrorCode.UnknownAction, data: new() {
 							{ "action", actionName }
 						} );
 					}
@@ -457,7 +457,7 @@ namespace ServerMonitor.Collector {
 				// Something bad happened...
 				} catch ( Exception exception ) {
 					logger.LogError( exception, "Failed to execute service action '{0}' on service '{1}'", actionName, serviceName );
-					return Response.SendJson( response, data: new JsonObject() {
+					return Response.SendJson( response, data: new() {
 						{ "exitCode", 1 },
 						{ "outputText", string.Empty },
 						{ "errorText", exception.Message }
@@ -465,7 +465,7 @@ namespace ServerMonitor.Collector {
 				}
 
 				// If we got here, the action was successful
-				return Response.SendJson( response, data: new JsonObject() {
+				return Response.SendJson( response, data: new() {
 					{ "exitCode", 0 },
 					{ "outputText", string.Empty },
 					{ "errorText", string.Empty }
@@ -496,7 +496,7 @@ namespace ServerMonitor.Collector {
 				command.WaitForExit();
 
 				// Respond with the results
-				return Response.SendJson( response, data: new JsonObject() {
+				return Response.SendJson( response, data: new() {
 					{ "exitCode", command.ExitCode },
 					{ "outputText", outputText },
 					{ "errorText", errorText }

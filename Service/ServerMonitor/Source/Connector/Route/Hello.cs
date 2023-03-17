@@ -17,7 +17,7 @@ namespace ServerMonitor.Connector.Route {
 		public static async Task<HttpListenerResponse> OnGetRequest( Config configuration, HttpListenerRequest request, HttpListenerResponse response, HttpListenerContext context ) {
 			logger.LogInformation( "Hello, {0}!", context.User!.Identity!.Name );
 
-			return Response.SendJson( response, data: new JsonObject() {
+			return Response.SendJson( response, data: new() {
 				{ "message", "Hello World!" }
 			} );
 		}
