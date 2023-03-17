@@ -1,18 +1,22 @@
 package com.viral32111.servermonitor
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.appcompat.app.ActionBar
+import androidx.appcompat.app.AppCompatActivity
 import com.android.volley.*
 import com.google.android.material.appbar.MaterialToolbar
 
 class ServersActivity : AppCompatActivity() {
 
 	// Runs when the activity is created...
-	override fun onCreate( savedInstanceState: Bundle? ) {
+	@SuppressLint( "InflateParams" ) // We intend to pass null to our layout inflater
+	override fun onCreate(savedInstanceState: Bundle? ) {
 
 		// Run default action & display the relevant layout file
 		super.onCreate( savedInstanceState )
@@ -43,6 +47,9 @@ class ServersActivity : AppCompatActivity() {
 
 			return@setOnMenuItemClickListener true
 		}
+
+		// Get all the UI
+		val linearLayout = findViewById<LinearLayout>( R.id.serversLinearLayout )
 
 		// Get the persistent settings - https://developer.android.com/training/data-storage/shared-preferences
 		val sharedPreferences = getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE )
@@ -82,15 +89,15 @@ class ServersActivity : AppCompatActivity() {
 				for ( _server in servers ) {
 					val server = _server.asJsonObject
 
-					val identifier = server.get( "identifier" )?.asString
-					val jobName = server.get( "jobName" )?.asString
-					val instanceAddress = server.get( "instanceAddress" )?.asString
-					val lastScrape = server.get( "lastScrape" )?.asBigInteger
-					val hostName = server.get( "hostName" )?.asString
-					val operatingSystem = server.get( "operatingSystem" )?.asString
-					val architecture = server.get( "architecture" )?.asString
-					val version = server.get( "version" )?.asString
-					val uptimeSeconds = server.get( "uptimeSeconds" )?.asBigInteger
+					val identifier = server.get( "identifier" ).asString
+					val jobName = server.get( "jobName" ).asString
+					val instanceAddress = server.get( "instanceAddress" ).asString
+					val lastScrape = server.get( "lastScrape" ).asBigInteger
+					val hostName = server.get( "hostName" ).asString
+					val operatingSystem = server.get( "operatingSystem" ).asString
+					val architecture = server.get( "architecture" ).asString
+					val version = server.get( "version" ).asString
+					val uptimeSeconds = server.get( "uptimeSeconds" ).asBigInteger
 
 					Log.d( Shared.logTag, "Identifier: '${ identifier }'" )
 					Log.d( Shared.logTag, "Job Name: '${ jobName }'" )
@@ -101,6 +108,40 @@ class ServersActivity : AppCompatActivity() {
 					Log.d( Shared.logTag, "Architecture: '${ architecture }'" )
 					Log.d( Shared.logTag, "Version: '${ version }'" )
 					Log.d( Shared.logTag, "Uptime: '${ uptimeSeconds }' seconds" )
+
+					val serverView = layoutInflater.inflate( R.layout.server, null )
+					val serverViewTitleTextView = serverView.findViewById<TextView>( R.id.serverTitleTextView )
+					val serverViewStatusTextView = serverView.findViewById<TextView>( R.id.serverStatusTextView )
+					val serverViewProcessorTextView = serverView.findViewById<TextView>( R.id.serverProcessorUsageTextView )
+					val serverViewMemoryTextView = serverView.findViewById<TextView>( R.id.serverMemoryUsageTextView )
+					val serverViewTemperatureTextView = serverView.findViewById<TextView>( R.id.serverTemperatureValueTextView )
+					val serverViewServiceTextView = serverView.findViewById<TextView>( R.id.serverServicesCountTextView )
+					val serverViewNetworkTextView = serverView.findViewById<TextView>( R.id.serverNetworkUsageTextView )
+					val serverViewDiskTextView = serverView.findViewById<TextView>( R.id.serverDiskUsageTextView )
+					val serverViewUptimeTextView = serverView.findViewById<TextView>( R.id.serverUptimeTextView )
+
+					serverView.setOnClickListener {
+						Log.d( Shared.logTag, "Server '${ hostName }' ('${ identifier }', '${ jobName }', '${ instanceAddress }') pressed" )
+					}
+
+					serverViewTitleTextView.text = hostName.uppercase()
+
+					if ( uptimeSeconds >= 0.toBigInteger() ) {
+						serverViewStatusTextView.text = getString( R.string.serversTextViewServerStatusOnline )
+						serverViewUptimeTextView.text = uptimeSeconds.toString() // TODO
+
+					} else {
+						serverViewStatusTextView.text = getString( R.string.serversTextViewServerStatusOffline )
+						serverViewProcessorTextView.text = String.format( getString( R.string.serversTextViewServerProcessorUsage ), 0 )
+						serverViewMemoryTextView.text = String.format( getString( R.string.serversTextViewServerMemoryUsage ), 0, "K" )
+						serverViewTemperatureTextView.text = String.format( getString( R.string.serversTextViewServerTemperatureValue ), 0 )
+						serverViewServiceTextView.text = String.format( getString( R.string.serversTextViewServerServicesCount ), 0 )
+						serverViewNetworkTextView.text = String.format( getString( R.string.serversTextViewServerNetworkUsage ), 0, "K" )
+						serverViewDiskTextView.text = String.format( getString( R.string.serversTextViewServerDiskUsage ), 0, "K" )
+						serverViewUptimeTextView.text = getString( R.string.serversTextViewServerUptimeOffline )
+					}
+
+					linearLayout.addView( serverView ) // https://stackoverflow.com/a/8956861
 				}
 			} else {
 				Log.e( Shared.logTag, "Servers array from API is null?!" )

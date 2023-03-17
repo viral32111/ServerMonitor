@@ -38,7 +38,7 @@ class SetupActivity : AppCompatActivity() {
 		materialToolbar?.isTitleCentered = true
 		Log.d( Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered })" )
 
-		// Get all UI controls
+		// Get all the UI
 		instanceUrlEditText = findViewById( R.id.settingsInstanceUrlEditText )
 		credentialsUsernameEditText = findViewById( R.id.setupCredentialsUsernameEditText )
 		credentialsPasswordEditText = findViewById( R.id.setupCredentialsPasswordEditText )
