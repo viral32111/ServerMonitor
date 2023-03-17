@@ -140,14 +140,15 @@ namespace ServerMonitor.Connector {
 			HttpListenerResponse response = context.Response;
 			string requestMethod = request.HttpMethod;
 			string requestPath = request.Url?.AbsolutePath ?? "/";
-			string requestAddress = string.Empty;
-			try {
+			string? requestAddress = request.Headers.Get( configuration.HTTPProxyAddressHeader );
+			if ( requestAddress == null ) try {
+				logger.LogDebug( "No proxied IP address in HTTP header '{0}', falling back to remote endpoint...", configuration.HTTPProxyAddressHeader );
 				requestAddress = request.RemoteEndPoint.Address.ToString();
 			} catch ( NullReferenceException ) {
-				logger.LogError( "No remote IP address for API request '{0}' '{1}'", requestMethod, requestPath );
+				logger.LogError( "No remote IP address for HTTP request '{0}' '{1}'", requestMethod, requestPath );
 				return response;
 			}
-			logger.LogDebug( "Incoming HTTP request '{0}' '{1}' from '{2}'", requestMethod, requestPath, requestAddress );
+			logger.LogInformation( "Incoming HTTP request '{0}' '{1}' from '{2}'", requestMethod, requestPath, requestAddress );
 
 			// Ensure basic authentication was used - https://stackoverflow.com/q/570605
 			HttpListenerBasicIdentity? basicAuthentication = ( HttpListenerBasicIdentity? ) context.User?.Identity;

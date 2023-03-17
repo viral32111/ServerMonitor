@@ -119,9 +119,10 @@ namespace ServerMonitor {
 		public required string CloudflareAccessServiceTokenId { get; set; } = "";
 		public required string CloudflareAccessServiceTokenSecret { get; set; } = "";
 
-		// HTTP client options
+		// HTTP options
 		public required int HTTPClientTimeoutSeconds { get; set; } = 30;
 		public required string HTTPClientUserAgent { get; set; } = "ServerMonitor/0.0.0 (https://viral32111.com; contact@viral32111.com)";
+		public required string HTTPProxyAddressHeader { get; set; } = "X-Forwarded-For";
 
 		// Collector options
 		public required string CollectorActionListenAddress { get; set; } = "127.0.0.1";

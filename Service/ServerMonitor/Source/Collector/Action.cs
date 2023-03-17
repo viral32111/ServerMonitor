@@ -118,8 +118,9 @@ namespace ServerMonitor.Collector {
 			HttpListenerResponse response = context.Response;
 			string requestMethod = request.HttpMethod;
 			string requestPath = request.Url?.AbsolutePath ?? "/";
-			string requestAddress = string.Empty;
-			try {
+			string? requestAddress = request.Headers.Get( configuration.HTTPProxyAddressHeader );
+			if ( requestAddress == null ) try {
+				logger.LogDebug( "No proxied IP address in HTTP header '{0}', falling back to remote endpoint...", configuration.HTTPProxyAddressHeader );
 				requestAddress = request.RemoteEndPoint.Address.ToString();
 			} catch ( NullReferenceException ) {
 				logger.LogError( "No remote IP address for HTTP request '{0}' '{1}'", requestMethod, requestPath );
