@@ -5,8 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.view.animation.AccelerateDecelerateInterpolator
-import android.view.animation.AccelerateInterpolator
+import android.view.animation.Animation
 import android.view.animation.LinearInterpolator
 import android.widget.ProgressBar
 import android.widget.TextView
@@ -118,6 +117,48 @@ class ServersActivity : AppCompatActivity() {
 		progressBarAnimation.interpolator = LinearInterpolator() // We want linear, not accelerate-decelerate interpolation
 		progressBarAnimation.duration = 10000 // 10 seconds
 
+		//progressBarAnimation.repeatMode = Animation.RESTART
+		//progressBarAnimation.repeatCount = Animation.INFINITE
+
+		// https://medium.com/android-news/handsome-codes-with-kotlin-6e183db4c7e5
+		progressBarAnimation.setAnimationListener( object : Animation.AnimationListener {
+			override fun onAnimationStart( animation: Animation? ) {
+				Log.d( Shared.logTag, "Animation started" )
+			}
+
+			override fun onAnimationEnd( animation: Animation? ) {
+				Log.d( Shared.logTag, "Animation ended" )
+
+				swipeRefreshLayout.isRefreshing = true
+
+				// Fetch the servers...
+				fetchServers( instanceUrl, credentialsUsername, credentialsPassword, { servers ->
+
+					// Update the overall status
+					statusTitleTextView.text = getString( R.string.serversTextViewStatusTitleGood )
+					statusTitleTextView.setTextColor( getColor( R.color.statusGood ) )
+					statusDescriptionTextView.text = getString( R.string.serversTextViewStatusDescriptionGood )
+
+					// Create a new adapter for the recycler view
+					val serverAdapter = ServerAdapter( servers, applicationContext ) { server ->
+						Log.d( Shared.logTag, "Server '${ server.HostName }' ('${ server.Identifier }', '${ server.JobName }', '${ server.InstanceAddress }') pressed" )
+					}
+					recyclerView.swapAdapter( serverAdapter, false )
+
+					// Update the recycler view & restart refresh countdown
+					serverAdapter.notifyItemRangeChanged( 0, servers.size )
+					refreshProgressBar.startAnimation( progressBarAnimation )
+
+					swipeRefreshLayout.isRefreshing = false
+
+				}, false )
+			}
+
+			override fun onAnimationRepeat( animation: Animation? ) {
+				Log.d( Shared.logTag, "Animation repeated" )
+			}
+		} )
+
 		refreshProgressBar.startAnimation( progressBarAnimation )
 
 		// When we're swiped down to refresh...
@@ -131,7 +172,7 @@ class ServersActivity : AppCompatActivity() {
 			// Fetch the servers...
 			fetchServers( instanceUrl, credentialsUsername, credentialsPassword, { servers ->
 
-				// Set the overall status
+				// Update the overall status
 				statusTitleTextView.text = getString( R.string.serversTextViewStatusTitleGood )
 				statusTitleTextView.setTextColor( getColor( R.color.statusGood ) )
 				statusDescriptionTextView.text = getString( R.string.serversTextViewStatusDescriptionGood )
