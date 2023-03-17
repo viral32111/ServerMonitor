@@ -1,6 +1,7 @@
 package com.viral32111.servermonitor
 
 import android.content.Context
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -25,6 +26,8 @@ class ServerAdapter( private val servers: Array<Server>, private val context: Co
 		val uptimeTextView: TextView
 
 		init {
+			Log.d( Shared.logTag, "Initialising new view holder..." )
+
 			constraintLayout = view.findViewById( R.id.serverConstraintLayout )
 			titleTextView = view.findViewById( R.id.serverTitleTextView )
 			statusTextView = view.findViewById( R.id.serverStatusTextView )
@@ -40,12 +43,14 @@ class ServerAdapter( private val servers: Array<Server>, private val context: Co
 
 	// Creates new views - called by the layout manager
 	override fun onCreateViewHolder( viewGroup: ViewGroup, viewType: Int ): ViewHolder {
+		Log.d( Shared.logTag, "Creating new server view..." )
 		return ViewHolder( LayoutInflater.from( viewGroup.context ).inflate( R.layout.server, viewGroup, false ) )
 	}
 
 	// Replaces the contents of a view - called by the layout manager
 	override fun onBindViewHolder( viewHolder: ViewHolder, index: Int ) {
 		val server = servers[ index ]
+		Log.d( Shared.logTag, "Replacing view for server '${ server.HostName }' ('${ server.Identifier }', '${ server.JobName }', '${ server.InstanceAddress }')..." )
 
 		// https://stackoverflow.com/a/49969478
 		viewHolder.constraintLayout.setOnClickListener {

@@ -140,7 +140,7 @@ class ServersActivity : AppCompatActivity() {
 				val serverAdapter = ServerAdapter( servers, this ) { server ->
 					Log.d( Shared.logTag, "Server '${ server.HostName }' ('${ server.Identifier }', '${ server.JobName }', '${ server.InstanceAddress }') pressed" )
 				}
-				recyclerView.swapAdapter( serverAdapter, true )
+				recyclerView.swapAdapter( serverAdapter, false )
 
 				// Update the recycler view, stop loading & restart refresh countdown
 				serverAdapter.notifyItemRangeChanged( 0, servers.size )
