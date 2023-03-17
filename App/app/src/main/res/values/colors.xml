@@ -29,4 +29,14 @@
 
 	<color name="textColorHint">#A1887F</color>
 
+	<!-- Server in server list -->
+	<color name="serverBackground">#F2F2F2</color>
+	<color name="serverStroke">#EDEDED</color>
+
+	<!-- Status text -->
+	<color name="statusGood">#209313</color>
+	<color name="statusWarning">#E88E27</color>
+	<color name="statusBad">#EF1C1C</color>
+	<color name="statusDead">#999999</color>
+
 </resources>

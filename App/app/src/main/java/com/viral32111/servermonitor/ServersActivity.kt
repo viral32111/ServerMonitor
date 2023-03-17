@@ -8,7 +8,6 @@ import android.util.Log
 import androidx.appcompat.app.ActionBar
 import com.android.volley.*
 import com.google.android.material.appbar.MaterialToolbar
-import com.google.gson.JsonObject
 
 class ServersActivity : AppCompatActivity() {
 

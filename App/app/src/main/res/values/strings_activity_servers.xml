@@ -26,4 +26,30 @@
 	<string name="serversDialogProgressServersTitle">Servers</string>
 	<string name="serversDialogProgressServersMessage">Fetching the list of servers…</string>
 
+	<!-- Overall status -->
+	<string name="serversTextViewStatusTitleGood">ALL GOOD</string>
+	<string name="serversTextViewStatusTitleBad">ONGOING ISSUES</string>
+	<string name="serversTextViewStatusTitleDead">UNKNOWN</string>
+	<string name="serversTextViewStatusDescriptionGood">There have been no issues today.</string>
+	<string name="serversTextViewStatusDescriptionBad">There have been %d issues today.</string>
+	<string name="serversTextViewStatusDescriptionDead">Server information unavailable.</string>
+
+	<!-- Server in the servers list -->
+	<string name="serversTextViewServerTitle">%s</string>
+	<string name="serversTextViewServerStatusOnline">ONLINE</string>
+	<string name="serversTextViewServerStatusOffline">OFFLINE</string>
+	<string name="serversTextViewServerProcessorUsage">%d%%</string>
+	<string name="serversTextViewServerProcessorLabel">Processor</string>
+	<string name="serversTextViewServerMemoryUsage">%d%s</string>
+	<string name="serversTextViewServerMemoryLabel">Memory</string>
+	<string name="serversTextViewServerTemperatureValue">%d℃</string>
+	<string name="serversTextViewServerTemperatureLabel">Temperature</string>
+	<string name="serversTextViewServerServicesCount">%d</string>
+	<string name="serversTextViewServerServicesLabel">Services</string>
+	<string name="serversTextViewServerNetworkUsage">%d%s</string>
+	<string name="serversTextViewServerNetworkLabel">Net I/O</string>
+	<string name="serversTextViewServerDiskUsage">%d%s</string>
+	<string name="serversTextViewServerDiskLabel">Disk I/O</string>
+	<string name="serversTextViewServerUptime">Up for %d days, %d hours, %d minutes.</string>
+
 </resources>

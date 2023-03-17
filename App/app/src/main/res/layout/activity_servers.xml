@@ -7,21 +7,302 @@
 	android:layout_height="match_parent"
 	tools:context=".ServersActivity">
 
+	<TextView
+		android:id="@+id/serversStatusTitleTextView"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_marginStart="@dimen/margin_left"
+		android:layout_marginTop="@dimen/margin_top"
+		android:layout_marginEnd="@dimen/margin_right"
+		android:text="@string/serversTextViewStatusTitleDead"
+		android:textColor="@color/statusDead"
+		android:textSize="24sp"
+		android:textStyle="bold"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toTopOf="parent"
+		tools:ignore="TextContrastCheck" />
+
+	<TextView
+		android:id="@+id/serversStatusDescriptionTextView"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_marginStart="@dimen/margin_top"
+		android:layout_marginTop="8dp"
+		android:layout_marginEnd="@dimen/margin_right"
+		android:text="@string/serversTextViewStatusDescriptionDead"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toBottomOf="@+id/serversStatusTitleTextView" />
+
 	<ScrollView
 		android:id="@+id/serversScrollView"
-		android:layout_width="match_parent"
-		android:layout_height="match_parent"
+		android:layout_width="0dp"
+		android:layout_height="0dp"
+		android:layout_marginTop="16dp"
 		android:contentDescription="@string/serversScrollViewSpeakableText"
 		app:layout_constraintBottom_toBottomOf="parent"
 		app:layout_constraintEnd_toEndOf="parent"
 		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toTopOf="parent">
+		app:layout_constraintTop_toBottomOf="@+id/serversStatusDescriptionTextView">
 
 		<LinearLayout
 			android:id="@+id/serversLinearLayout"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:orientation="vertical" />
+			android:orientation="vertical"
+			android:paddingHorizontal="@dimen/serversListPadding">
+
+			<androidx.constraintlayout.widget.ConstraintLayout
+				android:id="@+id/serversServerConstraintLayout"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:background="@drawable/shape_server"
+				android:paddingHorizontal="6dp"
+				android:paddingVertical="4dp">
+
+				<TextView
+					android:id="@+id/serversServerTitleTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginStart="4dp"
+					android:layout_marginEnd="6dp"
+					android:text="@string/serversTextViewServerTitle"
+					android:textAlignment="textStart"
+					android:textStyle="bold"
+					app:layout_constraintEnd_toStartOf="@+id/serversServerStatusTextView"
+					app:layout_constraintHorizontal_bias="0.0"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toTopOf="parent" />
+
+				<TextView
+					android:id="@+id/serversServerStatusTextView"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:layout_marginStart="6dp"
+					android:layout_marginEnd="4dp"
+					android:text="@string/serversTextViewServerStatusOffline"
+					android:textAlignment="textEnd"
+					android:textColor="@color/statusDead"
+					android:textStyle="bold"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintHorizontal_bias="1.0"
+					app:layout_constraintStart_toEndOf="@+id/serversServerTitleTextView"
+					app:layout_constraintTop_toTopOf="parent"
+					tools:ignore="TextContrastCheck" />
+
+				<View
+					android:id="@+id/serversServerTitleDivider"
+					android:layout_width="0dp"
+					android:layout_height="1dp"
+					android:layout_marginTop="4dp"
+					android:background="?android:attr/listDivider"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serversServerTitleTextView" />
+
+				<TextView
+					android:id="@+id/serversServerProcessorUsageTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginStart="4dp"
+					android:layout_marginTop="4dp"
+					android:layout_marginEnd="8dp"
+					android:text="@string/serversTextViewServerProcessorUsage"
+					android:textAlignment="center"
+					android:textColor="@color/statusDead"
+					android:textSize="20sp"
+					app:layout_constraintEnd_toStartOf="@+id/serversServerMemoryUsageTextView"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serversServerTitleDivider"
+					tools:ignore="TextContrastCheck" />
+
+				<TextView
+					android:id="@+id/serversServerProcessorLabelTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginStart="4dp"
+					android:layout_marginEnd="8dp"
+					android:text="@string/serversTextViewServerProcessorLabel"
+					android:textAlignment="center"
+					app:layout_constraintEnd_toStartOf="@+id/serversServerMemoryLabelTextView"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serversServerProcessorUsageTextView" />
+
+				<TextView
+					android:id="@+id/serversServerMemoryLabelTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginStart="8dp"
+					android:layout_marginEnd="8dp"
+					android:text="@string/serversTextViewServerMemoryLabel"
+					android:textAlignment="center"
+					app:layout_constraintEnd_toStartOf="@+id/serversServerTemperatureLabelTextView"
+					app:layout_constraintStart_toEndOf="@+id/serversServerProcessorLabelTextView"
+					app:layout_constraintTop_toBottomOf="@+id/serversServerMemoryUsageTextView" />
+
+				<TextView
+					android:id="@+id/serversServerMemoryUsageTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginStart="8dp"
+					android:layout_marginTop="4dp"
+					android:layout_marginEnd="8dp"
+					android:text="@string/serversTextViewServerMemoryUsage"
+					android:textAlignment="center"
+					android:textColor="@color/statusDead"
+					android:textSize="20sp"
+					app:layout_constraintEnd_toStartOf="@+id/serversServerTemperatureValueTextView"
+					app:layout_constraintStart_toEndOf="@+id/serversServerProcessorUsageTextView"
+					app:layout_constraintTop_toBottomOf="@+id/serversServerTitleDivider"
+					tools:ignore="TextContrastCheck" />
+
+				<TextView
+					android:id="@+id/serversServerTemperatureValueTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginStart="8dp"
+					android:layout_marginEnd="4dp"
+					android:text="@string/serversTextViewServerTemperatureValue"
+					android:textAlignment="center"
+					android:textColor="@color/statusDead"
+					android:textSize="20sp"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toEndOf="@+id/serversServerMemoryUsageTextView"
+					app:layout_constraintTop_toTopOf="@+id/serversServerMemoryUsageTextView"
+					tools:ignore="TextContrastCheck" />
+
+				<TextView
+					android:id="@+id/serversServerTemperatureLabelTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginStart="8dp"
+					android:layout_marginEnd="4dp"
+					android:text="@string/serversTextViewServerTemperatureLabel"
+					android:textAlignment="center"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toEndOf="@+id/serversServerMemoryLabelTextView"
+					app:layout_constraintTop_toBottomOf="@+id/serversServerTemperatureValueTextView" />
+
+				<TextView
+					android:id="@+id/serversServerServicesCountTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginStart="4dp"
+					android:layout_marginTop="8dp"
+					android:layout_marginEnd="8dp"
+					android:text="@string/serversTextViewServerServicesCount"
+					android:textAlignment="center"
+					android:textColor="@color/statusDead"
+					android:textSize="20sp"
+					app:layout_constraintEnd_toStartOf="@+id/serversServerNetworkUsageTextView"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serversServerProcessorLabelTextView"
+					tools:ignore="TextContrastCheck" />
+
+				<TextView
+					android:id="@+id/serversServerServicesLabelTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginStart="4dp"
+					android:layout_marginEnd="8dp"
+					android:layout_marginBottom="4dp"
+					android:text="@string/serversTextViewServerServicesLabel"
+					android:textAlignment="center"
+					app:layout_constraintBottom_toTopOf="@+id/serversServerUptimeDivider"
+					app:layout_constraintEnd_toStartOf="@+id/serversServerNetworkLabelTextView"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serversServerServicesCountTextView"
+					app:layout_constraintVertical_bias="0.0" />
+
+				<TextView
+					android:id="@+id/serversServerNetworkLabelTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginStart="8dp"
+					android:layout_marginEnd="8dp"
+					android:layout_marginBottom="4dp"
+					android:text="@string/serversTextViewServerNetworkLabel"
+					android:textAlignment="center"
+					app:layout_constraintBottom_toTopOf="@+id/serversServerUptimeDivider"
+					app:layout_constraintEnd_toStartOf="@+id/serversServerDiskLabelTextView"
+					app:layout_constraintStart_toEndOf="@+id/serversServerServicesLabelTextView"
+					app:layout_constraintTop_toBottomOf="@+id/serversServerNetworkUsageTextView"
+					app:layout_constraintVertical_bias="0.0" />
+
+				<TextView
+					android:id="@+id/serversServerNetworkUsageTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginStart="8dp"
+					android:layout_marginTop="8dp"
+					android:layout_marginEnd="8dp"
+					android:text="@string/serversTextViewServerNetworkUsage"
+					android:textAlignment="center"
+					android:textColor="@color/statusDead"
+					android:textSize="20sp"
+					app:layout_constraintEnd_toStartOf="@+id/serversServerDiskUsageTextView"
+					app:layout_constraintStart_toEndOf="@+id/serversServerServicesCountTextView"
+					app:layout_constraintTop_toBottomOf="@+id/serversServerMemoryLabelTextView"
+					tools:ignore="TextContrastCheck" />
+
+				<TextView
+					android:id="@+id/serversServerDiskLabelTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginStart="8dp"
+					android:layout_marginEnd="4dp"
+					android:layout_marginBottom="4dp"
+					android:text="@string/serversTextViewServerDiskLabel"
+					android:textAlignment="center"
+					app:layout_constraintBottom_toTopOf="@+id/serversServerUptimeDivider"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toEndOf="@+id/serversServerNetworkLabelTextView"
+					app:layout_constraintTop_toBottomOf="@+id/serversServerDiskUsageTextView"
+					app:layout_constraintVertical_bias="0.0" />
+
+				<TextView
+					android:id="@+id/serversServerDiskUsageTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginStart="8dp"
+					android:layout_marginTop="8dp"
+					android:layout_marginEnd="4dp"
+					android:text="@string/serversTextViewServerDiskUsage"
+					android:textAlignment="center"
+					android:textColor="@color/statusDead"
+					android:textSize="20sp"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toEndOf="@+id/serversServerNetworkUsageTextView"
+					app:layout_constraintTop_toBottomOf="@+id/serversServerTemperatureLabelTextView"
+					tools:ignore="TextContrastCheck" />
+
+				<View
+					android:id="@+id/serversServerUptimeDivider"
+					android:layout_width="0dp"
+					android:layout_height="1dp"
+					android:layout_marginBottom="4dp"
+					android:background="?android:attr/listDivider"
+					app:layout_constraintBottom_toTopOf="@+id/serversServerUptimeTextView"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent" />
+
+				<TextView
+					android:id="@+id/serversServerUptimeTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginStart="4dp"
+					android:layout_marginTop="4dp"
+					android:layout_marginEnd="4dp"
+					android:text="@string/serversTextViewServerUptime"
+					android:textAlignment="center"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serversServerUptimeDivider" />
+
+			</androidx.constraintlayout.widget.ConstraintLayout>
+
+		</LinearLayout>
 	</ScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
