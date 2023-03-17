@@ -291,9 +291,9 @@ class SetupActivity : AppCompatActivity() {
 
 			// Switch to the Servers activity if there's more than 1 server, otherwise switch to the Server activity
 			// NOTE: This will fallback to 2 servers, as that will show the Servers activity which is capable of displaying only 1 server
+			Log.d( Shared.logTag, "Switching to next activity..." )
 			startActivity( Intent( this, if ( ( servers?.size() ?: 2 ) > 1) ServersActivity::class.java else ServerActivity::class.java ) )
 			overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
-			Log.d( Shared.logTag, "Switching to next activity..." )
 
 			// Remove this activity from the back button history
 			finish()

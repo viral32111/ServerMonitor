@@ -4,4 +4,26 @@
 	<!-- Title on the action bar -->
 	<string name="serversActionBarTitle">Servers</string>
 
+	<!-- Screen reader description of scroll view -->
+	<string name="serversScrollViewSpeakableText">List of servers</string>
+	
+	<!-- Toasts for fetch servers -->
+	<string name="serversToastServersAuthenticationUnknownUser">No credentials exist with the configured username.</string>
+	<string name="serversToastServersAuthenticationIncorrectPassword">The configured instance password is incorrect.</string>
+	<string name="serversToastServersAuthenticationFailure">The configured instance credentials are incorrect.</string>
+	<string name="serversToastServersNotFound">Unable to find the fetch servers API route.</string>
+	<string name="serversToastServersClientFailure">The device encountered an error sending the request.</string>
+	<string name="serversToastServersUnavailable">The configured instance is unavailable at the moment.</string>
+	<string name="serversToastServersServerFailure">The API encountered an error processing the request.</string>
+	<string name="serversToastServersNoConnection">Unable to connect to API. Is the instance URL correct and are you connected to the Internet?</string>
+	<string name="serversToastServersTimeout">Connection to API timed out. Are you connected to the Internet?</string>
+	<string name="serversToastServersParseFailure">Failed to parse API response as JSON. Is the URL correct?</string>
+	<string name="serversToastServersFailure">An unknown issue occurred while fetching the number of servers.</string>
+	<string name="serversToastServersCancel">The API request was cancelled.</string>
+	<string name="serversToastServersNull">Null property encountered in API response JSON.</string>
+
+	<!-- Progress dialog for fetch server count  -->
+	<string name="serversDialogProgressServersTitle">Servers</string>
+	<string name="serversDialogProgressServersMessage">Fetching the list of servers…</string>
+
 </resources>
