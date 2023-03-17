@@ -1,8 +1,11 @@
 package com.viral32111.servermonitor
 
 import android.app.Activity
+import android.util.Log
+import androidx.appcompat.app.AlertDialog
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.android.volley.Request
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 
 // Shows a toast popup at the bottom of the activity
@@ -20,4 +23,24 @@ fun requestMethodToName( method: Int ): String {
 		Request.Method.DELETE -> "DELETE"
 		else -> method.toString()
 	}
+}
+
+// Creates a popup with a progress spinner that can be cancelled - https://stackoverflow.com/a/14834802
+fun createProgressDialog( activity: Activity, titleId: Int, messageId: Int, cancelCallback: () -> Unit ): AlertDialog {
+	val dialogProgress = activity.layoutInflater.inflate( R.layout.dialog_progress, null )
+
+	return MaterialAlertDialogBuilder( activity )
+		.setTitle( titleId )
+		.setMessage( messageId )
+		.setView( dialogProgress )
+		.setNegativeButton( R.string.dialogProgressNegativeButton ) { _, _ ->
+			Log.d( Shared.logTag, "Progress dialog cancelled via negative button" )
+			cancelCallback.invoke()
+		}
+		.setOnCancelListener {
+			Log.d( Shared.logTag, "Progress dialog cancelled via dismiss/system back button" )
+			cancelCallback.invoke()
+		}
+		.create()
+
 }

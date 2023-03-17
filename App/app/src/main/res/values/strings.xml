@@ -12,5 +12,13 @@
 	<string name="toastInstanceTestTimeout">Connection timed out while testing instance. Are you connected to the Internet?</string>
 	<string name="toastInstanceTestParseFailure">Failed to parse instance response as JSON. Is the URL correct?</string>
 	<string name="toastInstanceTestFailure">An unknown issue occurred while testing the instance. Is everything correct?</string>
+	<string name="toastInstanceTestCancel">The instance test was cancelled.</string>
+
+	<!-- Progress dialog for instance test -->
+	<string name="dialogProgressInstanceTestTitle">Instance Test</string>
+	<string name="dialogProgressInstanceTestMessage">This shouldn\'t take too long…</string>
+
+	<!-- Progress dialog -->
+	<string name="dialogProgressNegativeButton">Cancel</string>
 
 </resources>

@@ -30,7 +30,7 @@
 	<!-- Continue button -->
 	<string name="setup_button_continue">Continue</string>
 
-	<!-- Toasts for get server count -->
+	<!-- Toasts for fetch server count -->
 	<string name="setupToastServerCountAuthenticationUnknownUser">No credentials exist with the configured instance username.</string>
 	<string name="setupToastServerCountAuthenticationIncorrectPassword">The configured instance password is incorrect.</string>
 	<string name="setupToastServerCountAuthenticationFailure">The configured instance credentials are incorrect.</string>
@@ -42,5 +42,10 @@
 	<string name="setupToastServerCountTimeout">Connection to API timed out. Are you connected to the Internet?</string>
 	<string name="setupToastServerCountParseFailure">Failed to parse API response as JSON. Is the URL correct?</string>
 	<string name="setupToastServerCountFailure">An unknown issue occurred while fetching the number of servers.</string>
+	<string name="setupToastServerCountCancel">The API request was cancelled.</string>
+
+	<!-- Progress dialog for fetch server count  -->
+	<string name="setupDialogProgressServerCountTitle">Server Count</string>
+	<string name="setupDialogProgressServerCountMessage">Fetching the list of servers…</string>
 
 </resources>

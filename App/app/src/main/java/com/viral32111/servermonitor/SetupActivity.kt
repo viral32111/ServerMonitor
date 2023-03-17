@@ -1,13 +1,12 @@
 package com.viral32111.servermonitor
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.view.View
 import android.widget.Button
 import android.widget.EditText
-import android.widget.ProgressBar
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
 import com.android.volley.*
@@ -20,10 +19,10 @@ class SetupActivity : AppCompatActivity() {
 	private lateinit var credentialsUsernameEditText: EditText
 	private lateinit var credentialsPasswordEditText: EditText
 	private lateinit var continueButton: Button
-	private lateinit var progressBar: ProgressBar
 
 	// Runs when the activity is created...
-	override fun onCreate( savedInstanceState: Bundle? ) {
+	@SuppressLint("InflateParams")
+	override fun onCreate(savedInstanceState: Bundle? ) {
 
 		// Display the layout
 		super.onCreate( savedInstanceState )
@@ -46,7 +45,6 @@ class SetupActivity : AppCompatActivity() {
 		credentialsUsernameEditText = findViewById( R.id.setupCredentialsUsernameEditText )
 		credentialsPasswordEditText = findViewById( R.id.setupCredentialsPasswordEditText )
 		continueButton = findViewById( R.id.settingsSaveButton )
-		progressBar = findViewById( R.id.setupProgressBar )
 		Log.d( Shared.logTag, "Got UI controls" )
 
 		// Get the persistent settings - https://developer.android.com/training/data-storage/shared-preferences
@@ -70,8 +68,8 @@ class SetupActivity : AppCompatActivity() {
 		// When the the continue button is pressed...
 		continueButton.setOnClickListener {
 
-			// Disable UI & show loading spinner
-			setLoading( true )
+			// Disable UI
+			enableInputs( true )
 
 			// Get the values in the text inputs
 			val instanceUrl = instanceUrlEditText.text.toString()
@@ -81,7 +79,7 @@ class SetupActivity : AppCompatActivity() {
 
 			// Do not continue if an instance URL wasn't provided
 			if ( instanceUrl.isBlank() ) {
-				setLoading( false )
+				enableInputs( false )
 				showBriefMessage( this, R.string.setupToastInstanceUrlEmpty )
 				Log.w( Shared.logTag, "Instance URL is empty" )
 				return@setOnClickListener
@@ -89,7 +87,7 @@ class SetupActivity : AppCompatActivity() {
 
 			// Do not continue if the URL isn't valid
 			if ( !validateInstanceUrl( instanceUrl ) ) {
-				setLoading( false )
+				enableInputs( false )
 				showBriefMessage( this, R.string.setupToastInstanceUrlInvalid )
 				Log.w( Shared.logTag, "Instance URL is invalid" )
 				return@setOnClickListener
@@ -97,7 +95,7 @@ class SetupActivity : AppCompatActivity() {
 
 			// Do not continue if a username wasn't provided
 			if ( credentialsUsername.isBlank() ) {
-				setLoading( false )
+				enableInputs( false )
 				showBriefMessage( this, R.string.setupToastCredentialsUsernameEmpty )
 				Log.w( Shared.logTag, "Username is empty" )
 				return@setOnClickListener
@@ -105,7 +103,7 @@ class SetupActivity : AppCompatActivity() {
 
 			// Do not continue if the username isn't valid
 			if ( !validateCredentialsUsername( credentialsUsername ) ) {
-				setLoading( false )
+				enableInputs( false )
 				showBriefMessage( this, R.string.setupToastCredentialsUsernameInvalid )
 				Log.w( Shared.logTag, "Username is invalid" )
 				return@setOnClickListener
@@ -113,7 +111,7 @@ class SetupActivity : AppCompatActivity() {
 
 			// Do not continue if a password wasn't provided
 			if ( credentialsPassword.isBlank() ) {
-				setLoading( false )
+				enableInputs( false )
 				showBriefMessage( this, R.string.setupToastCredentialsPasswordEmpty )
 				Log.w( Shared.logTag, "Password is empty" )
 				return@setOnClickListener
@@ -121,17 +119,25 @@ class SetupActivity : AppCompatActivity() {
 
 			// Do not continue if the password isn't valid
 			if ( !validateCredentialsPassword( credentialsPassword ) ) {
-				setLoading( false )
+				enableInputs( false )
 				showBriefMessage( this, R.string.setupToastCredentialsPasswordInvalid )
 				Log.w( Shared.logTag, "Password is invalid" )
 				return@setOnClickListener
 			}
 
+			// Create a progress dialog for the connector test
+			val progressDialog = createProgressDialog( this, R.string.dialogProgressInstanceTestTitle, R.string.dialogProgressInstanceTestMessage ) {
+				API.cancelQueue() // Cancel all pending HTTP requests
+				enableInputs( false ) // Enable UI
+				showBriefMessage( this, R.string.toastInstanceTestCancel )
+			}
+
 			// Test if a connector instance is running on this URL...
 			testInstance( instanceUrl, credentialsUsername, credentialsPassword, {
 
-				// Enable UI & hide loading spinner
-				setLoading( false )
+				// Hide the progress dialog & enable UI
+				progressDialog.hide()
+				enableInputs( false )
 
 				// Save the values to the shared preferences - https://developer.android.com/training/data-storage/shared-preferences#WriteSharedPreference
 				with ( sharedPreferences.edit() ) {
@@ -146,8 +152,12 @@ class SetupActivity : AppCompatActivity() {
 				switchActivity( instanceUrl, credentialsUsername, credentialsPassword )
 
 			}, {
-				setLoading( false ) // Enable UI & hide loading spinner
+				progressDialog.hide() // Hide the progress dialog
+				enableInputs( false ) // Enable UI
 			} )
+
+			// Show the progress dialog
+			progressDialog.show()
 
 		}
 
@@ -165,16 +175,16 @@ class SetupActivity : AppCompatActivity() {
 			credentialsUsernameEditText.setText( credentialsUsername )
 			credentialsPasswordEditText.setText( credentialsPassword )
 
-			// Disable input & show loading spinner
-			setLoading( true )
+			// Disable input
+			enableInputs( true )
 
 			// Test if this instance is running...
 			testInstance( instanceUrl, credentialsUsername, credentialsPassword, {
-				setLoading( false ) // Enable UI & hide loading spinner
+				enableInputs( false ) // Enable UI
 				switchActivity( instanceUrl, credentialsUsername, credentialsPassword ) // Change to the next appropriate activity
 			}, {
 				Log.e( Shared.logTag, "We may already be setup, but the instance is offline?" )
-				setLoading( false ) // Enable UI & hide loading spinner
+				enableInputs( false ) // Enable UI
 			} )
 		} else {
 			Log.d( Shared.logTag, "We're not setup yet! ('${ instanceUrl }', '${ credentialsUsername }', '${ credentialsPassword }')" )
@@ -182,10 +192,16 @@ class SetupActivity : AppCompatActivity() {
 
 	}
 
-	// Cancels pending HTTP requests when the app is closed
+	// When the activity is closed...
 	override fun onStop() {
 		super.onStop()
+
+		// Cancel all pending HTTP requests
 		API.cancelQueue()
+
+		// Enable UI
+		enableInputs( false )
+
 	}
 
 	// Tests if a connector instance is running on a given URL
@@ -240,7 +256,21 @@ class SetupActivity : AppCompatActivity() {
 
 	// Switches to the next activity
 	private fun switchActivity( instanceUrl: String, credentialsUsername: String, credentialsPassword: String ) {
+
+		// Create a progress dialog
+		val progressDialog = createProgressDialog( this, R.string.setupDialogProgressServerCountTitle, R.string.setupDialogProgressServerCountMessage ) {
+			API.cancelQueue() // Cancel all pending HTTP requests
+			enableInputs( false ) // Enable UI
+			showBriefMessage( this, R.string.setupToastServerCountCancel )
+		}
+
+		// Fetch the list of servers
 		API.getServers( instanceUrl, credentialsUsername, credentialsPassword, { serversData ->
+
+			// Hide the progress dialog
+			progressDialog.hide()
+
+			// Get the array
 			val servers = serversData?.get( "servers" )?.asJsonArray
 			Log.d( Shared.logTag, "Got '${ servers?.size() }' servers from API ('${ servers.toString() }')" )
 
@@ -255,6 +285,9 @@ class SetupActivity : AppCompatActivity() {
 
 		}, { error, statusCode, errorCode ->
 			Log.e( Shared.logTag, "Failed to get servers from API due to '${ error }' (Status Code: '${ statusCode }', Error Code: '${ errorCode }')" )
+
+			// Hide the progress dialog
+			progressDialog.hide()
 
 			when ( error ) {
 
@@ -294,20 +327,18 @@ class SetupActivity : AppCompatActivity() {
 
 			}
 		} )
+
+		// Show the progress dialog
+		progressDialog.show()
+
 	}
 
-	// Changes the UI so it indicates loading
-	private fun setLoading( isLoading: Boolean ) {
-
-		// Enable/disable user input
+	// Enables/disables user input
+	private fun enableInputs( isLoading: Boolean ) {
 		instanceUrlEditText.isEnabled = !isLoading
 		credentialsUsernameEditText.isEnabled = !isLoading
 		credentialsPasswordEditText.isEnabled = !isLoading
 		continueButton.isEnabled = !isLoading
-
-		// Show/hide progress spinner
-		progressBar.visibility = if ( isLoading ) View.VISIBLE else View.GONE
-
 	}
 
 }
