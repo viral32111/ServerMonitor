@@ -296,6 +296,7 @@ class SetupActivity : AppCompatActivity() {
 		} )
 	}
 
+	// Changes the UI so it indicates loading
 	private fun setLoading( isLoading: Boolean ) {
 
 		// Enable/disable user input

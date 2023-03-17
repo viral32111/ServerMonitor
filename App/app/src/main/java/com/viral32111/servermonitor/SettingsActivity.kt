@@ -10,16 +10,18 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.Spinner
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.ActionBar
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
 import com.android.volley.*
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.materialswitch.MaterialSwitch
 
 class SettingsActivity : AppCompatActivity() {
 
 	// UI
-	private lateinit var saveButton: Button
 	private lateinit var instanceUrlEditText: EditText
 	private lateinit var credentialsUsernameEditText: EditText
 	private lateinit var credentialsPasswordEditText: EditText
@@ -28,7 +30,18 @@ class SettingsActivity : AppCompatActivity() {
 	private lateinit var themeSpinner: Spinner
 	private lateinit var notificationsAlwaysOngoingSwitch: MaterialSwitch
 	private lateinit var notificationsWhenIssueArisesSwitch: MaterialSwitch
+	private lateinit var saveButton: Button
 	private lateinit var progressBar: ProgressBar
+
+	// Values from when activity loaded, for checking if anything has been changed when back is pressed
+	private var instanceUrl: String? = null
+	private var credentialsUsername: String? = null
+	private var credentialsPassword: String? = null
+	private var automaticRefresh: Boolean? = null
+	private var automaticRefreshInterval: Int? = null
+	private var theme: Int? = null
+	private var notificationAlwaysOngoing: Boolean? = null
+	private var notificationWhenIssueArises: Boolean? = null
 
 	// Runs when the activity is created...
 	override fun onCreate( savedInstanceState: Bundle? ) {
@@ -49,20 +62,11 @@ class SettingsActivity : AppCompatActivity() {
 		materialToolbar?.isTitleCentered = true
 		Log.d( Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered })" )
 
-		// Enable the back button on the toolbar
-		materialToolbar?.navigationIcon = AppCompatResources.getDrawable( this, R.drawable.ic_baseline_arrow_back_24 )
-		materialToolbar?.setNavigationOnClickListener {
-			Log.d( Shared.logTag, "Going back to previous activity" )
-			finish()
-			overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
-		}
-
 		// Disable the menu on the toolbar
 		materialToolbar?.menu?.clear()
 		Log.d( Shared.logTag, "Disabled menu items on Material Toolbar" )
 
 		// Get all the UI controls
-		saveButton = findViewById( R.id.settingsSaveButton )
 		instanceUrlEditText = findViewById( R.id.settingsInstanceUrlEditText )
 		credentialsUsernameEditText = findViewById( R.id.settingsCredentialsUsernameEditText )
 		credentialsPasswordEditText = findViewById( R.id.settingsCredentialsPasswordEditText )
@@ -71,6 +75,7 @@ class SettingsActivity : AppCompatActivity() {
 		themeSpinner = findViewById( R.id.settingsThemeSpinner )
 		notificationsAlwaysOngoingSwitch = findViewById( R.id.settingsNotificationsAlwaysOngoingSwitch )
 		notificationsWhenIssueArisesSwitch = findViewById( R.id.settingsNotificationsWhenIssueArisesSwitch )
+		saveButton = findViewById( R.id.settingsSaveButton )
 		progressBar = findViewById( R.id.settingsProgressBar )
 		Log.d( Shared.logTag, "Got UI controls" )
 
@@ -83,7 +88,7 @@ class SettingsActivity : AppCompatActivity() {
 		val sharedPreferences = getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE )
 		Log.d( Shared.logTag, "Got shared preferences for '${ Shared.sharedPreferencesName }'" )
 
-		// Update UI with settings & save in case it used defaults
+		// Update values with persistent settings & save in case it used defaults
 		readSettings( sharedPreferences )
 		saveSettings( sharedPreferences, {
 			Log.d( Shared.logTag, "Successfully re-saved settings" )
@@ -91,13 +96,13 @@ class SettingsActivity : AppCompatActivity() {
 			Log.e( Shared.logTag, "Failed to re-save settings" )
 		} )
 
-		// Validate & save settings when the save button is pressed
+		// Validate & save values when the save button is pressed
 		saveButton.setOnClickListener {
 
 			// Disable input & show loading
 			setLoading( true )
 
-			// Attempt to save the settings
+			// Attempt to save the values
 			saveSettings( sharedPreferences, {
 
 				// Enable input & hide loading
@@ -118,28 +123,52 @@ class SettingsActivity : AppCompatActivity() {
 			automaticRefreshIntervalEditText.isEnabled = isChecked
 		}
 
+		// Enable the back button on the toolbar
+		materialToolbar?.navigationIcon = AppCompatResources.getDrawable( this, R.drawable.ic_baseline_arrow_back_24 )
+		materialToolbar?.setNavigationOnClickListener {
+			Log.d( Shared.logTag, "Navigation back button pressed" )
+			confirmBack( sharedPreferences )
+		}
+
+		// Register the back button pressed callback - https://medium.com/tech-takeaways/how-to-migrate-the-deprecated-onbackpressed-function-e66bb29fa2fd
+		onBackPressedDispatcher.addCallback( this, onBackPressed )
+
+	}
+
+	// Cancels pending HTTP requests when the app is closed
+	override fun onStop() {
+		super.onStop()
+		API.cancelQueue()
+	}
+
+	// Show a confirmation when the back button is pressed - https://medium.com/tech-takeaways/how-to-migrate-the-deprecated-onbackpressed-function-e66bb29fa2fd
+	private val onBackPressed: OnBackPressedCallback = object : OnBackPressedCallback( true ) {
+		override fun handleOnBackPressed() {
+			Log.d( Shared.logTag, "System back button pressed" )
+			confirmBack( getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE ) )
+		}
 	}
 
 	// Updates the UI with the settings from the persistent settings
 	private fun readSettings( sharedPreferences: SharedPreferences ) {
 		Log.d( Shared.logTag, "Populating UI with settings from shared preferences..." )
 
-		// Get stored settings or default to current UI - https://developer.android.com/training/data-storage/shared-preferences#ReadSharedPreference
-		val instanceUrl = sharedPreferences.getString( "instanceUrl", instanceUrlEditText.text.toString() )
-		val credentialsUsername = sharedPreferences.getString( "credentialsUsername", credentialsUsernameEditText.text.toString() )
-		val credentialsPassword = sharedPreferences.getString( "credentialsPassword", credentialsPasswordEditText.text.toString() )
-		val automaticRefresh = sharedPreferences.getBoolean( "automaticRefresh", automaticRefreshSwitch.isChecked )
-		val automaticRefreshInterval = sharedPreferences.getInt( "automaticRefreshInterval", 15 ) // Default to 15 seconds
-		val theme = sharedPreferences.getInt( "theme", themeSpinner.selectedItemPosition ) // Not ideal to use position but we'll never have more than 3 themes anyway (system, light & dark)
-		val notificationAlwaysOngoing = sharedPreferences.getBoolean( "notificationAlwaysOngoing", notificationsAlwaysOngoingSwitch.isChecked )
-		val notificationWhenIssueArises = sharedPreferences.getBoolean( "notificationWhenIssueArises", notificationsWhenIssueArisesSwitch.isChecked )
+		// Get stored settings or default to current values - https://developer.android.com/training/data-storage/shared-preferences#ReadSharedPreference
+		instanceUrl = sharedPreferences.getString( "instanceUrl", instanceUrlEditText.text.toString() )
+		credentialsUsername = sharedPreferences.getString( "credentialsUsername", credentialsUsernameEditText.text.toString() )
+		credentialsPassword = sharedPreferences.getString( "credentialsPassword", credentialsPasswordEditText.text.toString() )
+		automaticRefresh = sharedPreferences.getBoolean( "automaticRefresh", automaticRefreshSwitch.isChecked )
+		automaticRefreshInterval = sharedPreferences.getInt( "automaticRefreshInterval", 15 ) // Default to 15 seconds
+		theme = sharedPreferences.getInt( "theme", themeSpinner.selectedItemPosition ) // Not ideal to use position but we'll never have more than 3 themes anyway (system, light & dark)
+		notificationAlwaysOngoing = sharedPreferences.getBoolean( "notificationAlwaysOngoing", notificationsAlwaysOngoingSwitch.isChecked )
+		notificationWhenIssueArises = sharedPreferences.getBoolean( "notificationWhenIssueArises", notificationsWhenIssueArisesSwitch.isChecked )
 
-		// Update the UI
-		automaticRefreshSwitch.isChecked = automaticRefresh
+		// Update the values
+		automaticRefreshSwitch.isChecked = automaticRefresh as Boolean
 		automaticRefreshIntervalEditText.setText( automaticRefreshInterval.toString() )
-		themeSpinner.setSelection( theme )
-		notificationsAlwaysOngoingSwitch.isChecked = notificationAlwaysOngoing
-		notificationsWhenIssueArisesSwitch.isChecked = notificationWhenIssueArises
+		themeSpinner.setSelection( theme as Int )
+		notificationsAlwaysOngoingSwitch.isChecked = notificationAlwaysOngoing as Boolean
+		notificationsWhenIssueArisesSwitch.isChecked = notificationWhenIssueArises as Boolean
 
 		// Enable instance URL & credentials if setup is finished
 		if ( !instanceUrl.isNullOrBlank() ) {
@@ -163,7 +192,7 @@ class SettingsActivity : AppCompatActivity() {
 
 	}
 
-	// Saves the settings to the persistent settings
+	// Saves the values to the persistent settings
 	private fun saveSettings( sharedPreferences: SharedPreferences, successCallback: () -> Unit, errorCallback: () -> Unit ) {
 		Log.d( Shared.logTag, "Saving settings to shared preferences..." )
 
@@ -229,7 +258,7 @@ class SettingsActivity : AppCompatActivity() {
 		API.getHello( instanceUrl, credentialsUsername, credentialsPassword, { helloData ->
 			Log.d( Shared.logTag, "Instance '${ instanceUrl }' is running! (Message: '${ helloData?.get( "message" )?.asString }')" )
 
-			// Save the settings to shared preferences - https://developer.android.com/training/data-storage/shared-preferences#WriteSharedPreference
+			// Save the values to shared preferences - https://developer.android.com/training/data-storage/shared-preferences#WriteSharedPreference
 			with ( sharedPreferences.edit() ) {
 				putString( "instanceUrl", instanceUrl )
 				putString( "credentialsUsername", credentialsUsername )
@@ -293,6 +322,7 @@ class SettingsActivity : AppCompatActivity() {
 
 	}
 
+	// Changes the UI so it indicates loading
 	private fun setLoading( isLoading: Boolean ) {
 
 		// Enable/disable user input
@@ -311,4 +341,60 @@ class SettingsActivity : AppCompatActivity() {
 
 	}
 
+	// Shows a confirmation dialog for leaving settings without saving changes, but only if the settings have been changed
+	private fun confirmBack( sharedPreferences: SharedPreferences ) {
+		if ( hasValuesChanged( sharedPreferences ) ) {
+			Log.d( Shared.logTag, "Settings have changed, showing confirmation dialog..." )
+
+			MaterialAlertDialogBuilder( this )
+				.setTitle( R.string.settingsDialogConfirmBackTitle )
+				.setMessage( R.string.settingsDialogConfirmBackMessage )
+				.setPositiveButton( R.string.settingsDialogConfirmBackPositiveButton ) { _, _ ->
+					Log.d( Shared.logTag, "Back confirmed, returning to previous activity..." )
+
+					finish()
+					overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
+				}
+				.setNegativeButton( R.string.settingsDialogConfirmBackNegativeButton ) { _, _ ->
+					Log.d( Shared.logTag, "Back aborted, not returning to previous activity" )
+				}
+				.show()
+
+		} else {
+			Log.d( Shared.logTag, "Settings have not changed, not showing confirmation dialog" )
+
+			finish()
+			overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
+		}
+	}
+
+	// Checks if the values have changed since the activity loaded
+	private fun hasValuesChanged( sharedPreferences: SharedPreferences ): Boolean {
+
+		// Get the values from all the inputs
+		val instanceUrl = instanceUrlEditText.text.toString()
+		val credentialsUsername = credentialsUsernameEditText.text.toString()
+		val credentialsPassword = credentialsPasswordEditText.text.toString()
+		val automaticRefresh = automaticRefreshSwitch.isChecked
+		val automaticRefreshInterval = automaticRefreshIntervalEditText.text.toString().toInt()
+		val theme = themeSpinner.selectedItemPosition
+		val notificationAlwaysOngoing = notificationsAlwaysOngoingSwitch.isChecked
+		val notificationWhenIssueArises = notificationsWhenIssueArisesSwitch.isChecked
+
+		// True if any of the values have changed
+		if ( instanceUrl != this.instanceUrl ) return true
+		if ( credentialsUsername != this.credentialsUsername ) return true
+		if ( credentialsPassword != this.credentialsPassword ) return true
+		if ( automaticRefresh != this.automaticRefresh ) return true
+		if ( automaticRefreshInterval != this.automaticRefreshInterval ) return true
+		if ( theme != this.theme ) return true
+		if ( notificationAlwaysOngoing != this.notificationAlwaysOngoing ) return true
+		if ( notificationWhenIssueArises != this.notificationWhenIssueArises ) return true
+
+		// Otherwise false
+		return false
+
+	}
+
 }
+
