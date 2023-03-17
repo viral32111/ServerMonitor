@@ -127,7 +127,7 @@ class SetupActivity : AppCompatActivity() {
 				return@setOnClickListener
 			}
 
-			// Test if a connector instance is running on this URL
+			// Test if a connector instance is running on this URL...
 			testInstance( instanceUrl, credentialsUsername, credentialsPassword, {
 
 				// Enable UI & hide loading spinner
@@ -146,10 +146,7 @@ class SetupActivity : AppCompatActivity() {
 				switchActivity( instanceUrl, credentialsUsername, credentialsPassword )
 
 			}, {
-
-				// Enable UI & hide loading spinner
-				setLoading( false )
-
+				setLoading( false ) // Enable UI & hide loading spinner
 			} )
 
 		}
@@ -159,17 +156,25 @@ class SetupActivity : AppCompatActivity() {
 		val credentialsUsername = sharedPreferences.getString( "credentialsUsername", null )
 		val credentialsPassword = sharedPreferences.getString( "credentialsPassword", null )
 
-		// Change to the appropriate activity if we are already setup
+		// Are we already setup?
 		if ( !instanceUrl.isNullOrBlank() && !credentialsUsername.isNullOrBlank() && !credentialsPassword.isNullOrBlank() ) {
 			Log.d( Shared.logTag, "We're already setup! ('${ instanceUrl }', '${ credentialsUsername }', '${ credentialsPassword }')" )
+
+			// Populate the UI so the user doesn't have to retype everything if the instance test fails
+			instanceUrlEditText.setText( instanceUrl )
+			credentialsUsernameEditText.setText( credentialsUsername )
+			credentialsPasswordEditText.setText( credentialsPassword )
+
+			// Disable input & show loading spinner
 			setLoading( true )
 
+			// Test if this instance is running...
 			testInstance( instanceUrl, credentialsUsername, credentialsPassword, {
-				setLoading( false )
-				switchActivity( instanceUrl, credentialsUsername, credentialsPassword )
+				setLoading( false ) // Enable UI & hide loading spinner
+				switchActivity( instanceUrl, credentialsUsername, credentialsPassword ) // Change to the next appropriate activity
 			}, {
 				Log.e( Shared.logTag, "We may already be setup, but the instance is offline?" )
-				setLoading( false )
+				setLoading( false ) // Enable UI & hide loading spinner
 			} )
 		} else {
 			Log.d( Shared.logTag, "We're not setup yet! ('${ instanceUrl }', '${ credentialsUsername }', '${ credentialsPassword }')" )
