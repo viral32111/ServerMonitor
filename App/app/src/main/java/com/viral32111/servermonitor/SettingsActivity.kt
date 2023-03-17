@@ -49,6 +49,18 @@ class SettingsActivity : AppCompatActivity() {
 		materialToolbar?.isTitleCentered = true
 		Log.d( Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered })" )
 
+		// Enable the back button on the toolbar
+		materialToolbar?.navigationIcon = AppCompatResources.getDrawable( this, R.drawable.ic_baseline_arrow_back_24 )
+		materialToolbar?.setNavigationOnClickListener {
+			Log.d( Shared.logTag, "Going back to previous activity" )
+			finish()
+			overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
+		}
+
+		// Disable the menu on the toolbar
+		materialToolbar?.menu?.clear()
+		Log.d( Shared.logTag, "Disabled menu items on Material Toolbar" )
+
 		// Get all the UI controls
 		saveButton = findViewById( R.id.settingsSaveButton )
 		instanceUrlEditText = findViewById( R.id.settingsInstanceUrlEditText )
@@ -62,18 +74,6 @@ class SettingsActivity : AppCompatActivity() {
 		progressBar = findViewById( R.id.settingsProgressBar )
 		Log.d( Shared.logTag, "Got UI controls" )
 
-		// Enable the back button on the toolbar
-		materialToolbar?.navigationIcon = AppCompatResources.getDrawable( this, R.drawable.ic_baseline_arrow_back_24 )
-		materialToolbar?.setNavigationOnClickListener {
-			Log.d( Shared.logTag, "Going back to previous activity" )
-			finish()
-			overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
-		}
-
-		// Disable the menu on the toolbar
-		materialToolbar?.menu?.clear()
-		Log.d( Shared.logTag, "Disabled menu items on Material Toolbar" )
-
 		// Force theme selection by disabling interaction - This will be removed once dark theme is properly implemented
 		themeSpinner.setSelection( 2 ) // Light
 		themeSpinner.isEnabled = false
@@ -85,23 +85,44 @@ class SettingsActivity : AppCompatActivity() {
 
 		// Update UI with settings & save in case it used defaults
 		readSettings( sharedPreferences )
-		saveSettings( sharedPreferences )
+		saveSettings( sharedPreferences, {
+			Log.d( Shared.logTag, "Successfully re-saved settings" )
+		}, {
+			Log.e( Shared.logTag, "Failed to re-save settings" )
+		} )
 
 		// Validate & save settings when the save button is pressed
 		saveButton.setOnClickListener {
-			saveSettings( sharedPreferences )
+
+			// Disable input & show loading
+			setLoading( true )
+
+			// Attempt to save the settings
+			saveSettings( sharedPreferences, {
+
+				// Enable input & hide loading
+				setLoading( false )
+
+				// Return to the previous activity
+				finish()
+				overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
+
+			}, {
+				setLoading( false ) // Enable input & hide loading
+			} )
+
 		}
 
-		// Disable interval input when automatic refresh is switched off
+		// Disables interval input when automatic refresh is switched off
 		automaticRefreshSwitch.setOnCheckedChangeListener { _, isChecked ->
 			automaticRefreshIntervalEditText.isEnabled = isChecked
 		}
 
 	}
 
-	// Updates the UI with the values from the persistent settings
+	// Updates the UI with the settings from the persistent settings
 	private fun readSettings( sharedPreferences: SharedPreferences ) {
-		Log.d( Shared.logTag, "Populating UI with values from shared preferences..." )
+		Log.d( Shared.logTag, "Populating UI with settings from shared preferences..." )
 
 		// Get stored settings or default to current UI - https://developer.android.com/training/data-storage/shared-preferences#ReadSharedPreference
 		val instanceUrl = sharedPreferences.getString( "instanceUrl", instanceUrlEditText.text.toString() )
@@ -121,33 +142,30 @@ class SettingsActivity : AppCompatActivity() {
 		notificationsWhenIssueArisesSwitch.isChecked = notificationWhenIssueArises
 
 		// Enable instance URL & credentials if setup is finished
-		if ( !instanceUrl.isNullOrEmpty() ) {
+		if ( !instanceUrl.isNullOrBlank() ) {
 			instanceUrlEditText.setText( instanceUrl )
 			instanceUrlEditText.hint = getString( R.string.settingsEditTextInstanceUrlHint )
 			instanceUrlEditText.isEnabled = true
 		}
-		if ( !credentialsUsername.isNullOrEmpty() ) {
+		if ( !credentialsUsername.isNullOrBlank() ) {
 			credentialsUsernameEditText.setText( credentialsUsername )
 			credentialsUsernameEditText.hint = getString( R.string.settingsEditTextCredentialsUsernameHint )
 			credentialsUsernameEditText.isEnabled = true
 		}
-		if ( !credentialsPassword.isNullOrEmpty() ) {
+		if ( !credentialsPassword.isNullOrBlank() ) {
 			credentialsPasswordEditText.setText( credentialsPassword )
 			credentialsPasswordEditText.hint = getString( R.string.settingsEditTextCredentialsPasswordHint )
 			credentialsPasswordEditText.isEnabled = true
 		}
 
-		// Disable interval input when automatic refresh is switched off
+		// Disable interval input if automatic refresh is switched off
 		automaticRefreshIntervalEditText.isEnabled = automaticRefreshSwitch.isChecked
 
 	}
 
-	// Saves the values in the UI to the persistent settings
-	private fun saveSettings( sharedPreferences: SharedPreferences ) {
-		Log.d( Shared.logTag, "Saving UI values to shared preferences..." )
-
-		// Disable input & show loading
-		setLoading( true )
+	// Saves the settings to the persistent settings
+	private fun saveSettings( sharedPreferences: SharedPreferences, successCallback: () -> Unit, errorCallback: () -> Unit ) {
+		Log.d( Shared.logTag, "Saving settings to shared preferences..." )
 
 		// Get the values from all the UI inputs
 		val instanceUrl = instanceUrlEditText.text.toString()
@@ -211,10 +229,7 @@ class SettingsActivity : AppCompatActivity() {
 		API.getHello( instanceUrl, credentialsUsername, credentialsPassword, { helloData ->
 			Log.d( Shared.logTag, "Instance '${ instanceUrl }' is running! (Message: '${ helloData?.get( "message" )?.asString }')" )
 
-			// Enable input & hide loading
-			setLoading( false )
-
-			// Save those values to shared preferences - https://developer.android.com/training/data-storage/shared-preferences#WriteSharedPreference
+			// Save the settings to shared preferences - https://developer.android.com/training/data-storage/shared-preferences#WriteSharedPreference
 			with ( sharedPreferences.edit() ) {
 				putString( "instanceUrl", instanceUrl )
 				putString( "credentialsUsername", credentialsUsername )
@@ -226,18 +241,16 @@ class SettingsActivity : AppCompatActivity() {
 				putBoolean( "notificationWhenIssueArises", notificationWhenIssueArises )
 				apply()
 			}
-			Log.d( Shared.logTag, "Saved values to shared preferences" )
+			Log.d( Shared.logTag, "Saved settings to shared preferences" )
 
-			// Return to the previous activity
-			finish()
-			overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
+			// Run the custom callback
+			successCallback.invoke()
 
-		// Show message if the test fails
 		}, { error, statusCode, errorCode ->
 			Log.e( Shared.logTag, "Instance '${ instanceUrl }' is NOT running! (Error: '${ error }', Status Code: '${ statusCode }', Error Code: '${ errorCode }')" )
 
-			// Enable input & hide loading
-			setLoading( false )
+			// Run the custom callback
+			errorCallback.invoke()
 
 			when ( error ) {
 
@@ -255,7 +268,12 @@ class SettingsActivity : AppCompatActivity() {
 				}
 
 				// HTTP 5xx
-				is ServerError -> showBriefMessage( this, R.string.settingsToastInstanceTestServerFailure )
+				is ServerError -> when ( statusCode ) {
+					502 -> showBriefMessage( this, R.string.settingsToastInstanceTestUnavailable )
+					503 -> showBriefMessage( this, R.string.settingsToastInstanceTestUnavailable )
+					504 -> showBriefMessage( this, R.string.settingsToastInstanceTestUnavailable )
+					else -> showBriefMessage( this, R.string.settingsToastInstanceTestServerFailure )
+				}
 
 				// No Internet connection, malformed domain
 				is NoConnectionError -> showBriefMessage( this, R.string.settingsToastInstanceTestNoConnection )

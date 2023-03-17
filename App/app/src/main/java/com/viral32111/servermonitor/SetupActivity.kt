@@ -192,11 +192,11 @@ class SetupActivity : AppCompatActivity() {
 	private fun testInstance( instanceUrl: String, credentialsUsername: String, credentialsPassword: String, successCallback: () -> Unit, errorCallback: () -> Unit ) {
 		API.getHello( instanceUrl, credentialsUsername, credentialsPassword, { helloData ->
 			Log.d( Shared.logTag, "Instance '${ instanceUrl }' is running! (Message: '${ helloData?.get( "message" )?.asString }')" )
-			successCallback.invoke()
+			successCallback.invoke() // Run the custom callback
 
 		}, { error, statusCode, errorCode ->
 			Log.e( Shared.logTag, "Instance '${ instanceUrl }' is NOT running! (Error: '${ error }', Status Code: '${ statusCode }', Error Code: '${ errorCode }')" )
-			errorCallback.invoke()
+			errorCallback.invoke() // Run the custom callback
 
 			when ( error ) {
 
