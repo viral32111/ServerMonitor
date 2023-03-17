@@ -5,6 +5,10 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.animation.AccelerateDecelerateInterpolator
+import android.view.animation.AccelerateInterpolator
+import android.view.animation.LinearInterpolator
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
@@ -61,6 +65,7 @@ class ServersActivity : AppCompatActivity() {
 		val recyclerView = findViewById<RecyclerView>( R.id.serversRecyclerView )
 		val statusTitleTextView = findViewById<TextView>( R.id.serversStatusTitleTextView )
 		val statusDescriptionTextView = findViewById<TextView>( R.id.serversStatusDescriptionTextView )
+		val refreshProgressBar = findViewById<ProgressBar>( R.id.serversRefreshProgressBar )
 
 		// Get the persistent settings - https://developer.android.com/training/data-storage/shared-preferences
 		val sharedPreferences = getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE )
@@ -108,9 +113,20 @@ class ServersActivity : AppCompatActivity() {
 
 		} )
 
-		// When we're pulled down to refresh...
+		// https://stackoverflow.com/a/18015071
+		val progressBarAnimation = ProgressBarAnimation( refreshProgressBar, refreshProgressBar.progress.toFloat(), refreshProgressBar.max.toFloat() )
+		progressBarAnimation.interpolator = LinearInterpolator() // We want linear, not accelerate-decelerate interpolation
+		progressBarAnimation.duration = 10000 // 10 seconds
+
+		refreshProgressBar.startAnimation( progressBarAnimation )
+
+		// When we're swiped down to refresh...
 		swipeRefreshLayout.setOnRefreshListener {
 			Log.d( Shared.logTag, "Swipe refreshed!" )
+
+			// Stop the refresh countdown
+			refreshProgressBar.clearAnimation()
+			refreshProgressBar.progress = 0
 
 			// Fetch the servers...
 			fetchServers( instanceUrl, credentialsUsername, credentialsPassword, { servers ->
@@ -126,9 +142,10 @@ class ServersActivity : AppCompatActivity() {
 				}
 				recyclerView.swapAdapter( serverAdapter, true )
 
-				// Update the recycler view & finish loading
+				// Update the recycler view, stop loading & restart refresh countdown
 				serverAdapter.notifyItemRangeChanged( 0, servers.size )
 				swipeRefreshLayout.isRefreshing = false
+				refreshProgressBar.startAnimation( progressBarAnimation )
 
 			}, false )
 
