@@ -63,17 +63,49 @@ class ServerAdapter( private val servers: Array<Server>, private val context: Co
 			viewHolder.statusTextView.text = context.getString( R.string.serversTextViewServerStatusOnline )
 			viewHolder.statusTextView.setTextColor( context.getColor( R.color.statusGood ) )
 
-			viewHolder.uptimeTextView.text = String.format( context.getString( R.string.serversTextViewServerUptime ), TimeSpan( server.UptimeSeconds ).toString( false ) )
+			// TODO: Populate text views with server data
 
-			// TODO: Populate the other text views with server data
+			viewHolder.processorTextView.text = String.format( context.getString( R.string.serversTextViewServerProcessorUsage ), 0 )
+			viewHolder.processorTextView.setTextColor( context.getColor( R.color.statusGood ) )
+
+			viewHolder.memoryTextView.text = String.format( context.getString( R.string.serversTextViewServerMemoryUsage ), 0, "K" )
+			viewHolder.memoryTextView.setTextColor( context.getColor( R.color.statusGood ) )
+
+			viewHolder.temperatureTextView.text = String.format( context.getString( R.string.serversTextViewServerTemperatureValue ), 0 )
+			viewHolder.temperatureTextView.setTextColor( context.getColor( R.color.statusGood ) )
+
+			viewHolder.serviceTextView.text = String.format( context.getString( R.string.serversTextViewServerServicesCount ), 0 )
+			viewHolder.serviceTextView.setTextColor( context.getColor( R.color.statusGood ) )
+
+			viewHolder.networkTextView.text = String.format( context.getString( R.string.serversTextViewServerNetworkUsage ), 0, "K" )
+			viewHolder.networkTextView.setTextColor( context.getColor( R.color.statusGood ) )
+
+			viewHolder.diskTextView.text = String.format( context.getString( R.string.serversTextViewServerDiskUsage ), 0, "K" )
+			viewHolder.diskTextView.setTextColor( context.getColor( R.color.statusGood ) )
+
+			viewHolder.uptimeTextView.text = String.format( context.getString( R.string.serversTextViewServerUptime ), TimeSpan( server.UptimeSeconds ).toString( false ) )
 		} else {
 			viewHolder.statusTextView.text = context.getString( R.string.serversTextViewServerStatusOffline )
+			viewHolder.statusTextView.setTextColor( context.getColor( R.color.statusDead ) )
+
 			viewHolder.processorTextView.text = String.format( context.getString( R.string.serversTextViewServerProcessorUsage ), 0 )
+			viewHolder.processorTextView.setTextColor( context.getColor( R.color.statusDead ) )
+
 			viewHolder.memoryTextView.text = String.format( context.getString( R.string.serversTextViewServerMemoryUsage ), 0, "K" )
+			viewHolder.memoryTextView.setTextColor( context.getColor( R.color.statusDead ) )
+
 			viewHolder.temperatureTextView.text = String.format( context.getString( R.string.serversTextViewServerTemperatureValue ), 0 )
+			viewHolder.temperatureTextView.setTextColor( context.getColor( R.color.statusDead ) )
+
 			viewHolder.serviceTextView.text = String.format( context.getString( R.string.serversTextViewServerServicesCount ), 0 )
+			viewHolder.serviceTextView.setTextColor( context.getColor( R.color.statusDead ) )
+
 			viewHolder.networkTextView.text = String.format( context.getString( R.string.serversTextViewServerNetworkUsage ), 0, "K" )
+			viewHolder.networkTextView.setTextColor( context.getColor( R.color.statusDead ) )
+
 			viewHolder.diskTextView.text = String.format( context.getString( R.string.serversTextViewServerDiskUsage ), 0, "K" )
+			viewHolder.diskTextView.setTextColor( context.getColor( R.color.statusDead ) )
+
 			viewHolder.uptimeTextView.text = context.getString( R.string.serversTextViewServerUptimeOffline )
 		}
 	}
