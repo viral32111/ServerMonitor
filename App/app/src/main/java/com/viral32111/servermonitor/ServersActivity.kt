@@ -11,6 +11,7 @@ import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
 import com.android.volley.*
 import com.google.android.material.appbar.MaterialToolbar
+import kotlin.math.round
 
 class ServersActivity : AppCompatActivity() {
 
@@ -50,6 +51,8 @@ class ServersActivity : AppCompatActivity() {
 
 		// Get all the UI
 		val linearLayout = findViewById<LinearLayout>( R.id.serversLinearLayout )
+		val statusTitleTextView = findViewById<TextView>( R.id.serversStatusTitleTextView )
+		val statusDescriptionTextView = findViewById<TextView>( R.id.serversStatusDescriptionTextView )
 
 		// Get the persistent settings - https://developer.android.com/training/data-storage/shared-preferences
 		val sharedPreferences = getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE )
@@ -75,6 +78,10 @@ class ServersActivity : AppCompatActivity() {
 			showBriefMessage( this, R.string.serversToastServersCancel )
 		}
 
+		// TODO: Use real IP header on server instead of remote endpoint address wherever possible, cus of Cloudflare Tunnel
+		// TODO: Update Docker collector command on README to include mounts for dbus system socket, privileged mode, systemd directories
+		// TODO: Install systemctl in Ubuntu Docker image
+
 		// Fetch the list of servers
 		API.getServers( instanceUrl, credentialsUsername, credentialsPassword, { serversData ->
 
@@ -86,6 +93,11 @@ class ServersActivity : AppCompatActivity() {
 			Log.d( Shared.logTag, "Got '${ servers?.size() }' servers from API ('${ servers.toString() }')" )
 
 			if ( servers != null ) {
+				statusTitleTextView.text = getString( R.string.serversTextViewStatusTitleGood )
+				statusTitleTextView.setTextColor( getColor( R.color.statusGood ) )
+
+				statusDescriptionTextView.text = getString( R.string.serversTextViewStatusDescriptionGood )
+
 				for ( _server in servers ) {
 					val server = _server.asJsonObject
 
@@ -97,7 +109,7 @@ class ServersActivity : AppCompatActivity() {
 					val operatingSystem = server.get( "operatingSystem" ).asString
 					val architecture = server.get( "architecture" ).asString
 					val version = server.get( "version" ).asString
-					val uptimeSeconds = server.get( "uptimeSeconds" ).asBigInteger
+					val uptimeSeconds = round( server.get( "uptimeSeconds" ).asDouble ).toLong()
 
 					Log.d( Shared.logTag, "Identifier: '${ identifier }'" )
 					Log.d( Shared.logTag, "Job Name: '${ jobName }'" )
@@ -122,13 +134,19 @@ class ServersActivity : AppCompatActivity() {
 
 					serverView.setOnClickListener {
 						Log.d( Shared.logTag, "Server '${ hostName }' ('${ identifier }', '${ jobName }', '${ instanceAddress }') pressed" )
+
+						// TODO: Switch to Server activity
 					}
 
 					serverViewTitleTextView.text = hostName.uppercase()
 
-					if ( uptimeSeconds >= 0.toBigInteger() ) {
+					if ( uptimeSeconds >= 0 ) {
 						serverViewStatusTextView.text = getString( R.string.serversTextViewServerStatusOnline )
-						serverViewUptimeTextView.text = uptimeSeconds.toString() // TODO
+						serverViewStatusTextView.setTextColor( getColor( R.color.statusGood ) )
+
+						serverViewUptimeTextView.text = String.format( getString( R.string.serversTextViewServerUptime ), TimeSpan( uptimeSeconds ).toString( false ) )
+
+						// TODO: API call for GET /server, then populate text views with relevant data
 
 					} else {
 						serverViewStatusTextView.text = getString( R.string.serversTextViewServerStatusOffline )
@@ -141,7 +159,9 @@ class ServersActivity : AppCompatActivity() {
 						serverViewUptimeTextView.text = getString( R.string.serversTextViewServerUptimeOffline )
 					}
 
+					// TODO: Test the scrolling functionality
 					linearLayout.addView( serverView ) // https://stackoverflow.com/a/8956861
+
 				}
 			} else {
 				Log.e( Shared.logTag, "Servers array from API is null?!" )

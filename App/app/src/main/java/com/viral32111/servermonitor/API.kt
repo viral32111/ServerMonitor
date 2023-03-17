@@ -19,7 +19,6 @@ class API {
 
 		// HTTP request queue
 		private lateinit var requestQueue: RequestQueue
-		private const val requestQueueTag = Shared.logTag
 
 		// Initialise the HTTP request queue - https://google.github.io/volley/simple.html#use-newrequestqueue
 		fun initializeQueue( context: Context ) {
@@ -30,7 +29,7 @@ class API {
 		// Cancels all HTTP requests in the queue - https://google.github.io/volley/simple.html#cancel-a-request
 		fun cancelQueue() {
 			Log.d( Shared.logTag, "Cancelling all HTTP requests in the queue..." )
-			requestQueue.cancelAll( requestQueueTag )
+			requestQueue.cancelAll( Shared.httpRequestQueueTag )
 		}
 
 		// Encode credentials as Base64 for use in HTTP Basic Authorization - https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication, https://developer.android.com/reference/kotlin/java/util/Base64
@@ -93,7 +92,7 @@ class API {
 			httpRequest.retryPolicy = DefaultRetryPolicy( DefaultRetryPolicy.DEFAULT_TIMEOUT_MS, 0, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT )
 
 			// Send the request
-			httpRequest.tag = requestQueueTag
+			httpRequest.tag = Shared.httpRequestQueueTag
 			requestQueue.add( httpRequest )
 			Log.d( Shared.logTag, "Sending HTTP request to URL '${ url }' (Method: '${ requestMethodToName( method ) }', Username: '${ username }', Password: '${ password }')..." )
 
