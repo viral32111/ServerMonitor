@@ -1,38 +1,36 @@
 package com.viral32111.servermonitor
 
-import java.math.BigInteger
-
 // Converts seconds into days, hours, minutes & seconds.
 
 class TimeSpan( totalSeconds: Long ) {
-	val Days: Long;
-	val Hours: Long;
-	val Minutes: Long;
-	val Seconds: Long;
+	private val days: Long
+	private val hours: Long
+	private val minutes: Long
+	private val seconds: Long
 
 	// https://www.geeksforgeeks.org/converting-seconds-into-days-hours-minutes-and-seconds/
 	init {
 		var remainder = totalSeconds
 
-		Days = remainder / 86400
+		days = remainder / 86400
 		remainder %= 86400
 
-		Hours = remainder / 3600
+		hours = remainder / 3600
 		remainder %= 3600
 
-		Minutes = remainder / 60
+		minutes = remainder / 60
 		remainder %= 60
 
-		Seconds = remainder
+		seconds = remainder
 	}
 
 	fun toString( includeSeconds: Boolean ): String {
 		val parts = ArrayList<String>()
 
-		if ( Days > 0L ) parts.add( "${ Days } day${ if ( Days != 1L ) "s" else "" }" )
-		if ( Hours > 0L ) parts.add( "${ Hours } day${ if ( Days != 1L ) "s" else "" }" )
-		if ( Minutes > 0L ) parts.add( "${ Minutes } minute${ if ( Minutes != 1L ) "s" else "" }" )
-		if ( includeSeconds && Seconds > 0L ) parts.add( "${ Seconds } second${ if ( Seconds != 1L ) "s" else "" }" )
+		if ( days > 0L ) parts.add( "$days day${ if ( days != 1L ) "s" else "" }" )
+		if ( hours > 0L ) parts.add( "$hours hour${ if ( hours != 1L ) "s" else "" }" )
+		if ( minutes > 0L ) parts.add( "$minutes minute${ if ( minutes != 1L ) "s" else "" }" )
+		if ( includeSeconds && seconds > 0L ) parts.add( "$seconds second${ if ( seconds != 1L ) "s" else "" }" )
 
 		return parts.joinToString( ", " )
 	}
