@@ -124,7 +124,7 @@ class ServersActivity : AppCompatActivity() {
 
 					// Create a new adapter for the recycler view
 					val serverAdapter = ServerAdapter( servers, applicationContext ) { server ->
-						Log.d( Shared.logTag, "Server '${ server.HostName }' ('${ server.Identifier }', '${ server.JobName }', '${ server.InstanceAddress }') pressed" )
+						Log.d( Shared.logTag, "Server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') pressed" )
 					}
 					recyclerView.swapAdapter( serverAdapter, false )
 
@@ -168,7 +168,7 @@ class ServersActivity : AppCompatActivity() {
 
 				// Create a new adapter for the recycler view
 				val serverAdapter = ServerAdapter( servers, this ) { server ->
-					Log.d( Shared.logTag, "Server '${ server.HostName }' ('${ server.Identifier }', '${ server.JobName }', '${ server.InstanceAddress }') pressed" )
+					Log.d( Shared.logTag, "Server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') pressed" )
 				}
 				recyclerView.swapAdapter( serverAdapter, false )
 
@@ -235,7 +235,7 @@ class ServersActivity : AppCompatActivity() {
 
 			// Create the adapter for the recycler view - https://www.geeksforgeeks.org/android-pull-to-refresh-with-recyclerview-in-kotlin/
 			val serverAdapter = ServerAdapter( servers, this ) { server ->
-				Log.d( Shared.logTag, "Server '${ server.HostName }' ('${ server.Identifier }', '${ server.JobName }', '${ server.InstanceAddress }') pressed" )
+				Log.d( Shared.logTag, "Server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') pressed" )
 			}
 			recyclerView.adapter = serverAdapter
 
@@ -274,11 +274,31 @@ class ServersActivity : AppCompatActivity() {
 			if ( servers != null ) {
 				// https://www.geeksforgeeks.org/kotlin-list-arraylist/
 				val serverList = ArrayList<Server>()
-				for ( arrayItem in servers ) serverList.add( Server( arrayItem.asJsonObject ) )
-				successCallback.invoke( serverList.toTypedArray() )
+				for ( arrayItem in servers ) {
+					val server = Server( arrayItem.asJsonObject )
+
+					if ( server.isOnline() ) {
+						Log.d( Shared.logTag, "Server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') is online, fetching metrics..." )
+
+						server.fetchMetrics( this, instanceUrl, credentialsUsername, credentialsPassword, {
+							Log.d( Shared.logTag, "Metrics fetched for server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }')" )
+							serverList.add( server )
+
+						}, {
+							Log.d( Shared.logTag, "Failed to fetch metrics for server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }')" )
+						} )
+
+					} else {
+						Log.d( Shared.logTag, "Server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') is offline, not fetching metrics..." )
+						serverList.add( server )
+					}
+				}
+
+				//successCallback.invoke( serverList.toTypedArray() )
 
 			} else {
 				Log.e( Shared.logTag, "Servers array from API is null?!" )
+				errorCallback.invoke()
 				showBriefMessage( this, R.string.serversToastServersNull )
 			}
 

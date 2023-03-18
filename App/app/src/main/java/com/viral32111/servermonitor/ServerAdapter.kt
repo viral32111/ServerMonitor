@@ -50,7 +50,7 @@ class ServerAdapter( private val servers: Array<Server>, private val context: Co
 	// Replaces the contents of a view - called by the layout manager
 	override fun onBindViewHolder( viewHolder: ViewHolder, index: Int ) {
 		val server = servers[ index ]
-		Log.d( Shared.logTag, "Replacing view for server '${ server.HostName }' ('${ server.Identifier }', '${ server.JobName }', '${ server.InstanceAddress }')..." )
+		Log.d( Shared.logTag, "Replacing view for server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }')..." )
 
 		// Forward click events to the given listener - https://stackoverflow.com/a/49969478
 		viewHolder.constraintLayout.setOnClickListener {
@@ -58,10 +58,10 @@ class ServerAdapter( private val servers: Array<Server>, private val context: Co
 		}
 
 		// Set the title to the server's name
-		viewHolder.titleTextView.text = server.HostName.uppercase()
+		viewHolder.titleTextView.text = server.hostName.uppercase()
 
 		// The server is online...
-		if ( server.UptimeSeconds >= 0 ) {
+		if ( server.isOnline() ) {
 			viewHolder.statusTextView.text = context.getString( R.string.serversTextViewServerStatusOnline )
 			viewHolder.statusTextView.setTextColor( context.getColor( R.color.statusGood ) )
 
@@ -86,7 +86,7 @@ class ServerAdapter( private val servers: Array<Server>, private val context: Co
 			viewHolder.diskTextView.setTextColor( context.getColor( R.color.statusGood ) )
 
 			// Format the uptime into days, hours & minutes
-			viewHolder.uptimeTextView.text = String.format( context.getString( R.string.serversTextViewServerUptime ), TimeSpan( server.UptimeSeconds ).toString( false ) )
+			viewHolder.uptimeTextView.text = String.format( context.getString( R.string.serversTextViewServerUptime ), TimeSpan( server.uptimeSeconds ).toString( false ) )
 
 		// The server is offline...
 		} else {

@@ -105,16 +105,14 @@ class API {
 		fun getServers( baseUrl: String, username: String, password: String, successCallback: ( data: JsonObject? ) -> Unit, errorCallback: ( error: VolleyError, statusCode: Int?, errorCode: Int? ) -> Unit ) {
 			sendRequest( Request.Method.GET, "${ baseUrl }/servers", username, password, successCallback, errorCallback )
 		}
-
-		// TODO: Update these to take necessary parameters
-		fun getServer( baseUrl: String, username: String, password: String, successCallback: ( data: JsonObject? ) -> Unit, errorCallback: ( error: VolleyError, statusCode: Int?, errorCode: Int? ) -> Unit ) {
-			sendRequest( Request.Method.GET, "${ baseUrl }/server", username, password, successCallback, errorCallback )
+		fun getServer( baseUrl: String, username: String, password: String, serverIdentifier: String, successCallback: ( data: JsonObject? ) -> Unit, errorCallback: ( error: VolleyError, statusCode: Int?, errorCode: Int? ) -> Unit ) {
+			sendRequest( Request.Method.GET, "${ baseUrl }/server?id=${ serverIdentifier }", username, password, successCallback, errorCallback )
 		}
-		fun postServer( baseUrl: String, username: String, password: String, successCallback: ( data: JsonObject? ) -> Unit, errorCallback: ( error: VolleyError, statusCode: Int?, errorCode: Int? ) -> Unit ) {
-			sendRequest( Request.Method.POST, "${ baseUrl }/server", username, password, successCallback, errorCallback )
+		fun postServer( baseUrl: String, username: String, password: String, serverIdentifier: String, actionName: String, successCallback: ( data: JsonObject? ) -> Unit, errorCallback: ( error: VolleyError, statusCode: Int?, errorCode: Int? ) -> Unit ) {
+			sendRequest( Request.Method.POST, "${ baseUrl }/server?id=${ serverIdentifier }&action=${ actionName }", username, password, successCallback, errorCallback )
 		}
-		fun postService( baseUrl: String, username: String, password: String, successCallback: ( data: JsonObject? ) -> Unit, errorCallback: ( error: VolleyError, statusCode: Int?, errorCode: Int? ) -> Unit ) {
-			sendRequest( Request.Method.POST, "${ baseUrl }/service", username, password, successCallback, errorCallback )
+		fun postService( baseUrl: String, username: String, password: String, serverIdentifier: String, serviceName: String, actionName: String, successCallback: ( data: JsonObject? ) -> Unit, errorCallback: ( error: VolleyError, statusCode: Int?, errorCode: Int? ) -> Unit ) {
+			sendRequest( Request.Method.POST, "${ baseUrl }/service?server=${ serverIdentifier }&name=${ serviceName }&action=${ actionName }", username, password, successCallback, errorCallback )
 		}
 
 	}
