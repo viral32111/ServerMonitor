@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.view.animation.Animation
 import android.view.animation.LinearInterpolator
 import android.widget.ProgressBar
@@ -87,6 +88,12 @@ class ServersActivity : AppCompatActivity() {
 		val progressBarAnimation = ProgressBarAnimation( refreshProgressBar, refreshProgressBar.progress.toFloat(), refreshProgressBar.max.toFloat() )
 		progressBarAnimation.interpolator = LinearInterpolator() // We want linear, not accelerate-decelerate interpolation
 		progressBarAnimation.duration = settings.automaticRefreshInterval * 1000L // Convert seconds to milliseconds
+
+		// Disable the progress bar if automatic refresh is turned off
+		if ( !settings.automaticRefresh ) {
+			refreshProgressBar.isEnabled = false
+			refreshProgressBar.visibility = View.GONE
+		}
 
 		// Event listeners for the automatic refresh countdown progress bar animation - https://medium.com/android-news/handsome-codes-with-kotlin-6e183db4c7e5
 		progressBarAnimation.setAnimationListener( object : Animation.AnimationListener {
