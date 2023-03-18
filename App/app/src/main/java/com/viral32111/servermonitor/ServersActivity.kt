@@ -19,9 +19,9 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.android.volley.*
 import com.google.android.material.appbar.MaterialToolbar
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
-import kotlin.coroutines.coroutineContext
+import com.google.gson.JsonParseException
+import com.google.gson.JsonSyntaxException
+import kotlinx.coroutines.*
 
 class ServersActivity : AppCompatActivity() {
 
@@ -117,6 +117,32 @@ class ServersActivity : AppCompatActivity() {
 				// Show refreshing spinner
 				swipeRefreshLayout.isRefreshing = true
 
+				CoroutineScope( Dispatchers.Main ).launch { // Begin coroutine context (on the UI thread)...
+					withContext( Dispatchers.IO ) { // Run on network thread...
+
+						// Fetch the servers
+						try {
+							val servers = fetchServers( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!! )
+
+							// Update the UI
+							withContext( Dispatchers.Main ) {
+								updateUI( servers )
+							}
+
+						} catch ( exception: APIException ) {
+							Log.e( Shared.logTag, "V Exception (onAnimationEnd)!!! ${ exception.message }, ${ exception }" )
+						} catch ( exception: JsonParseException ) {
+							Log.e( Shared.logTag, "JP Exception (onAnimationEnd)!!! ${ exception.message }, ${ exception }" )
+						} catch ( exception: JsonSyntaxException ) {
+							Log.e( Shared.logTag, "JS Exception (onAnimationEnd)!!! ${ exception.message }, ${ exception }" )
+						} catch ( exception: NullPointerException ) {
+							Log.e( Shared.logTag, "NP Exception (onAnimationEnd)!!! ${ exception.message }, ${ exception }" )
+						}
+
+					}
+				}
+
+				/*
 				// Fetch the servers...
 				fetchServers( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, { servers ->
 
@@ -142,6 +168,7 @@ class ServersActivity : AppCompatActivity() {
 				   swipeRefreshLayout.isRefreshing = false
 
 				}, false )
+				*/
 			}
 
 			// When the animation repeats...
@@ -161,6 +188,32 @@ class ServersActivity : AppCompatActivity() {
 				refreshProgressBar.progress = 0
 			}
 
+			CoroutineScope( Dispatchers.Main ).launch {
+				withContext( Dispatchers.IO ) {
+
+					// Fetch the servers
+					try {
+						val servers = fetchServers( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!! )
+
+						// Update the UI
+						withContext( Dispatchers.Main ) {
+							updateUI( servers )
+						}
+
+					} catch ( exception: APIException ) {
+						Log.e( Shared.logTag, "V Exception (onAnimationEnd)!!! ${ exception.message }, ${ exception }" )
+					} catch ( exception: JsonParseException ) {
+						Log.e( Shared.logTag, "JP Exception (onAnimationEnd)!!! ${ exception.message }, ${ exception }" )
+					} catch ( exception: JsonSyntaxException ) {
+						Log.e( Shared.logTag, "JS Exception (onAnimationEnd)!!! ${ exception.message }, ${ exception }" )
+					} catch ( exception: NullPointerException ) {
+						Log.e( Shared.logTag, "NP Exception (onAnimationEnd)!!! ${ exception.message }, ${ exception }" )
+					}
+
+				}
+			}
+
+			/*
 			// Fetch the servers...
 			fetchServers( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, { servers ->
 
@@ -186,6 +239,7 @@ class ServersActivity : AppCompatActivity() {
 				swipeRefreshLayout.isRefreshing = false
 
 			}, false )
+			*/
 
 		}
 
@@ -228,31 +282,53 @@ class ServersActivity : AppCompatActivity() {
 		// Show refreshing spinner
 		swipeRefreshLayout.isRefreshing = true
 
-		// Initially fetch the servers...
-		fetchServers( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, { servers ->
+		CoroutineScope( Dispatchers.Main ).launch {
+			withContext( Dispatchers.IO ) {
 
-			// Set the overall status
-			statusTitleTextView.text = getString( R.string.serversTextViewStatusTitleGood )
-			statusTitleTextView.setTextColor( getColor( R.color.statusGood ) )
-			statusDescriptionTextView.text = getString( R.string.serversTextViewStatusDescriptionGood )
+				// Fetch the servers
+				try {
+					val servers = fetchServers( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!! )
 
-			// Create the adapter for the recycler view - https://www.geeksforgeeks.org/android-pull-to-refresh-with-recyclerview-in-kotlin/
-			val serverAdapter = ServerAdapter( servers, this ) { server ->
-				Log.d( Shared.logTag, "Server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') pressed" )
+					// Update the UI
+					withContext( Dispatchers.Main ) {
+						updateUI( servers )
+					}
+
+				} catch ( exception: APIException ) {
+					Log.e( Shared.logTag, "V Exception (onAnimationEnd)!!! ${ exception.message }, ${ exception }" )
+				} catch ( exception: JsonParseException ) {
+					Log.e( Shared.logTag, "JP Exception (onAnimationEnd)!!! ${ exception.message }, ${ exception }" )
+				} catch ( exception: JsonSyntaxException ) {
+					Log.e( Shared.logTag, "JS Exception (onAnimationEnd)!!! ${ exception.message }, ${ exception }" )
+				} catch ( exception: NullPointerException ) {
+					Log.e( Shared.logTag, "NP Exception (onAnimationEnd)!!! ${ exception.message }, ${ exception }" )
+				}
+
 			}
-			recyclerView.adapter = serverAdapter
+		}
 
-			// Update the recycler view, stop loading & restart automatic refresh countdown progress bar animation
-			serverAdapter.notifyItemRangeChanged( 0, servers.size ) // IDE doesn't like .notifyDataSetChanged()
-			swipeRefreshLayout.isRefreshing = false
-			if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
+	}
 
-		}, {
+	private fun updateUI( servers: Array<Server> ) {
 
-			// Hide refreshing spinner
-			swipeRefreshLayout.isRefreshing = false
+		// Set the overall status
+		statusTitleTextView.text = getString( R.string.serversTextViewStatusTitleGood )
+		statusTitleTextView.setTextColor( getColor( R.color.statusGood ) )
+		statusDescriptionTextView.text = getString( R.string.serversTextViewStatusDescriptionGood )
 
-		} )
+		// Create the adapter for the recycler view - https://www.geeksforgeeks.org/android-pull-to-refresh-with-recyclerview-in-kotlin/
+		val serverAdapter = ServerAdapter( servers, applicationContext ) { server -> onServerPressed( server ) }
+		recyclerView.adapter = serverAdapter
+
+		// Update the recycler view, stop loading & restart automatic refresh countdown progress bar animation
+		serverAdapter.notifyItemRangeChanged( 0, servers.size ) // IDE doesn't like .notifyDataSetChanged()
+		swipeRefreshLayout.isRefreshing = false
+		if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
+
+	}
+
+	private fun onServerPressed( server: Server ) {
+		Log.d( Shared.logTag, "Server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') pressed" )
 	}
 
 	// Fetches the servers
@@ -356,6 +432,46 @@ class ServersActivity : AppCompatActivity() {
 
 		// Show the progress dialog
 		if ( useProgressDialog ) progressDialog.show()
+
+	}
+
+	/**
+	 * Fetches all of the servers as an array.
+	 * @param instanceUrl The URL to the connector instance, using the HTTPS schema.
+	 * @param credentialsUsername The user to authenticate as.
+	 * @param credentialsPassword The password to authenticate with.
+	 * @return An array of servers.
+	 * @throws APIException Any sort of error, such as non-success HTTP status code, network connectivity, etc.
+	 * @throws JsonParseException An error parsing the HTTP response body as JSON, when successful.
+	 * @throws JsonSyntaxException An error parsing the HTTP response body as JSON, when successful.
+	 * @throws NullPointerException The API response contained an unexpected null property.
+	 */
+	private suspend fun fetchServers( instanceUrl: String, credentialsUsername: String, credentialsPassword: String ): Array<Server> {
+
+		// Fetch the servers, will throw a null pointer exception if null
+		val servers = API.getServers( instanceUrl, credentialsUsername, credentialsPassword )!!
+		Log.d( Shared.logTag, "Got '${ servers.size() }' servers from API ('${ servers }')" )
+
+		// Convert the JSON array to a list of servers - https://www.geeksforgeeks.org/kotlin-list-arraylist/
+		val serverList = ArrayList<Server>()
+		for ( arrayItem in servers ) {
+			val server = Server( arrayItem.asJsonObject ) // TODO: Ensure this is a JSON object
+
+			if ( server.isOnline() ) {
+				Log.d( Shared.logTag, "Server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') is online, fetching metrics..." )
+
+				server.update( this, instanceUrl, credentialsUsername, credentialsPassword )
+				Log.d( Shared.logTag, "Metrics fetched for server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }')" )
+
+				serverList.add( server )
+			} else {
+				Log.d( Shared.logTag, "Server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') is offline, not fetching metrics..." )
+				serverList.add( server )
+			}
+		}
+
+		// Convert the list to a fixed array before returning
+		return serverList.toTypedArray()
 
 	}
 

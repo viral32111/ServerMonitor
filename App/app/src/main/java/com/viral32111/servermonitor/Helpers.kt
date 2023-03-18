@@ -1,6 +1,7 @@
 package com.viral32111.servermonitor
 
 import android.app.Activity
+import android.content.Context
 import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import androidx.constraintlayout.widget.ConstraintLayout

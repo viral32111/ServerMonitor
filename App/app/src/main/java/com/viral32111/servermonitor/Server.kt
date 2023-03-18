@@ -1,13 +1,9 @@
 package com.viral32111.servermonitor
 
 import android.app.Activity
-import android.content.Context
 import android.util.Log
 import com.android.volley.*
 import com.google.gson.JsonObject
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
 import kotlin.math.round
 
 // Holds data about a server
@@ -126,7 +122,7 @@ class Server( data: JsonObject ) {
 
 	}
 
-	suspend fun fetchMetrics( activity: Activity, instanceUrl: String, credentialsUsername: String, credentialsPassword: String ) {
+	suspend fun update( activity: Activity, instanceUrl: String, credentialsUsername: String, credentialsPassword: String ) {
 		val data = API.getServer( instanceUrl, credentialsUsername, credentialsPassword, identifier )!!
 
 		identifier = data.get( "identifier" ).asString
