@@ -3,7 +3,7 @@ FROM ghcr.io/viral32111/dotnet:7.0-ubuntu
 
 # Configure directories & files
 ARG SERVERMONITOR_DIRECTORY=/usr/local/server-monitor \
-	SERVERMONITOR_CONFIG_FILE=/etc/server-monitor/config.json
+	SERVERMONITOR_CONFIG_DIRECTORY=/etc/server-monitor
 
 # Install required packages
 RUN apt-get update && \
@@ -16,7 +16,7 @@ COPY --chown=${USER_ID}:${USER_ID} ./ ${SERVERMONITOR_DIRECTORY}
 
 # Move the configuration file to the system-wide configuration directory
 RUN mkdir --verbose --parents ${SERVERMONITOR_CONFIG_DIRECTORY} && \
-	mv --verbose ${SERVERMONITOR_DIRECTORY}/config.json ${SERVERMONITOR_CONFIG_FILE} && \
+	mv --verbose ${SERVERMONITOR_DIRECTORY}/config.json ${SERVERMONITOR_CONFIG_DIRECTORY}/config.json && \
 	chown --changes --recursive ${USER_ID}:${USER_ID} ${SERVERMONITOR_CONFIG_DIRECTORY}
 
 # Switch to the regular user, in the install directory
