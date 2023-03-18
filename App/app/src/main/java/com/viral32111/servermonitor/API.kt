@@ -11,6 +11,9 @@ import com.google.gson.JsonParser
 import com.google.gson.JsonSyntaxException
 import java.nio.charset.Charset
 import java.util.*
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
 class API {
 
@@ -37,7 +40,7 @@ class API {
 			return Base64.getEncoder().encodeToString( "${ username }:${ password }".toByteArray() )
 		}
 
-		// Sends a HTTP request
+		// Sends a HTTP request (Callback)
 		private fun sendRequest( method: Int, url: String, username: String, password: String, successCallback: ( data: JsonObject? ) -> Unit, errorCallback: ( error: VolleyError, statusCode: Int?, errorCode: Int? ) -> Unit ) {
 
 			// Create the request to the given URL
@@ -98,23 +101,84 @@ class API {
 
 		}
 
-		// Convenience methods for each routes
-		fun getHello( baseUrl: String, username: String, password: String, successCallback: ( data: JsonObject? ) -> Unit, errorCallback: ( error: VolleyError, statusCode: Int?, errorCode: Int? ) -> Unit ) {
-			sendRequest( Request.Method.GET, "${ baseUrl }/hello", username, password, successCallback, errorCallback )
+		// Sends a HTTP request (Coroutine)
+		private suspend fun sendRequest( method: Int, url: String, username: String, password: String ): JsonObject? = suspendCoroutine { continuation ->
+
+			// Create the request to the given URL
+			val httpRequest = object: JsonObjectRequest( method, url, null, { _payload ->
+
+				// Attempt to check the custom error code
+				try {
+					val payload = JsonParser.parseString( _payload.toString() ).asJsonObject // Convert Java JSON to Google GSON
+
+					val errorCode = payload.get( "errorCode" )?.asInt
+					if ( errorCode == ErrorCode.Success.code ) {
+						continuation.resume( payload.get( "data" )?.asJsonObject )
+					} else {
+						continuation.resumeWithException( APIException( VolleyError( "Received non-success code '${ errorCode }' from server" ), null, errorCode ) )
+					}
+				} catch ( exception: JsonParseException ) {
+					continuation.resumeWithException( APIException( VolleyError( exception.message, ParseError( exception ) ), null, null ) )
+				} catch ( exception: JsonSyntaxException ) {
+					continuation.resumeWithException( APIException( VolleyError( exception.message, ParseError( exception ) ), null, null ) )
+				}
+
+			}, { error ->
+
+				// Get useful response data to pass to our callback
+				val statusCode = error.networkResponse?.statusCode
+				val body = error.networkResponse?.data?.toString( Charset.defaultCharset() )
+
+				// Attempt to pass our custom error code to the callback
+				if ( body != null ) {
+					try {
+						continuation.resumeWithException( APIException( error, statusCode, JsonParser.parseString( body )?.asJsonObject?.get( "errorCode" )?.asInt ) )
+					} catch ( exception: JsonParseException ) {
+						continuation.resumeWithException( APIException( error, statusCode, null ) )
+					} catch ( exception: JsonSyntaxException ) {
+						continuation.resumeWithException( APIException( error, statusCode, null ) )
+					}
+				} else {
+					continuation.resumeWithException( APIException( error, statusCode, null ) )
+				}
+
+			} ) {
+				// Override the request headers - https://stackoverflow.com/a/53141982
+				override fun getHeaders(): MutableMap<String, String> {
+					return hashMapOf(
+						"Accept" to "application/json, */*", // Expect a JSON response
+						"Authorization" to "Basic ${ encodeCredentials( username, password ) }" // Authentication
+					)
+				}
+			}
+
+			// Disable automatic retrying on failure
+			httpRequest.retryPolicy = DefaultRetryPolicy( DefaultRetryPolicy.DEFAULT_TIMEOUT_MS, 0, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT )
+
+			// Send the request
+			httpRequest.tag = Shared.httpRequestQueueTag
+			requestQueue.add( httpRequest )
+			Log.d( Shared.logTag, "Sending HTTP request to URL '${ url }' (Method: '${ requestMethodToName( method ) }', Username: '${ username }', Password: '${ password }')..." )
+
 		}
-		fun getServers( baseUrl: String, username: String, password: String, successCallback: ( data: JsonObject? ) -> Unit, errorCallback: ( error: VolleyError, statusCode: Int?, errorCode: Int? ) -> Unit ) {
-			sendRequest( Request.Method.GET, "${ baseUrl }/servers", username, password, successCallback, errorCallback )
-		}
-		fun getServer( baseUrl: String, username: String, password: String, serverIdentifier: String, successCallback: ( data: JsonObject? ) -> Unit, errorCallback: ( error: VolleyError, statusCode: Int?, errorCode: Int? ) -> Unit ) {
-			sendRequest( Request.Method.GET, "${ baseUrl }/server?id=${ serverIdentifier }", username, password, successCallback, errorCallback )
-		}
-		fun postServer( baseUrl: String, username: String, password: String, serverIdentifier: String, actionName: String, successCallback: ( data: JsonObject? ) -> Unit, errorCallback: ( error: VolleyError, statusCode: Int?, errorCode: Int? ) -> Unit ) {
-			sendRequest( Request.Method.POST, "${ baseUrl }/server?id=${ serverIdentifier }&action=${ actionName }", username, password, successCallback, errorCallback )
-		}
-		fun postService( baseUrl: String, username: String, password: String, serverIdentifier: String, serviceName: String, actionName: String, successCallback: ( data: JsonObject? ) -> Unit, errorCallback: ( error: VolleyError, statusCode: Int?, errorCode: Int? ) -> Unit ) {
-			sendRequest( Request.Method.POST, "${ baseUrl }/service?server=${ serverIdentifier }&name=${ serviceName }&action=${ actionName }", username, password, successCallback, errorCallback )
-		}
+
+		// Convenience methods for each routes (Callback)
+		fun getHello( baseUrl: String, username: String, password: String, successCallback: ( data: JsonObject? ) -> Unit, errorCallback: ( error: VolleyError, statusCode: Int?, errorCode: Int? ) -> Unit ) = sendRequest( Request.Method.GET, "${ baseUrl }/hello", username, password, successCallback, errorCallback )
+		fun getServers( baseUrl: String, username: String, password: String, successCallback: ( data: JsonObject? ) -> Unit, errorCallback: ( error: VolleyError, statusCode: Int?, errorCode: Int? ) -> Unit ) = sendRequest( Request.Method.GET, "${ baseUrl }/servers", username, password, successCallback, errorCallback )
+		fun getServer( baseUrl: String, username: String, password: String, serverIdentifier: String, successCallback: ( data: JsonObject? ) -> Unit, errorCallback: ( error: VolleyError, statusCode: Int?, errorCode: Int? ) -> Unit ) = sendRequest( Request.Method.GET, "${ baseUrl }/server?id=${ serverIdentifier }", username, password, successCallback, errorCallback )
+		fun postServer( baseUrl: String, username: String, password: String, serverIdentifier: String, actionName: String, successCallback: ( data: JsonObject? ) -> Unit, errorCallback: ( error: VolleyError, statusCode: Int?, errorCode: Int? ) -> Unit ) = sendRequest( Request.Method.POST, "${ baseUrl }/server?id=${ serverIdentifier }&action=${ actionName }", username, password, successCallback, errorCallback )
+		fun postService( baseUrl: String, username: String, password: String, serverIdentifier: String, serviceName: String, actionName: String, successCallback: ( data: JsonObject? ) -> Unit, errorCallback: ( error: VolleyError, statusCode: Int?, errorCode: Int? ) -> Unit ) = sendRequest( Request.Method.POST, "${ baseUrl }/service?server=${ serverIdentifier }&name=${ serviceName }&action=${ actionName }", username, password, successCallback, errorCallback )
+
+		// Convenience methods for each routes (Coroutine)
+		suspend fun getHello( baseUrl: String, username: String, password: String ) = sendRequest( Request.Method.GET, "${ baseUrl }/hello", username, password )
+		suspend fun getServers( baseUrl: String, username: String, password: String ) = sendRequest( Request.Method.GET, "${ baseUrl }/servers", username, password )
+		suspend fun getServer( baseUrl: String, username: String, password: String, serverIdentifier: String ) = sendRequest( Request.Method.GET, "${ baseUrl }/server?id=${ serverIdentifier }", username, password )
+		suspend fun postServer( baseUrl: String, username: String, password: String, serverIdentifier: String, actionName: String ) = sendRequest( Request.Method.POST, "${ baseUrl }/server?id=${ serverIdentifier }&action=${ actionName }", username, password )
+		suspend fun postService( baseUrl: String, username: String, password: String, serverIdentifier: String, serviceName: String, actionName: String ) = sendRequest( Request.Method.POST, "${ baseUrl }/service?server=${ serverIdentifier }&name=${ serviceName }&action=${ actionName }", username, password )
 
 	}
 
 }
+
+// Custom exception type for coroutines
+class APIException( val error: VolleyError, val statusCode: Int?, val errorCode: Int? ): Exception()

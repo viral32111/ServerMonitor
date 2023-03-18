@@ -5,6 +5,9 @@ import android.content.Context
 import android.util.Log
 import com.android.volley.*
 import com.google.gson.JsonObject
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 import kotlin.math.round
 
 // Holds data about a server
@@ -121,5 +124,24 @@ class Server( data: JsonObject ) {
 			}
 		} )
 
+	}
+
+	suspend fun fetchMetrics( activity: Activity, instanceUrl: String, credentialsUsername: String, credentialsPassword: String ) {
+		val data = API.getServer( instanceUrl, credentialsUsername, credentialsPassword, identifier )!!
+
+		identifier = data.get( "identifier" ).asString
+		jobName = data.get( "jobName" ).asString
+		instanceAddress = data.get( "instanceAddress" ).asString
+		lastScrape = data.get( "lastScrape" ).asLong
+		hostName = data.get( "hostName" ).asString
+		operatingSystem = data.get( "operatingSystem" ).asString
+		architecture = data.get( "architecture" ).asString
+		version = data.get( "version" ).asString
+		uptimeSeconds = round( data.get( "uptimeSeconds" ).asDouble ).toLong()
+
+		val resources = data.get( "resources" ).asJsonObject
+
+		val processor = resources.get( "processor" ).asJsonObject
+		processorUsage = processor.get( "usage" ).asFloat
 	}
 }

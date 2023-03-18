@@ -19,6 +19,9 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.android.volley.*
 import com.google.android.material.appbar.MaterialToolbar
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlin.coroutines.coroutineContext
 
 class ServersActivity : AppCompatActivity() {
 
@@ -280,6 +283,7 @@ class ServersActivity : AppCompatActivity() {
 					if ( server.isOnline() ) {
 						Log.d( Shared.logTag, "Server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') is online, fetching metrics..." )
 
+						// TODO: Wait for all of these because the foor loop finishes before these return
 						server.fetchMetrics( this, instanceUrl, credentialsUsername, credentialsPassword, {
 							Log.d( Shared.logTag, "Metrics fetched for server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }')" )
 							serverList.add( server )
