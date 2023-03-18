@@ -89,11 +89,22 @@ See [config.json](/Service/ServerMonitor/config.json) for an example configurati
 
 ## Building
 
-Build the Android application with Gradle using `./gradlew assembleRelease` and optionally run tests using `./gradlew test` in the [`App`](/App) directory. The resulting APK file will be created at `App/app/build/outputs/apk/release/app-release.apk`.
+### App
 
-Build the server service with .NET using `dotnet build --configuration Release` and optionally run tests using `dotnet test --configuration Release` in the [`Service`](/Service) directory. The resulting DLL file & dependencies will be created at `Service/ServerMonitor/bin/Release/net7.0/ServerMonitor.dll`.
+1. Create a key store & signing key, then [configure signing](https://github.com/viral32111/ServerMonitor/blob/main/App/app/build.gradle#L22-L25) using environment variables or the global Gradle configuration file (`~/.gradle/gradle.properties`).
+  * Alternatively remove the signing configuration from the Gradle build file to disable APK signing.
+2. Build the Android application with Gradle by running `./gradlew assembleRelease` in the [`App`](/App/) directory.
+3. Optionally run instrumented tests by running `./gradlew test` in the [`App`](/App/) directory.
 
-**NOTE: You will need to add `https://nuget.pkg.github.com/viral32111/index.json` as a NuGet packages source, as one of the dependencies is my personal [JSON Extensions](https://github.com/viral32111/JsonExtensions) package.**
+The APK file will be created at `App/app/build/outputs/apk/release/app-release.apk`.
+
+### Service
+
+1. Add `https://nuget.pkg.github.com/viral32111/index.json` as a NuGet packages source, as one of the dependencies is my [JSON Extensions](https://github.com/viral32111/JsonExtensions) package.
+2. Build the server service with .NET by running `dotnet build --configuration Release` in the [`Service`](/Service/) directory.
+3. Optionally run unit & integration tests by running `dotnet test --configuration Release` in the [`Service`](/Service) directory.
+
+The resulting DLL file & dependencies will be created at `Service/ServerMonitor/bin/Release/net7.0/ServerMonitor.dll`.
 
 ## Progress
 
