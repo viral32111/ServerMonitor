@@ -63,7 +63,7 @@ docker container run \
 * The JSON configuration file should be mounted at `/etc/server-monitor/config.json`.
 * By default the RESTful API uses port `6996`.
 
-**NOTE:** Some features of the Docker image in *"collector"* mode are tedious on some systems due to availability of system API functions, especially on Windows-based Docker installations. It is recommended to only use the Docker image for the *"connector"* mode, then a regular installation for the *"collector"* mode.
+**NOTE: Some features of the Docker image in *"collector"* mode are tedious on some systems due to availability of system API functions, especially on Windows-based Docker installations. It is recommended to only use the Docker image for the *"connector"* mode, then a regular installation for the *"collector"* mode.**
 
 ## Configuration
 
@@ -93,7 +93,7 @@ Build the Android application with Gradle using `./gradlew assembleRelease` and 
 
 Build the server service with .NET using `dotnet build --configuration Release` and optionally run tests using `dotnet test --configuration Release` in the [`Service`](/Service) directory. The resulting DLL file & dependencies will be created at `Service/ServerMonitor/bin/Release/net7.0/ServerMonitor.dll`.
 
-**NOTE**: You will need to add `https://nuget.pkg.github.com/viral32111/index.json` as a NuGet packages source, as one of the dependencies is my personal [JSON Extensions](https://github.com/viral32111/JsonExtensions) package.
+**NOTE: You will need to add `https://nuget.pkg.github.com/viral32111/index.json` as a NuGet packages source, as one of the dependencies is my personal [JSON Extensions](https://github.com/viral32111/JsonExtensions) package.**
 
 ## Progress
 
