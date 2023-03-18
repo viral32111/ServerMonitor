@@ -19,6 +19,8 @@ class Server( data: JsonObject ) {
 	var uptimeSeconds: Long
 
 	var processorUsage: Float? = null
+	var processorFrequency: Float? = null
+	var processorTemperature: Float? = null
 
 	// Decode the JSON object from the GET /servers array
 	init {
@@ -122,7 +124,7 @@ class Server( data: JsonObject ) {
 
 	}
 
-	suspend fun update( activity: Activity, instanceUrl: String, credentialsUsername: String, credentialsPassword: String ) {
+	suspend fun update( instanceUrl: String, credentialsUsername: String, credentialsPassword: String ) {
 		val data = API.getServer( instanceUrl, credentialsUsername, credentialsPassword, identifier )!!
 
 		identifier = data.get( "identifier" ).asString
@@ -139,5 +141,6 @@ class Server( data: JsonObject ) {
 
 		val processor = resources.get( "processor" ).asJsonObject
 		processorUsage = processor.get( "usage" ).asFloat
+		processorTemperature = processor.get( "temperature" ).asFloat
 	}
 }

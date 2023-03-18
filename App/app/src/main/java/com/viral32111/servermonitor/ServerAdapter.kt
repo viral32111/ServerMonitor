@@ -67,14 +67,24 @@ class ServerAdapter( private val servers: Array<Server>, private val context: Co
 
 			// TODO: Populate text views with server data
 
-			viewHolder.processorTextView.text = String.format( context.getString( R.string.serversTextViewServerProcessorUsage ), 0 )
-			viewHolder.processorTextView.setTextColor( context.getColor( R.color.statusGood ) )
+			if ( server.processorUsage != null ) {
+				viewHolder.processorTextView.text = String.format( context.getString( R.string.serversTextViewServerProcessorUsage ), server.processorUsage!!.toInt() )
+				viewHolder.processorTextView.setTextColor( context.getColor( R.color.statusGood ) )
+			} else {
+				viewHolder.processorTextView.text = String.format( context.getString( R.string.serversTextViewServerProcessorUsage ), 0 )
+				viewHolder.processorTextView.setTextColor( context.getColor( R.color.statusDead ) )
+			}
 
 			viewHolder.memoryTextView.text = String.format( context.getString( R.string.serversTextViewServerMemoryUsage ), 0, "K" )
 			viewHolder.memoryTextView.setTextColor( context.getColor( R.color.statusGood ) )
 
-			viewHolder.temperatureTextView.text = String.format( context.getString( R.string.serversTextViewServerTemperatureValue ), 0 )
-			viewHolder.temperatureTextView.setTextColor( context.getColor( R.color.statusGood ) )
+			if ( server.processorTemperature != null && server.processorTemperature!! >= 0f ) {
+				viewHolder.temperatureTextView.text = String.format( context.getString( R.string.serversTextViewServerTemperatureValue ), server.processorTemperature!!.toInt() )
+				viewHolder.temperatureTextView.setTextColor( context.getColor( R.color.statusGood ) )
+			} else {
+				viewHolder.temperatureTextView.text = String.format( context.getString( R.string.serversTextViewServerTemperatureValue ), 0 )
+				viewHolder.temperatureTextView.setTextColor( context.getColor( R.color.statusDead ) )
+			}
 
 			viewHolder.serviceTextView.text = String.format( context.getString( R.string.serversTextViewServerServicesCount ), 0 )
 			viewHolder.serviceTextView.setTextColor( context.getColor( R.color.statusGood ) )
