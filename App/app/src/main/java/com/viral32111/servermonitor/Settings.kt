@@ -14,7 +14,7 @@ class Settings( private val sharedPreferences: SharedPreferences ) {
 	// Defaults are the values
 	var automaticRefresh: Boolean = true
 	var automaticRefreshInterval: Int = 15 // Seconds
-	var theme: Int = 0
+	var theme: Int = 2 // TODO: Set this to 0 for system theme, once dark theme is implemented
 	var notificationAlwaysOngoing: Boolean = true
 	var notificationWhenIssueArises: Boolean = true
 

@@ -28,16 +28,6 @@ class SettingsActivity : AppCompatActivity() {
 	private lateinit var notificationsWhenIssueArisesSwitch: MaterialSwitch
 	private lateinit var saveButton: Button
 
-	// Values from when activity loaded, for checking if anything has been changed when back is pressed
-	private var instanceUrl: String? = null
-	private var credentialsUsername: String? = null
-	private var credentialsPassword: String? = null
-	private var automaticRefresh: Boolean? = null
-	private var automaticRefreshInterval: Int? = null
-	private var theme: Int? = null
-	private var notificationAlwaysOngoing: Boolean? = null
-	private var notificationWhenIssueArises: Boolean? = null
-
 	// Runs when the activity is created...
 	override fun onCreate( savedInstanceState: Bundle? ) {
 
@@ -73,7 +63,8 @@ class SettingsActivity : AppCompatActivity() {
 		saveButton = findViewById( R.id.settingsSaveButton )
 		Log.d( Shared.logTag, "Got UI controls" )
 
-		// Force theme selection by disabling interaction - This will be removed once dark theme is properly implemented
+		// Force theme selection by disabling interaction
+		// TODO: Remove this once dark theme is implemented
 		themeSpinner.setSelection( 2 ) // Light
 		themeSpinner.isEnabled = false
 		Log.d( Shared.logTag, "Forced theme selection" )
@@ -105,7 +96,7 @@ class SettingsActivity : AppCompatActivity() {
 		materialToolbar?.navigationIcon = AppCompatResources.getDrawable( this, R.drawable.ic_baseline_arrow_back_24 )
 		materialToolbar?.setNavigationOnClickListener {
 			Log.d( Shared.logTag, "Navigation back button pressed" )
-			confirmBack()
+			confirmBack( settings )
 		}
 
 		// Register the back button pressed callback - https://medium.com/tech-takeaways/how-to-migrate-the-deprecated-onbackpressed-function-e66bb29fa2fd
@@ -129,7 +120,7 @@ class SettingsActivity : AppCompatActivity() {
 	private val onBackPressed: OnBackPressedCallback = object : OnBackPressedCallback( true ) {
 		override fun handleOnBackPressed() {
 			Log.d( Shared.logTag, "System back button pressed" )
-			confirmBack()
+			confirmBack( Settings( getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE ) ) )
 		}
 	}
 
@@ -239,6 +230,7 @@ class SettingsActivity : AppCompatActivity() {
 		}
 
 		// Test if a connector instance is running on this URL
+		// TODO: Don't run this if we're not setup yet because it'll always error
 		API.getHello( instanceUrl, credentialsUsername, credentialsPassword, { helloData ->
 			Log.d( Shared.logTag, "Instance '${ instanceUrl }' is running! (Message: '${ helloData?.get( "message" )?.asString }')" )
 
@@ -318,15 +310,15 @@ class SettingsActivity : AppCompatActivity() {
 		credentialsPasswordEditText.isEnabled = shouldEnable
 		automaticRefreshSwitch.isEnabled = shouldEnable
 		automaticRefreshIntervalEditText.isEnabled = shouldEnable
-		themeSpinner.isEnabled = shouldEnable
+		themeSpinner.isEnabled = false // TODO: Don't enable this until dark theme is implemented
 		notificationsAlwaysOngoingSwitch.isEnabled = shouldEnable
 		notificationsWhenIssueArisesSwitch.isEnabled = shouldEnable
 		saveButton.isEnabled = shouldEnable
 	}
 
 	// Shows a confirmation dialog for leaving settings without saving changes, but only if the settings have been changed
-	private fun confirmBack() {
-		if ( hasValuesChanged() ) {
+	private fun confirmBack( settings: Settings ) {
+		if ( hasValuesChanged( settings ) ) {
 			Log.d( Shared.logTag, "Settings have changed, showing confirmation dialog..." )
 
 			MaterialAlertDialogBuilder( this )
@@ -351,8 +343,8 @@ class SettingsActivity : AppCompatActivity() {
 		}
 	}
 
-	// Checks if the values have changed since the activity loaded
-	private fun hasValuesChanged(): Boolean {
+	// Checks if the settings have changed
+	private fun hasValuesChanged( settings: Settings ): Boolean {
 
 		// Get the values from all the inputs
 		val instanceUrl = instanceUrlEditText.text.toString()
@@ -365,14 +357,14 @@ class SettingsActivity : AppCompatActivity() {
 		val notificationWhenIssueArises = notificationsWhenIssueArisesSwitch.isChecked
 
 		// True if any of the values have changed
-		if ( instanceUrl != this.instanceUrl ) return true
-		if ( credentialsUsername != this.credentialsUsername ) return true
-		if ( credentialsPassword != this.credentialsPassword ) return true
-		if ( automaticRefresh != this.automaticRefresh ) return true
-		if ( automaticRefreshInterval != this.automaticRefreshInterval ) return true
-		if ( theme != this.theme ) return true
-		if ( notificationAlwaysOngoing != this.notificationAlwaysOngoing ) return true
-		if ( notificationWhenIssueArises != this.notificationWhenIssueArises ) return true
+		if ( instanceUrl != settings.instanceUrl ) return true
+		if ( credentialsUsername != settings.credentialsUsername ) return true
+		if ( credentialsPassword != settings.credentialsPassword ) return true
+		if ( automaticRefresh != settings.automaticRefresh ) return true
+		if ( automaticRefreshInterval != settings.automaticRefreshInterval ) return true
+		if ( theme != settings.theme ) return true
+		if ( notificationAlwaysOngoing != settings.notificationAlwaysOngoing ) return true
+		if ( notificationWhenIssueArises != settings.notificationWhenIssueArises ) return true
 
 		// Otherwise false
 		return false
