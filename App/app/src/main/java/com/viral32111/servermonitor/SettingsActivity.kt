@@ -73,11 +73,13 @@ class SettingsActivity : AppCompatActivity() {
 		val settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE ) )
 		Log.d( Shared.logTag, "Got settings ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
 
-		// Update values with persistent settings & save in case it used defaults
-		readSettings( settings )
+		// Update UI with values from settings
+		updateUIWithSettings( settings )
+		/*
 		saveSettings( settings ) {
 			Log.d( Shared.logTag, "Successfully re-saved settings" )
 		}
+		*/
 
 		// Validate & save values when the save button is pressed, then return to the previous activity
 		saveButton.setOnClickListener {
@@ -112,7 +114,7 @@ class SettingsActivity : AppCompatActivity() {
 		API.cancelQueue()
 
 		// Enable input
-		enableInputs( true )
+		enableInputs( true, Settings( getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE ) ).isSetup() )
 
 	}
 
@@ -125,7 +127,7 @@ class SettingsActivity : AppCompatActivity() {
 	}
 
 	// Updates the UI with the settings from the persistent settings
-	private fun readSettings( settings: Settings ) {
+	private fun updateUIWithSettings(settings: Settings ) {
 		Log.d( Shared.logTag, "Populating UI with settings from shared preferences..." )
 
 		// Update the values
@@ -162,7 +164,7 @@ class SettingsActivity : AppCompatActivity() {
 		Log.d( Shared.logTag, "Saving settings to shared preferences..." )
 
 		// Disable input
-		enableInputs( false )
+		enableInputs( false, settings.isSetup() )
 
 		// Get the values from all the UI inputs
 		val instanceUrl = instanceUrlEditText.text.toString()
@@ -174,74 +176,142 @@ class SettingsActivity : AppCompatActivity() {
 		val notificationAlwaysOngoing = notificationsAlwaysOngoingSwitch.isChecked
 		val notificationWhenIssueArises = notificationsWhenIssueArisesSwitch.isChecked
 
-		// Do not continue if an instance URL wasn't provided
-		if ( instanceUrl.isBlank() ) {
-			enableInputs( true )
-			showBriefMessage( this, R.string.settingsToastInstanceUrlEmpty )
-			Log.w( Shared.logTag, "Instance URL is empty" )
-			return
-		}
+		// Are we already setup?
+		if ( settings.isSetup() ) {
 
-		// Do not continue if the URL isn't valid
-		if ( !validateInstanceUrl( instanceUrl ) ) {
-			enableInputs( true )
-			showBriefMessage( this, R.string.settingsToastInstanceUrlInvalid )
-			Log.w( Shared.logTag, "Instance URL '${ instanceUrl }' is invalid" )
-			return
-		}
+			// Do not continue if an instance URL wasn't provided
+			if ( instanceUrl.isBlank() ) {
+				enableInputs( true, settings.isSetup() )
+				showBriefMessage( this, R.string.settingsToastInstanceUrlEmpty )
+				Log.w( Shared.logTag, "Instance URL is empty" )
+				return
+			}
 
-		// Do not continue if a username wasn't provided
-		if ( credentialsUsername.isBlank() ) {
-			enableInputs( true )
-			showBriefMessage( this, R.string.settingsToastCredentialsUsernameEmpty )
-			Log.w( Shared.logTag, "Username is empty" )
-			return
-		}
+			// Do not continue if the URL isn't valid
+			if ( !validateInstanceUrl( instanceUrl ) ) {
+				enableInputs( true, settings.isSetup() )
+				showBriefMessage( this, R.string.settingsToastInstanceUrlInvalid )
+				Log.w( Shared.logTag, "Instance URL '${ instanceUrl }' is invalid" )
+				return
+			}
 
-		// Do not continue if the username isn't valid
-		if ( !validateCredentialsUsername( credentialsUsername ) ) {
-			enableInputs( true )
-			showBriefMessage( this, R.string.settingsToastCredentialsUsernameInvalid )
-			Log.w( Shared.logTag, "Username '${ credentialsUsername }' is invalid" )
-			return
-		}
+			// Do not continue if a username wasn't provided
+			if ( credentialsUsername.isBlank() ) {
+				enableInputs( true, settings.isSetup() )
+				showBriefMessage( this, R.string.settingsToastCredentialsUsernameEmpty )
+				Log.w( Shared.logTag, "Username is empty" )
+				return
+			}
 
-		// Do not continue if a password wasn't provided
-		if ( credentialsPassword.isBlank() ) {
-			enableInputs( true )
-			showBriefMessage( this, R.string.settingsToastCredentialsPasswordEmpty )
-			Log.w( Shared.logTag, "Password is empty" )
-			return
-		}
+			// Do not continue if the username isn't valid
+			if ( !validateCredentialsUsername( credentialsUsername ) ) {
+				enableInputs( true, settings.isSetup() )
+				showBriefMessage( this, R.string.settingsToastCredentialsUsernameInvalid )
+				Log.w( Shared.logTag, "Username '${ credentialsUsername }' is invalid" )
+				return
+			}
 
-		// Do not continue if the password isn't valid
-		if ( !validateCredentialsPassword( credentialsPassword ) ) {
-			enableInputs( true )
-			showBriefMessage( this, R.string.settingsToastCredentialsPasswordInvalid )
-			Log.w( Shared.logTag, "Password '${ credentialsPassword }' is invalid" )
-			return
-		}
+			// Do not continue if a password wasn't provided
+			if ( credentialsPassword.isBlank() ) {
+				enableInputs( true, settings.isSetup() )
+				showBriefMessage( this, R.string.settingsToastCredentialsPasswordEmpty )
+				Log.w( Shared.logTag, "Password is empty" )
+				return
+			}
 
-		// Create a progress dialog
-		val progressDialog = createProgressDialog( this, R.string.dialogProgressInstanceTestTitle, R.string.dialogProgressInstanceTestMessage ) {
-			API.cancelQueue() // Cancel all pending HTTP requests
-			enableInputs( true ) // Enable input
-			showBriefMessage( this, R.string.toastInstanceTestCancel )
-		}
+			// Do not continue if the password isn't valid
+			if ( !validateCredentialsPassword( credentialsPassword ) ) {
+				enableInputs( true, settings.isSetup() )
+				showBriefMessage( this, R.string.settingsToastCredentialsPasswordInvalid )
+				Log.w( Shared.logTag, "Password '${ credentialsPassword }' is invalid" )
+				return
+			}
 
-		// Test if a connector instance is running on this URL
-		// TODO: Don't run this if we're not setup yet because it'll always error
-		API.getHello( instanceUrl, credentialsUsername, credentialsPassword, { helloData ->
-			Log.d( Shared.logTag, "Instance '${ instanceUrl }' is running! (Message: '${ helloData?.get( "message" )?.asString }')" )
+			// Create a progress dialog
+			val progressDialog = createProgressDialog( this, R.string.dialogProgressInstanceTestTitle, R.string.dialogProgressInstanceTestMessage ) {
+				API.cancelQueue() // Cancel all pending HTTP requests
+				enableInputs( true, settings.isSetup() ) // Enable input
+				showBriefMessage( this, R.string.toastInstanceTestCancel )
+			}
 
-			// Hide progress dialog & enable input
-			progressDialog.dismiss()
-			enableInputs( true )
+			// Test if a connector instance is running on this URL
+			API.getHello( instanceUrl, credentialsUsername, credentialsPassword, { helloData ->
+				Log.d( Shared.logTag, "Instance '${ instanceUrl }' is running! (Message: '${ helloData?.get( "message" )?.asString }')" )
 
-			// Update settings with these values
-			settings.instanceUrl = instanceUrl
-			settings.credentialsUsername = credentialsUsername
-			settings.credentialsPassword = credentialsPassword
+				// Hide progress dialog & enable input
+				progressDialog.dismiss()
+				enableInputs( true, settings.isSetup() )
+
+				// Update settings with these values
+				settings.instanceUrl = instanceUrl
+				settings.credentialsUsername = credentialsUsername
+				settings.credentialsPassword = credentialsPassword
+				settings.automaticRefresh = automaticRefresh
+				settings.automaticRefreshInterval = automaticRefreshInterval
+				settings.theme = theme
+				settings.notificationAlwaysOngoing = notificationAlwaysOngoing
+				settings.notificationWhenIssueArises = notificationWhenIssueArises
+				settings.save()
+
+				// Run the custom callback
+				successCallback.invoke()
+
+			}, { error, statusCode, errorCode ->
+				Log.e( Shared.logTag, "Instance '${ instanceUrl }' is NOT running! (Error: '${ error }', Status Code: '${ statusCode }', Error Code: '${ errorCode }')" )
+
+				// Hide progress dialog & enable input
+				progressDialog.dismiss()
+				enableInputs( true, settings.isSetup() )
+
+				when ( error ) {
+
+					// Bad authentication
+					is AuthFailureError -> when ( errorCode ) {
+						ErrorCode.UnknownUser.code -> showBriefMessage( this, R.string.toastInstanceTestAuthenticationUnknownUser )
+						ErrorCode.IncorrectPassword.code -> showBriefMessage( this, R.string.toastInstanceTestAuthenticationIncorrectPassword )
+						else -> showBriefMessage( this, R.string.toastInstanceTestAuthenticationFailure )
+					}
+
+					// HTTP 4xx
+					is ClientError -> when ( statusCode ) {
+						404 -> showBriefMessage( this, R.string.toastInstanceTestNotFound )
+						else -> showBriefMessage( this, R.string.toastInstanceTestClientFailure )
+					}
+
+					// HTTP 5xx
+					is ServerError -> when ( statusCode ) {
+						502 -> showBriefMessage( this, R.string.toastInstanceTestUnavailable )
+						503 -> showBriefMessage( this, R.string.toastInstanceTestUnavailable )
+						504 -> showBriefMessage( this, R.string.toastInstanceTestUnavailable )
+						else -> showBriefMessage( this, R.string.toastInstanceTestServerFailure )
+					}
+
+					// No Internet connection, malformed domain
+					is NoConnectionError -> showBriefMessage( this, R.string.toastInstanceTestNoConnection )
+					is NetworkError -> showBriefMessage( this, R.string.toastInstanceTestNoConnection )
+
+					// Connection timed out
+					is TimeoutError -> showBriefMessage( this, R.string.toastInstanceTestTimeout )
+
+					// Couldn't parse as JSON
+					is ParseError -> showBriefMessage( this, R.string.toastInstanceTestParseFailure )
+
+					// ¯\_(ツ)_/¯
+					else -> showBriefMessage( this, R.string.toastInstanceTestFailure )
+
+				}
+			} )
+
+			// Show the progress dialog
+			progressDialog.show()
+
+		// We're not setup yet...
+		} else {
+
+			// Enable input
+			enableInputs( true, settings.isSetup() )
+
+			// Only update the other settings
 			settings.automaticRefresh = automaticRefresh
 			settings.automaticRefreshInterval = automaticRefreshInterval
 			settings.theme = theme
@@ -250,70 +320,29 @@ class SettingsActivity : AppCompatActivity() {
 			settings.save()
 
 			// Run the custom callback
+
 			successCallback.invoke()
-
-		}, { error, statusCode, errorCode ->
-			Log.e( Shared.logTag, "Instance '${ instanceUrl }' is NOT running! (Error: '${ error }', Status Code: '${ statusCode }', Error Code: '${ errorCode }')" )
-
-			// Hide progress dialog & enable input
-			progressDialog.dismiss()
-			enableInputs( true )
-
-			when ( error ) {
-
-				// Bad authentication
-				is AuthFailureError -> when ( errorCode ) {
-					ErrorCode.UnknownUser.code -> showBriefMessage( this, R.string.toastInstanceTestAuthenticationUnknownUser )
-					ErrorCode.IncorrectPassword.code -> showBriefMessage( this, R.string.toastInstanceTestAuthenticationIncorrectPassword )
-					else -> showBriefMessage( this, R.string.toastInstanceTestAuthenticationFailure )
-				}
-
-				// HTTP 4xx
-				is ClientError -> when ( statusCode ) {
-					404 -> showBriefMessage( this, R.string.toastInstanceTestNotFound )
-					else -> showBriefMessage( this, R.string.toastInstanceTestClientFailure )
-				}
-
-				// HTTP 5xx
-				is ServerError -> when ( statusCode ) {
-					502 -> showBriefMessage( this, R.string.toastInstanceTestUnavailable )
-					503 -> showBriefMessage( this, R.string.toastInstanceTestUnavailable )
-					504 -> showBriefMessage( this, R.string.toastInstanceTestUnavailable )
-					else -> showBriefMessage( this, R.string.toastInstanceTestServerFailure )
-				}
-
-				// No Internet connection, malformed domain
-				is NoConnectionError -> showBriefMessage( this, R.string.toastInstanceTestNoConnection )
-				is NetworkError -> showBriefMessage( this, R.string.toastInstanceTestNoConnection )
-
-				// Connection timed out
-				is TimeoutError -> showBriefMessage( this, R.string.toastInstanceTestTimeout )
-
-				// Couldn't parse as JSON
-				is ParseError -> showBriefMessage( this, R.string.toastInstanceTestParseFailure )
-
-				// ¯\_(ツ)_/¯
-				else -> showBriefMessage( this, R.string.toastInstanceTestFailure )
-
-			}
-		} )
-
-		// Show the progress dialog
-		progressDialog.show()
+		}
 
 	}
 
 	// Enable/disable user input
-	private fun enableInputs( shouldEnable: Boolean ) {
-		instanceUrlEditText.isEnabled = shouldEnable
-		credentialsUsernameEditText.isEnabled = shouldEnable
-		credentialsPasswordEditText.isEnabled = shouldEnable
+	private fun enableInputs( shouldEnable: Boolean, isSetup: Boolean ) {
+
+		// Only change these if we're already setup
+		if ( isSetup ) {
+			instanceUrlEditText.isEnabled = shouldEnable
+			credentialsUsernameEditText.isEnabled = shouldEnable
+			credentialsPasswordEditText.isEnabled = shouldEnable
+		}
+
 		automaticRefreshSwitch.isEnabled = shouldEnable
-		automaticRefreshIntervalEditText.isEnabled = shouldEnable
+		automaticRefreshIntervalEditText.isEnabled = shouldEnable && automaticRefreshSwitch.isChecked // Only toggle this if automatic refreshing is enabled
 		themeSpinner.isEnabled = false // TODO: Don't enable this until dark theme is implemented
 		notificationsAlwaysOngoingSwitch.isEnabled = shouldEnable
 		notificationsWhenIssueArisesSwitch.isEnabled = shouldEnable
 		saveButton.isEnabled = shouldEnable
+
 	}
 
 	// Shows a confirmation dialog for leaving settings without saving changes, but only if the settings have been changed
@@ -356,10 +385,14 @@ class SettingsActivity : AppCompatActivity() {
 		val notificationAlwaysOngoing = notificationsAlwaysOngoingSwitch.isChecked
 		val notificationWhenIssueArises = notificationsWhenIssueArisesSwitch.isChecked
 
+		// Only check these if we're already setup
+		if ( settings.isSetup() ) {
+			if ( instanceUrl != settings.instanceUrl ) return true
+			if ( credentialsUsername != settings.credentialsUsername ) return true
+			if ( credentialsPassword != settings.credentialsPassword ) return true
+		}
+
 		// True if any of the values have changed
-		if ( instanceUrl != settings.instanceUrl ) return true
-		if ( credentialsUsername != settings.credentialsUsername ) return true
-		if ( credentialsPassword != settings.credentialsPassword ) return true
 		if ( automaticRefresh != settings.automaticRefresh ) return true
 		if ( automaticRefreshInterval != settings.automaticRefreshInterval ) return true
 		if ( theme != settings.theme ) return true
