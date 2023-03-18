@@ -22,6 +22,17 @@ import com.google.android.material.appbar.MaterialToolbar
 
 class ServersActivity : AppCompatActivity() {
 
+	// UI
+	private lateinit var swipeRefreshLayout: SwipeRefreshLayout
+	private lateinit var recyclerView: RecyclerView
+	private lateinit var statusTitleTextView: TextView
+	private lateinit var statusDescriptionTextView: TextView
+	private lateinit var refreshProgressBar: ProgressBar
+
+	// Misc
+	private lateinit var progressBarAnimation: ProgressBarAnimation
+	private lateinit var settings: Settings
+
 	// Runs when the activity is created...
 	@SuppressLint( "InflateParams" ) // We intend to pass null to our layout inflater
 	override fun onCreate(savedInstanceState: Bundle? ) {
@@ -57,14 +68,14 @@ class ServersActivity : AppCompatActivity() {
 		}
 
 		// Get all the UI
-		val swipeRefreshLayout = findViewById<SwipeRefreshLayout>( R.id.serversSwipeRefreshLayout )
-		val recyclerView = findViewById<RecyclerView>( R.id.serversRecyclerView )
-		val statusTitleTextView = findViewById<TextView>( R.id.serversStatusTitleTextView )
-		val statusDescriptionTextView = findViewById<TextView>( R.id.serversStatusDescriptionTextView )
-		val refreshProgressBar = findViewById<ProgressBar>( R.id.serversRefreshProgressBar )
+		swipeRefreshLayout = findViewById( R.id.serversSwipeRefreshLayout )
+		recyclerView = findViewById( R.id.serversRecyclerView )
+		statusTitleTextView = findViewById( R.id.serversStatusTitleTextView )
+		statusDescriptionTextView = findViewById( R.id.serversStatusDescriptionTextView )
+		refreshProgressBar = findViewById( R.id.serversRefreshProgressBar )
 
 		// Get the settings
-		val settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE ) )
+		settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE ) )
 		Log.d( Shared.logTag, "Got settings ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
 
 		// Switch to the servers activity if we aren't servers yet
@@ -85,15 +96,8 @@ class ServersActivity : AppCompatActivity() {
 		recyclerView.addItemDecoration( dividerItemDecoration )
 
 		// Create the animation for the automatic refresh countdown progress bar - https://stackoverflow.com/a/18015071
-		val progressBarAnimation = ProgressBarAnimation( refreshProgressBar, refreshProgressBar.progress.toFloat(), refreshProgressBar.max.toFloat() )
+		progressBarAnimation = ProgressBarAnimation( refreshProgressBar, refreshProgressBar.progress.toFloat(), refreshProgressBar.max.toFloat() )
 		progressBarAnimation.interpolator = LinearInterpolator() // We want linear, not accelerate-decelerate interpolation
-		progressBarAnimation.duration = settings.automaticRefreshInterval * 1000L // Convert seconds to milliseconds
-
-		// Disable the progress bar if automatic refresh is turned off
-		if ( !settings.automaticRefresh ) {
-			refreshProgressBar.isEnabled = false
-			refreshProgressBar.visibility = View.GONE
-		}
 
 		// Event listeners for the automatic refresh countdown progress bar animation - https://medium.com/android-news/handsome-codes-with-kotlin-6e183db4c7e5
 		progressBarAnimation.setAnimationListener( object : Animation.AnimationListener {
@@ -129,6 +133,11 @@ class ServersActivity : AppCompatActivity() {
 					if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
 					swipeRefreshLayout.isRefreshing = false
 
+				}, {
+
+				   // Hide refreshing spinner
+				   swipeRefreshLayout.isRefreshing = false
+
 				}, false )
 			}
 
@@ -136,6 +145,7 @@ class ServersActivity : AppCompatActivity() {
 			override fun onAnimationRepeat( animation: Animation? ) {
 				Log.d( Shared.logTag, "Animation repeated" )
 			}
+
 		} )
 
 		// When we're swiped down to refresh...
@@ -167,9 +177,53 @@ class ServersActivity : AppCompatActivity() {
 				swipeRefreshLayout.isRefreshing = false
 				if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
 
+			}, {
+
+			   // Hide refresh spinner
+				swipeRefreshLayout.isRefreshing = false
+
 			}, false )
 
 		}
+
+	}
+
+	// Cancel pending HTTP requests when the activity is closed
+	override fun onStop() {
+		super.onStop()
+		API.cancelQueue()
+	}
+
+	// Stop the automatic refresh countdown progress bar when the activity is changed/app is minimised
+	override fun onPause() {
+		super.onPause()
+		Log.d( Shared.logTag, "Paused servers activity" )
+
+		// Stop the automatic refresh countdown progress bar
+		if ( settings.automaticRefresh ) {
+			refreshProgressBar.clearAnimation()
+			refreshProgressBar.progress = 0
+		}
+	}
+
+	// When the activity is opened/app is brought to foreground...
+	override fun onResume() {
+		super.onResume()
+		Log.d( Shared.logTag, "Resumed servers activity" )
+
+		// Reload settings in case they have changed
+		settings.read()
+		Log.d( Shared.logTag, "Reloaded settings (Automatic Refresh: '${ settings.automaticRefresh }', Automatic Refresh Interval: '${ settings.automaticRefreshInterval }')" )
+
+		// Set the progress bar animation duration to the automatic refresh interval
+		progressBarAnimation.duration = settings.automaticRefreshInterval * 1000L // Convert seconds to milliseconds
+
+		// Toggle the countdown progress bar depending on the automatic refresh setting
+		refreshProgressBar.isEnabled = settings.automaticRefresh
+		refreshProgressBar.visibility = if ( settings.automaticRefresh ) View.VISIBLE else View.GONE
+
+		// Show refreshing spinner
+		swipeRefreshLayout.isRefreshing = true
 
 		// Initially fetch the servers...
 		fetchServers( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, { servers ->
@@ -185,26 +239,21 @@ class ServersActivity : AppCompatActivity() {
 			}
 			recyclerView.adapter = serverAdapter
 
-			// Update the recycler view - IDE doesn't like .notifyDataSetChanged()
-			serverAdapter.notifyItemRangeChanged( 0, servers.size )
-
-			// Start the automatic refresh countdown progress bar animation
+			// Update the recycler view, stop loading & restart automatic refresh countdown progress bar animation
+			serverAdapter.notifyItemRangeChanged( 0, servers.size ) // IDE doesn't like .notifyDataSetChanged()
+			swipeRefreshLayout.isRefreshing = false
 			if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
 
+		}, {
+
+			// Hide refreshing spinner
+			swipeRefreshLayout.isRefreshing = false
+
 		} )
-
 	}
-
-	// Cancel pending HTTP requests when the activity is closed
-	override fun onStop() {
-		super.onStop()
-		API.cancelQueue()
-	}
-
-	// TODO: Reload everything when returning from Settings activity (things like automatic refresh interval may have changed)
 
 	// Fetches the servers
-	private fun fetchServers( instanceUrl: String, credentialsUsername: String, credentialsPassword: String, successCallback: ( servers: Array<Server> ) -> Unit, useProgressDialog: Boolean = false ) {
+	private fun fetchServers( instanceUrl: String, credentialsUsername: String, credentialsPassword: String, successCallback: ( servers: Array<Server> ) -> Unit, errorCallback: () -> Unit, useProgressDialog: Boolean = false ) {
 
 		// Create a progress dialog
 		val progressDialog = createProgressDialog( this, R.string.serversDialogProgressServersTitle, R.string.serversDialogProgressServersMessage ) {
@@ -238,6 +287,9 @@ class ServersActivity : AppCompatActivity() {
 
 			// Hide the progress dialog
 			if ( useProgressDialog ) progressDialog.dismiss()
+
+			// Run the custom callback
+			errorCallback.invoke()
 
 			when ( error ) {
 

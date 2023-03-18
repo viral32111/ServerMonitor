@@ -75,11 +75,6 @@ class SettingsActivity : AppCompatActivity() {
 
 		// Update UI with values from settings
 		updateUIWithSettings( settings )
-		/*
-		saveSettings( settings ) {
-			Log.d( Shared.logTag, "Successfully re-saved settings" )
-		}
-		*/
 
 		// Validate & save values when the save button is pressed, then return to the previous activity
 		saveButton.setOnClickListener {

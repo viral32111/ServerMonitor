@@ -1,6 +1,5 @@
 package com.viral32111.servermonitor
 
-import android.util.Log
 import com.google.gson.JsonObject
 import kotlin.math.round
 
@@ -28,6 +27,7 @@ class Server( data: JsonObject ) {
 		Version = data.get( "version" ).asString
 		UptimeSeconds = round( data.get( "uptimeSeconds" ).asDouble ).toLong()
 
+		/*
 		Log.d( Shared.logTag, "Identifier: '${ Identifier }'" )
 		Log.d( Shared.logTag, "Job Name: '${ JobName }'" )
 		Log.d( Shared.logTag, "Instance Address: '${ InstanceAddress }'" )
@@ -37,6 +37,7 @@ class Server( data: JsonObject ) {
 		Log.d( Shared.logTag, "Architecture: '${ Architecture }'" )
 		Log.d( Shared.logTag, "Version: '${ Version }'" )
 		Log.d( Shared.logTag, "Uptime: '${ UptimeSeconds }' seconds" )
+		*/
 	}
 
 	// TODO: API call for GET /server, populate more properties with data

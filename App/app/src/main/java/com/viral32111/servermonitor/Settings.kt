@@ -18,17 +18,9 @@ class Settings( private val sharedPreferences: SharedPreferences ) {
 	var notificationAlwaysOngoing: Boolean = true
 	var notificationWhenIssueArises: Boolean = true
 
-	// Get values from persistent settings, fallback to defaults - https://developer.android.com/training/data-storage/shared-preferences#ReadSharedPreference
+	// Read values from persistent settings on initialisation
 	init {
-		instanceUrl = sharedPreferences.getString( "instanceUrl", null )
-		credentialsUsername = sharedPreferences.getString( "credentialsUsername", null )
-		credentialsPassword = sharedPreferences.getString( "credentialsPassword", null )
-
-		automaticRefresh = sharedPreferences.getBoolean( "automaticRefresh", automaticRefresh )
-		automaticRefreshInterval = sharedPreferences.getInt( "automaticRefreshInterval", automaticRefreshInterval )
-		theme = sharedPreferences.getInt( "theme", theme )
-		notificationAlwaysOngoing = sharedPreferences.getBoolean( "notificationAlwaysOngoing", notificationAlwaysOngoing )
-		notificationWhenIssueArises = sharedPreferences.getBoolean( "notificationWhenIssueArises", notificationWhenIssueArises )
+		read()
 	}
 
 	// Checks if we are setup yet
@@ -51,5 +43,18 @@ class Settings( private val sharedPreferences: SharedPreferences ) {
 		}
 
 		Log.d( Shared.logTag, "Saved settings to shared preferences (URL: '${ instanceUrl }', Username: '${ credentialsUsername }', Password: '${ credentialsPassword }')" )
+	}
+
+	// Read the values from shared preferences, fallback to defaults - https://developer.android.com/training/data-storage/shared-preferences#ReadSharedPreference
+	fun read() {
+		instanceUrl = sharedPreferences.getString( "instanceUrl", null )
+		credentialsUsername = sharedPreferences.getString( "credentialsUsername", null )
+		credentialsPassword = sharedPreferences.getString( "credentialsPassword", null )
+
+		automaticRefresh = sharedPreferences.getBoolean( "automaticRefresh", automaticRefresh )
+		automaticRefreshInterval = sharedPreferences.getInt( "automaticRefreshInterval", automaticRefreshInterval )
+		theme = sharedPreferences.getInt( "theme", theme )
+		notificationAlwaysOngoing = sharedPreferences.getBoolean( "notificationAlwaysOngoing", notificationAlwaysOngoing )
+		notificationWhenIssueArises = sharedPreferences.getBoolean( "notificationWhenIssueArises", notificationWhenIssueArises )
 	}
 }
