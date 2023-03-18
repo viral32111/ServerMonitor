@@ -19,10 +19,6 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.android.volley.*
 import com.google.android.material.appbar.MaterialToolbar
 
-// TODO: Use real IP header on server instead of remote endpoint address wherever possible, cus of Cloudflare Tunnel
-// TODO: Update Docker collector command on README to include mounts for dbus system socket, privileged mode, systemd directories
-// TODO: Install systemctl in Ubuntu Docker image
-
 class ServersActivity : AppCompatActivity() {
 
 	// Runs when the activity is created...
@@ -66,19 +62,13 @@ class ServersActivity : AppCompatActivity() {
 		val statusDescriptionTextView = findViewById<TextView>( R.id.serversStatusDescriptionTextView )
 		val refreshProgressBar = findViewById<ProgressBar>( R.id.serversRefreshProgressBar )
 
-		// Get the persistent settings - https://developer.android.com/training/data-storage/shared-preferences
-		val sharedPreferences = getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE )
-		Log.d( Shared.logTag, "Got shared preferences for '${ Shared.sharedPreferencesName }'" )
-
-		// Get the settings - https://developer.android.com/training/data-storage/shared-preferences#ReadSharedPreference
-		val instanceUrl = sharedPreferences.getString( "instanceUrl", null )
-		val credentialsUsername = sharedPreferences.getString( "credentialsUsername", null )
-		val credentialsPassword = sharedPreferences.getString( "credentialsPassword", null )
-		Log.d( Shared.logTag, "Got settings ('${ instanceUrl }', '${ credentialsUsername }', '${ credentialsPassword }')" )
+		// Get the settings
+		val settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE ) )
+		Log.d( Shared.logTag, "Got settings ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
 
 		// Switch to the servers activity if we aren't servers yet
-		if ( instanceUrl.isNullOrBlank() || credentialsUsername.isNullOrBlank() || credentialsPassword.isNullOrBlank() ) {
-			Log.d( Shared.logTag, "Not servers yet, switching to servers activity..." )
+		if ( !settings.isSetup() ) {
+			Log.d( Shared.logTag, "Not setup yet, switching to servers activity..." )
 			startActivity( Intent( this, SetupActivity::class.java ) )
 			overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
 			return
@@ -93,8 +83,89 @@ class ServersActivity : AppCompatActivity() {
 		dividerItemDecoration.setDrawable( ContextCompat.getDrawable( this, R.drawable.shape_divider )!! )
 		recyclerView.addItemDecoration( dividerItemDecoration )
 
+		// Create the animation for the automatic refresh countdown progress bar - https://stackoverflow.com/a/18015071
+		val progressBarAnimation = ProgressBarAnimation( refreshProgressBar, refreshProgressBar.progress.toFloat(), refreshProgressBar.max.toFloat() )
+		progressBarAnimation.interpolator = LinearInterpolator() // We want linear, not accelerate-decelerate interpolation
+		progressBarAnimation.duration = settings.automaticRefreshInterval * 1000L // Convert seconds to milliseconds
+
+		// Event listeners for the automatic refresh countdown progress bar animation - https://medium.com/android-news/handsome-codes-with-kotlin-6e183db4c7e5
+		progressBarAnimation.setAnimationListener( object : Animation.AnimationListener {
+
+			// When the animation starts...
+			override fun onAnimationStart( animation: Animation? ) {
+				Log.d( Shared.logTag, "Animation started" )
+			}
+
+			// When the animation finishes...
+			override fun onAnimationEnd( animation: Animation? ) {
+				Log.d( Shared.logTag, "Animation ended" )
+
+				// Show refreshing spinner
+				swipeRefreshLayout.isRefreshing = true
+
+				// Fetch the servers...
+				fetchServers( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, { servers ->
+
+					// Update the overall status
+					statusTitleTextView.text = getString( R.string.serversTextViewStatusTitleGood )
+					statusTitleTextView.setTextColor( getColor( R.color.statusGood ) )
+					statusDescriptionTextView.text = getString( R.string.serversTextViewStatusDescriptionGood )
+
+					// Create a new adapter for the recycler view
+					val serverAdapter = ServerAdapter( servers, applicationContext ) { server ->
+						Log.d( Shared.logTag, "Server '${ server.HostName }' ('${ server.Identifier }', '${ server.JobName }', '${ server.InstanceAddress }') pressed" )
+					}
+					recyclerView.swapAdapter( serverAdapter, false )
+
+					// Update the recycler view, restart automatic refresh countdown progress bar & hide refreshing spinner
+					serverAdapter.notifyItemRangeChanged( 0, servers.size )
+					if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
+					swipeRefreshLayout.isRefreshing = false
+
+				}, false )
+			}
+
+			// When the animation repeats...
+			override fun onAnimationRepeat( animation: Animation? ) {
+				Log.d( Shared.logTag, "Animation repeated" )
+			}
+		} )
+
+		// When we're swiped down to refresh...
+		swipeRefreshLayout.setOnRefreshListener {
+			Log.d( Shared.logTag, "Swipe refreshed!" )
+
+			// Stop the automatic refresh countdown progress bar
+			if ( settings.automaticRefresh ) {
+				refreshProgressBar.clearAnimation()
+				refreshProgressBar.progress = 0
+			}
+
+			// Fetch the servers...
+			fetchServers( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, { servers ->
+
+				// Update the overall status
+				statusTitleTextView.text = getString( R.string.serversTextViewStatusTitleGood )
+				statusTitleTextView.setTextColor( getColor( R.color.statusGood ) )
+				statusDescriptionTextView.text = getString( R.string.serversTextViewStatusDescriptionGood )
+
+				// Create a new adapter for the recycler view
+				val serverAdapter = ServerAdapter( servers, this ) { server ->
+					Log.d( Shared.logTag, "Server '${ server.HostName }' ('${ server.Identifier }', '${ server.JobName }', '${ server.InstanceAddress }') pressed" )
+				}
+				recyclerView.swapAdapter( serverAdapter, false )
+
+				// Update the recycler view, stop loading & restart automatic refresh countdown progress bar animation
+				serverAdapter.notifyItemRangeChanged( 0, servers.size )
+				swipeRefreshLayout.isRefreshing = false
+				if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
+
+			}, false )
+
+		}
+
 		// Initially fetch the servers...
-		fetchServers( instanceUrl, credentialsUsername, credentialsPassword, { servers ->
+		fetchServers( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, { servers ->
 
 			// Set the overall status
 			statusTitleTextView.text = getString( R.string.serversTextViewStatusTitleGood )
@@ -110,87 +181,10 @@ class ServersActivity : AppCompatActivity() {
 			// Update the recycler view - IDE doesn't like .notifyDataSetChanged()
 			serverAdapter.notifyItemRangeChanged( 0, servers.size )
 
+			// Start the automatic refresh countdown progress bar animation
+			if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
+
 		} )
-
-		// https://stackoverflow.com/a/18015071
-		val progressBarAnimation = ProgressBarAnimation( refreshProgressBar, refreshProgressBar.progress.toFloat(), refreshProgressBar.max.toFloat() )
-		progressBarAnimation.interpolator = LinearInterpolator() // We want linear, not accelerate-decelerate interpolation
-		progressBarAnimation.duration = 10000 // 10 seconds
-
-		//progressBarAnimation.repeatMode = Animation.RESTART
-		//progressBarAnimation.repeatCount = Animation.INFINITE
-
-		// https://medium.com/android-news/handsome-codes-with-kotlin-6e183db4c7e5
-		progressBarAnimation.setAnimationListener( object : Animation.AnimationListener {
-			override fun onAnimationStart( animation: Animation? ) {
-				Log.d( Shared.logTag, "Animation started" )
-			}
-
-			override fun onAnimationEnd( animation: Animation? ) {
-				Log.d( Shared.logTag, "Animation ended" )
-
-				swipeRefreshLayout.isRefreshing = true
-
-				// Fetch the servers...
-				fetchServers( instanceUrl, credentialsUsername, credentialsPassword, { servers ->
-
-					// Update the overall status
-					statusTitleTextView.text = getString( R.string.serversTextViewStatusTitleGood )
-					statusTitleTextView.setTextColor( getColor( R.color.statusGood ) )
-					statusDescriptionTextView.text = getString( R.string.serversTextViewStatusDescriptionGood )
-
-					// Create a new adapter for the recycler view
-					val serverAdapter = ServerAdapter( servers, applicationContext ) { server ->
-						Log.d( Shared.logTag, "Server '${ server.HostName }' ('${ server.Identifier }', '${ server.JobName }', '${ server.InstanceAddress }') pressed" )
-					}
-					recyclerView.swapAdapter( serverAdapter, false )
-
-					// Update the recycler view & restart refresh countdown
-					serverAdapter.notifyItemRangeChanged( 0, servers.size )
-					refreshProgressBar.startAnimation( progressBarAnimation )
-
-					swipeRefreshLayout.isRefreshing = false
-
-				}, false )
-			}
-
-			override fun onAnimationRepeat( animation: Animation? ) {
-				Log.d( Shared.logTag, "Animation repeated" )
-			}
-		} )
-
-		refreshProgressBar.startAnimation( progressBarAnimation )
-
-		// When we're swiped down to refresh...
-		swipeRefreshLayout.setOnRefreshListener {
-			Log.d( Shared.logTag, "Swipe refreshed!" )
-
-			// Stop the refresh countdown
-			refreshProgressBar.clearAnimation()
-			refreshProgressBar.progress = 0
-
-			// Fetch the servers...
-			fetchServers( instanceUrl, credentialsUsername, credentialsPassword, { servers ->
-
-				// Update the overall status
-				statusTitleTextView.text = getString( R.string.serversTextViewStatusTitleGood )
-				statusTitleTextView.setTextColor( getColor( R.color.statusGood ) )
-				statusDescriptionTextView.text = getString( R.string.serversTextViewStatusDescriptionGood )
-
-				// Create a new adapter for the recycler view
-				val serverAdapter = ServerAdapter( servers, this ) { server ->
-					Log.d( Shared.logTag, "Server '${ server.HostName }' ('${ server.Identifier }', '${ server.JobName }', '${ server.InstanceAddress }') pressed" )
-				}
-				recyclerView.swapAdapter( serverAdapter, false )
-
-				// Update the recycler view, stop loading & restart refresh countdown
-				serverAdapter.notifyItemRangeChanged( 0, servers.size )
-				swipeRefreshLayout.isRefreshing = false
-				refreshProgressBar.startAnimation( progressBarAnimation )
-
-			}, false )
-
-		}
 
 	}
 
@@ -199,6 +193,8 @@ class ServersActivity : AppCompatActivity() {
 		super.onStop()
 		API.cancelQueue()
 	}
+
+	// TODO: Reload everything when returning from Settings activity (things like automatic refresh interval may have changed)
 
 	// Fetches the servers
 	private fun fetchServers( instanceUrl: String, credentialsUsername: String, credentialsPassword: String, successCallback: ( servers: Array<Server> ) -> Unit, useProgressDialog: Boolean = false ) {

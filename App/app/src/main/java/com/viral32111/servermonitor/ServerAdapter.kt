@@ -9,10 +9,10 @@ import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 
-// https://developer.android.com/develop/ui/views/layout/recyclerview, https://stackoverflow.com/a/54847887
-
+// Custom recycler view adapter for the server list - https://developer.android.com/develop/ui/views/layout/recyclerview, https://stackoverflow.com/a/54847887
 class ServerAdapter( private val servers: Array<Server>, private val context: Context, private val onServerClickListener: ( server: Server ) -> Unit ): RecyclerView.Adapter<ServerAdapter.ViewHolder>() {
 
+	// Holds all the UI
 	class ViewHolder( view: View ) : RecyclerView.ViewHolder( view ) {
 		val constraintLayout: ConstraintLayout
 		val titleTextView: TextView
@@ -52,13 +52,15 @@ class ServerAdapter( private val servers: Array<Server>, private val context: Co
 		val server = servers[ index ]
 		Log.d( Shared.logTag, "Replacing view for server '${ server.HostName }' ('${ server.Identifier }', '${ server.JobName }', '${ server.InstanceAddress }')..." )
 
-		// https://stackoverflow.com/a/49969478
+		// Forward click events to the given listener - https://stackoverflow.com/a/49969478
 		viewHolder.constraintLayout.setOnClickListener {
 			onServerClickListener.invoke( server )
 		}
 
+		// Set the title to the server's name
 		viewHolder.titleTextView.text = server.HostName.uppercase()
 
+		// The server is online...
 		if ( server.UptimeSeconds >= 0 ) {
 			viewHolder.statusTextView.text = context.getString( R.string.serversTextViewServerStatusOnline )
 			viewHolder.statusTextView.setTextColor( context.getColor( R.color.statusGood ) )
@@ -83,7 +85,10 @@ class ServerAdapter( private val servers: Array<Server>, private val context: Co
 			viewHolder.diskTextView.text = String.format( context.getString( R.string.serversTextViewServerDiskUsage ), 0, "K" )
 			viewHolder.diskTextView.setTextColor( context.getColor( R.color.statusGood ) )
 
+			// Format the uptime into days, hours & minutes
 			viewHolder.uptimeTextView.text = String.format( context.getString( R.string.serversTextViewServerUptime ), TimeSpan( server.UptimeSeconds ).toString( false ) )
+
+		// The server is offline...
 		} else {
 			viewHolder.statusTextView.text = context.getString( R.string.serversTextViewServerStatusOffline )
 			viewHolder.statusTextView.setTextColor( context.getColor( R.color.statusDead ) )

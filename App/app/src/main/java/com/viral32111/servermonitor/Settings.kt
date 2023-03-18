@@ -1,0 +1,55 @@
+package com.viral32111.servermonitor
+
+import android.content.SharedPreferences
+import android.util.Log
+
+// Manages custom settings - https://developer.android.com/training/data-storage/shared-preferences
+class Settings( private val sharedPreferences: SharedPreferences ) {
+
+	// No defaults for these, they must be configured on setup
+	var instanceUrl: String? = null
+	var credentialsUsername: String? = null
+	var credentialsPassword: String? = null
+
+	// Defaults are the values
+	var automaticRefresh: Boolean = true
+	var automaticRefreshInterval: Int = 15 // Seconds
+	var theme: Int = 0
+	var notificationAlwaysOngoing: Boolean = true
+	var notificationWhenIssueArises: Boolean = true
+
+	// Get values from persistent settings, fallback to defaults - https://developer.android.com/training/data-storage/shared-preferences#ReadSharedPreference
+	init {
+		instanceUrl = sharedPreferences.getString( "instanceUrl", null )
+		credentialsUsername = sharedPreferences.getString( "credentialsUsername", null )
+		credentialsPassword = sharedPreferences.getString( "credentialsPassword", null )
+
+		automaticRefresh = sharedPreferences.getBoolean( "automaticRefresh", automaticRefresh )
+		automaticRefreshInterval = sharedPreferences.getInt( "automaticRefreshInterval", automaticRefreshInterval )
+		theme = sharedPreferences.getInt( "theme", theme )
+		notificationAlwaysOngoing = sharedPreferences.getBoolean( "notificationAlwaysOngoing", notificationAlwaysOngoing )
+		notificationWhenIssueArises = sharedPreferences.getBoolean( "notificationWhenIssueArises", notificationWhenIssueArises )
+	}
+
+	// Checks if we are setup yet
+	fun isSetup(): Boolean {
+		return !instanceUrl.isNullOrBlank() && !credentialsUsername.isNullOrBlank() || !credentialsPassword.isNullOrBlank()
+	}
+
+	// Save the values to shared preferences - https://developer.android.com/training/data-storage/shared-preferences#WriteSharedPreference
+	fun save() {
+		with ( sharedPreferences.edit() ) {
+			putString( "instanceUrl", instanceUrl )
+			putString( "credentialsUsername", credentialsUsername )
+			putString( "credentialsPassword", credentialsPassword )
+			putBoolean( "automaticRefresh", automaticRefresh )
+			putInt( "automaticRefreshInterval", automaticRefreshInterval )
+			putInt( "theme", theme )
+			putBoolean( "notificationAlwaysOngoing", notificationAlwaysOngoing )
+			putBoolean( "notificationWhenIssueArises", notificationWhenIssueArises )
+			apply()
+		}
+
+		Log.d( Shared.logTag, "Saved settings to shared preferences (URL: '${ instanceUrl }', Username: '${ credentialsUsername }', Password: '${ credentialsPassword }')" )
+	}
+}

@@ -1,7 +1,6 @@
 package com.viral32111.servermonitor
 
 import android.content.Context
-import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
@@ -79,19 +78,19 @@ class SettingsActivity : AppCompatActivity() {
 		themeSpinner.isEnabled = false
 		Log.d( Shared.logTag, "Forced theme selection" )
 
-		// Get the persistent settings - https://developer.android.com/training/data-storage/shared-preferences
-		val sharedPreferences = getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE )
-		Log.d( Shared.logTag, "Got shared preferences for '${ Shared.sharedPreferencesName }'" )
+		// Get settings
+		val settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE ) )
+		Log.d( Shared.logTag, "Got settings ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
 
 		// Update values with persistent settings & save in case it used defaults
-		readSettings( sharedPreferences )
-		saveSettings( sharedPreferences ) {
+		readSettings( settings )
+		saveSettings( settings ) {
 			Log.d( Shared.logTag, "Successfully re-saved settings" )
 		}
 
 		// Validate & save values when the save button is pressed, then return to the previous activity
 		saveButton.setOnClickListener {
-			saveSettings( sharedPreferences ) {
+			saveSettings( settings ) {
 				finish()
 				overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
 			}
@@ -135,39 +134,29 @@ class SettingsActivity : AppCompatActivity() {
 	}
 
 	// Updates the UI with the settings from the persistent settings
-	private fun readSettings( sharedPreferences: SharedPreferences ) {
+	private fun readSettings( settings: Settings ) {
 		Log.d( Shared.logTag, "Populating UI with settings from shared preferences..." )
 
-		// Get stored settings or default to current values - https://developer.android.com/training/data-storage/shared-preferences#ReadSharedPreference
-		instanceUrl = sharedPreferences.getString( "instanceUrl", instanceUrlEditText.text.toString() )
-		credentialsUsername = sharedPreferences.getString( "credentialsUsername", credentialsUsernameEditText.text.toString() )
-		credentialsPassword = sharedPreferences.getString( "credentialsPassword", credentialsPasswordEditText.text.toString() )
-		automaticRefresh = sharedPreferences.getBoolean( "automaticRefresh", automaticRefreshSwitch.isChecked )
-		automaticRefreshInterval = sharedPreferences.getInt( "automaticRefreshInterval", 15 ) // Default to 15 seconds
-		theme = sharedPreferences.getInt( "theme", themeSpinner.selectedItemPosition ) // Not ideal to use position but we'll never have more than 3 themes anyway (system, light & dark)
-		notificationAlwaysOngoing = sharedPreferences.getBoolean( "notificationAlwaysOngoing", notificationsAlwaysOngoingSwitch.isChecked )
-		notificationWhenIssueArises = sharedPreferences.getBoolean( "notificationWhenIssueArises", notificationsWhenIssueArisesSwitch.isChecked )
-
 		// Update the values
-		automaticRefreshSwitch.isChecked = automaticRefresh as Boolean
-		automaticRefreshIntervalEditText.setText( automaticRefreshInterval.toString() )
-		themeSpinner.setSelection( theme as Int )
-		notificationsAlwaysOngoingSwitch.isChecked = notificationAlwaysOngoing as Boolean
-		notificationsWhenIssueArisesSwitch.isChecked = notificationWhenIssueArises as Boolean
+		automaticRefreshSwitch.isChecked = settings.automaticRefresh
+		automaticRefreshIntervalEditText.setText( settings.automaticRefreshInterval.toString() )
+		themeSpinner.setSelection( settings.theme )
+		notificationsAlwaysOngoingSwitch.isChecked = settings.notificationAlwaysOngoing
+		notificationsWhenIssueArisesSwitch.isChecked = settings.notificationWhenIssueArises
 
 		// Enable instance URL & credentials if setup is finished
-		if ( !instanceUrl.isNullOrBlank() ) {
-			instanceUrlEditText.setText( instanceUrl )
+		if ( !settings.instanceUrl.isNullOrBlank() ) {
+			instanceUrlEditText.setText( settings.instanceUrl )
 			instanceUrlEditText.hint = getString( R.string.settingsEditTextInstanceUrlHint )
 			instanceUrlEditText.isEnabled = true
 		}
-		if ( !credentialsUsername.isNullOrBlank() ) {
-			credentialsUsernameEditText.setText( credentialsUsername )
+		if ( !settings.credentialsUsername.isNullOrBlank() ) {
+			credentialsUsernameEditText.setText( settings.credentialsUsername )
 			credentialsUsernameEditText.hint = getString( R.string.settingsEditTextCredentialsUsernameHint )
 			credentialsUsernameEditText.isEnabled = true
 		}
-		if ( !credentialsPassword.isNullOrBlank() ) {
-			credentialsPasswordEditText.setText( credentialsPassword )
+		if ( !settings.credentialsPassword.isNullOrBlank() ) {
+			credentialsPasswordEditText.setText( settings.credentialsPassword )
 			credentialsPasswordEditText.hint = getString( R.string.settingsEditTextCredentialsPasswordHint )
 			credentialsPasswordEditText.isEnabled = true
 		}
@@ -178,7 +167,7 @@ class SettingsActivity : AppCompatActivity() {
 	}
 
 	// Saves the values to the persistent settings
-	private fun saveSettings( sharedPreferences: SharedPreferences, successCallback: () -> Unit ) {
+	private fun saveSettings( settings: Settings, successCallback: () -> Unit ) {
 		Log.d( Shared.logTag, "Saving settings to shared preferences..." )
 
 		// Disable input
@@ -257,19 +246,16 @@ class SettingsActivity : AppCompatActivity() {
 			progressDialog.dismiss()
 			enableInputs( true )
 
-			// Save the values to shared preferences - https://developer.android.com/training/data-storage/shared-preferences#WriteSharedPreference
-			with ( sharedPreferences.edit() ) {
-				putString( "instanceUrl", instanceUrl )
-				putString( "credentialsUsername", credentialsUsername )
-				putString( "credentialsPassword", credentialsPassword )
-				putBoolean( "automaticRefresh", automaticRefresh )
-				putInt( "automaticRefreshInterval", automaticRefreshInterval )
-				putInt( "theme", theme )
-				putBoolean( "notificationAlwaysOngoing", notificationAlwaysOngoing )
-				putBoolean( "notificationWhenIssueArises", notificationWhenIssueArises )
-				apply()
-			}
-			Log.d( Shared.logTag, "Saved settings to shared preferences" )
+			// Update settings with these values
+			settings.instanceUrl = instanceUrl
+			settings.credentialsUsername = credentialsUsername
+			settings.credentialsPassword = credentialsPassword
+			settings.automaticRefresh = automaticRefresh
+			settings.automaticRefreshInterval = automaticRefreshInterval
+			settings.theme = theme
+			settings.notificationAlwaysOngoing = notificationAlwaysOngoing
+			settings.notificationWhenIssueArises = notificationWhenIssueArises
+			settings.save()
 
 			// Run the custom callback
 			successCallback.invoke()

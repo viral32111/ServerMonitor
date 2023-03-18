@@ -1,5 +1,6 @@
 package com.viral32111.servermonitor
 
+// Keep these synced with the error codes on the server-side service
 enum class ErrorCode( val code: Int ) {
 	Success( 0 ),
 	NoAuthentication( 1 ),

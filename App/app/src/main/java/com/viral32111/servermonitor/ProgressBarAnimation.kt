@@ -4,8 +4,7 @@ import android.view.animation.Animation
 import android.view.animation.Transformation
 import android.widget.ProgressBar
 
-// https://stackoverflow.com/a/18015071
-
+// Animation for horizontal progress bars - https://stackoverflow.com/a/18015071
 class ProgressBarAnimation(
 	private val progressBar: ProgressBar,
 	private val from: Float,

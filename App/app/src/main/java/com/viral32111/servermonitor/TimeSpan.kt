@@ -1,7 +1,6 @@
 package com.viral32111.servermonitor
 
 // Converts seconds into days, hours, minutes & seconds.
-
 class TimeSpan( totalSeconds: Long ) {
 	private val days: Long
 	private val hours: Long
@@ -24,6 +23,7 @@ class TimeSpan( totalSeconds: Long ) {
 		seconds = remainder
 	}
 
+	// Creates a human-readable string
 	fun toString( includeSeconds: Boolean ): String {
 		val parts = ArrayList<String>()
 

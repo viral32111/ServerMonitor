@@ -45,9 +45,9 @@ class SetupActivity : AppCompatActivity() {
 		continueButton = findViewById( R.id.settingsSaveButton )
 		Log.d( Shared.logTag, "Got UI controls" )
 
-		// Get the persistent settings - https://developer.android.com/training/data-storage/shared-preferences
-		val sharedPreferences = getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE )
-		Log.d( Shared.logTag, "Got shared preferences for '${ Shared.sharedPreferencesName }'" )
+		// Get the settings - https://developer.android.com/training/data-storage/shared-preferences
+		val settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE ) )
+		Log.d( Shared.logTag, "Got settings ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
 
 		// Initialise our RESTful API class
 		API.initializeQueue( applicationContext )
@@ -137,14 +137,11 @@ class SetupActivity : AppCompatActivity() {
 				progressDialog.dismiss()
 				enableInputs( true )
 
-				// Save the values to the shared preferences - https://developer.android.com/training/data-storage/shared-preferences#WriteSharedPreference
-				with ( sharedPreferences.edit() ) {
-					putString( "instanceUrl", instanceUrl )
-					putString( "credentialsUsername", credentialsUsername )
-					putString( "credentialsPassword", credentialsPassword )
-					apply()
-				}
-				Log.d( Shared.logTag, "Saved values to shared preferences (URL: '${ instanceUrl }', Username: '${ credentialsUsername }', Password: '${ credentialsPassword }')" )
+				// Update the settings with these values
+				settings.instanceUrl = instanceUrl
+				settings.credentialsUsername = credentialsUsername
+				settings.credentialsPassword = credentialsPassword
+				settings.save()
 
 				// Change to the appropriate activity
 				switchActivity( instanceUrl, credentialsUsername, credentialsPassword )
@@ -159,19 +156,14 @@ class SetupActivity : AppCompatActivity() {
 
 		}
 
-		// Get the current values from shared preferences - they may be null if we're not setup yet
-		val instanceUrl = sharedPreferences.getString( "instanceUrl", null )
-		val credentialsUsername = sharedPreferences.getString( "credentialsUsername", null )
-		val credentialsPassword = sharedPreferences.getString( "credentialsPassword", null )
-
 		// Are we already setup?
-		if ( !instanceUrl.isNullOrBlank() && !credentialsUsername.isNullOrBlank() && !credentialsPassword.isNullOrBlank() ) {
-			Log.d( Shared.logTag, "We're already setup! ('${ instanceUrl }', '${ credentialsUsername }', '${ credentialsPassword }')" )
+		if ( settings.isSetup() ) {
+			Log.d( Shared.logTag, "We're already setup! ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
 
 			// Populate the UI so the user doesn't have to retype everything if the instance test fails
-			instanceUrlEditText.setText( instanceUrl )
-			credentialsUsernameEditText.setText( credentialsUsername )
-			credentialsPasswordEditText.setText( credentialsPassword )
+			instanceUrlEditText.setText( settings.instanceUrl )
+			credentialsUsernameEditText.setText( settings.credentialsUsername )
+			credentialsPasswordEditText.setText( settings.credentialsPassword )
 
 			// Disable input
 			enableInputs( false )
@@ -184,10 +176,10 @@ class SetupActivity : AppCompatActivity() {
 			}
 
 			// Test if this instance is running...
-			testInstance( instanceUrl, credentialsUsername, credentialsPassword, {
+			testInstance( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, {
 				progressDialog.dismiss() // Hide the progress dialog
 				enableInputs( true ) // Enable input
-				switchActivity( instanceUrl, credentialsUsername, credentialsPassword ) // Change to the next appropriate activity
+				switchActivity( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!! ) // Change to the next appropriate activity
 			}, {
 				Log.e( Shared.logTag, "We may already be setup, but the instance is offline?" )
 				progressDialog.dismiss() // Hide the progress dialog
@@ -198,7 +190,7 @@ class SetupActivity : AppCompatActivity() {
 			progressDialog.show()
 
 		} else {
-			Log.d( Shared.logTag, "We're not setup yet! ('${ instanceUrl }', '${ credentialsUsername }', '${ credentialsPassword }')" )
+			Log.d( Shared.logTag, "We're not setup yet! ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
 		}
 
 	}
