@@ -28,15 +28,22 @@ Download & start the *"collector*" by running the following command:
 docker container run \
   --name server-monitor-collector \
   --mount type=bind,source=/path/to/your/config.json,target=/etc/server-monitor/config.json \
-  --publish published=127.0.0.1:5000,target=5000,protocol=tcp \
-  --publish published=127.0.0.1:6997,target=6997,protocol=tcp \
+  --mount type=bind,source=/etc/systemd,target=/etc/systemd \
+  --mount type=bind,source=/var/lib/systemd,target=/var/lib/systemd \
+  --mount type=bind,source=/usr/lib/systemd,target=/usr/lib/systemd \
+  --mount type=bind,source=/run/systemd,target=/run/systemd \
+  --mount type=bind,source=/run/dbus/system_bus_socket,target=/run/dbus/system_bus_socket \
+  --network host \
+  --privileged \
+  --user 0:0 \
   --restart on-failure \
   --pull always \
   ghcr.io/viral32111/server-monitor:main-ubuntu
   collector
 ```
 
-* Use the `main-windows` image tag Windows-based Docker installations.
+* Use the `:main-windows` image tag for Windows-based Docker installations.
+* Remove all the systemd & dbus mounts when running on Windows-based Docker installations.
 * The JSON configuration file should be mounted at `/etc/server-monitor/config.json`.
 * By default the Prometheus metrics exporter uses port `5000`, and the action server uses port `6997`.
 
@@ -52,9 +59,11 @@ docker container run \
   connector
 ```
 
-* Use the `main-windows` image tag Windows-based Docker installations.
+* Use the `:main-windows` image tag for Windows-based Docker installations.
 * The JSON configuration file should be mounted at `/etc/server-monitor/config.json`.
 * By default the RESTful API uses port `6996`.
+
+**NOTE:** Some features of the Docker image in *"collector"* mode are tedious on some systems due to availability of system API functions, especially on Windows-based Docker installations. It is recommended to only use the Docker image for the *"connector"* mode, then a regular installation for the *"collector"* mode.
 
 ## Configuration
 
