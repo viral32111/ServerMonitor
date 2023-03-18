@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.android.volley.*
 import com.android.volley.toolbox.JsonObjectRequest
+import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
@@ -116,18 +117,20 @@ class API {
 		private suspend fun sendRequest( method: Int, url: String, username: String, password: String ): JsonObject? = suspendCoroutine { continuation ->
 
 			// Create the request to the given URL
-			val httpRequest = object: JsonObjectRequest( method, url, null, { _payload ->
+			val httpRequest = object: StringRequest( method, url, { responseBody ->
 
-				// Attempt to check the custom error code
+				// Attempt to parse as JSON
 				try {
-					val payload = JsonParser.parseString( _payload.toString() ).asJsonObject // Convert Java JSON to Google GSON
+					val payload = JsonParser.parseString( responseBody ).asJsonObject
 
+					// Check the custom error code
 					val errorCode = payload.get( "errorCode" )?.asInt
 					if ( errorCode == ErrorCode.Success.code ) {
 						continuation.resume( payload.get( "data" )?.asJsonObject )
 					} else {
 						continuation.resumeWithException( APIException( "Unexpected response code '${ errorCode }' for '${ url }'", null, null, errorCode ) )
 					}
+
 				} catch ( exception: JsonParseException ) {
 					continuation.resumeWithException( exception )
 				} catch ( exception: JsonSyntaxException ) {
