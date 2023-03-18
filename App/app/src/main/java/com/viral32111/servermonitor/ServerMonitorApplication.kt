@@ -6,6 +6,6 @@ import com.google.android.material.color.DynamicColors
 class ServerMonitorApplication : Application() {
 	override fun onCreate() {
 		super.onCreate()
-		DynamicColors.applyToActivitiesIfAvailable( this )
+		//DynamicColors.applyToActivitiesIfAvailable( this )
 	}
 }
