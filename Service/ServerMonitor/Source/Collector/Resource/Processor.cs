@@ -52,8 +52,13 @@ namespace ServerMonitor.Collector.Resource {
 				currentFrequency = Convert.ToUInt32( managementObject[ "CurrentClockSpeed" ].ToString() );
 			}
 
-			// Get system temperature
-			double currentTemperature = GetSystemTemperature( "ACPI\\ThermalZone\\TZ00_0" ) ?? GetSystemTemperature( "ACPI\\ThermalZone\\TZ10_0" ) ?? -1;
+			// Try to get system temperature
+			double currentTemperature = -1;
+			try {
+				currentTemperature = GetSystemTemperature( "ACPI\\ThermalZone\\TZ00_0" ) ?? GetSystemTemperature( "ACPI\\ThermalZone\\TZ10_0" ) ?? -1;
+			} catch ( ManagementException exception ) {
+				logger.LogWarning( "Getting the system temperature is not supported on this system! ({0})", exception.ErrorCode );
+			}
 
 			// Set the values for the exported Prometheus metrics
 			Usage.Set( processorUsage );
