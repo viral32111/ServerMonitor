@@ -56,8 +56,8 @@ namespace ServerMonitor.Collector.Resource {
 				float pageFileUsagePercentage = performanceCounter.NextValue();
 
 				// Set the values for the exported Prometheus page-file metrics
-				SwapTotalBytes.Set( ( double ) memoryStatus.ullTotalPageFile - memoryStatus.ullTotalPhys );
-				SwapFreeBytes.Set( SwapTotalBytes.Value * ( 1 - ( pageFileUsagePercentage / 100 ) ) );
+				SwapTotalBytes.Set( ( long ) ( memoryStatus.ullTotalPageFile - memoryStatus.ullTotalPhys ) );
+				SwapFreeBytes.Set( ( long ) Math.Round( SwapTotalBytes.Value * ( 1 - ( pageFileUsagePercentage / 100 ) ), 0 ) );
 			}
 
 			logger.LogDebug( "Updated Prometheus metrics" );
