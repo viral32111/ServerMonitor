@@ -533,8 +533,50 @@ namespace ServerMonitor.Connector.Helper {
 				.Select( netInterface => netInterface.NestedGet<string>( "interface" ) )
 				.ToArray();
 
-			// Fetch the bytes sent for recently scraped network interfaces ( Interface Name -> Bytes Sent )
-			Dictionary<string, long> interfaceBytesSent = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_network_sent_bytes", new() {
+			// Fetch the total bytes sent for recently scraped network interfaces ( Interface Name -> Bytes Sent )
+			Dictionary<string, long> interfaceTotalBytesSent = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_network_sent_bytes", new() {
+				{ "instance", instanceAddress },
+				{ "job", jobName }
+			} ) ) )
+				.NestedGet<JsonArray>( "result" )
+				.Where( netInterface => netInterface != null )
+				.Select( netInterface => netInterface!.AsObject() )
+				.Where( netInterface =>
+					netInterface.NestedHas( "metric" ) == true &&
+					netInterface.NestedHas( "metric.interface" ) == true
+				)
+				.Where( netInterface =>
+					netInterface.NestedHas( "value" ) == true &&
+					netInterface.NestedGet<JsonArray>( "value" ).Count == 2
+				)
+				.ToDictionary(
+					netInterface => netInterface.NestedGet<string>( "metric.interface" ),
+					netInterface => long.Parse( netInterface.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() )
+				);
+			
+			// Fetch the rate of bytes sent for recently scraped network interfaces ( Interface Name -> Bytes Sent )
+			Dictionary<string, double> interfaceRateBytesSent = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_network_sent_bytes", new() {
+				{ "instance", instanceAddress },
+				{ "job", jobName }
+			}, "rate", configuration.PrometheusScrapeIntervalSeconds * 2 ) ) )
+				.NestedGet<JsonArray>( "result" )
+				.Where( netInterface => netInterface != null )
+				.Select( netInterface => netInterface!.AsObject() )
+				.Where( netInterface =>
+					netInterface.NestedHas( "metric" ) == true &&
+					netInterface.NestedHas( "metric.interface" ) == true
+				)
+				.Where( netInterface =>
+					netInterface.NestedHas( "value" ) == true &&
+					netInterface.NestedGet<JsonArray>( "value" ).Count == 2
+				)
+				.ToDictionary(
+					netInterface => netInterface.NestedGet<string>( "metric.interface" ),
+					netInterface => double.Parse( netInterface.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() )
+				);
+
+			// Fetch the total bytes received for recently scraped network interfaces ( Interface Name -> Bytes Received )
+			Dictionary<string, long> interfaceTotalBytesReceived = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_network_received_bytes", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
 			} ) ) )
@@ -554,11 +596,11 @@ namespace ServerMonitor.Connector.Helper {
 					netInterface => long.Parse( netInterface.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() )
 				);
 
-			// Fetch the bytes received for recently scraped network interfaces ( Interface Name -> Bytes Received )
-			Dictionary<string, long> interfaceBytesReceived = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_network_received_bytes", new() {
+			// Fetch the rate of bytes received for recently scraped network interfaces ( Interface Name -> Bytes Received )
+			Dictionary<string, double> interfaceRateBytesReceived = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_network_received_bytes", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
-			} ) ) )
+			}, "rate", configuration.PrometheusScrapeIntervalSeconds * 2 ) ) )
 				.NestedGet<JsonArray>( "result" )
 				.Where( netInterface => netInterface != null )
 				.Select( netInterface => netInterface!.AsObject() )
@@ -572,15 +614,21 @@ namespace ServerMonitor.Connector.Helper {
 				)
 				.ToDictionary(
 					netInterface => netInterface.NestedGet<string>( "metric.interface" ),
-					netInterface => long.Parse( netInterface.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() )
+					netInterface => double.Parse( netInterface.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() )
 				);
 
 			// Merge the data into an array of JSON objects (interfaces that have not been recently scraped will have -1 for bytesSent & bytesReceived)
 			return interfaceNames.Aggregate( new List<JsonObject>(), ( interfaces, interfaceName ) => {
 				interfaces.Add( new() {
 					{ "name", interfaceName },
-					{ "bytesSent", interfaceBytesSent.ContainsKey( interfaceName ) == true ? interfaceBytesSent[ interfaceName ] : -1 },
-					{ "bytesReceived", interfaceBytesReceived.ContainsKey( interfaceName ) == true ? interfaceBytesReceived[ interfaceName ] : -1 }
+					{ "bytesSent", new JsonObject() {
+						{ "total", interfaceTotalBytesSent.ContainsKey( interfaceName ) == true ? interfaceTotalBytesSent[ interfaceName ] : -1 },
+						{ "rate", interfaceRateBytesSent.ContainsKey( interfaceName ) == true ? interfaceRateBytesSent[ interfaceName ] : -1 }
+					} },
+					{ "bytesReceived", new JsonObject() {
+						{ "total", interfaceTotalBytesReceived.ContainsKey( interfaceName ) == true ? interfaceTotalBytesReceived[ interfaceName ] : -1 },
+						{ "rate", interfaceRateBytesReceived.ContainsKey( interfaceName ) == true ? interfaceRateBytesReceived[ interfaceName ] : -1 }
+					} }
 				} );
 
 				return interfaces;
