@@ -29,12 +29,10 @@ namespace ServerMonitor.Collector {
 			// Setup the global HTTP client
 			Program.SetupHTTPClient();
 
-			// Fail if we're not running as administrator/root, and a collector requires it
+			// Fail if we're not running as administrator/root
 			if ( IsRunningAsAdmin() == false ) {
-				if ( configuration.CollectSNMPMetrics == true && configuration.SNMPManagerListenPort < 1024 ) {
-					logger.LogError( "This program must be run as administrator/root" );
-					Environment.Exit( 1 );
-				}
+				logger.LogError( "This program must be run as administrator/root" );
+				Environment.Exit( 1 );
 			}
 
 			// Start the Prometheus metrics server

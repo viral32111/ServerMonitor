@@ -6,6 +6,7 @@ using System.Management;
 using System.Diagnostics;
 using System.Runtime.Versioning;
 using System.Runtime.InteropServices;
+using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using Prometheus;
 
@@ -51,27 +52,34 @@ namespace ServerMonitor.Collector.Resource {
 				currentFrequency = Convert.ToUInt32( managementObject[ "CurrentClockSpeed" ].ToString() );
 			}
 
-			// TODO: Temperature
+			// Get system temperature
+			double currentTemperature = GetSystemTemperature( "ACPI\\ThermalZone\\TZ00_0" ) ?? GetSystemTemperature( "ACPI\\ThermalZone\\TZ10_0" ) ?? -1;
 
 			// Set the values for the exported Prometheus metrics
 			Usage.Set( processorUsage );
 			Frequency.Set( currentFrequency );
-			Temperature.Set( -1 );
+			Temperature.Set( currentTemperature );
 			logger.LogDebug( "Updated Prometheus metrics" );
 		}
 
-		// https://stackoverflow.com/a/3114251
-		/*[ SupportedOSPlatform( "windows" ) ]
-		private void GetTemperature() {
+		// Gets the temperature for a given system thermal zone - https://stackoverflow.com/a/3114251
+		// NOTE: This is very manufacturer dependent, and may not work on all systems
+		[ SupportedOSPlatform( "windows" ) ]
+		private double? GetSystemTemperature( string thermalZone ) {
 			if ( !RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) throw new PlatformNotSupportedException( "Method only available on Windows" );
 
+			// Get each thermal zone temperature from the WMI interface
 			foreach ( ManagementObject managementObject in new ManagementObjectSearcher( @"root\WMI", "SELECT * FROM MSAcpi_ThermalZoneTemperature" ).Get() ) {
 				double currentTemperature = Convert.ToDouble( managementObject[ "CurrentTemperature" ].ToString() );
-				double temperatureSelsius = ( currentTemperature - 2732 ) / 10.0;
+				double temperatureCelsius = ( currentTemperature - 2732 ) / 10.0;
+				logger.LogDebug( "Temperature of '{0}': {1} C ({2})", managementObject[ "InstanceName" ].ToString(), temperatureCelsius, currentTemperature );
 
-				logger.LogDebug( "Temperature of '{0}': {1} C ({2})", managementObject[ "InstanceName" ].ToString(), temperatureSelsius, currentTemperature );
+				if ( managementObject[ "InstanceName" ].ToString() == thermalZone ) return temperatureCelsius;
 			}
-		}*/
+
+			// Null if the thermal zone wasn't found
+			return null;
+		}
 
 		// Updates the exported Prometheus metrics (for Linux)
 		[ SupportedOSPlatform( "linux" ) ]
