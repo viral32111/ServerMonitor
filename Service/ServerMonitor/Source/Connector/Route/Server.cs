@@ -145,7 +145,10 @@ namespace ServerMonitor.Connector.Route {
 			int actionServerPort = actionServer.NestedGet<int>( "port" );
 
 			// Fetch the supported actions
-			JsonObject supportedActions = await FetchSupportedActions( configuration, actionServerAddress, actionServerPort, serverIdentifier );
+			JsonObject? supportedActions = await FetchSupportedActions( configuration, actionServerAddress, actionServerPort, serverIdentifier );
+			if ( supportedActions == null ) return Response.SendJson( response, statusCode: HttpStatusCode.ServiceUnavailable, errorCode: ErrorCode.ActionServerOffline, data: new() {
+				{ "id", serverIdentifier }
+			} );
 
 			// Ensure the action is valid
 			if ( supportedActions.ContainsKey( actionName ) == false ) return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.InvalidParameter, data: new() {
@@ -203,7 +206,7 @@ namespace ServerMonitor.Connector.Route {
 		}
 
 		// Fetches the supported actions for a server
-		private static async Task<JsonObject> FetchSupportedActions( Config configuration, string actionServerAddress, int actionServerPort, string serverIdentifier ) {
+		private static async Task<JsonObject?> FetchSupportedActions( Config configuration, string actionServerAddress, int actionServerPort, string serverIdentifier ) {
 
 			// Create the HTTP request
 			HttpRequestMessage httpRequest = new() {
@@ -219,31 +222,36 @@ namespace ServerMonitor.Connector.Route {
 				httpRequest.Headers.Authorization = new AuthenticationHeaderValue( "Key", configuration.CollectorActionAuthenticationKey );
 			}
 
-			// Send the HTTP request...
-			logger.LogDebug( "Sending fetch supported actions for server '{0}' ('{1}' '{2}')", serverIdentifier, httpRequest.Method, httpRequest.RequestUri );
-			using ( HttpResponseMessage httpResponse = await Program.HttpClient.SendAsync( httpRequest ) ) {
-				// TODO: httpResponse.EnsureSuccessStatusCode();
+			// Attempt to send the HTTP request...
+			try {
+				logger.LogDebug( "Sending fetch supported actions for server '{0}' ('{1}' '{2}')", serverIdentifier, httpRequest.Method, httpRequest.RequestUri );
+				using ( HttpResponseMessage httpResponse = await Program.HttpClient.SendAsync( httpRequest ) ) {
+					// TODO: httpResponse.EnsureSuccessStatusCode();
 
-				// Parse the response
-				string responseContent = await httpResponse.Content.ReadAsStringAsync();
-				JsonObject? responsePayload = JsonSerializer.Deserialize<JsonObject>( responseContent );
-				if ( responsePayload == null ) throw new Exception( $"Failed to parse response '{ responseContent }' as JSON" );
+					// Parse the response
+					string responseContent = await httpResponse.Content.ReadAsStringAsync();
+					JsonObject? responsePayload = JsonSerializer.Deserialize<JsonObject>( responseContent );
+					if ( responsePayload == null ) throw new Exception( $"Failed to parse response '{ responseContent }' as JSON" );
 
-				// Ensure the required properties exist
-				if ( responsePayload.NestedHas( "errorCode" ) == false ) throw new Exception( $"Missing error code property in response payload" );
-				if ( responsePayload.NestedHas( "data" ) == false ) throw new Exception( $"Missing data property in response payload" );
+					// Ensure the required properties exist
+					if ( responsePayload.NestedHas( "errorCode" ) == false ) throw new Exception( $"Missing error code property in response payload" );
+					if ( responsePayload.NestedHas( "data" ) == false ) throw new Exception( $"Missing data property in response payload" );
 
-				// Easy access to the required properties
-				int errorCode = responsePayload.NestedGet<int>( "errorCode" );
-				JsonObject data = responsePayload.NestedGet<JsonObject>( "data" );
-				logger.LogDebug( "Error Code: '{0}', Data: '{1}'", errorCode, data.ToJsonString() );
+					// Easy access to the required properties
+					int errorCode = responsePayload.NestedGet<int>( "errorCode" );
+					JsonObject data = responsePayload.NestedGet<JsonObject>( "data" );
+					logger.LogDebug( "Error Code: '{0}', Data: '{1}'", errorCode, data.ToJsonString() );
 
-				// TODO: Ensure success
-				//if ( responsePayload.NestedGet<int>( "errorCode" ) != ( int ) ErrorCode.Success ) throw new Exception( "Failed to fetch supported actions" );
+					// TODO: Ensure success
+					//if ( responsePayload.NestedGet<int>( "errorCode" ) != ( int ) ErrorCode.Success ) throw new Exception( "Failed to fetch supported actions" );
 
-				// Return the data (as a copy, not a reference)
-				return data.Clone()!.AsObject();
+					// Return the data (as a copy, not a reference)
+					return data.Clone()!.AsObject();
 
+				}
+			} catch ( Exception exception ) {
+				logger.LogError( exception, "Failed to fetch supported actions for server '{0}' ({1})", serverIdentifier, exception.Message );
+				return null;
 			}
 
 		}

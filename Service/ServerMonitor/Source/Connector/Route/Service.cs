@@ -110,31 +110,38 @@ namespace ServerMonitor.Connector.Route {
 				httpRequest.Headers.Authorization = new AuthenticationHeaderValue( "Key", configuration.CollectorActionAuthenticationKey );
 			}
 
-			// Send the HTTP request...
-			using ( HttpResponseMessage httpResponse = await Program.HttpClient.SendAsync( httpRequest ) ) {
-				logger.LogDebug( "Sent execute service action HTTP request '{0}' '{1}'", httpRequest.Method, httpRequest.RequestUri );
-				// TODO: httpResponse.EnsureSuccessStatusCode();
+			// Attempt to send the HTTP request...
+			try {
+				using ( HttpResponseMessage httpResponse = await Program.HttpClient.SendAsync( httpRequest ) ) {
+					logger.LogDebug( "Sent execute service action HTTP request '{0}' '{1}'", httpRequest.Method, httpRequest.RequestUri );
+					// TODO: httpResponse.EnsureSuccessStatusCode();
 
-				// Parse the response
-				string responseContent = await httpResponse.Content.ReadAsStringAsync();
-				JsonObject? responsePayload = JsonSerializer.Deserialize<JsonObject>( responseContent );
-				if ( responsePayload == null ) throw new Exception( $"Failed to parse execute action response '{ responseContent }' as JSON" );
+					// Parse the response
+					string responseContent = await httpResponse.Content.ReadAsStringAsync();
+					JsonObject? responsePayload = JsonSerializer.Deserialize<JsonObject>( responseContent );
+					if ( responsePayload == null ) throw new Exception( $"Failed to parse execute action response '{ responseContent }' as JSON" );
 
-				// Ensure the required properties exist
-				if ( responsePayload.NestedHas( "errorCode" ) == false ) throw new Exception( $"Missing error code property in execute service action response payload" );
-				if ( responsePayload.NestedHas( "data" ) == false ) throw new Exception( $"Missing data property in execute service action response payload" );
+					// Ensure the required properties exist
+					if ( responsePayload.NestedHas( "errorCode" ) == false ) throw new Exception( $"Missing error code property in execute service action response payload" );
+					if ( responsePayload.NestedHas( "data" ) == false ) throw new Exception( $"Missing data property in execute service action response payload" );
 
-				// Easy access to the required properties
-				int errorCode = responsePayload.NestedGet<int>( "errorCode" );
-				JsonObject data = responsePayload.NestedGet<JsonObject>( "data" );
-				logger.LogDebug( "Error Code: '{0}', Data: '{1}'", errorCode, data.ToJsonString() );
+					// Easy access to the required properties
+					int errorCode = responsePayload.NestedGet<int>( "errorCode" );
+					JsonObject data = responsePayload.NestedGet<JsonObject>( "data" );
+					logger.LogDebug( "Error Code: '{0}', Data: '{1}'", errorCode, data.ToJsonString() );
 
-				// TODO: Ensure success
-				//if ( responsePayload.NestedGet<int>( "errorCode" ) != ( int ) ErrorCode.Success ) throw new Exception( $"Failed to execute service action '{ actionName }'" );
+					// TODO: Ensure success
+					//if ( responsePayload.NestedGet<int>( "errorCode" ) != ( int ) ErrorCode.Success ) throw new Exception( $"Failed to execute service action '{ actionName }'" );
 
-				// Respond with the data (as a copy, not a reference)
-				return Response.SendJson( response, statusCode: HttpStatusCode.OK, errorCode: ErrorCode.Success, data: data.Clone()!.AsObject() );
+					// Respond with the data (as a copy, not a reference)
+					return Response.SendJson( response, statusCode: HttpStatusCode.OK, errorCode: ErrorCode.Success, data: data.Clone()!.AsObject() );
 
+				}
+			} catch ( Exception exception ) {
+				logger.LogError( exception, "Failed to fetch supported actions for service '{0}' on server '{1}' ({2})", serviceName, serverIdentifier, exception.Message );
+				return Response.SendJson( response, statusCode: HttpStatusCode.ServiceUnavailable, errorCode: ErrorCode.ActionServerOffline, data: new() {
+					{ "id", serverIdentifier }
+				} );
 			}
 
 		}

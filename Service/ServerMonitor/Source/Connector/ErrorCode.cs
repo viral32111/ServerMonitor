@@ -1,4 +1,4 @@
-using System;
+// Keep this synced with the Android app
 
 namespace ServerMonitor.Connector {
 
@@ -27,6 +27,7 @@ namespace ServerMonitor.Connector {
 		ActionNotExecutable = 21,
 		ActionServerUnknown = 22,
 		UnknownAction = 23,
+		ActionServerOffline = 24
 	}
 
 }
