@@ -414,7 +414,7 @@ namespace ServerMonitor.Connector.Helper {
 			Dictionary<string, double> driveRateBytesRead = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_drive_read_bytes", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
-			}, "rate", configuration.PrometheusScrapeIntervalSeconds * 2 ) ) )
+			}, "rate", configuration.PrometheusScrapeIntervalSeconds ) ) )
 				.NestedGet<JsonArray>( "result" )
 				.Where( drive => drive != null )
 				.Select( drive => drive!.AsObject() )
@@ -456,7 +456,7 @@ namespace ServerMonitor.Connector.Helper {
 			Dictionary<string, double> driveRateBytesWritten = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_drive_write_bytes", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName },
-			}, "rate", configuration.PrometheusScrapeIntervalSeconds * 2 ) ) )
+			}, "rate", configuration.PrometheusScrapeIntervalSeconds ) ) )
 				.NestedGet<JsonArray>( "result" )
 				.Where( drive => drive != null )
 				.Select( drive => drive!.AsObject() )
@@ -558,7 +558,7 @@ namespace ServerMonitor.Connector.Helper {
 			Dictionary<string, double> interfaceRateBytesSent = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_network_sent_bytes", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
-			}, "rate", configuration.PrometheusScrapeIntervalSeconds * 2 ) ) )
+			}, "rate", configuration.PrometheusScrapeIntervalSeconds ) ) )
 				.NestedGet<JsonArray>( "result" )
 				.Where( netInterface => netInterface != null )
 				.Select( netInterface => netInterface!.AsObject() )
@@ -600,7 +600,7 @@ namespace ServerMonitor.Connector.Helper {
 			Dictionary<string, double> interfaceRateBytesReceived = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_network_received_bytes", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
-			}, "rate", configuration.PrometheusScrapeIntervalSeconds * 2 ) ) )
+			}, "rate", configuration.PrometheusScrapeIntervalSeconds ) ) )
 				.NestedGet<JsonArray>( "result" )
 				.Where( netInterface => netInterface != null )
 				.Select( netInterface => netInterface!.AsObject() )
@@ -760,28 +760,8 @@ namespace ServerMonitor.Connector.Helper {
 		// Fetches Docker container metrics on a server
 		public static async Task<JsonObject[]> FetchDockerContainers( Config configuration, string jobName, string instanceAddress, long lastScrape ) {
 
-			// Fetch information for all known Docker containers
-			Dictionary<string, JsonObject> dockerContainers = ( await FetchSeries( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_docker_status_code", new() {
-				{ "instance", instanceAddress },
-				{ "job", jobName }
-			} ) ) )
-				.Where( container => container != null )
-				.Select( container => container!.AsObject() )
-				.Where( container =>
-					container.NestedHas( "id" ) == true &&
-					container.NestedHas( "name" ) == true &&
-					container.NestedHas( "image" ) == true
-				)
-				.ToDictionary(
-					container => container.NestedGet<string>( "id" ),
-					container => new JsonObject() {
-						{ "name", container.NestedGet<string>( "name" ) },
-						{ "image", container.NestedGet<string>( "image" ) }
-					}
-				);
-
 			// Get the status codes for recently scraped containers ( Container ID -> Status Code )
-			Dictionary<string, int> statusCodes = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_docker_status_code", new() {
+			Dictionary<string, JsonObject> statusCodes = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_docker_status_code", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
 			} ) ) )
@@ -790,7 +770,9 @@ namespace ServerMonitor.Connector.Helper {
 				.Select( container => container!.AsObject() )
 				.Where( container =>
 					container.NestedHas( "metric" ) == true &&
-					container.NestedHas( "metric.id" ) == true
+					container.NestedHas( "metric.id" ) == true &&
+					container.NestedHas( "metric.name" ) == true &&
+					container.NestedHas( "metric.image" ) == true
 				)
 				.Where( container =>
 					container.NestedHas( "value" ) == true &&
@@ -798,7 +780,11 @@ namespace ServerMonitor.Connector.Helper {
 				)
 				.ToDictionary(
 					container => container.NestedGet<string>( "metric.id" ),
-					container => int.Parse( container.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() )
+					container => new JsonObject() {
+						{ "name", container.NestedGet<string>( "metric.name" ) },
+						{ "image", container.NestedGet<string>( "metric.image" ) },
+						{ "statusCode", int.Parse( container.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() ) }
+					}
 				);
 
 			// Get the exit codes for recently scraped containers ( Container ID -> Exit Code )
@@ -866,16 +852,16 @@ namespace ServerMonitor.Connector.Helper {
 				);
 
 			// Merge the data into an array of JSON objects (drives that have not been recently scraped will have -1 for statusCode, exitCode, healthStatusCode & uptimeSeconds)
-			return dockerContainers.Aggregate( new List<JsonObject>(), ( containers, pair ) => {
-				int statusCode = statusCodes.ContainsKey( pair.Key ) == true ? statusCodes[ pair.Key ] : -1;
+			return statusCodes.Aggregate( new List<JsonObject>(), ( containers, pair ) => {
+				int statusCode = pair.Value.NestedGet<int>( "statusCode" );
 
 				containers.Add( new() {
 					{ "id", pair.Key },
 
 					{ "name", pair.Value.NestedGet<string>( "name" ) },
 					{ "image", pair.Value.NestedGet<string>( "image" ) },
-
 					{ "statusCode", statusCode },
+
 					{ "exitCode", exitCodes.ContainsKey( pair.Key ) == true ? exitCodes[ pair.Key ] : -1 },
 					{ "healthStatusCode", healthStatusCodes.ContainsKey( pair.Key ) == true ? healthStatusCodes[ pair.Key ] : -1 },
 					{ "uptimeSeconds", uptimes.ContainsKey( pair.Key ) == true && statusCode == 1 ? uptimes[ pair.Key ] : -1 },
