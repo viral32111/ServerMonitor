@@ -198,6 +198,7 @@ class SetupActivity : AppCompatActivity() {
 	// When the activity is closed...
 	override fun onStop() {
 		super.onStop()
+		Log.d( Shared.logTag, "Stopped setup activity" )
 
 		// Cancel all pending HTTP requests
 		//API.cancelQueue()

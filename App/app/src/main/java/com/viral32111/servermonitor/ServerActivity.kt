@@ -7,9 +7,19 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.ActionBar
+import com.android.volley.*
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.gson.JsonParseException
+import com.google.gson.JsonSyntaxException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class ServerActivity : AppCompatActivity() {
+
+	private lateinit var settings: Settings
+	private lateinit var serverIdentifier: String
 
 	// Runs when the activity is created...
 	override fun onCreate( savedInstanceState: Bundle? ) {
@@ -45,30 +55,27 @@ class ServerActivity : AppCompatActivity() {
 		}
 
 		// Get the settings
-		val settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE ) )
+		settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE ) )
 		Log.d( Shared.logTag, "Got settings ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
 
 		// Switch to the servers activity if we aren't servers yet
 		if ( !settings.isSetup() ) {
 			Log.d( Shared.logTag, "Not setup yet, switching to servers activity..." )
-
 			startActivity( Intent( this, SetupActivity::class.java ) )
 			overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
-
 			return
 		}
 
-		// Get the server's identifier
+		// Return to the previous activity if we were not given a server identifier
 		val serverIdentifier = intent.extras?.getString( "serverIdentifier" )
 		Log.d( Shared.logTag, "Server identifier: '${ serverIdentifier }'" )
 		if ( serverIdentifier == null ) {
 			Log.w( Shared.logTag, "No server identifier passed to activity?! Returning to previous activity..." )
-
 			finish()
 			overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
-
 			return
 		}
+		this.serverIdentifier = serverIdentifier
 
 		// Register the back button pressed callback - https://medium.com/tech-takeaways/how-to-migrate-the-deprecated-onbackpressed-function-e66bb29fa2fd
 		onBackPressedDispatcher.addCallback( this, onBackPressed )
@@ -85,10 +92,97 @@ class ServerActivity : AppCompatActivity() {
 		}
 	}
 
-	// Cancel pending HTTP requests when the activity is closed
+	// When the activity is closed...
 	override fun onStop() {
 		super.onStop()
+		Log.d( Shared.logTag, "Stopped server activity" )
+
+		// Cancel all pending HTTP requests
 		//API.cancelQueue()
+	}
+
+	override fun onPause() {
+		super.onPause()
+		Log.d( Shared.logTag, "Paused server activity" )
+	}
+
+	override fun onResume() {
+		super.onResume()
+		Log.d( Shared.logTag, "Resumed server activity" )
+
+		// TODO: Progress dialog
+
+		val activity = this
+		CoroutineScope( Dispatchers.Main ).launch {
+			withContext( Dispatchers.IO ) {
+
+				// Fetch the server
+				try {
+					val server = API.getServer( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, serverIdentifier )!!
+					Log.d( Shared.logTag, "Got server '${ serverIdentifier }' ('${ server }')" )
+					// TODO: Create Server object
+
+				} catch ( exception: APIException ) {
+					Log.e( Shared.logTag, "Failed to fetch server '${ serverIdentifier }' from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
+
+					withContext( Dispatchers.Main ) {
+						when ( exception.volleyError ) {
+
+							// Bad authentication
+							is AuthFailureError -> when ( exception.apiErrorCode ) {
+								ErrorCode.UnknownUser.code -> showBriefMessage( activity, R.string.serverToastServerAuthenticationUnknownUser )
+								ErrorCode.IncorrectPassword.code -> showBriefMessage( activity, R.string.serverToastServerAuthenticationIncorrectPassword )
+								else -> showBriefMessage( activity, R.string.serverToastServerAuthenticationFailure )
+							}
+
+							// HTTP 4xx
+							is ClientError -> when ( exception.httpStatusCode ) {
+								404 -> showBriefMessage( activity, R.string.serverToastServerNotFound )
+								else -> showBriefMessage( activity, R.string.serverToastServerClientFailure )
+							}
+
+							// HTTP 5xx
+							is ServerError -> when ( exception.httpStatusCode ) {
+								502 -> showBriefMessage( activity, R.string.serverToastServerUnavailable )
+								503 -> showBriefMessage( activity, R.string.serverToastServerUnavailable )
+								504 -> showBriefMessage( activity, R.string.serverToastServerUnavailable )
+								else -> showBriefMessage( activity, R.string.serverToastServerServerFailure )
+							}
+
+							// No Internet connection, malformed domain
+							is NoConnectionError -> showBriefMessage( activity, R.string.serverToastServerNoConnection )
+							is NetworkError -> showBriefMessage( activity, R.string.serverToastServerNoConnection )
+
+							// Connection timed out
+							is TimeoutError -> showBriefMessage( activity, R.string.serverToastServerTimeout )
+
+							// ¯\_(ツ)_/¯
+							else -> showBriefMessage( activity, R.string.serverToastServerFailure )
+
+						}
+					}
+				} catch ( exception: JsonParseException) {
+					Log.e( Shared.logTag, "Failed to parse fetch server API response as JSON due to '${ exception.message }'" )
+
+					withContext( Dispatchers.Main ) {
+						showBriefMessage( activity, R.string.serverToastServerParseFailure )
+					}
+				} catch ( exception: JsonSyntaxException) {
+					Log.e( Shared.logTag, "Failed to parse fetch server API response as JSON due to '${ exception.message }'" )
+
+					withContext( Dispatchers.Main ) {
+						showBriefMessage( activity, R.string.serverToastServerParseFailure )
+					}
+				} catch ( exception: NullPointerException ) {
+					Log.e( Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
+
+					withContext( Dispatchers.Main ) {
+						showBriefMessage( activity, R.string.serverToastServerNull )
+					}
+				}
+
+			}
+		}
 	}
 
 }

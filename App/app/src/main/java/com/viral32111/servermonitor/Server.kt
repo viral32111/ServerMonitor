@@ -9,7 +9,7 @@ import com.google.gson.JsonSyntaxException
 import kotlin.math.round
 
 // Holds data about a server
-class Server( data: JsonObject ) {
+class Server( data: JsonObject, extended: Boolean = false ) {
 	var identifier: String
 	var jobName: String
 	var instanceAddress: String
@@ -34,7 +34,7 @@ class Server( data: JsonObject ) {
 
 	var services: Array<Service>? = null
 
-	// Decode the JSON object from the GET /servers array
+	// Deseralise the JSON object
 	init {
 		identifier = data.get( "identifier" ).asString
 		jobName = data.get( "jobName" ).asString
@@ -45,6 +45,8 @@ class Server( data: JsonObject ) {
 		architecture = data.get( "architecture" ).asString
 		version = data.get( "version" ).asString
 		uptimeSeconds = round( data.get( "uptimeSeconds" ).asDouble ).toLong()
+
+		// TODO: Everything in update() when extended is true
 	}
 
 	// Checks if the server is online or offline

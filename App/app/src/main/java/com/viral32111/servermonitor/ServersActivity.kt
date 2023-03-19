@@ -315,9 +315,12 @@ class ServersActivity : AppCompatActivity() {
 
 	}
 
-	// Cancel pending HTTP requests when the activity is closed
+	// When the activity is closed...
 	override fun onStop() {
 		super.onStop()
+		Log.d( Shared.logTag, "Stopped servers activity" )
+
+		// Cancel all pending HTTP requests
 		//API.cancelQueue()
 	}
 
@@ -468,8 +471,6 @@ class ServersActivity : AppCompatActivity() {
 
 	// When a server is pressed...
 	private fun onServerPressed( server: Server ) {
-		//API.cancelQueue()
-
 		Log.d( Shared.logTag, "Switching to server activity..." )
 		val intent = Intent( this, ServerActivity::class.java )
 		intent.putExtra( "serverIdentifier", server.identifier )

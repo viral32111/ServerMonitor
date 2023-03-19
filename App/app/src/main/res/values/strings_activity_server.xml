@@ -5,4 +5,19 @@
 	<!-- TODO: This will eventually be the server name! -->
 	<string name="serverActionBarTitle">Server</string>
 
+	<!-- Toasts for fetch server -->
+	<string name="serverToastServerAuthenticationUnknownUser">No credentials exist with the configured username.</string>
+	<string name="serverToastServerAuthenticationIncorrectPassword">The configured instance password is incorrect.</string>
+	<string name="serverToastServerAuthenticationFailure">The configured instance credentials are incorrect.</string>
+	<string name="serverToastServerNotFound">Unable to find the fetch servers API route.</string>
+	<string name="serverToastServerClientFailure">The device encountered an error sending the request.</string>
+	<string name="serverToastServerUnavailable">The configured instance is unavailable at the moment.</string>
+	<string name="serverToastServerServerFailure">The API encountered an error processing the request.</string>
+	<string name="serverToastServerNoConnection">Unable to connect to API. Is the instance URL correct and are you connected to the Internet?</string>
+	<string name="serverToastServerTimeout">Connection to API timed out. Are you connected to the Internet?</string>
+	<string name="serverToastServerParseFailure">Failed to parse API response as JSON. Is the URL correct?</string>
+	<string name="serverToastServerFailure">An unknown issue occurred while fetching the number of servers.</string>
+	<string name="serverToastServerCancel">The API request was cancelled.</string>
+	<string name="serverToastServerNull">Null property encountered in API response JSON.</string>
+
 </resources>
