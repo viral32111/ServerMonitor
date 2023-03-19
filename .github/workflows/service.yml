@@ -146,7 +146,26 @@ jobs:
           name: ${{ env.ARTIFACT_NAME }}
           path: ./Service/Artifact/
 
-      - name: Launch as Collector
+      - name: Launch as Collector (Ubuntu)
+        if: ${{ matrix.name == 'Ubuntu' }}
+        env:
+          SERVER_MONITOR_DOCKERENGINEAPIADDRESS: ${{ matrix.docker }}
+          SERVER_MONITOR_COLLECTPROCESSORMETRICS: true
+          SERVER_MONITOR_COLLECTMEMORYMETRICS: true
+          SERVER_MONITOR_COLLECTDISKMETRICS: true
+          SERVER_MONITOR_COLLECTNETWORKMETRICS: true
+          SERVER_MONITOR_COLLECTINFORMATIONMETRICS: true
+          SERVER_MONITOR_COLLECTPOWERMETRICS: false
+          SERVER_MONITOR_COLLECTFANMETRICS: false
+          SERVER_MONITOR_COLLECTSERVICEMETRICS: true
+          SERVER_MONITOR_COLLECTDOCKERMETRICS: true
+          SERVER_MONITOR_COLLECTSNMPMETRICS: true
+          SERVER_MONITOR_SNMPMANAGERLISTENADDRESS: 127.0.0.1
+          SERVER_MONITOR_SNMPMANAGERLISTENPORT: 1620
+        run: sudo dotnet ./Artifact/ServerMonitor.dll --once collector
+
+      - name: Launch as Collector (Windows)
+        if: ${{ matrix.name == 'Windows' }}
         env:
           SERVER_MONITOR_DOCKERENGINEAPIADDRESS: ${{ matrix.docker }}
           SERVER_MONITOR_COLLECTPROCESSORMETRICS: true
