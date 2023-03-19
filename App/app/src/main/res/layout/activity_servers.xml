@@ -54,12 +54,18 @@
 			app:layout_constraintStart_toStartOf="parent"
 			app:layout_constraintTop_toBottomOf="@+id/serversStatusTitleTextView" />
 
-		<ScrollView
+		<androidx.core.widget.NestedScrollView
 			android:id="@+id/serversScrollView"
 			android:layout_width="0dp"
 			android:layout_height="0dp"
 			android:layout_marginTop="16dp"
 			android:contentDescription="@string/serversScrollViewSpeakableText"
+			android:fadeScrollbars="true"
+			android:scrollIndicators="right"
+			android:scrollbarAlwaysDrawHorizontalTrack="false"
+			android:scrollbarAlwaysDrawVerticalTrack="true"
+			android:scrollbars="vertical"
+			android:verticalScrollbarPosition="right"
 			app:layout_constraintBottom_toBottomOf="parent"
 			app:layout_constraintEnd_toEndOf="parent"
 			app:layout_constraintStart_toStartOf="parent"
@@ -75,8 +81,8 @@
 				android:scrollbars="horizontal"
 				android:showDividers="middle"
 				tools:itemCount="0"
-				tools:listitem="@layout/server"/>
-		</ScrollView>
+				tools:listitem="@layout/server" />
+		</androidx.core.widget.NestedScrollView>
 
 	</androidx.constraintlayout.widget.ConstraintLayout>
 
