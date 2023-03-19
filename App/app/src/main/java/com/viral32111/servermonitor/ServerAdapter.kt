@@ -56,6 +56,7 @@ class ServerAdapter( private val servers: Array<Server>, private val context: Co
 
 		// Forward click events to the given listener - https://stackoverflow.com/a/49969478
 		viewHolder.constraintLayout.setOnClickListener {
+			Log.d( Shared.logTag, "Server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') pressed" )
 			onServerClickListener.invoke( server )
 		}
 

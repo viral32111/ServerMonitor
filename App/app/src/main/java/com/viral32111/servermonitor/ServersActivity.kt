@@ -113,9 +113,12 @@ class ServersActivity : AppCompatActivity() {
 				Log.d( Shared.logTag, "Automatic refresh countdown progress bar animation started" )
 			}
 
-			// When the animation finishes...
+			// When the animation finishes or is manually cleared...
 			override fun onAnimationEnd( animation: Animation? ) {
-				Log.d( Shared.logTag, "Automatic refresh countdown progress bar animation ended" )
+				Log.d( Shared.logTag, "Automatic refresh countdown progress bar animation ended (${ animation?.hasEnded() }, ${ animation?.hasStarted() }, ${ refreshProgressBar.progress }, ${ refreshProgressBar.isAnimating })" )
+
+				// Don't refresh if we've been manually cleared
+				if ( refreshProgressBar.progress == 0 ) return
 
 				// Show refreshing spinner
 				swipeRefreshLayout.isRefreshing = true
@@ -217,94 +220,95 @@ class ServersActivity : AppCompatActivity() {
 		swipeRefreshLayout.setOnRefreshListener {
 			Log.d( Shared.logTag, "Swipe refreshed!" )
 
-			// Stop the automatic refresh countdown progress bar
+			// Stop the automatic refresh countdown progress bar, thus calling the animation callback
 			if ( settings.automaticRefresh ) {
 				refreshProgressBar.clearAnimation()
-				refreshProgressBar.progress = 0
-			}
 
-			CoroutineScope( Dispatchers.Main ).launch {
-				withContext( Dispatchers.IO ) {
+			// If automatic refresh is disabled, then do the refresh manually...
+			} else {
+				CoroutineScope( Dispatchers.Main ).launch {
+					withContext( Dispatchers.IO ) {
 
-					// Fetch the servers
-					try {
-						val servers = fetchServers( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!! )
+						// Fetch the servers
+						try {
+							val servers = fetchServers( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!! )
 
-						// Update the UI
-						withContext( Dispatchers.Main ) {
-							swipeRefreshLayout.isRefreshing = false
-							refreshProgressBar.progress = 0
-							updateUI( servers )
-						}
+							// Update the UI
+							withContext( Dispatchers.Main ) {
+								swipeRefreshLayout.isRefreshing = false
+								refreshProgressBar.progress = 0
+								updateUI( servers )
+							}
 
-					} catch ( exception: APIException ) {
-						Log.e( Shared.logTag, "Failed to fetch servers from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
+						} catch ( exception: APIException ) {
+							Log.e( Shared.logTag, "Failed to fetch servers from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
 
-						withContext( Dispatchers.Main ) {
-							swipeRefreshLayout.isRefreshing = false
-							refreshProgressBar.progress = 0
+							withContext( Dispatchers.Main ) {
+								swipeRefreshLayout.isRefreshing = false
+								refreshProgressBar.progress = 0
 
-							when ( exception.volleyError ) {
+								when ( exception.volleyError ) {
 
-								// Bad authentication
-								is AuthFailureError -> when ( exception.apiErrorCode ) {
-									ErrorCode.UnknownUser.code -> showBriefMessage( activity, R.string.serversToastServersAuthenticationUnknownUser )
-									ErrorCode.IncorrectPassword.code -> showBriefMessage( activity, R.string.serversToastServersAuthenticationIncorrectPassword )
-									else -> showBriefMessage( activity, R.string.serversToastServersAuthenticationFailure )
+									// Bad authentication
+									is AuthFailureError -> when ( exception.apiErrorCode ) {
+										ErrorCode.UnknownUser.code -> showBriefMessage( activity, R.string.serversToastServersAuthenticationUnknownUser )
+										ErrorCode.IncorrectPassword.code -> showBriefMessage( activity, R.string.serversToastServersAuthenticationIncorrectPassword )
+										else -> showBriefMessage( activity, R.string.serversToastServersAuthenticationFailure )
+									}
+
+									// HTTP 4xx
+									is ClientError -> when ( exception.httpStatusCode ) {
+										404 -> showBriefMessage( activity, R.string.serversToastServersNotFound )
+										else -> showBriefMessage( activity, R.string.serversToastServersClientFailure )
+									}
+
+									// HTTP 5xx
+									is ServerError -> when ( exception.httpStatusCode ) {
+										502 -> showBriefMessage( activity, R.string.serversToastServersUnavailable )
+										503 -> showBriefMessage( activity, R.string.serversToastServersUnavailable )
+										504 -> showBriefMessage( activity, R.string.serversToastServersUnavailable )
+										else -> showBriefMessage( activity, R.string.serversToastServersServerFailure )
+									}
+
+									// No Internet connection, malformed domain
+									is NoConnectionError -> showBriefMessage( activity, R.string.serversToastServersNoConnection )
+									is NetworkError -> showBriefMessage( activity, R.string.serversToastServersNoConnection )
+
+									// Connection timed out
+									is TimeoutError -> showBriefMessage( activity, R.string.serversToastServersTimeout )
+
+									// ¯\_(ツ)_/¯
+									else -> showBriefMessage( activity, R.string.serversToastServersFailure )
+
 								}
+							}
+						} catch ( exception: JsonParseException ) {
+							Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
 
-								// HTTP 4xx
-								is ClientError -> when ( exception.httpStatusCode ) {
-									404 -> showBriefMessage( activity, R.string.serversToastServersNotFound )
-									else -> showBriefMessage( activity, R.string.serversToastServersClientFailure )
-								}
+							withContext( Dispatchers.Main ) {
+								swipeRefreshLayout.isRefreshing = false
+								refreshProgressBar.progress = 0
+								showBriefMessage( activity, R.string.serversToastServersParseFailure )
+							}
+						} catch ( exception: JsonSyntaxException ) {
+							Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
 
-								// HTTP 5xx
-								is ServerError -> when ( exception.httpStatusCode ) {
-									502 -> showBriefMessage( activity, R.string.serversToastServersUnavailable )
-									503 -> showBriefMessage( activity, R.string.serversToastServersUnavailable )
-									504 -> showBriefMessage( activity, R.string.serversToastServersUnavailable )
-									else -> showBriefMessage( activity, R.string.serversToastServersServerFailure )
-								}
+							withContext( Dispatchers.Main ) {
+								swipeRefreshLayout.isRefreshing = false
+								refreshProgressBar.progress = 0
+								showBriefMessage( activity, R.string.serversToastServersParseFailure )
+							}
+						} catch ( exception: NullPointerException ) {
+							Log.e( Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
 
-								// No Internet connection, malformed domain
-								is NoConnectionError -> showBriefMessage( activity, R.string.serversToastServersNoConnection )
-								is NetworkError -> showBriefMessage( activity, R.string.serversToastServersNoConnection )
-
-								// Connection timed out
-								is TimeoutError -> showBriefMessage( activity, R.string.serversToastServersTimeout )
-
-								// ¯\_(ツ)_/¯
-								else -> showBriefMessage( activity, R.string.serversToastServersFailure )
-
+							withContext( Dispatchers.Main ) {
+								swipeRefreshLayout.isRefreshing = false
+								refreshProgressBar.progress = 0
+								showBriefMessage( activity, R.string.serversToastServersNull )
 							}
 						}
-					} catch ( exception: JsonParseException ) {
-						Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
 
-						withContext( Dispatchers.Main ) {
-							swipeRefreshLayout.isRefreshing = false
-							refreshProgressBar.progress = 0
-							showBriefMessage( activity, R.string.serversToastServersParseFailure )
-						}
-					} catch ( exception: JsonSyntaxException ) {
-						Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
-
-						withContext( Dispatchers.Main ) {
-							swipeRefreshLayout.isRefreshing = false
-							refreshProgressBar.progress = 0
-							showBriefMessage( activity, R.string.serversToastServersParseFailure )
-						}
-					} catch ( exception: NullPointerException ) {
-						Log.e( Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
-
-						withContext( Dispatchers.Main ) {
-							swipeRefreshLayout.isRefreshing = false
-							refreshProgressBar.progress = 0
-							showBriefMessage( activity, R.string.serversToastServersNull )
-						}
 					}
-
 				}
 			}
 		}
@@ -314,7 +318,7 @@ class ServersActivity : AppCompatActivity() {
 	// Cancel pending HTTP requests when the activity is closed
 	override fun onStop() {
 		super.onStop()
-		API.cancelQueue()
+		//API.cancelQueue()
 	}
 
 	// Stop the automatic refresh countdown progress bar when the activity is changed/app is minimised
@@ -322,10 +326,13 @@ class ServersActivity : AppCompatActivity() {
 		super.onPause()
 		Log.d( Shared.logTag, "Paused servers activity" )
 
+		// Stop any current refreshing
+		swipeRefreshLayout.isRefreshing = false
+
 		// Stop the automatic refresh countdown progress bar
 		if ( settings.automaticRefresh ) {
-			refreshProgressBar.clearAnimation()
-			refreshProgressBar.progress = 0
+			refreshProgressBar.progress = 0 // Reset progress to prevent automatic refresh
+			refreshProgressBar.clearAnimation() // Will call the animation end callback
 		}
 	}
 
@@ -359,7 +366,7 @@ class ServersActivity : AppCompatActivity() {
 					// Update the UI
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
-						refreshProgressBar.progress = 0
+						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
 
 						updateUI( servers )
 					}
@@ -369,7 +376,7 @@ class ServersActivity : AppCompatActivity() {
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
-						refreshProgressBar.progress = 0
+						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
 
 						when ( exception.volleyError ) {
 
@@ -411,7 +418,7 @@ class ServersActivity : AppCompatActivity() {
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
-						refreshProgressBar.progress = 0
+						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
 						showBriefMessage( activity, R.string.serversToastServersParseFailure )
 					}
 				} catch ( exception: JsonSyntaxException ) {
@@ -419,7 +426,7 @@ class ServersActivity : AppCompatActivity() {
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
-						refreshProgressBar.progress = 0
+						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
 						showBriefMessage( activity, R.string.serversToastServersParseFailure )
 					}
 				} catch ( exception: NullPointerException ) {
@@ -427,7 +434,7 @@ class ServersActivity : AppCompatActivity() {
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
-						refreshProgressBar.progress = 0
+						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
 						showBriefMessage( activity, R.string.serversToastServersNull )
 					}
 				}
@@ -452,13 +459,22 @@ class ServersActivity : AppCompatActivity() {
 		// Update the recycler view, stop loading & restart automatic refresh countdown progress bar animation
 		serverAdapter.notifyItemRangeChanged( 0, servers.size ) // IDE doesn't like .notifyDataSetChanged()
 		swipeRefreshLayout.isRefreshing = false
-		if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
+		if ( settings.automaticRefresh ) {
+			//progressBarAnimation.reset()
+			refreshProgressBar.startAnimation( progressBarAnimation )
+		}
 
 	}
 
 	// When a server is pressed...
 	private fun onServerPressed( server: Server ) {
-		Log.d( Shared.logTag, "Server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') pressed" )
+		//API.cancelQueue()
+
+		Log.d( Shared.logTag, "Switching to server activity..." )
+		val intent = Intent( this, ServerActivity::class.java )
+		intent.putExtra( "serverIdentifier", server.identifier )
+		startActivity( intent )
+		overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
 	}
 
 	/**

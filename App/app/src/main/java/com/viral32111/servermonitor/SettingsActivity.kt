@@ -106,7 +106,7 @@ class SettingsActivity : AppCompatActivity() {
 		super.onStop()
 
 		// Cancel all pending HTTP requests
-		API.cancelQueue()
+		//API.cancelQueue()
 
 		// Enable input
 		enableInputs( true, Settings( getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE ) ).isSetup() )

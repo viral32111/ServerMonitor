@@ -1,9 +1,11 @@
 package com.viral32111.servermonitor
 
+import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.ActionBar
 import com.google.android.material.appbar.MaterialToolbar
 
@@ -42,6 +44,51 @@ class ServerActivity : AppCompatActivity() {
 			return@setOnMenuItemClickListener true
 		}
 
+		// Get the settings
+		val settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE ) )
+		Log.d( Shared.logTag, "Got settings ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
+
+		// Switch to the servers activity if we aren't servers yet
+		if ( !settings.isSetup() ) {
+			Log.d( Shared.logTag, "Not setup yet, switching to servers activity..." )
+
+			startActivity( Intent( this, SetupActivity::class.java ) )
+			overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
+
+			return
+		}
+
+		// Get the server's identifier
+		val serverIdentifier = intent.extras?.getString( "serverIdentifier" )
+		Log.d( Shared.logTag, "Server identifier: '${ serverIdentifier }'" )
+		if ( serverIdentifier == null ) {
+			Log.w( Shared.logTag, "No server identifier passed to activity?! Returning to previous activity..." )
+
+			finish()
+			overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
+
+			return
+		}
+
+		// Register the back button pressed callback - https://medium.com/tech-takeaways/how-to-migrate-the-deprecated-onbackpressed-function-e66bb29fa2fd
+		onBackPressedDispatcher.addCallback( this, onBackPressed )
+
+	}
+
+	// Show a confirmation when the back button is pressed - https://medium.com/tech-takeaways/how-to-migrate-the-deprecated-onbackpressed-function-e66bb29fa2fd
+	private val onBackPressed: OnBackPressedCallback = object : OnBackPressedCallback( true ) {
+		override fun handleOnBackPressed() {
+			Log.d( Shared.logTag, "System back button pressed" )
+
+			finish()
+			overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
+		}
+	}
+
+	// Cancel pending HTTP requests when the activity is closed
+	override fun onStop() {
+		super.onStop()
+		//API.cancelQueue()
 	}
 
 }
