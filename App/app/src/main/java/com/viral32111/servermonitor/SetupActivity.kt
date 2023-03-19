@@ -200,7 +200,7 @@ class SetupActivity : AppCompatActivity() {
 		super.onStop()
 
 		// Cancel all pending HTTP requests
-		API.cancelQueue()
+		//API.cancelQueue()
 
 		// Enable input
 		enableInputs( true )

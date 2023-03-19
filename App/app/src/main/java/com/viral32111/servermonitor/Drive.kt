@@ -24,8 +24,8 @@ class Drive( data: JsonObject ) {
 		rateBytesRead = bytesRead.get( "rate" ).asDouble.toLong()
 
 		val bytesWritten = data.get( "bytesWritten" ).asJsonObject
-		totalBytesWritten = bytesRead.get( "total" ).asLong
-		rateBytesWritten = bytesRead.get( "rate" ).asDouble.toLong()
+		totalBytesWritten = bytesWritten.get( "total" ).asLong
+		rateBytesWritten = bytesWritten.get( "rate" ).asDouble.toLong()
 
 		val partitionsList = ArrayList<Partition>()
 		for ( partition in data.get( "partitions" ).asJsonArray ) partitionsList.add( Partition( ( partition.asJsonObject ) ) )

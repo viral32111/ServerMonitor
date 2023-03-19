@@ -30,6 +30,7 @@ class Server( data: JsonObject ) {
 	var swapFreeBytes: Long? = null
 
 	var drives: Array<Drive>? = null
+	var networkInterfaces: Array<NetworkInterface>? = null
 
 	var services: Array<Service>? = null
 
@@ -171,6 +172,11 @@ class Server( data: JsonObject ) {
 		val drivesList = ArrayList<Drive>()
 		for ( drive in resources.get( "drives" ).asJsonArray ) drivesList.add( Drive( drive.asJsonObject ) )
 		drives = drivesList.toTypedArray()
+
+		// Network Interfaces
+		val netInterfacesList = ArrayList<NetworkInterface>()
+		for ( netInterface in resources.get( "networkInterfaces" ).asJsonArray ) netInterfacesList.add( NetworkInterface( netInterface.asJsonObject ) )
+		networkInterfaces = netInterfacesList.toTypedArray()
 
 		// Services
 		val servicesList = ArrayList<Service>()
