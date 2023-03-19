@@ -27,7 +27,10 @@ namespace ServerMonitor.Connector.Helper {
 		private static string CreateQueryString( Dictionary<string, string?> parameters ) => string.Join( "&", parameters.Select( pair => $"{ pair.Key }={ Uri.EscapeDataString( pair.Value ?? "" ) }" ) );
 
 		// Creates a Prometheus query with labels
-		private static string CreatePromQL( string metric, Dictionary<string, string> labels ) => string.Concat( metric, "{", string.Join( ",", labels.Select( pair => $"{ pair.Key }=\"{ pair.Value }\"" ) ), "}" );
+		private static string CreatePromQL( string metric, Dictionary<string, string> labels, string? function = null, int? duration = null ) {
+			string query = string.Concat( metric, "{", string.Join( ",", labels.Select( pair => $"{ pair.Key }=\"{ pair.Value }\"" ) ), "}", ( duration != null ? $"[{duration}s]" : "" ) );
+			return ( string.IsNullOrWhiteSpace( function ) == false ) ? $"{ function }({ query })" : query;
+		}
 
 		// Encode/decode (mostly) unique identifiers for a server
 		public static string EncodeIdentifier( string jobName, string instanceAddress ) => Base64.EncodeURLSafe( string.Concat( jobName, ";", instanceAddress ) );
@@ -408,10 +411,10 @@ namespace ServerMonitor.Connector.Helper {
 				);
 
 			// Fetch the rate of bytes read for recently scraped drives ( Drive Name -> Bytes Read )
-			Dictionary<string, double> driveRateBytesRead = ( await FetchQuery( configuration, CreatePromQL( $"rate( { configuration.PrometheusMetricsPrefix }_resource_drive_read_bytes[ { configuration.PrometheusScrapeIntervalSeconds * 2 }s ] )", new() {
+			Dictionary<string, double> driveRateBytesRead = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_drive_read_bytes", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
-			} ) ) )
+			}, "rate", configuration.PrometheusScrapeIntervalSeconds * 2 ) ) )
 				.NestedGet<JsonArray>( "result" )
 				.Where( drive => drive != null )
 				.Select( drive => drive!.AsObject() )
@@ -429,7 +432,7 @@ namespace ServerMonitor.Connector.Helper {
 				);
 
 			// Fetch the total bytes written for recently scraped drives ( Drive Name -> Bytes Written )
-			Dictionary<string, long> driveTotalBytesWritten = ( await FetchQuery( configuration, CreatePromQL( $"rate( { configuration.PrometheusMetricsPrefix }_resource_drive_write_bytes[ { configuration.PrometheusScrapeIntervalSeconds * 2 }s ] )", new() {
+			Dictionary<string, long> driveTotalBytesWritten = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_drive_write_bytes", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName },
 			} ) ) )
@@ -453,7 +456,7 @@ namespace ServerMonitor.Connector.Helper {
 			Dictionary<string, double> driveRateBytesWritten = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_drive_write_bytes", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName },
-			} ) ) )
+			}, "rate", configuration.PrometheusScrapeIntervalSeconds * 2 ) ) )
 				.NestedGet<JsonArray>( "result" )
 				.Where( drive => drive != null )
 				.Select( drive => drive!.AsObject() )
