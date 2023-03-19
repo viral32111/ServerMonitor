@@ -14,7 +14,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.ServerMonitor"
         android:name=".ServerMonitorApplication"
-        tools:targetApi="31">
+        android:enableOnBackInvokedCallback="true"
+        tools:targetApi="33">
         <activity
             android:name=".ServiceActivity"
             android:exported="false" />
