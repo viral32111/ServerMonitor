@@ -4,6 +4,8 @@ import android.app.Activity
 import android.util.Log
 import com.android.volley.*
 import com.google.gson.JsonObject
+import com.google.gson.JsonParseException
+import com.google.gson.JsonSyntaxException
 import kotlin.math.round
 
 // Holds data about a server
@@ -22,6 +24,13 @@ class Server( data: JsonObject ) {
 	var processorFrequency: Float? = null
 	var processorTemperature: Float? = null
 
+	var memoryTotalBytes: Long? = null
+	var memoryFreeBytes: Long? = null
+	var swapTotalBytes: Long? = null
+	var swapFreeBytes: Long? = null
+
+	var services: Array<Service>? = null
+
 	// Decode the JSON object from the GET /servers array
 	init {
 		identifier = data.get( "identifier" ).asString
@@ -33,24 +42,11 @@ class Server( data: JsonObject ) {
 		architecture = data.get( "architecture" ).asString
 		version = data.get( "version" ).asString
 		uptimeSeconds = round( data.get( "uptimeSeconds" ).asDouble ).toLong()
-
-		/*
-		Log.d( Shared.logTag, "Identifier: '${ Identifier }'" )
-		Log.d( Shared.logTag, "Job Name: '${ JobName }'" )
-		Log.d( Shared.logTag, "Instance Address: '${ InstanceAddress }'" )
-		Log.d( Shared.logTag, "Last Scrape: '${ LastScrape }'" )
-		Log.d( Shared.logTag, "Host Name: '${ HostName }'" )
-		Log.d( Shared.logTag, "Operating System: '${ OperatingSystem }'" )
-		Log.d( Shared.logTag, "Architecture: '${ Architecture }'" )
-		Log.d( Shared.logTag, "Version: '${ Version }'" )
-		Log.d( Shared.logTag, "Uptime: '${ UptimeSeconds }' seconds" )
-		*/
 	}
 
 	// Checks if the server is online or offline
 	fun isOnline(): Boolean = uptimeSeconds >= 0
 
-	// TODO: API call for GET /server, populate more properties with data
 	fun fetchMetrics( activity: Activity, instanceUrl: String, credentialsUsername: String, credentialsPassword: String, successCallback: () -> Unit, errorCallback: () -> Unit ) {
 		API.getServer( instanceUrl, credentialsUsername, credentialsPassword, identifier, { data ->
 			if ( data != null ) {
@@ -124,9 +120,23 @@ class Server( data: JsonObject ) {
 
 	}
 
+	/**
+	 * Updates this server's data.
+	 * @param instanceUrl The URL to the connector instance, using the HTTPS schema.
+	 * @param credentialsUsername The user to authenticate as.
+	 * @param credentialsPassword The password to authenticate with.
+	 * @throws APIException Any sort of error, such as non-success HTTP status code, network connectivity, etc.
+	 * @throws JsonParseException An error parsing the HTTP response body as JSON, when successful.
+	 * @throws JsonSyntaxException An error parsing the HTTP response body as JSON, when successful.
+	 * @throws NullPointerException The API response contained an unexpected null property.
+	 */
 	suspend fun update( instanceUrl: String, credentialsUsername: String, credentialsPassword: String ) {
-		val data = API.getServer( instanceUrl, credentialsUsername, credentialsPassword, identifier )!!
 
+		// Fetch the server, will throw a null pointer exception if null
+		val data = API.getServer( instanceUrl, credentialsUsername, credentialsPassword, identifier )!!
+		Log.d( Shared.logTag, "Fetched server '${ hostName }' ('${ identifier }', '${ jobName }', '${ instanceAddress }') from API" )
+
+		// Update basic information
 		identifier = data.get( "identifier" ).asString
 		jobName = data.get( "jobName" ).asString
 		instanceAddress = data.get( "instanceAddress" ).asString
@@ -139,8 +149,25 @@ class Server( data: JsonObject ) {
 
 		val resources = data.get( "resources" ).asJsonObject
 
+		// Update processor metrics
 		val processor = resources.get( "processor" ).asJsonObject
 		processorUsage = processor.get( "usage" ).asFloat
 		processorTemperature = processor.get( "temperature" ).asFloat
+
+		// Update memory metrics
+		val memory = resources.get( "memory" ).asJsonObject
+		memoryTotalBytes = memory.get( "totalBytes" ).asLong
+		memoryFreeBytes = memory.get( "freeBytes" ).asLong
+
+		// Update swap/page-file metrics
+		val swap = memory.get( "swap" ).asJsonObject
+		swapTotalBytes = swap.get( "totalBytes" ).asLong
+		swapFreeBytes = swap.get( "freeBytes" ).asLong
+
+		// Services
+		val servicesList = ArrayList<Service>()
+		for ( service in data.get( "services" ).asJsonArray ) servicesList.add( Service( service.asJsonObject ) )
+		services = servicesList.toTypedArray()
+
 	}
 }

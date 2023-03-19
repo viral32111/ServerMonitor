@@ -476,7 +476,7 @@ class ServersActivity : AppCompatActivity() {
 
 		// Fetch the servers, will throw a null pointer exception if null
 		val servers = API.getServers( instanceUrl, credentialsUsername, credentialsPassword )!!
-		Log.d( Shared.logTag, "Got '${ servers.size() }' servers from API ('${ servers }')" )
+		Log.d( Shared.logTag, "Fetched '${ servers.size() }' servers from API ('${ servers }')" )
 
 		// Convert the JSON array to a list of servers - https://www.geeksforgeeks.org/kotlin-list-arraylist/
 		val serverList = ArrayList<Server>()

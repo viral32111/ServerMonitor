@@ -7,6 +7,8 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import com.android.volley.Request
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
+import com.google.gson.JsonParseException
+import com.google.gson.JsonSyntaxException
 
 // Shows a toast popup at the bottom of the activity
 // https://developer.android.com/develop/ui/views/notifications/snackbar/showing
@@ -45,5 +47,12 @@ fun createProgressDialog( activity: Activity, titleId: Int, messageId: Int, canc
 			Log.d( Shared.logTag, "Progress dialog dismissed" )
 		}
 		.create()
+
+}
+
+
+
+
+fun bytesToAppropriateUnit( bytes: Long ) {
 
 }

@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
+import kotlin.math.roundToInt
 
 // Custom recycler view adapter for the server list - https://developer.android.com/develop/ui/views/layout/recyclerview, https://stackoverflow.com/a/54847887
 class ServerAdapter( private val servers: Array<Server>, private val context: Context, private val onServerClickListener: ( server: Server ) -> Unit ): RecyclerView.Adapter<ServerAdapter.ViewHolder>() {
@@ -65,8 +66,7 @@ class ServerAdapter( private val servers: Array<Server>, private val context: Co
 			viewHolder.statusTextView.text = context.getString( R.string.serversTextViewServerStatusOnline )
 			viewHolder.statusTextView.setTextColor( context.getColor( R.color.statusGood ) )
 
-			// TODO: Populate text views with server data
-
+			// Processor Usage
 			if ( server.processorUsage != null ) {
 				viewHolder.processorTextView.text = String.format( context.getString( R.string.serversTextViewServerProcessorUsage ), server.processorUsage!!.toInt() )
 				viewHolder.processorTextView.setTextColor( context.getColor( R.color.statusGood ) )
@@ -75,9 +75,17 @@ class ServerAdapter( private val servers: Array<Server>, private val context: Co
 				viewHolder.processorTextView.setTextColor( context.getColor( R.color.statusDead ) )
 			}
 
-			viewHolder.memoryTextView.text = String.format( context.getString( R.string.serversTextViewServerMemoryUsage ), 0, "K" )
-			viewHolder.memoryTextView.setTextColor( context.getColor( R.color.statusGood ) )
+			// Memory Used
+			if ( server.memoryTotalBytes != null && server.memoryFreeBytes != null ) {
+				val size = Size( server.memoryTotalBytes!! - server.memoryFreeBytes!! )
+				viewHolder.memoryTextView.text = String.format( context.getString( R.string.serversTextViewServerMemoryUsage ), size.amount.roundToInt(), size.suffix.substring( 0, 1 ) )
+				viewHolder.memoryTextView.setTextColor( context.getColor( R.color.statusGood ) )
+			} else {
+				viewHolder.memoryTextView.text = String.format( context.getString( R.string.serversTextViewServerMemoryUsage ), 0, "K" )
+				viewHolder.memoryTextView.setTextColor( context.getColor( R.color.statusDead ) )
+			}
 
+			// Processor Temperature
 			if ( server.processorTemperature != null && server.processorTemperature!! >= 0f ) {
 				viewHolder.temperatureTextView.text = String.format( context.getString( R.string.serversTextViewServerTemperatureValue ), server.processorTemperature!!.toInt() )
 				viewHolder.temperatureTextView.setTextColor( context.getColor( R.color.statusGood ) )
@@ -86,12 +94,23 @@ class ServerAdapter( private val servers: Array<Server>, private val context: Co
 				viewHolder.temperatureTextView.setTextColor( context.getColor( R.color.statusDead ) )
 			}
 
-			viewHolder.serviceTextView.text = String.format( context.getString( R.string.serversTextViewServerServicesCount ), 0 )
-			viewHolder.serviceTextView.setTextColor( context.getColor( R.color.statusGood ) )
+			// Running Services Count
+			if ( server.services != null ) {
+				val runningServices = ArrayList<Service>()
+				for ( service in server.services!! ) if ( service.isRunning() ) runningServices.add( service )
 
+				viewHolder.serviceTextView.text = String.format( context.getString( R.string.serversTextViewServerServicesCount ), runningServices.size )
+				viewHolder.serviceTextView.setTextColor( context.getColor( R.color.statusGood ) )
+			} else {
+				viewHolder.serviceTextView.text = String.format( context.getString( R.string.serversTextViewServerServicesCount ), server.services!!.size )
+				viewHolder.serviceTextView.setTextColor( context.getColor( R.color.statusDead ) )
+			}
+
+			// Network I/O
 			viewHolder.networkTextView.text = String.format( context.getString( R.string.serversTextViewServerNetworkUsage ), 0, "K" )
 			viewHolder.networkTextView.setTextColor( context.getColor( R.color.statusGood ) )
 
+			// Disk I/O
 			viewHolder.diskTextView.text = String.format( context.getString( R.string.serversTextViewServerDiskUsage ), 0, "K" )
 			viewHolder.diskTextView.setTextColor( context.getColor( R.color.statusGood ) )
 

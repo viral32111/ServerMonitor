@@ -187,7 +187,7 @@ class API {
 		suspend fun getHello( baseUrl: String, username: String, password: String ) = sendRequest( Request.Method.GET, "${ baseUrl }/hello", username, password )
 
 		/**
-		 * Fetches all of the servers (`GET /server`).
+		 * Fetches basic information for every server (`GET /servers`).
 		 * @param baseUrl The base URL of the API, using the HTTPS schema.
 		 * @param username The user to authenticate as.
 		 * @param password The password to authenticate with.
@@ -198,7 +198,18 @@ class API {
 		 */
 		suspend fun getServers( baseUrl: String, username: String, password: String ): JsonArray? = sendRequest( Request.Method.GET, "${ baseUrl }/servers", username, password )?.get( "servers" )?.asJsonArray
 
+		/**
+		 * Fetches all data for a single server (`GET /server`)
+		 * @param baseUrl The base URL of the API, using the HTTPS schema.
+		 * @param username The user to authenticate as.
+		 * @param password The password to authenticate with.
+		 * @param serverIdentifier The Base64-encoded unique identifier of a server.
+		 * @throws APIException Any sort of error, such as non-success HTTP status code, network connectivity, etc.
+		 * @throws JsonParseException An error parsing the HTTP response body as JSON, when successful.
+		 * @throws JsonSyntaxException An error parsing the HTTP response body as JSON, when successful.
+		 */
 		suspend fun getServer( baseUrl: String, username: String, password: String, serverIdentifier: String ) = sendRequest( Request.Method.GET, "${ baseUrl }/server?id=${ serverIdentifier }", username, password )
+
 		suspend fun postServer( baseUrl: String, username: String, password: String, serverIdentifier: String, actionName: String ) = sendRequest( Request.Method.POST, "${ baseUrl }/server?id=${ serverIdentifier }&action=${ actionName }", username, password )
 		suspend fun postService( baseUrl: String, username: String, password: String, serverIdentifier: String, serviceName: String, actionName: String ) = sendRequest( Request.Method.POST, "${ baseUrl }/service?server=${ serverIdentifier }&name=${ serviceName }&action=${ actionName }", username, password )
 
