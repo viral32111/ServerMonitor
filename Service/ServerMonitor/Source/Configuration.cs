@@ -84,6 +84,7 @@ namespace ServerMonitor {
 		public required string PrometheusAPIAddress { get; set; } = "127.0.0.1";
 		public required int PrometheusAPIPort { get; set; } = 9090;
 		public required float PrometheusAPIVersion { get; set; } = 1f;
+		public required int PrometheusScrapeIntervalSeconds { get; set; } = 15;
 
 		// Resource metrics options
 		public required bool CollectProcessorMetrics { get; set; } = true;

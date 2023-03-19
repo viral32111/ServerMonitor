@@ -386,8 +386,8 @@ namespace ServerMonitor.Connector.Helper {
 				.Select( drive => drive.NestedGet<string>( "drive" ) )
 				.ToArray();
 
-			// Fetch the bytes read for recently scraped drives ( Drive Name -> Bytes Read )
-			Dictionary<string, long> driveBytesRead = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_drive_read_bytes", new() {
+			// Fetch the total bytes read for recently scraped drives ( Drive Name -> Bytes Read )
+			Dictionary<string, long> driveTotalBytesRead = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_drive_read_bytes", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName }
 			} ) ) )
@@ -407,8 +407,29 @@ namespace ServerMonitor.Connector.Helper {
 					drive => long.Parse( drive.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() )
 				);
 
-			// Fetch the bytes written for recently scraped drives ( Drive Name -> Bytes Written )
-			Dictionary<string, long> driveBytesWritten = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_drive_write_bytes", new() {
+			// Fetch the rate of bytes read for recently scraped drives ( Drive Name -> Bytes Read )
+			Dictionary<string, double> driveRateBytesRead = ( await FetchQuery( configuration, CreatePromQL( $"rate( { configuration.PrometheusMetricsPrefix }_resource_drive_read_bytes[ { configuration.PrometheusScrapeIntervalSeconds * 2 }s ] )", new() {
+				{ "instance", instanceAddress },
+				{ "job", jobName }
+			} ) ) )
+				.NestedGet<JsonArray>( "result" )
+				.Where( drive => drive != null )
+				.Select( drive => drive!.AsObject() )
+				.Where( drive =>
+					drive.NestedHas( "metric" ) == true &&
+					drive.NestedHas( "metric.drive" ) == true
+				)
+				.Where( drive =>
+					drive.NestedHas( "value" ) == true &&
+					drive.NestedGet<JsonArray>( "value" ).Count == 2
+				)
+				.ToDictionary(
+					drive => drive.NestedGet<string>( "metric.drive" ),
+					drive => double.Parse( drive.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() )
+				);
+
+			// Fetch the total bytes written for recently scraped drives ( Drive Name -> Bytes Written )
+			Dictionary<string, long> driveTotalBytesWritten = ( await FetchQuery( configuration, CreatePromQL( $"rate( { configuration.PrometheusMetricsPrefix }_resource_drive_write_bytes[ { configuration.PrometheusScrapeIntervalSeconds * 2 }s ] )", new() {
 				{ "instance", instanceAddress },
 				{ "job", jobName },
 			} ) ) )
@@ -426,6 +447,27 @@ namespace ServerMonitor.Connector.Helper {
 				.ToDictionary(
 					drive => drive.NestedGet<string>( "metric.drive" ),
 					drive => long.Parse( drive.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() )
+				);
+
+			// Fetch the rate of bytes written for recently scraped drives ( Drive Name -> Bytes Written )
+			Dictionary<string, double> driveRateBytesWritten = ( await FetchQuery( configuration, CreatePromQL( $"{ configuration.PrometheusMetricsPrefix }_resource_drive_write_bytes", new() {
+				{ "instance", instanceAddress },
+				{ "job", jobName },
+			} ) ) )
+				.NestedGet<JsonArray>( "result" )
+				.Where( drive => drive != null )
+				.Select( drive => drive!.AsObject() )
+				.Where( drive =>
+					drive.NestedHas( "metric" ) == true &&
+					drive.NestedHas( "metric.drive" ) == true
+				)
+				.Where( drive =>
+					drive.NestedHas( "value" ) == true &&
+					drive.NestedGet<JsonArray>( "value" ).Count == 2
+				)
+				.ToDictionary(
+					drive => drive.NestedGet<string>( "metric.drive" ),
+					drive => double.Parse( drive.NestedGet<JsonArray>( "value" )[ 1 ]!.AsValue().GetValue<string>() )
 				);
 
 			// Fetch the health for recently scraped drives ( Drive Name -> Health )
@@ -458,8 +500,14 @@ namespace ServerMonitor.Connector.Helper {
 				drives.Add( new() {
 					{ "name", driveName },
 					{ "health", driveHealth.ContainsKey( driveName ) == true ? driveHealth[ driveName ] : -1 },
-					{ "bytesRead", driveBytesRead.ContainsKey( driveName ) == true ? driveBytesRead[ driveName ] : -1 },
-					{ "bytesWritten", driveBytesWritten.ContainsKey( driveName ) == true ? driveBytesWritten[ driveName ] : -1 },
+					{ "bytesRead", new JsonObject() {
+						{ "total", driveTotalBytesRead.ContainsKey( driveName ) == true ? driveTotalBytesRead[ driveName ] : -1 },
+						{ "rate", driveRateBytesRead.ContainsKey( driveName ) == true ? driveRateBytesRead[ driveName ] : -1  }
+					} },
+					{ "bytesWritten", new JsonObject() {
+						{ "total", driveTotalBytesWritten.ContainsKey( driveName ) == true ? driveTotalBytesWritten[ driveName ] : -1 },
+						{ "rate", driveRateBytesWritten.ContainsKey( driveName ) == true ? driveRateBytesWritten[ driveName ] : -1 }
+					} },
 					{ "partitions", drivePartitions.ContainsKey( driveName ) == true ? drivePartitions[ driveName ] : new JsonArray() }
 				} );
 

@@ -6,6 +6,7 @@
 	"PrometheusAPIAddress": "127.0.0.1",
 	"PrometheusAPIPort": 9090,
 	"PrometheusAPIVersion": 1,
+	"PrometheusScrapeInterval": 15,
 	"CollectProcessorMetrics": true,
 	"CollectMemoryMetrics": true,
 	"CollectDiskMetrics": true,
