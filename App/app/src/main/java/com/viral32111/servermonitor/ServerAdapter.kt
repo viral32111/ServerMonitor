@@ -9,6 +9,7 @@ import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 
 // Custom recycler view adapter for the server list - https://developer.android.com/develop/ui/views/layout/recyclerview, https://stackoverflow.com/a/54847887
 class ServerAdapter( private val servers: Array<Server>, private val context: Context, private val onServerClickListener: ( server: Server ) -> Unit ): RecyclerView.Adapter<ServerAdapter.ViewHolder>() {
@@ -111,8 +112,14 @@ class ServerAdapter( private val servers: Array<Server>, private val context: Co
 			viewHolder.networkTextView.setTextColor( context.getColor( R.color.statusGood ) )
 
 			// Disk I/O
-			viewHolder.diskTextView.text = String.format( context.getString( R.string.serversTextViewServerDiskUsage ), 0, "K" )
-			viewHolder.diskTextView.setTextColor( context.getColor( R.color.statusGood ) )
+			if ( server.drives != null ) {
+				val rate = Size( server.drives!!.fold( 0 ) { total, drive -> total + drive.rateBytesRead + drive.rateBytesWritten } )
+				viewHolder.diskTextView.text = String.format( context.getString( R.string.serversTextViewServerDiskUsage ), rate.amount.roundToLong(), rate.suffix.substring( 0, 1 ) )
+				viewHolder.diskTextView.setTextColor( context.getColor( R.color.statusGood ) )
+			} else {
+				viewHolder.diskTextView.text = String.format( context.getString( R.string.serversTextViewServerDiskUsage ), 0, "K" )
+				viewHolder.diskTextView.setTextColor( context.getColor( R.color.statusDead ) )
+			}
 
 			// Format the uptime into days, hours & minutes
 			viewHolder.uptimeTextView.text = String.format( context.getString( R.string.serversTextViewServerUptime ), TimeSpan( server.uptimeSeconds ).toString( false ) )

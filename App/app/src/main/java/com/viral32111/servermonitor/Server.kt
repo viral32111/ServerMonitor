@@ -29,6 +29,8 @@ class Server( data: JsonObject ) {
 	var swapTotalBytes: Long? = null
 	var swapFreeBytes: Long? = null
 
+	var drives: Array<Drive>? = null
+
 	var services: Array<Service>? = null
 
 	// Decode the JSON object from the GET /servers array
@@ -152,6 +154,7 @@ class Server( data: JsonObject ) {
 		// Update processor metrics
 		val processor = resources.get( "processor" ).asJsonObject
 		processorUsage = processor.get( "usage" ).asFloat
+		processorFrequency = processor.get( "frequency" ).asFloat
 		processorTemperature = processor.get( "temperature" ).asFloat
 
 		// Update memory metrics
@@ -163,6 +166,11 @@ class Server( data: JsonObject ) {
 		val swap = memory.get( "swap" ).asJsonObject
 		swapTotalBytes = swap.get( "totalBytes" ).asLong
 		swapFreeBytes = swap.get( "freeBytes" ).asLong
+
+		// Drives
+		val drivesList = ArrayList<Drive>()
+		for ( drive in resources.get( "drives" ).asJsonArray ) drivesList.add( Drive( drive.asJsonObject ) )
+		drives = drivesList.toTypedArray()
 
 		// Services
 		val servicesList = ArrayList<Service>()

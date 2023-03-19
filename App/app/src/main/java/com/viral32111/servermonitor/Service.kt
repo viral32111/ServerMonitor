@@ -7,13 +7,13 @@ import com.google.gson.JsonObject
  * @param data The JSON object from the API representing the service.
  */
 class Service( data: JsonObject ) {
-	var runLevel: String? = null
-	var serviceName: String? = null
-	var displayName: String? = null
-	var description: String? = null
-	var statusCode: Int? = null
-	var exitCode: Int? = null
-	var uptimeSeconds: Double? = null
+	val runLevel: String
+	val serviceName: String
+	val displayName: String
+	val description: String
+	val statusCode: Int
+	val exitCode: Int
+	val uptimeSeconds: Double
 	// TODO: supportedActions
 	// TODO: logs
 
@@ -31,5 +31,5 @@ class Service( data: JsonObject ) {
 	 * Checks if this service is running.
 	 * @return True if this service is running, false otherwise.
 	 */
-	fun isRunning(): Boolean = if ( statusCode != null && uptimeSeconds != null ) statusCode!! == 1 && uptimeSeconds!! >= 0.0 else false
+	fun isRunning(): Boolean = statusCode == 1 && uptimeSeconds >= 0.0
 }
