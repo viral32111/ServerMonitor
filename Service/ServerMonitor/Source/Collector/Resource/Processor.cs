@@ -57,8 +57,8 @@ namespace ServerMonitor.Collector.Resource {
 
 			// Set the values for the exported Prometheus metrics
 			Usage.Set( processorUsage );
-			Frequency.Set( currentFrequency );
 			Temperature.Set( currentTemperature );
+			Frequency.Set( currentFrequency );
 			logger.LogDebug( "Updated Prometheus metrics" );
 		}
 

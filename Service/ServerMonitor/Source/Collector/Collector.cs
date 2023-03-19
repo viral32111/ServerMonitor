@@ -1,10 +1,6 @@
 using System;
 using System.Threading;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using System.Security.Principal;
-using Microsoft.Extensions.Logging; // https://learn.microsoft.com/en-us/dotnet/core/extensions/console-log-formatter
-using Mono.Unix.Native; // https://github.com/mono/mono.posix
+using Microsoft.Extensions.Logging;
 using Prometheus; // https://github.com/prometheus-net/prometheus-net
 using ServerMonitor.Collector.Resource;
 
@@ -28,12 +24,6 @@ namespace ServerMonitor.Collector {
 
 			// Setup the global HTTP client
 			Program.SetupHTTPClient();
-
-			// Fail if we're not running as administrator/root
-			if ( IsRunningAsAdmin() == false ) {
-				logger.LogError( "This program must be run as administrator/root" );
-				Environment.Exit( 1 );
-			}
 
 			// Start the Prometheus metrics server
 			MetricsServer = new(
@@ -279,21 +269,6 @@ namespace ServerMonitor.Collector {
 			// Stop the action server
 			action.StopListening();
 
-		}
-
-		// Checks if this application is running as administrator/root, which is required for some of the metrics we're collecting
-		private bool IsRunningAsAdmin() {
-			// Windows - https://stackoverflow.com/a/11660205
-			if ( RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) {
-				WindowsIdentity identity = WindowsIdentity.GetCurrent();
-				WindowsPrincipal principal = new WindowsPrincipal( identity );
-				return principal.IsInRole( WindowsBuiltInRole.Administrator );
-
-			// Linux - https://github.com/dotnet/runtime/issues/25118#issuecomment-367407469
-			} else if ( RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) {
-				return Syscall.getuid() == 0;
-
-			} else throw new PlatformNotSupportedException( "This platform is not supported." );
 		}
 
 	}

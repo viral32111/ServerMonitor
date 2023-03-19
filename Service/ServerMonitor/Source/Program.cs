@@ -3,7 +3,10 @@ using System.IO;
 using System.Net.Http;
 using System.Reflection;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using System.Security.Principal;
 using System.CommandLine; // https://learn.microsoft.com/en-us/dotnet/standard/commandline/get-started-tutorial
+using Mono.Unix.Native; // https://github.com/mono/mono.posix
 using Microsoft.Extensions.Logging; // https://learn.microsoft.com/en-us/dotnet/core/extensions/console-log-formatter
 
 namespace ServerMonitor {
@@ -46,7 +49,13 @@ namespace ServerMonitor {
 			// Sub-command to start in "collector" mode
 			Command collectorCommand = new( "collector", "Expose metrics to Prometheus from configured sources." );
 			collectorCommand.SetHandler( ( string extraConfigurationFilePath, bool runOnce ) => {
-				
+
+				// Fail if we're not running as administrator/root
+				if ( IsRunningAsAdmin() == false ) {
+					logger.LogError( "This program must be run as administrator/root" );
+					Environment.Exit( 1 );
+				}
+
 				// Load the configuration
 				Configuration.Load( extraConfigurationFilePath );
 				logger.LogInformation( "Loaded the configuration" );
@@ -113,6 +122,21 @@ namespace ServerMonitor {
 			// Set the lock
 			Program.IsHTTPClientSetup = true;
 
+		}
+
+		// Checks if this application is running as administrator/root, which is required for some of the metrics we're collecting
+		private static bool IsRunningAsAdmin() {
+			// Windows - https://stackoverflow.com/a/11660205
+			if ( RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) ) {
+				WindowsIdentity identity = WindowsIdentity.GetCurrent();
+				WindowsPrincipal principal = new WindowsPrincipal( identity );
+				return principal.IsInRole( WindowsBuiltInRole.Administrator );
+
+			// Linux - https://github.com/dotnet/runtime/issues/25118#issuecomment-367407469
+			} else if ( RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) {
+				return Syscall.getuid() == 0;
+
+			} else throw new PlatformNotSupportedException( "This platform is not supported." );
 		}
 
 	}
