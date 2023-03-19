@@ -25,5 +25,6 @@ enum class ErrorCode( val code: Int ) {
 	WrongServer( 20 ),
 	ActionNotExecutable( 21 ),
 	ActionServerUnknown( 22 ),
-	UnknownAction( 23 )
+	UnknownAction( 23 ),
+	ActionServerOffline( 24 )
 }
