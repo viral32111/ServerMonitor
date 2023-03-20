@@ -206,6 +206,7 @@ namespace ServerMonitor.Collector {
 				if ( processIdentifier != 0 ) serviceStatus = serviceData[ "ActiveState" ] switch {
 					"inactive" => 0, // Windows equivalent: Stopped
 					"active" => 1, // Windows equivalent: Running
+					"activating" => 2, // Windows equivalent: StartPending
 					"reloading" => 2, // Windows equivalent: StartPending, StopPending
 					"failed" => 3, // No Windows equivalent
 					"exited" => 4, // No Windows equivalent
