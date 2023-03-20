@@ -114,7 +114,7 @@ namespace ServerMonitor.Connector.Route {
 			try {
 				using ( HttpResponseMessage httpResponse = await Program.HttpClient.SendAsync( httpRequest ) ) {
 					logger.LogDebug( "Sent execute service action HTTP request '{0}' '{1}'", httpRequest.Method, httpRequest.RequestUri );
-					// TODO: httpResponse.EnsureSuccessStatusCode();
+					httpResponse.EnsureSuccessStatusCode();
 
 					// Parse the response
 					string responseContent = await httpResponse.Content.ReadAsStringAsync();
@@ -130,8 +130,8 @@ namespace ServerMonitor.Connector.Route {
 					JsonObject data = responsePayload.NestedGet<JsonObject>( "data" );
 					logger.LogDebug( "Error Code: '{0}', Data: '{1}'", errorCode, data.ToJsonString() );
 
-					// TODO: Ensure success
-					//if ( responsePayload.NestedGet<int>( "errorCode" ) != ( int ) ErrorCode.Success ) throw new Exception( $"Failed to execute service action '{ actionName }'" );
+					// Ensure success
+					if ( responsePayload.NestedGet<int>( "errorCode" ) != ( int ) ErrorCode.Success ) throw new Exception( $"Failed to execute service action '{ actionName }'" );
 
 					// Respond with the data (as a copy, not a reference)
 					return Response.SendJson( response, statusCode: HttpStatusCode.OK, errorCode: ErrorCode.Success, data: data.Clone()!.AsObject() );
