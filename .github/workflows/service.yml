@@ -9,9 +9,6 @@ on:
       - '**'
     tags:
       - '*.*.*'
-  pull_request:
-    branches:
-    - '**'
   workflow_dispatch:
 
 env:
@@ -39,7 +36,7 @@ jobs:
           dotnet-version: 7.0.x
 
       - name: Add GitHub Packages source
-        if: ${{ github.event_name != 'pull_request' }}
+        if: ${{ github.event_name == 'push' && github.event.pull_request == null && !startsWith( github.ref, 'refs/heads/dependabot/' ) }}
         run: dotnet nuget add source --name github --username ${{ github.repository_owner }} --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
 
       - name: Restore dependencies
@@ -86,7 +83,7 @@ jobs:
           dotnet-version: 7.0.x
 
       - name: Add GitHub Packages source
-        if: ${{ github.event_name != 'pull_request' }}
+        if: ${{ github.event_name == 'push' && github.event.pull_request == null && !startsWith( github.ref, 'refs/heads/dependabot/' ) }}
         run: dotnet nuget add source --name github --username ${{ github.repository_owner }} --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
 
       - name: Restore dependencies
@@ -231,7 +228,7 @@ jobs:
             image=moby/buildkit:v0.10.6
 
       - name: Login to GitHub Container Registry
-        if: ${{ github.event_name != 'pull_request' }}
+        if: ${{ github.event_name == 'push' && github.event.pull_request == null && !startsWith( github.ref, 'refs/heads/dependabot/' ) }}
         uses: docker/login-action@v2
         with:
           registry: ${{ env.DOCKER_REGISTRY_DOMAIN }}
@@ -268,7 +265,7 @@ jobs:
         if: ${{ matrix.name == 'Ubuntu' }}
         uses: docker/build-push-action@v4
         with:
-          push: ${{ github.event_name != 'pull_request' }}
+          push: ${{ github.event_name == 'push' && github.event.pull_request == null && !startsWith( github.ref, 'refs/heads/dependabot/' ) }}
           file: ./Service/${{ matrix.dockerfile }}
           context: ./Service/Artifact/
           tags: ${{ steps.metadata.outputs.tags }}
@@ -292,14 +289,14 @@ jobs:
         run: docker image build --no-cache --pull --file ./${{ matrix.dockerfile }} ${{ steps.format.outputs.tags }} ${{ steps.format.outputs.labels }} ./Artifact/
 
       - name: Push Docker image (Windows)
-        if: ${{ matrix.name == 'Windows' && github.event_name != 'pull_request' }}
+        if: ${{ matrix.name == 'Windows' && github.event_name == 'push' && github.event.pull_request == null && !startsWith( github.ref, 'refs/heads/dependabot/' ) }}
         run: docker image push --all-tags ${{ env.DOCKER_REGISTRY_DOMAIN }}/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}
 
   cleanup:
     name: Cleanup
     runs-on: ubuntu-22.04
     needs: docker
-    if: ${{ always() }}
+    if: ${{ github.event_name == 'push' && github.event.pull_request == null && !startsWith( github.ref, 'refs/heads/dependabot/' ) }}
     continue-on-error: true
     permissions:
       contents: read
@@ -318,6 +315,7 @@ jobs:
     name: Deploy
     runs-on: ubuntu-22.04
     needs: cleanup
+    if: ${{ github.event_name == 'push' && github.event.pull_request == null && !startsWith( github.ref, 'refs/heads/dependabot/' ) }}
     strategy:
       fail-fast: false
       matrix:
