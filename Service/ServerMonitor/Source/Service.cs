@@ -11,19 +11,37 @@ namespace ServerMonitor {
 		// Create the logger for this file
 		private static readonly ILogger logger = Logging.CreateLogger( "Service" );
 
-		// Set the name
+		// Properties from arguments
+		public readonly Config Configuration;
+		public readonly bool RunOnce;
+		public readonly bool NoListen;
+		public readonly Mode Mode;
+
+		// Set the properties
 		[ SupportedOSPlatform( "windows" ) ]
-		public Service() => ServiceName = "ServerMonitor";
+		public Service( Config configuration, bool runOnce, bool noListen, Mode mode ) {
+			string modeName = mode switch {
+				Mode.Collector => "Collector",
+				Mode.Connector => "Connector",
+				_ => throw new Exception( "Invalid mode" )
+			};
+
+			ServiceName = $"Server-Monitor-{ modeName }";
+
+			this.Configuration = configuration;
+			this.RunOnce = runOnce;
+			this.NoListen = noListen;
+			this.Mode = mode;
+		}
 
 		// Runs when the service is started...
 		[ SupportedOSPlatform( "windows" ) ]
 		protected override void OnStart( string[] arguments ) {
 			logger.LogInformation( "Starting service" );
 
-			// Is this blocking?
-			int exitCode = Program.ProcessArguments( arguments, true );
-
-			Environment.Exit( exitCode );
+			if ( Mode == Mode.Collector ) Program.Collector.HandleCommand( Configuration, RunOnce );
+			else if ( Mode == Mode.Connector ) Program.Connector.HandleCommand( Configuration, RunOnce, NoListen );
+			else throw new Exception( "Invalid mode" );
 		}
 
 		// Runs when the service is stopped...
@@ -33,8 +51,6 @@ namespace ServerMonitor {
 
 			Program.Collector.Stop();
 			Program.Connector.Stop();
-
-			Environment.Exit( 0 );
 		}
 
 	}

@@ -27,24 +27,6 @@ namespace ServerMonitor {
 
 		public static int Main( string[] arguments ) {
 
-			// We're running as a service on Windows...
-			if ( Environment.UserInteractive == false && RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) == true ) {
-				logger.LogDebug( "Running as system service" );
-				#pragma warning disable CA1416 // IDE doesn't understand the check above...
-				using ( Service service = new() ) ServiceBase.Run( service );
-				#pragma warning restore CA1416
-				return 0; // I don't think this is ever reached, but just in case...
-			
-			// We're running in an interactive CLI, or as a service on Linux...
-			} else {
-				logger.LogDebug( "Running as command-line program" );
-				return ProcessArguments( arguments, false );
-			}
-
-		}
-
-		public static int ProcessArguments( string[] arguments, bool isRunningAsService ) {
-
 			// Get the directory that the executable DLL/binary is in - https://stackoverflow.com/a/66023223
 			Assembly? executable = Assembly.GetEntryAssembly() ?? throw new Exception( "Failed to get this executable" );
 			string executableDirectory = Path.GetDirectoryName( executable.Location ) ?? throw new Exception( "Failed to get this executable's directory" );
@@ -69,9 +51,17 @@ namespace ServerMonitor {
 			);
 			rootCommand.AddOption( runOnceOption );
 
+			// Option for running as a service
+			Option<bool> runAsServiceOption = new(
+				name: "--service",
+				description: "Run as a service, rather than a command-line program. Do not specify this manually.",
+				getDefaultValue: () => false
+			);
+			rootCommand.AddOption( runAsServiceOption );
+
 			// Sub-command to start in "collector" mode
 			Command collectorCommand = new( "collector", "Export metrics to Prometheus from configured sources." );
-			collectorCommand.SetHandler( ( string extraConfigurationFilePath, bool runOnce ) => {
+			collectorCommand.SetHandler( ( string extraConfigurationFilePath, bool runOnce, bool runningAsService ) => {
 
 				// Fail if we're not running as administrator/root
 				if ( IsRunningAsAdmin() == false ) {
@@ -84,17 +74,33 @@ namespace ServerMonitor {
 				Configuration.Load( extraConfigurationFilePath );
 				logger.LogInformation( "Loaded the configuration" );
 
-				// Call the handler
-				Collector.HandleCommand( Configuration.Config!, runOnce );
+				// If we're running as a system service...
+				if ( runningAsService == true ) {
+					logger.LogDebug( "Running as a system service" );
 
-			}, extraConfigurationFilePathOption, runOnceOption );
+					// Start from the service base on Windows, or just call the handler on Linux
+					if ( RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) == true ) {
+						#pragma warning disable CA1416 // IDE doesn't understand the check above...
+						using ( Service service = new( Configuration.Config!, runOnce, false, Mode.Collector ) ) ServiceBase.Run( service );
+						#pragma warning restore CA1416
+					} else if ( RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) == true ) {
+						Collector.HandleCommand( Configuration.Config!, runOnce );
+					} else throw new PlatformNotSupportedException( "This operating system is not supported." );
+
+				// Manually call the handler if we're running in an interactive CLI
+				} else {
+					logger.LogDebug( "Running as command-line program" );
+					Collector.HandleCommand( Configuration.Config!, runOnce );
+				}
+
+			}, extraConfigurationFilePathOption, runOnceOption, runAsServiceOption );
 			rootCommand.AddCommand( collectorCommand );
 	
-			// Sub-command to start in "connection point" mode
+			// Sub-command to start in "connector" mode
 			Command connectorCommand = new( "connector", "Serve metrics from Prometheus to the Android app." );
 			rootCommand.AddCommand( connectorCommand );
 
-			// Option to not start listening for requests when in "connection point" mode
+			// Option to not start listening for requests when in "connector" mode
 			Option<bool> noListenOption = new(
 				name: "--no-listen",
 				description: "Do not start the request listening loop.",
@@ -102,20 +108,35 @@ namespace ServerMonitor {
 			);
 			connectorCommand.AddOption( noListenOption );
 
-			// Handler for the "connection point" mode sub-command
-			connectorCommand.SetHandler( ( string extraConfigurationFilePath, bool runOnce, bool noListen ) => {
+			// Handler for the "connector" mode sub-command
+			connectorCommand.SetHandler( ( string extraConfigurationFilePath, bool runOnce, bool noListen, bool runningAsService ) => {
 
 				// Load the configuration
 				Configuration.Load( extraConfigurationFilePath );
 				logger.LogInformation( "Loaded the configuration" );
 
-				// Call the handler
-				Connector.HandleCommand( Configuration.Config!, runOnce, noListen );
+				// If we're running as a system service...
+				if ( runningAsService == true ) {
+					logger.LogDebug( "Running as a system service" );
 
-			}, extraConfigurationFilePathOption, runOnceOption, noListenOption );
+					// Start from the service base on Windows, or just call the handler on Linux
+					if ( RuntimeInformation.IsOSPlatform( OSPlatform.Windows ) == true ) {
+						#pragma warning disable CA1416 // IDE doesn't understand the check above...
+						using ( Service service = new( Configuration.Config!, runOnce, noListen, Mode.Connector ) ) ServiceBase.Run( service );
+						#pragma warning restore CA1416
+					} else if ( RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) == true ) {
+						Connector.HandleCommand( Configuration.Config!, runOnce, noListen );
+					} else throw new PlatformNotSupportedException( "This operating system is not supported." );
+
+				// Manually call the handler if we're running in an interactive CLI
+				} else {
+					logger.LogDebug( "Running as command-line program" );
+					Connector.HandleCommand( Configuration.Config!, runOnce, noListen );
+				}
+
+			}, extraConfigurationFilePathOption, runOnceOption, noListenOption, runAsServiceOption );
 
 			return rootCommand.Invoke( arguments );
-
 		}
 
 		// Sets up the HTTP client
@@ -164,6 +185,11 @@ namespace ServerMonitor {
 			} else throw new PlatformNotSupportedException( "This operating system is not supported." );
 		}
 
+	}
+
+	public enum Mode {
+		Collector,
+		Connector
 	}
 
 }
