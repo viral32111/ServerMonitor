@@ -14,9 +14,9 @@ A [Prometheus time-series database](https://prometheus.io/) is required for stor
 
 1. Download the [latest release](https://github.com/viral32111/ServerMonitor/releases/latest) of the Android application (`Server-Monitor-App.apk`) & server service (`Server-Monitor-Service.zip`).
 2. Install the server service on all the servers you wish to manage (the [.NET Core 7.0 Runtime](https://dotnet.microsoft.com/download/dotnet/7.0) is required).
-   * One server must be designated as the *"connector"* (RESTful API) for the Android application to fetch metrics data from. See [Connector](#Connector).
-   * All other servers must run in the *"collection"* mode for gathering & exporting metrics data for Prometheus to scrape. See [Collector][#Collector].
-3. Configure the server service appropriately using the JSON configuration file or environment variables ([see configuration](#Configuration)).
+   * One server must be designated as the *"connector"* (RESTful API) for the Android application to fetch metrics data from. See [Connector](#connector).
+   * All other servers must run in the *"collection"* mode for gathering & exporting metrics data for Prometheus to scrape. See [Collector](#collector).
+3. Configure the server service appropriately using the JSON configuration file or environment variables ([see configuration](#configuration)).
 4. Install the Android application on your device & connect to the publicly-accessible URL of the *"connector"* service using any of the configured credentials.
 
 ### Docker
@@ -121,7 +121,7 @@ Restart=on-failure
 WantedBy=multi-user.target
 ```
 
-Then run `systemctl enable server-monitor-collector` so it launches on system startup.
+Then run `systemctl daemon-reload` to reload service files, followed by `systemctl enable server-monitor-collector` so the service launches on system startup.
 
 ### Connector
 
@@ -155,7 +155,7 @@ Restart=on-failure
 WantedBy=multi-user.target
 ```
 
-Then run `systemctl enable server-monitor-connector` so it launches on system startup.
+Then run `systemctl daemon-reload` to reload service files, followed by `systemctl enable server-monitor-connector` so the service launches on system startup.
 
 ## Building
 
