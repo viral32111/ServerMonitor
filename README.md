@@ -95,13 +95,13 @@ This mode exports metrics from configured sources for Prometheus to scrape.
 
 Either start the service with the `collector` command-line argument, or register a new system service using a command below.
 
-On Windows, run this PowerShell command to create a new service:
+On Windows, run the following PowerShell command to create a new service, ensuring to replace the .NET Core Runtime & application paths where appropriate.
 
 ```powershell
-New-Service -Name "Server-Monitor-Collector" -DisplayName "Server Monitor (Collector)" -Description "Export metrics to Prometheus from configured sources." -BinaryPathName "C:\Path\To\Dotnet\Runtime\dotnet C:\Path\To\ServerMonitor\ServerMonitor.dll collector" -StartupType "Automatic" -DependsOn "Server"
+New-Service -Name "Server-Monitor-Collector" -DisplayName "Server Monitor (Collector)" -Description "Export metrics to Prometheus from configured sources." -BinaryPathName "\"C:\Path\To\Dotnet\Runtime\dotnet\" \"C:\Path\To\ServerMonitor\ServerMonitor.dll\" --service collector" -StartupType "Automatic" -DependsOn "LanmanServer"
 ```
 
-On Linux (for systemd), firstly create a new service file at `/etc/systemd/service/server-monitor-collector.service` with the contents:
+On Linux (for systemd), firstly create a new service file at `/etc/systemd/service/server-monitor-collector.service` with the following contents.
 
 ```
 [Unit]
@@ -113,7 +113,7 @@ After=network.target
 User=root
 Group=root
 WorkingDirectory=/path/to/servermonitor
-ExecStart=/path/to/dotnet /path/to/servermonitor/ServerMonitor.dll collector
+ExecStart=/path/to/dotnet /path/to/servermonitor/ServerMonitor.dll --service collector
 Type=simple
 Restart=on-failure
 
@@ -129,13 +129,13 @@ This mode serve metrics from Prometheus to the Android app via a RESTful API.
 
 Either start the service with the `connector` command-line argument, or register a new system service using a command below.
 
-On Windows, run this PowerShell command to create a new service:
+On Windows, run the following PowerShell command to create a new service, ensuring to replace the .NET Core Runtime & application paths where appropriate.
 
 ```powershell
-New-Service -Name "Server-Monitor-Connector" -DisplayName "Server Monitor (Connector)" -Description "Serve metrics from Prometheus to the Android app." -BinaryPathName "C:\Path\To\Dotnet\Runtime\dotnet C:\Path\To\ServerMonitor\ServerMonitor.dll connector" -StartupType "Automatic" -DependsOn "Server"
+New-Service -Name "Server-Monitor-Connector" -DisplayName "Server Monitor (Connector)" -Description "Serve metrics from Prometheus to the Android app." -BinaryPathName "\"C:\Path\To\Dotnet\Runtime\dotnet\" \"C:\Path\To\ServerMonitor\ServerMonitor.dll\" --service connector" -StartupType "Automatic" -DependsOn "LanmanServer"
 ```
 
-On Linux (for systemd), firstly create a new service file at `/etc/systemd/service/server-monitor-connector.service` with the contents:
+On Linux (for systemd), firstly create a new service file at `/etc/systemd/service/server-monitor-connector.service` with the following contents.
 
 ```
 [Unit]
@@ -147,7 +147,7 @@ After=network.target
 User=root
 Group=root
 WorkingDirectory=/path/to/servermonitor
-ExecStart=/path/to/dotnet /path/to/servermonitor/ServerMonitor.dll connector
+ExecStart=/path/to/dotnet /path/to/servermonitor/ServerMonitor.dll --service connector
 Type=simple
 Restart=on-failure
 
@@ -156,6 +156,10 @@ WantedBy=multi-user.target
 ```
 
 Then run `systemctl daemon-reload` to reload service files, followed by `systemctl enable server-monitor-connector` so the service launches on system startup.
+
+To verify service existence on Windows, open the *Services* (`services.msc`) application and check for the two *"Server Monitor"* services, it should be similar to the screenshot below.
+
+![Screenshot of Windows Services MMC](Screenshots/Windows-Services.png)
 
 ## Building
 
