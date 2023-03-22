@@ -7,6 +7,12 @@
     <dimen name="margin_top">16dp</dimen>
     <dimen name="margin_bottom">16dp</dimen>
 
+    <!-- Edge margins & padding for scroll views -->
+    <dimen name="scrollViewEdgeStart">12dp</dimen>
+    <dimen name="scrollViewEdgeEnd">12dp</dimen>
+    <dimen name="scrollViewEdgeTop">24dp</dimen>
+    <dimen name="scrollViewEdgeBottom">24dp</dimen>
+
     <!-- Default text size -->
     <dimen name="text_size">18sp</dimen>
 

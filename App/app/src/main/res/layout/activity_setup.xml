@@ -1,130 +1,148 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res-auto"
 	xmlns:tools="http://schemas.android.com/tools"
-	android:id="@+id/setupConstraintLayout"
+	android:id="@+id/setupScrollView"
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
+	android:layout_marginStart="@dimen/scrollViewEdgeStart"
+	android:layout_marginTop="@dimen/scrollViewEdgeTop"
+	android:layout_marginEnd="@dimen/scrollViewEdgeEnd"
+	android:layout_marginBottom="@dimen/scrollViewEdgeBottom"
+	android:fillViewport="true"
+	android:paddingStart="@dimen/scrollViewEdgeStart"
+	android:paddingEnd="@dimen/scrollViewEdgeEnd"
+	android:scrollbarStyle="outsideOverlay"
+	app:layout_constraintBottom_toBottomOf="parent"
+	app:layout_constraintEnd_toEndOf="parent"
+	app:layout_constraintStart_toStartOf="parent"
+	app:layout_constraintTop_toTopOf="parent"
 	tools:context=".SetupActivity">
 
-	<ScrollView
-		android:id="@+id/setupScrollView"
-		android:layout_width="0dp"
-		android:layout_height="0dp"
-		android:layout_marginStart="8dp"
-		android:layout_marginTop="@dimen/margin_top"
-		android:layout_marginEnd="8dp"
-		android:layout_marginBottom="@dimen/margin_bottom"
-		android:paddingHorizontal="16dp"
-		android:scrollbarStyle="outsideOverlay"
-		app:layout_constraintBottom_toBottomOf="parent"
-		app:layout_constraintEnd_toEndOf="parent"
-		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toTopOf="parent">
+	<androidx.constraintlayout.widget.ConstraintLayout
+		android:id="@+id/setupConstraintLayout"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content">
 
-		<LinearLayout
-			android:id="@+id/setupLinearLayout"
-			android:layout_width="match_parent"
+		<TextView
+			android:id="@+id/setupInstructionTextView"
+			android:layout_width="0dp"
 			android:layout_height="wrap_content"
-			android:orientation="vertical">
+			android:text="@string/setupTextViewInstruction"
+			android:textAlignment="center"
+			android:textSize="@dimen/text_size"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toTopOf="parent" />
 
-			<TextView
-				android:id="@+id/setupInstructionTextView"
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:text="@string/setupTextViewInstruction"
-				android:textAlignment="center"
+		<com.google.android.material.textfield.TextInputLayout
+			android:id="@+id/setupInstanceUrlTextInputLayout"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="32dp"
+			android:hint="@string/setupTextInputLayoutInstanceUrlHint"
+			app:errorEnabled="true"
+			app:helperText="@string/setupTextInputLayoutInstanceUrlHelp"
+			app:helperTextEnabled="true"
+			app:hintAnimationEnabled="true"
+			app:hintEnabled="true"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toBottomOf="@+id/setupInstructionTextView"
+			app:startIconDrawable="@drawable/cloud"
+			app:startIconScaleType="center">
+
+			<com.google.android.material.textfield.TextInputEditText
+				android:id="@+id/settingsInstanceUrlTextInputEditText"
+				android:layout_width="match_parent"
+				android:layout_height="match_parent"
+				android:autofillHints=""
+				android:ems="10"
+				android:inputType="textUri"
+				android:minHeight="48dp"
+				android:textColorHint="@color/textColorHint"
 				android:textSize="@dimen/text_size" />
 
-			<com.google.android.material.textfield.TextInputLayout
-				android:id="@+id/setupInstanceUrlTextInputLayout"
+		</com.google.android.material.textfield.TextInputLayout>
+
+		<com.google.android.material.textfield.TextInputLayout
+			android:id="@+id/setupCredentialsUsernameTextInputLayout"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="32dp"
+			android:hint="@string/setupTextInputLayoutCredentialsUsernameHint"
+			app:counterEnabled="true"
+			app:counterMaxLength="30"
+			app:errorEnabled="true"
+			app:helperText="@string/setupTextInputLayoutCredentialsUsernameHelp"
+			app:helperTextEnabled="true"
+			app:hintAnimationEnabled="true"
+			app:hintEnabled="true"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toBottomOf="@+id/setupInstanceUrlTextInputLayout"
+			app:startIconDrawable="@drawable/person">
+
+			<com.google.android.material.textfield.TextInputEditText
+				android:id="@+id/setupCredentialsUsernameTextInputEditText"
 				android:layout_width="match_parent"
-				android:layout_height="wrap_content"
-				android:layout_marginTop="32dp"
-				android:hint="@string/setupTextInputLayoutInstanceUrlHint"
-				app:helperText="@string/setupTextInputLayoutInstanceUrlHelp"
-				app:helperTextEnabled="true"
-				app:hintAnimationEnabled="true"
-				app:hintEnabled="true"
-				app:startIconDrawable="@drawable/cloud"
-				app:startIconScaleType="center">
+				android:layout_height="match_parent"
+				android:autofillHints=""
+				android:ems="10"
+				android:inputType="textPersonName"
+				android:minHeight="48dp"
+				android:textColorHint="@color/textColorHint"
+				android:textSize="@dimen/text_size"
+				tools:ignore="VisualLintTextFieldSize" />
 
-				<com.google.android.material.textfield.TextInputEditText
-					android:id="@+id/settingsInstanceUrlTextInputEditText"
-					android:layout_width="match_parent"
-					android:layout_height="match_parent"
-					android:autofillHints=""
-					android:ems="10"
-					android:inputType="textUri"
-					android:minHeight="48dp"
-					android:textColorHint="@color/textColorHint"
-					android:textSize="@dimen/text_size" />
+		</com.google.android.material.textfield.TextInputLayout>
 
-			</com.google.android.material.textfield.TextInputLayout>
+		<com.google.android.material.textfield.TextInputLayout
+			android:id="@+id/setupCredentialsPasswordTextInputLayout"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="32dp"
+			android:layout_marginBottom="32dp"
+			android:hint="@string/setupTextInputLayoutCredentialsPasswordHint"
+			app:errorEnabled="true"
+			app:helperText="@string/setupTextInputLayoutCredentialsPasswordHelp"
+			app:helperTextEnabled="true"
+			app:hintEnabled="true"
+			app:layout_constraintBottom_toTopOf="@+id/settingsSaveButton"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toBottomOf="@+id/setupCredentialsUsernameTextInputLayout"
+			app:layout_constraintVertical_bias="0.0"
+			app:passwordToggleEnabled="true"
+			app:startIconDrawable="@drawable/password">
 
-			<com.google.android.material.textfield.TextInputLayout
-				android:id="@+id/setupCredentialsUsernameTextInputLayout"
+			<com.google.android.material.textfield.TextInputEditText
+				android:id="@+id/setupCredentialsPasswordTextInputEditText"
 				android:layout_width="match_parent"
-				android:layout_height="wrap_content"
-				android:layout_marginTop="48dp"
-				android:hint="@string/setupTextInputLayoutCredentialsUsernameHint"
-				app:counterEnabled="true"
-				app:counterMaxLength="30"
-				app:helperText="@string/setupTextInputLayoutCredentialsUsernameHelp"
-				app:helperTextEnabled="true"
-				app:hintAnimationEnabled="true"
-				app:hintEnabled="true"
-				app:startIconDrawable="@drawable/person">
+				android:layout_height="match_parent"
+				android:autofillHints=""
+				android:ems="10"
+				android:inputType="textPassword"
+				android:minHeight="48dp"
+				android:textColorHint="@color/textColorHint"
+				android:textSize="@dimen/text_size"
+				tools:ignore="VisualLintTextFieldSize" />
 
-				<com.google.android.material.textfield.TextInputEditText
-					android:id="@+id/setupCredentialsUsernameTextInputEditText"
-					android:layout_width="match_parent"
-					android:layout_height="match_parent"
-					android:autofillHints=""
-					android:ems="10"
-					android:inputType="textPersonName"
-					android:minHeight="48dp"
-					android:textColorHint="@color/textColorHint"
-					android:textSize="@dimen/text_size"
-					tools:ignore="VisualLintTextFieldSize" />
+		</com.google.android.material.textfield.TextInputLayout>
 
-			</com.google.android.material.textfield.TextInputLayout>
+		<Button
+			android:id="@+id/settingsSaveButton"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:backgroundTint="@color/blue_400"
+			android:paddingStart="@dimen/button_padding_start"
+			android:paddingEnd="@dimen/button_padding_end"
+			android:text="@string/setup_button_continue"
+			app:layout_constraintBottom_toBottomOf="parent"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintHorizontal_bias="1.0"
+			app:layout_constraintStart_toStartOf="parent" />
 
-			<com.google.android.material.textfield.TextInputLayout
-				android:id="@+id/setupCredentialsPasswordTextInputLayout"
-				android:layout_width="match_parent"
-				android:layout_height="wrap_content"
-				android:layout_marginTop="48dp"
-				android:hint="@string/setupTextInputLayoutCredentialsPasswordHint"
-				app:helperText="@string/setupTextInputLayoutCredentialsPasswordHelp"
-				app:helperTextEnabled="true"
-				app:hintEnabled="true"
-				app:passwordToggleEnabled="true"
-				app:startIconDrawable="@drawable/password">
+	</androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>
 
-				<com.google.android.material.textfield.TextInputEditText
-					android:id="@+id/setupCredentialsPasswordTextInputEditText"
-					android:layout_width="match_parent"
-					android:layout_height="match_parent"
-					android:autofillHints=""
-					android:ems="10"
-					android:inputType="textPassword"
-					android:minHeight="48dp"
-					android:textColorHint="@color/textColorHint"
-					android:textSize="@dimen/text_size"
-					tools:ignore="VisualLintTextFieldSize" />
-
-			</com.google.android.material.textfield.TextInputLayout>
-
-			<Button
-				android:id="@+id/settingsSaveButton"
-				android:layout_width="match_parent"
-				android:layout_height="wrap_content"
-				android:layout_marginTop="32dp"
-				android:backgroundTint="@color/blue_400"
-				android:text="@string/setup_button_continue" />
-
-		</LinearLayout>
-	</ScrollView>
-
-</androidx.constraintlayout.widget.ConstraintLayout>

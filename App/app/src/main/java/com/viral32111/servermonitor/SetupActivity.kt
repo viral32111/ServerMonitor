@@ -8,6 +8,7 @@ import android.widget.Button
 import android.widget.EditText
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.widget.doOnTextChanged
 import com.android.volley.*
 import com.google.android.material.appbar.MaterialToolbar
 
@@ -192,6 +193,19 @@ class SetupActivity : AppCompatActivity() {
 		} else {
 			Log.d( Shared.logTag, "We're not setup yet! ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
 		}
+
+		/*
+		// Event handlers to show input validation errors on the inputs
+		instanceUrlEditText.setOnFocusChangeListener { _, hasFocus ->
+			if ( !hasFocus ) instanceUrlEditText.error = if ( !validateInstanceUrl( instanceUrlEditText.text.toString() ) ) getString( R.string.setupToastInstanceUrlInvalid ) else null
+		}
+		credentialsUsernameEditText.setOnFocusChangeListener { _, hasFocus ->
+			if ( !hasFocus ) credentialsUsernameEditText.error = if ( !validateCredentialsUsername( credentialsUsernameEditText.text.toString() ) ) getString( R.string.setupToastCredentialsUsernameInvalid ) else null
+		}
+		credentialsPasswordEditText.setOnFocusChangeListener { _, hasFocus ->
+			if ( !hasFocus ) credentialsPasswordEditText.error = if ( !validateCredentialsPassword( credentialsPasswordEditText.text.toString() ) ) getString( R.string.setupToastCredentialsPasswordInvalid ) else null
+		}
+		*/
 
 	}
 
