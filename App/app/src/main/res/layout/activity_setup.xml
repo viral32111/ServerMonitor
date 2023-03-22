@@ -7,126 +7,124 @@
 	android:layout_height="match_parent"
 	tools:context=".SetupActivity">
 
-	<TextView
-		android:id="@+id/setupInstructionTextView"
+	<ScrollView
+		android:id="@+id/setupScrollView"
 		android:layout_width="0dp"
-		android:layout_height="wrap_content"
-		android:layout_marginStart="@dimen/margin_left"
+		android:layout_height="0dp"
+		android:layout_marginStart="8dp"
 		android:layout_marginTop="@dimen/margin_top"
-		android:layout_marginEnd="@dimen/margin_top"
-		android:text="@string/setupTextViewInstruction"
-		android:textAlignment="center"
-		android:textSize="@dimen/text_size"
-		app:layout_constraintEnd_toEndOf="parent"
-		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toTopOf="parent" />
-
-	<com.google.android.material.textfield.TextInputLayout
-		android:id="@+id/setupInstanceUrlTextInputLayout"
-		android:layout_width="0dp"
-		android:layout_height="wrap_content"
-		android:layout_marginStart="@dimen/margin_left"
-		android:layout_marginTop="32dp"
-		android:layout_marginEnd="@dimen/margin_right"
-		android:hint="@string/setupTextInputLayoutInstanceUrlHint"
-		app:helperText="@string/setupTextInputLayoutInstanceUrlHelp"
-		app:helperTextEnabled="true"
-		app:hintAnimationEnabled="true"
-		app:hintEnabled="true"
-		app:layout_constraintEnd_toEndOf="parent"
-		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toBottomOf="@+id/setupInstructionTextView"
-		app:startIconDrawable="@drawable/cloud"
-		app:startIconScaleType="center">
-
-		<com.google.android.material.textfield.TextInputEditText
-			android:id="@+id/settingsInstanceUrlTextInputEditText"
-			android:layout_width="match_parent"
-			android:layout_height="match_parent"
-			android:autofillHints=""
-			android:ems="10"
-			android:inputType="textUri"
-			android:minHeight="48dp"
-			android:textColorHint="@color/textColorHint"
-			android:textSize="@dimen/text_size" />
-
-	</com.google.android.material.textfield.TextInputLayout>
-
-	<com.google.android.material.textfield.TextInputLayout
-		android:id="@+id/setupCredentialsUsernameTextInputLayout"
-		android:layout_width="0dp"
-		android:layout_height="wrap_content"
-		android:layout_marginStart="@dimen/margin_left"
-		android:layout_marginTop="48dp"
-		android:layout_marginEnd="@dimen/margin_right"
-		android:hint="@string/setupTextInputLayoutCredentialsUsernameHint"
-		app:counterEnabled="true"
-		app:counterMaxLength="30"
-		app:helperText="@string/setupTextInputLayoutCredentialsUsernameHelp"
-		app:helperTextEnabled="true"
-		app:hintAnimationEnabled="true"
-		app:hintEnabled="true"
-		app:layout_constraintEnd_toEndOf="parent"
-		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toBottomOf="@+id/setupInstanceUrlTextInputLayout"
-		app:startIconDrawable="@drawable/person">
-
-		<com.google.android.material.textfield.TextInputEditText
-			android:id="@+id/setupCredentialsUsernameTextInputEditText"
-			android:layout_width="match_parent"
-			android:layout_height="match_parent"
-			android:autofillHints=""
-			android:ems="10"
-			android:inputType="textPersonName"
-			android:minHeight="48dp"
-			android:textColorHint="@color/textColorHint"
-			android:textSize="@dimen/text_size"
-			tools:ignore="VisualLintTextFieldSize" />
-
-	</com.google.android.material.textfield.TextInputLayout>
-
-	<com.google.android.material.textfield.TextInputLayout
-		android:id="@+id/setupCredentialsPasswordTextInputLayout"
-		android:layout_width="0dp"
-		android:layout_height="wrap_content"
-		android:layout_marginStart="@dimen/margin_left"
-		android:layout_marginTop="48dp"
-		android:layout_marginEnd="@dimen/margin_right"
-		android:hint="@string/setupTextInputLayoutCredentialsPasswordHint"
-		app:helperText="@string/setupTextInputLayoutCredentialsPasswordHelp"
-		app:helperTextEnabled="true"
-		app:hintEnabled="true"
-		app:layout_constraintEnd_toEndOf="parent"
-		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toBottomOf="@+id/setupCredentialsUsernameTextInputLayout"
-		app:passwordToggleEnabled="true"
-		app:startIconDrawable="@drawable/password">
-
-		<com.google.android.material.textfield.TextInputEditText
-			android:id="@+id/setupCredentialsPasswordTextInputEditText"
-			android:layout_width="match_parent"
-			android:layout_height="match_parent"
-			android:autofillHints=""
-			android:ems="10"
-			android:inputType="textPassword"
-			android:minHeight="48dp"
-			android:textColorHint="@color/textColorHint"
-			android:textSize="@dimen/text_size"
-			tools:ignore="VisualLintTextFieldSize" />
-
-	</com.google.android.material.textfield.TextInputLayout>
-
-	<Button
-		android:id="@+id/settingsSaveButton"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:layout_marginEnd="@dimen/margin_left"
+		android:layout_marginEnd="8dp"
 		android:layout_marginBottom="@dimen/margin_bottom"
-		android:backgroundTint="@color/blue_400"
-		android:paddingStart="@dimen/button_padding_start"
-		android:paddingEnd="@dimen/button_padding_end"
-		android:text="@string/setup_button_continue"
+		android:paddingHorizontal="16dp"
+		android:scrollbarStyle="outsideOverlay"
 		app:layout_constraintBottom_toBottomOf="parent"
-		app:layout_constraintEnd_toEndOf="parent" />
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toTopOf="parent">
+
+		<LinearLayout
+			android:id="@+id/setupLinearLayout"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:orientation="vertical">
+
+			<TextView
+				android:id="@+id/setupInstructionTextView"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="@string/setupTextViewInstruction"
+				android:textAlignment="center"
+				android:textSize="@dimen/text_size" />
+
+			<com.google.android.material.textfield.TextInputLayout
+				android:id="@+id/setupInstanceUrlTextInputLayout"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="32dp"
+				android:hint="@string/setupTextInputLayoutInstanceUrlHint"
+				app:helperText="@string/setupTextInputLayoutInstanceUrlHelp"
+				app:helperTextEnabled="true"
+				app:hintAnimationEnabled="true"
+				app:hintEnabled="true"
+				app:startIconDrawable="@drawable/cloud"
+				app:startIconScaleType="center">
+
+				<com.google.android.material.textfield.TextInputEditText
+					android:id="@+id/settingsInstanceUrlTextInputEditText"
+					android:layout_width="match_parent"
+					android:layout_height="match_parent"
+					android:autofillHints=""
+					android:ems="10"
+					android:inputType="textUri"
+					android:minHeight="48dp"
+					android:textColorHint="@color/textColorHint"
+					android:textSize="@dimen/text_size" />
+
+			</com.google.android.material.textfield.TextInputLayout>
+
+			<com.google.android.material.textfield.TextInputLayout
+				android:id="@+id/setupCredentialsUsernameTextInputLayout"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="48dp"
+				android:hint="@string/setupTextInputLayoutCredentialsUsernameHint"
+				app:counterEnabled="true"
+				app:counterMaxLength="30"
+				app:helperText="@string/setupTextInputLayoutCredentialsUsernameHelp"
+				app:helperTextEnabled="true"
+				app:hintAnimationEnabled="true"
+				app:hintEnabled="true"
+				app:startIconDrawable="@drawable/person">
+
+				<com.google.android.material.textfield.TextInputEditText
+					android:id="@+id/setupCredentialsUsernameTextInputEditText"
+					android:layout_width="match_parent"
+					android:layout_height="match_parent"
+					android:autofillHints=""
+					android:ems="10"
+					android:inputType="textPersonName"
+					android:minHeight="48dp"
+					android:textColorHint="@color/textColorHint"
+					android:textSize="@dimen/text_size"
+					tools:ignore="VisualLintTextFieldSize" />
+
+			</com.google.android.material.textfield.TextInputLayout>
+
+			<com.google.android.material.textfield.TextInputLayout
+				android:id="@+id/setupCredentialsPasswordTextInputLayout"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="48dp"
+				android:hint="@string/setupTextInputLayoutCredentialsPasswordHint"
+				app:helperText="@string/setupTextInputLayoutCredentialsPasswordHelp"
+				app:helperTextEnabled="true"
+				app:hintEnabled="true"
+				app:passwordToggleEnabled="true"
+				app:startIconDrawable="@drawable/password">
+
+				<com.google.android.material.textfield.TextInputEditText
+					android:id="@+id/setupCredentialsPasswordTextInputEditText"
+					android:layout_width="match_parent"
+					android:layout_height="match_parent"
+					android:autofillHints=""
+					android:ems="10"
+					android:inputType="textPassword"
+					android:minHeight="48dp"
+					android:textColorHint="@color/textColorHint"
+					android:textSize="@dimen/text_size"
+					tools:ignore="VisualLintTextFieldSize" />
+
+			</com.google.android.material.textfield.TextInputLayout>
+
+			<Button
+				android:id="@+id/settingsSaveButton"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="32dp"
+				android:backgroundTint="@color/blue_400"
+				android:text="@string/setup_button_continue" />
+
+		</LinearLayout>
+	</ScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
