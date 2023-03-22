@@ -53,4 +53,7 @@
 	<string name="serversTextViewServerUptime">Up for %s.</string>
 	<string name="serversTextViewServerUptimeOffline">This server is offline.</string>
 
+	<!-- Toast when offline server is pressed -->
+	<string name="serversToastOfflineServerPress">That server is offline.</string>
+
 </resources>

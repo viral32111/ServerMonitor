@@ -469,13 +469,20 @@ class ServersActivity : AppCompatActivity() {
 
 	}
 
-	// When a server is pressed...
+	// Switch to the server activity when an online server is pressed...
 	private fun onServerPressed( server: Server ) {
-		Log.d( Shared.logTag, "Switching to server activity..." )
-		val intent = Intent( this, ServerActivity::class.java )
-		intent.putExtra( "serverIdentifier", server.identifier )
-		startActivity( intent )
-		overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
+		if ( server.isOnline() ) {
+			Log.d( Shared.logTag, "Server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') is online, switching to server activity..." )
+
+			val intent = Intent( this, ServerActivity::class.java )
+			intent.putExtra( "serverIdentifier", server.identifier )
+
+			startActivity( intent )
+			overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
+		} else {
+			Log.w( Shared.logTag, "Server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') is offline, not switching to server activity" )
+			showBriefMessage( this, R.string.serversToastOfflineServerPress )
+		}
 	}
 
 	/**
