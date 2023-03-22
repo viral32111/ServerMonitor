@@ -6,24 +6,22 @@
 
 	<!-- Instructions -->
 	<string name="setupTextViewInstruction">Enter the public URL to the primary Server Monitor connector instance below, along with your credentials.</string>
-	<string name="SetupTextViewSecureNotice">The instance must be served over HTTPs.</string>
 
 	<!-- Instance URL input -->
-	<string name="setupTextViewInstanceUrlLabel">Instance URL:</string>
-	<string name="setupEditTextInstanceUrlHint">https://example.com/my-instance-name…</string>
+	<string name="setupTextInputLayoutInstanceUrlHint">Instance URL</string>
+	<string name="setupTextInputLayoutInstanceUrlHelp">Must be served over a HTTPS connection.\n\nExample: <b>https://gateway.example.com/my-instance</b></string>
 	<string name="setupToastInstanceUrlEmpty">Provide an instance URL.</string>
 	<string name="setupToastInstanceUrlInvalid">The provided instance URL is invalid.</string>
 
-	<!-- Label for credentials section -->
-	<string name="setupTextViewCredentialsLabel">Authentication Credentials:</string>
-
 	<!-- Username input for authentication -->
-	<string name="setupEditTextCredentialsUsernameHint">JohnDoe</string>
+	<string name="setupTextInputLayoutCredentialsUsernameHint">Username</string>
+	<string name="setupTextInputLayoutCredentialsUsernameHelp">Must be between 3 and 30 characters.\nLimited to alphanumerics and underscores.\n\nExample: <b>John_Doe98</b></string>
 	<string name="setupToastCredentialsUsernameEmpty">Provide a username for authentication.</string>
 	<string name="setupToastCredentialsUsernameInvalid">The provided username does not meet minimum requirements.</string>
 
 	<!-- Password input for authentication -->
-	<string name="setupEditTextCredentialsPasswordHint">Sup3r_Go0d_P4ssw0rd!</string>
+	<string name="setupTextInputLayoutCredentialsPasswordHint">Password</string>
+	<string name="setupTextInputLayoutCredentialsPasswordHelp">Must be at least 8 characters.\nRequires at least 1 uppercase letter, 1 lowercase letter, 1 symbol, and 1 number.\n\nExample: <b>Sup3r_Go0d_P4ssw0rd!</b></string>
 	<string name="setupToastCredentialsPasswordEmpty">Provide a password for authentication.</string>
 	<string name="setupToastCredentialsPasswordInvalid">The provided password does not meet minimum requirements.</string>
 

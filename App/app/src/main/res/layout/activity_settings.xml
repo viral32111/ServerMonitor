@@ -15,13 +15,13 @@
 		android:layout_marginEnd="@dimen/margin_right"
 		android:text="@string/settingsTextViewInstanceUrlLabel"
 		android:textSize="@dimen/text_size"
-		app:layout_constraintBottom_toTopOf="@+id/settingsInstanceUrlEditText"
+		app:layout_constraintBottom_toTopOf="@+id/settingsInstanceUrlTextInputEditText"
 		app:layout_constraintEnd_toEndOf="parent"
 		app:layout_constraintHorizontal_bias="0.0"
 		app:layout_constraintStart_toStartOf="parent" />
 
 	<EditText
-		android:id="@+id/settingsInstanceUrlEditText"
+		android:id="@+id/settingsInstanceUrlTextInputEditText"
 		android:layout_width="0dp"
 		android:layout_height="wrap_content"
 		android:layout_marginStart="@dimen/margin_left"
@@ -72,7 +72,7 @@
 		app:layout_constraintEnd_toEndOf="parent"
 		app:layout_constraintHorizontal_bias="0.0"
 		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toBottomOf="@+id/settingsInstanceUrlEditText"
+		app:layout_constraintTop_toBottomOf="@+id/settingsInstanceUrlTextInputEditText"
 		tools:ignore="VisualLintTextFieldSize" />
 
 	<EditText

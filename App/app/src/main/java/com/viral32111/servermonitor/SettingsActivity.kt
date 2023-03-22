@@ -52,7 +52,7 @@ class SettingsActivity : AppCompatActivity() {
 		Log.d( Shared.logTag, "Disabled menu items on Material Toolbar" )
 
 		// Get all the UI
-		instanceUrlEditText = findViewById( R.id.settingsInstanceUrlEditText )
+		instanceUrlEditText = findViewById( R.id.settingsInstanceUrlTextInputEditText )
 		credentialsUsernameEditText = findViewById( R.id.settingsCredentialsUsernameEditText )
 		credentialsPasswordEditText = findViewById( R.id.settingsCredentialsPasswordEditText )
 		automaticRefreshSwitch = findViewById( R.id.settingsAutomaticRefreshSwitch )
