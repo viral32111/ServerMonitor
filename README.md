@@ -14,8 +14,8 @@ A [Prometheus time-series database](https://prometheus.io/) is required for stor
 
 1. Download the [latest release](https://github.com/viral32111/ServerMonitor/releases/latest) of the Android application (`Server-Monitor-App.apk`) & server service (`Server-Monitor-Service.zip`).
 2. Install the server service on all the servers you wish to manage (the [.NET Core 7.0 Runtime](https://dotnet.microsoft.com/download/dotnet/7.0) is required).
-   * One server must be designated as the *"connector"* (RESTful API) for the Android application to fetch metrics data from. Start the service with the `connector` command-line argument to run in this mode.
-   * All other servers must run in the *"collection"* mode for gathering & exporting metrics data for Prometheus to scrape. Start the service with the `collector` command-line argument to run in this mode.
+   * One server must be designated as the *"connector"* (RESTful API) for the Android application to fetch metrics data from. See [Connector](#Connector).
+   * All other servers must run in the *"collection"* mode for gathering & exporting metrics data for Prometheus to scrape. See [Collector][#Collector].
 3. Configure the server service appropriately using the JSON configuration file or environment variables ([see configuration](#Configuration)).
 4. Install the Android application on your device & connect to the publicly-accessible URL of the *"connector"* service using any of the configured credentials.
 
@@ -86,6 +86,76 @@ The configuration priority is as follows (higher entries will override previousl
 4. System-wide configuration file.
 
 See [config.json](/Service/ServerMonitor/config.json) for an example configuration file.
+
+## Modes
+
+### Collector
+
+This mode exports metrics from configured sources for Prometheus to scrape.
+
+Either start the service with the `collector` command-line argument, or register a new system service using a command below.
+
+On Windows, run this PowerShell command to create a new service:
+
+```powershell
+New-Service -Name "Server-Monitor-Collector" -DisplayName "Server Monitor (Collector)" -Description "Export metrics to Prometheus from configured sources." -BinaryPathName "C:\Path\To\Dotnet\Runtime\dotnet C:\Path\To\ServerMonitor\ServerMonitor.dll collector" -StartupType "Automatic" -DependsOn "Server"
+```
+
+On Linux (for systemd), firstly create a new service file at `/etc/systemd/service/server-monitor-collector.service` with the contents:
+
+```
+[Unit]
+Description=Server Monitor (Collector)
+Documentation=https://github.com/viral32111/ServerMonitor
+After=network.target
+
+[Service]
+User=root
+Group=root
+WorkingDirectory=/path/to/servermonitor
+ExecStart=/path/to/dotnet /path/to/servermonitor/ServerMonitor.dll collector
+Type=simple
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Then run `systemctl enable server-monitor-collector` so it launches on system startup.
+
+### Connector
+
+This mode serve metrics from Prometheus to the Android app via a RESTful API.
+
+Either start the service with the `connector` command-line argument, or register a new system service using a command below.
+
+On Windows, run this PowerShell command to create a new service:
+
+```powershell
+New-Service -Name "Server-Monitor-Connector" -DisplayName "Server Monitor (Connector)" -Description "Serve metrics from Prometheus to the Android app." -BinaryPathName "C:\Path\To\Dotnet\Runtime\dotnet C:\Path\To\ServerMonitor\ServerMonitor.dll connector" -StartupType "Automatic" -DependsOn "Server"
+```
+
+On Linux (for systemd), firstly create a new service file at `/etc/systemd/service/server-monitor-connector.service` with the contents:
+
+```
+[Unit]
+Description=Server Monitor (Connector)
+Documentation=https://github.com/viral32111/ServerMonitor
+After=network.target
+
+[Service]
+User=root
+Group=root
+WorkingDirectory=/path/to/servermonitor
+ExecStart=/path/to/dotnet /path/to/servermonitor/ServerMonitor.dll connector
+Type=simple
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Then run `systemctl enable server-monitor-connector` so it launches on system startup.
 
 ## Building
 
