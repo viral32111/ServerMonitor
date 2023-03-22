@@ -7,7 +7,7 @@
 
 		<Title>ServerMonitor</Title>
 		<Authors>viral32111</Authors>
-		<Description>A mobile app for monitoring servers in real-time. </Description>
+		<Description>A mobile app for monitoring servers in real-time.</Description>
 		<Copyright>Copyright (C) 2022 viral32111</Copyright>
 		<RepositoryUrl>https://github.com/viral32111/ServerMonitor</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
@@ -17,6 +17,8 @@
 		<Version>$(FileVersion)</Version>
 		<RootNamespace>ServerMonitor</RootNamespace>
 		<AssemblyName>$(MSBuildProjectName)</AssemblyName>
+
+		<ApplicationManifest>app.manifest</ApplicationManifest>
 	</PropertyGroup>
 
 	<ItemGroup>
