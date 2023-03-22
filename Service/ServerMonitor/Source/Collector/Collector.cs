@@ -14,6 +14,13 @@ namespace ServerMonitor.Collector {
 		// The metrics server
 		public MetricServer? MetricsServer { get; private set; }
 
+		// The SNMP manager
+		public SNMP? SNMPManager { get; private set; }
+		public CancellationTokenSource SNMPManagerCancellationTokenSource = new();
+
+		// The action server
+		public Action? ActionServer { get; private set; }
+
 		// Event that fires when the Metrics Server starts listening
 		public event EventHandler<EventArgs>? OnMetricsServerStarted;
 		public delegate void OnMetricsServerStartedEventHandler( object sender, EventArgs e );
@@ -37,35 +44,20 @@ namespace ServerMonitor.Collector {
 			OnMetricsServerStarted?.Invoke( null, EventArgs.Empty );
 
 			// Start the action server
-			Action action = new( configuration );
-			action.StartListening();
+			ActionServer = new( configuration );
+			ActionServer.StartListening();
 			logger.LogInformation( "Action server listening on http://{0}:{1}", configuration.CollectorActionListenAddress, configuration.CollectorActionListenPort );
 
 			// Create the SNMP manager
-			CancellationTokenSource cancellationTokenSource = new();
-			SNMP snmp = new( configuration, cancellationTokenSource.Token );
+			SNMPManager = new( configuration, SNMPManagerCancellationTokenSource.Token );
 
 			// Start the SNMP manager
-			if ( configuration.CollectSNMPMetrics == true ) snmp.ListenForTraps();
+			if ( configuration.CollectSNMPMetrics == true ) SNMPManager.ListenForTraps();
 
 			// Stop everything when CTRL+C is pressed - https://stackoverflow.com/a/929717
 			Console.CancelKeyPress += delegate ( object? sender, ConsoleCancelEventArgs e ) {
 				logger.LogInformation( "CTRL+C pressed! Stopping..." );
-
-				logger.LogDebug( "Stopping Prometheus Metrics server..." );
-				MetricsServer.Stop();
-				logger.LogDebug( "Prometheus Metrics server stopped" );
-	
-				if ( configuration.CollectSNMPMetrics == true ) {
-					logger.LogDebug( "Stopping SNMP manager..." );
-					cancellationTokenSource.Cancel();
-					snmp.WaitForTrapListener();
-					logger.LogDebug( "SNMP manager stopped" );
-				}
-
-				logger.LogDebug( "Stopping action server..." );
-				action.StopListening();
-				logger.LogDebug( "Action server stopped" );
+				Stop();
 			};
 
 			// Create instances of each resource collector
@@ -209,9 +201,9 @@ namespace ServerMonitor.Collector {
 
 				if ( configuration.CollectSNMPMetrics == true ) {
 					try {
-						snmp.Update();
+						SNMPManager.Update();
 
-						foreach ( string[] labelValues in snmp.ServiceCount.GetAllLabelValues() ) {
+						foreach ( string[] labelValues in SNMPManager.ServiceCount.GetAllLabelValues() ) {
 							string address = labelValues[ 0 ];
 							string port = labelValues[ 1 ];
 							string name = labelValues[ 2 ];
@@ -224,9 +216,9 @@ namespace ServerMonitor.Collector {
 							logger.LogInformation( "Description: '{0}'", description );
 							logger.LogInformation( "Contact: '{0}'", contact );
 							logger.LogInformation( "Location: '{0}'", location );
-							logger.LogInformation( "Traps Received: {0}", snmp.TrapsReceived.WithLabels( address, port, name, description, contact, location ).Value );
-							logger.LogInformation( "Uptime: {0} seconds", snmp.UptimeSeconds.WithLabels( address, port, name, description, contact, location ).Value );
-							logger.LogInformation( "Service Count: {0}", snmp.ServiceCount.WithLabels( address, port, name, description, contact, location ).Value );
+							logger.LogInformation( "Traps Received: {0}", SNMPManager.TrapsReceived.WithLabels( address, port, name, description, contact, location ).Value );
+							logger.LogInformation( "Uptime: {0} seconds", SNMPManager.UptimeSeconds.WithLabels( address, port, name, description, contact, location ).Value );
+							logger.LogInformation( "Service Count: {0}", SNMPManager.ServiceCount.WithLabels( address, port, name, description, contact, location ).Value );
 						}
 					} catch ( Exception exception ) {
 						logger.LogError( exception, "Failed to collect SNMP metrics" );
@@ -259,16 +251,33 @@ namespace ServerMonitor.Collector {
 			} while ( singleRun == false );
 
 			if ( configuration.CollectSNMPMetrics == true ) {
-				if ( singleRun == true ) cancellationTokenSource.Cancel(); // Stop the SNMP agent
-				snmp.WaitForTrapListener(); // Block until the SNMP agent has stopped
+				if ( singleRun == true ) SNMPManagerCancellationTokenSource.Cancel(); // Stop the SNMP agent
+				SNMPManager.WaitForTrapListener(); // Block until the SNMP agent has stopped
 			}
 
 			// Stop the Prometheus metrics server
 			//MetricsServer.Stop();
 
 			// Stop the action server
-			action.StopListening();
+			ActionServer.StopListening();
 
+		}
+
+		// Stop everything
+		// NOTE: This probably won't stop the big while loop above...
+		public void Stop() {
+			logger.LogDebug( "Stopping Prometheus Metrics server..." );
+			MetricsServer?.Stop();
+			logger.LogDebug( "Prometheus Metrics server stopped" );
+
+			logger.LogDebug( "Stopping SNMP manager..." );
+			SNMPManagerCancellationTokenSource.Cancel();
+			SNMPManager?.WaitForTrapListener();
+			logger.LogDebug( "SNMP manager stopped" );
+
+			logger.LogDebug( "Stopping action server..." );
+			ActionServer?.StopListening();
+			logger.LogDebug( "Action server stopped" );
 		}
 
 	}

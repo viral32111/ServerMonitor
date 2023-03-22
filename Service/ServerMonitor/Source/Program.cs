@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
+using System.ServiceProcess;
 using System.CommandLine; // https://learn.microsoft.com/en-us/dotnet/standard/commandline/get-started-tutorial
 using Mono.Unix.Native; // https://github.com/mono/mono.posix
 using Microsoft.Extensions.Logging; // https://learn.microsoft.com/en-us/dotnet/core/extensions/console-log-formatter
@@ -20,7 +21,27 @@ namespace ServerMonitor {
 		public static readonly HttpClient HttpClient = new();
 		private static bool IsHTTPClientSetup = false;
 
+		// Instances of each mode
+		public static readonly Collector.Collector Collector = new();
+		public static readonly Connector.Connector Connector = new();
+
 		public static int Main( string[] arguments ) {
+
+			// We're running as a service...
+			if ( Environment.UserInteractive == false ) {
+				logger.LogDebug( "Running as system service" );
+				using ( Service service = new() ) ServiceBase.Run( service );
+				return 0; // I don't think this is ever reached, but just in case...
+			
+			// We're running in an interactive CLI...
+			} else {
+				logger.LogDebug( "Running as command-line program" );
+				return ProcessArguments( arguments, false );
+			}
+
+		}
+
+		public static int ProcessArguments( string[] arguments, bool isRunningAsService ) {
 
 			// Get the directory that the executable DLL/binary is in - https://stackoverflow.com/a/66023223
 			Assembly? executable = Assembly.GetEntryAssembly() ?? throw new Exception( "Failed to get this executable" );
@@ -28,7 +49,7 @@ namespace ServerMonitor {
 			logger.LogDebug( $"Executable directory: '{ executableDirectory }'" );
 
 			// Create the root command, no handler though as only sub-commands are allowed
-			RootCommand rootCommand = new( "The backend API/service for the server monitoring mobile app." );
+			RootCommand rootCommand = new( "The backend metrics exporter & RESTful API service for the Android app." );
 
 			// Option to let the user specify an extra configuration file in a non-standard location
 			Option<string> extraConfigurationFilePathOption = new(
@@ -47,13 +68,14 @@ namespace ServerMonitor {
 			rootCommand.AddOption( runOnceOption );
 
 			// Sub-command to start in "collector" mode
-			Command collectorCommand = new( "collector", "Expose metrics to Prometheus from configured sources." );
+			Command collectorCommand = new( "collector", "Export metrics to Prometheus from configured sources." );
 			collectorCommand.SetHandler( ( string extraConfigurationFilePath, bool runOnce ) => {
 
 				// Fail if we're not running as administrator/root
 				if ( IsRunningAsAdmin() == false ) {
 					logger.LogError( "This program must be run as administrator/root" );
 					Environment.Exit( 1 );
+					return;
 				}
 
 				// Load the configuration
@@ -61,13 +83,13 @@ namespace ServerMonitor {
 				logger.LogInformation( "Loaded the configuration" );
 
 				// Call the handler
-				new Collector.Collector().HandleCommand( Configuration.Config!, runOnce );
+				Collector.HandleCommand( Configuration.Config!, runOnce );
 
 			}, extraConfigurationFilePathOption, runOnceOption );
 			rootCommand.AddCommand( collectorCommand );
 	
 			// Sub-command to start in "connection point" mode
-			Command connectorCommand = new( "connector", "Serve metrics from Prometheus to the mobile app." );
+			Command connectorCommand = new( "connector", "Serve metrics from Prometheus to the Android app." );
 			rootCommand.AddCommand( connectorCommand );
 
 			// Option to not start listening for requests when in "connection point" mode
@@ -86,11 +108,12 @@ namespace ServerMonitor {
 				logger.LogInformation( "Loaded the configuration" );
 
 				// Call the handler
-				new Connector.Connector().HandleCommand( Configuration.Config!, runOnce, noListen );
+				Connector.HandleCommand( Configuration.Config!, runOnce, noListen );
 
 			}, extraConfigurationFilePathOption, runOnceOption, noListenOption );
 
 			return rootCommand.Invoke( arguments );
+
 		}
 
 		// Sets up the HTTP client
@@ -136,7 +159,7 @@ namespace ServerMonitor {
 			} else if ( RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) ) {
 				return Syscall.getuid() == 0;
 
-			} else throw new PlatformNotSupportedException( "This platform is not supported." );
+			} else throw new PlatformNotSupportedException( "This operating system is not supported." );
 		}
 
 	}

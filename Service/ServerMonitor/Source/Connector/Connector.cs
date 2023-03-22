@@ -6,7 +6,6 @@ using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
-using ServerMonitor.Connector.Route;
 using ServerMonitor.Connector.Helper;
 
 namespace ServerMonitor.Connector {
@@ -30,15 +29,16 @@ namespace ServerMonitor.Connector {
 
 		// List of request handlers for API routes
 		private readonly RouteRequestHandler[] routeRequestHandlers = new[] {
-			Hello.OnGetRequest, // GET /hello
-			Server.OnGetRequest, // GET /server?id=
-			Server.OnPostRequest, // POST /server?id=&action=
-			Servers.OnGetRequest, // GET /servers
-			Service.OnPostRequest, // POST /service?server=&name=&action=
-			Hello.OnIndexRequest // GET /
+			Route.Hello.OnGetRequest, // GET /hello
+			Route.Server.OnGetRequest, // GET /server?id=
+			Route.Server.OnPostRequest, // POST /server?id=&action=
+			Route.Servers.OnGetRequest, // GET /servers
+			Route.Service.OnPostRequest, // POST /service?server=&name=&action=
+			Route.Hello.OnIndexRequest // GET /
 		};
 
-		// Signal this to arbitrarily stop the HTTP listener
+		// The HTTP listener
+		public HttpListener? HttpListener { get; private set; }
 		public readonly TaskCompletionSource StopServerCompletionSource = new();
 
 		// Event that fires when the HTTP listener starts listening
@@ -53,7 +53,7 @@ namespace ServerMonitor.Connector {
 			Program.SetupHTTPClient();
 
 			// Create a HTTP listener that requires authentication - https://stackoverflow.com/a/56207032, https://learn.microsoft.com/en-us/dotnet/api/system.net.httplistener?view=net-8.0
-			HttpListener httpListener = new() {
+			HttpListener = new() {
 				AuthenticationSchemes = AuthenticationSchemes.Basic,
 				Realm = configuration.ConnectorAuthenticationRealm
 			};
@@ -73,7 +73,7 @@ namespace ServerMonitor.Connector {
 				if ( routes[ routeAttribute.Method ].TryAdd( routeAttribute.Path, routeRequestHandler ) == false ) throw new Exception( $"Duplicate route '{ routeAttribute.Method } { routeAttribute.Path }' found for request handler '{ routeRequestHandler.Method.Name }'" );
 
 				// Add the route path to the HTTP listener
-				httpListener.Prefixes.Add( string.Concat( baseUrl, routeAttribute.Path.EndsWith( "/" ) == true ? routeAttribute.Path : string.Concat( routeAttribute.Path, "/" ) ) );
+				HttpListener.Prefixes.Add( string.Concat( baseUrl, routeAttribute.Path.EndsWith( "/" ) == true ? routeAttribute.Path : string.Concat( routeAttribute.Path, "/" ) ) );
 	
 				logger.LogInformation( "Registered API route '{0}' '{1}' ({2})", routeAttribute.Method, routeAttribute.Path, routeRequestHandler.Method.Name );
 
@@ -103,25 +103,21 @@ namespace ServerMonitor.Connector {
 			}
 
 			// Start the HTTP listener
-			httpListener.Start();
+			HttpListener.Start();
 			OnListeningStarted?.Invoke( null, EventArgs.Empty );
 			logger.LogInformation( "Listening for API requests on '{0}'", baseUrl );
 
 			// Stop everything when CTRL+C is pressed - https://stackoverflow.com/a/929717
 			Console.CancelKeyPress += delegate ( object? sender, ConsoleCancelEventArgs e ) {
 				logger.LogInformation( "CTRL+C pressed! Stopping..." );
-
-				logger.LogDebug( "Stopping HTTP listener..." );
-				StopServerCompletionSource.SetResult();
-				httpListener.Stop();
-				logger.LogDebug( "Stopped HTTP listener" );
+				Stop();
 			};
 
 			// Loop forever...
-			while ( httpListener.IsListening == true && noListen == false ) {
+			while ( HttpListener.IsListening == true && noListen == false ) {
 
 				// Wait for a request to come in, or for the server to be stopped
-				Task<HttpListenerContext> getContextTask = httpListener.GetContextAsync();
+				Task<HttpListenerContext> getContextTask = HttpListener.GetContextAsync();
 				Task stopServerTask = StopServerCompletionSource.Task;
 				if ( Task.WhenAny( getContextTask, stopServerTask ).Result == stopServerTask ) {
 					logger.LogDebug( "Received signal to stop API listener loop" );
@@ -137,9 +133,17 @@ namespace ServerMonitor.Connector {
 			}
 
 			// Stop the HTTP listener
-			httpListener.Stop();
+			HttpListener.Stop();
 			logger.LogInformation( "Stopped listening for API requests" );
 
+		}
+
+		// Stops the HTTP listener
+		public void Stop() {
+			logger.LogDebug( "Stopping HTTP listener..." );
+			StopServerCompletionSource.SetResult();
+			HttpListener?.Stop();
+			logger.LogDebug( "Stopped HTTP listener" );
 		}
 
 		// Processes an incoming HTTP request
