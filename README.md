@@ -98,7 +98,7 @@ Either start the service with the `collector` command-line argument, or register
 On Windows, run the following PowerShell command to create a new service, ensuring to replace the .NET Core Runtime & application paths where appropriate.
 
 ```powershell
-New-Service -Name "Server-Monitor-Collector" -DisplayName "Server Monitor (Collector)" -Description "Export metrics to Prometheus from configured sources." -BinaryPathName "\"C:\Path\To\Dotnet\Runtime\dotnet\" \"C:\Path\To\ServerMonitor\ServerMonitor.dll\" --service collector" -StartupType "Automatic" -DependsOn "LanmanServer"
+New-Service -Name "Server-Monitor-Collector" -DisplayName "Server Monitor (Collector)" -Description "Export metrics to Prometheus from configured sources." -BinaryPathName '"C:\Path\To\Dotnet\Runtime\dotnet.exe" "C:\Path\To\ServerMonitor\ServerMonitor.dll" --service collector' -StartupType "Automatic" -DependsOn "LanmanServer"
 ```
 
 On Linux (for systemd), firstly create a new service file at `/etc/systemd/service/server-monitor-collector.service` with the following contents.
@@ -132,7 +132,7 @@ Either start the service with the `connector` command-line argument, or register
 On Windows, run the following PowerShell command to create a new service, ensuring to replace the .NET Core Runtime & application paths where appropriate.
 
 ```powershell
-New-Service -Name "Server-Monitor-Connector" -DisplayName "Server Monitor (Connector)" -Description "Serve metrics from Prometheus to the Android app." -BinaryPathName "\"C:\Path\To\Dotnet\Runtime\dotnet\" \"C:\Path\To\ServerMonitor\ServerMonitor.dll\" --service connector" -StartupType "Automatic" -DependsOn "LanmanServer"
+New-Service -Name "Server-Monitor-Connector" -DisplayName "Server Monitor (Connector)" -Description "Serve metrics from Prometheus to the Android app." -BinaryPathName '"C:\Path\To\Dotnet\Runtime\dotnet.exe" "C:\Path\To\ServerMonitor\ServerMonitor.dll" --service connector' -StartupType "Automatic" -DependsOn "LanmanServer"
 ```
 
 On Linux (for systemd), firstly create a new service file at `/etc/systemd/service/server-monitor-connector.service` with the following contents.
