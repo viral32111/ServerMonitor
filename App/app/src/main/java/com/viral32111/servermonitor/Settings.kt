@@ -14,7 +14,7 @@ class Settings( private val sharedPreferences: SharedPreferences ) {
 	// Defaults are the values
 	var automaticRefresh: Boolean = true
 	var automaticRefreshInterval: Int = 15 // Seconds
-	var theme: Int = 2 // TODO: Set this to 0 for system theme, once dark theme is implemented
+	var theme: String = "Light" // TODO: Set this to 0 for system theme, once dark theme is implemented
 	var notificationAlwaysOngoing: Boolean = true
 	var notificationWhenIssueArises: Boolean = true
 
@@ -36,7 +36,7 @@ class Settings( private val sharedPreferences: SharedPreferences ) {
 			putString( "credentialsPassword", credentialsPassword )
 			putBoolean( "automaticRefresh", automaticRefresh )
 			putInt( "automaticRefreshInterval", automaticRefreshInterval )
-			putInt( "theme", theme )
+			putString( "theme", theme )
 			putBoolean( "notificationAlwaysOngoing", notificationAlwaysOngoing )
 			putBoolean( "notificationWhenIssueArises", notificationWhenIssueArises )
 			apply()
@@ -53,7 +53,7 @@ class Settings( private val sharedPreferences: SharedPreferences ) {
 
 		automaticRefresh = sharedPreferences.getBoolean( "automaticRefresh", automaticRefresh )
 		automaticRefreshInterval = sharedPreferences.getInt( "automaticRefreshInterval", automaticRefreshInterval )
-		theme = sharedPreferences.getInt( "theme", theme )
+		theme = sharedPreferences.getString( "theme", theme )!!
 		notificationAlwaysOngoing = sharedPreferences.getBoolean( "notificationAlwaysOngoing", notificationAlwaysOngoing )
 		notificationWhenIssueArises = sharedPreferences.getBoolean( "notificationWhenIssueArises", notificationWhenIssueArises )
 	}

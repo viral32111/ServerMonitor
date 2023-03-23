@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-	<array name="spinnerThemes">
+	<array name="themeValues">
 		<item>Follow System</item>
 		<item>Dark</item>
 		<item>Light</item>

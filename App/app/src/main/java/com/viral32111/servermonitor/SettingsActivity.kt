@@ -3,27 +3,33 @@ package com.viral32111.servermonitor
 import android.content.Context
 import android.os.Bundle
 import android.util.Log
+import android.widget.AutoCompleteTextView
 import android.widget.Button
-import android.widget.EditText
-import android.widget.Spinner
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.widget.doOnTextChanged
 import com.android.volley.*
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.materialswitch.MaterialSwitch
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 
 class SettingsActivity : AppCompatActivity() {
 
 	// UI
-	private lateinit var instanceUrlEditText: EditText
-	private lateinit var credentialsUsernameEditText: EditText
-	private lateinit var credentialsPasswordEditText: EditText
+	private lateinit var instanceUrlTextInputLayout: TextInputLayout
+	private lateinit var instanceUrlEditText: TextInputEditText
+	private lateinit var credentialsUsernameInputTextLayout: TextInputLayout
+	private lateinit var credentialsUsernameEditText: TextInputEditText
+	private lateinit var credentialsPasswordInputLayout: TextInputLayout
+	private lateinit var credentialsPasswordEditText: TextInputEditText
 	private lateinit var automaticRefreshSwitch: MaterialSwitch
-	private lateinit var automaticRefreshIntervalEditText: EditText
-	private lateinit var themeSpinner: Spinner
+	private lateinit var automaticRefreshIntervalEditText: TextInputEditText
+	private lateinit var themeTextInputLayout: TextInputLayout
+	private lateinit var themeAutoCompleteTextView: AutoCompleteTextView
 	private lateinit var notificationsAlwaysOngoingSwitch: MaterialSwitch
 	private lateinit var notificationsWhenIssueArisesSwitch: MaterialSwitch
 	private lateinit var saveButton: Button
@@ -53,20 +59,22 @@ class SettingsActivity : AppCompatActivity() {
 
 		// Get all the UI
 		instanceUrlEditText = findViewById( R.id.settingsInstanceUrlTextInputEditText )
-		credentialsUsernameEditText = findViewById( R.id.settingsCredentialsUsernameEditText )
-		credentialsPasswordEditText = findViewById( R.id.settingsCredentialsPasswordEditText )
+		credentialsUsernameEditText = findViewById( R.id.settingsCredentialsUsernameTextInputEditText )
+		credentialsPasswordEditText = findViewById( R.id.settingsCredentialsPasswordTextInputEditText )
 		automaticRefreshSwitch = findViewById( R.id.settingsAutomaticRefreshSwitch )
-		automaticRefreshIntervalEditText = findViewById( R.id.settingsAutomaticRefreshIntervalEditText )
-		themeSpinner = findViewById( R.id.settingsThemeSpinner )
-		notificationsAlwaysOngoingSwitch = findViewById( R.id.settingsNotificationsAlwaysOngoingSwitch )
-		notificationsWhenIssueArisesSwitch = findViewById( R.id.settingsNotificationsWhenIssueArisesSwitch )
+		automaticRefreshIntervalEditText = findViewById( R.id.settingsAutomaticRefreshIntervalTextInputEditText )
+		themeTextInputLayout = findViewById( R.id.settingsThemeTextInputLayout )
+		themeAutoCompleteTextView = findViewById( R.id.settingsThemeAutoCompleteTextView )
+		notificationsAlwaysOngoingSwitch = findViewById( R.id.settingsNotificationAlwaysOngoingSwitch )
+		notificationsWhenIssueArisesSwitch = findViewById( R.id.settingsNotificationWhenIssueArisesSwitch )
 		saveButton = findViewById( R.id.settingsSaveButton )
 		Log.d( Shared.logTag, "Got UI controls" )
 
 		// Force theme selection by disabling interaction
 		// TODO: Remove this once dark theme is implemented
-		themeSpinner.setSelection( 2 ) // Light
-		themeSpinner.isEnabled = false
+		//themeAutoCompleteTextView.setText( "Light", false )
+		themeTextInputLayout.isEnabled = false
+		themeAutoCompleteTextView.isEnabled = false
 		Log.d( Shared.logTag, "Forced theme selection" )
 
 		// Get settings
@@ -99,6 +107,18 @@ class SettingsActivity : AppCompatActivity() {
 		// Register the back button pressed callback - https://medium.com/tech-takeaways/how-to-migrate-the-deprecated-onbackpressed-function-e66bb29fa2fd
 		onBackPressedDispatcher.addCallback( this, onBackPressed )
 
+		// Show error when interval is not a number, or less than 1
+		automaticRefreshIntervalEditText.doOnTextChanged { text, _, _, _ ->
+			val value = text.toString().toIntOrNull()
+			if ( value == null ) {
+				automaticRefreshIntervalEditText.error = getString( R.string.settingsToastIntervalEmpty )
+			} else if ( value < 1 ) {
+				automaticRefreshIntervalEditText.error = getString( R.string.settingsToastIntervalInvalid )
+			} else {
+				automaticRefreshIntervalEditText.error = null
+			}
+		}
+
 	}
 
 	// When the activity is closed...
@@ -123,31 +143,34 @@ class SettingsActivity : AppCompatActivity() {
 	}
 
 	// Updates the UI with the settings from the persistent settings
-	private fun updateUIWithSettings(settings: Settings ) {
+	private fun updateUIWithSettings( settings: Settings ) {
 		Log.d( Shared.logTag, "Populating UI with settings from shared preferences..." )
 
 		// Update the values
 		automaticRefreshSwitch.isChecked = settings.automaticRefresh
 		automaticRefreshIntervalEditText.setText( settings.automaticRefreshInterval.toString() )
-		themeSpinner.setSelection( settings.theme )
+		themeAutoCompleteTextView.setText( settings.theme, false )
 		notificationsAlwaysOngoingSwitch.isChecked = settings.notificationAlwaysOngoing
 		notificationsWhenIssueArisesSwitch.isChecked = settings.notificationWhenIssueArises
 
 		// Enable instance URL & credentials if setup is finished
 		if ( !settings.instanceUrl.isNullOrBlank() ) {
 			instanceUrlEditText.setText( settings.instanceUrl )
-			instanceUrlEditText.hint = getString( R.string.settingsEditTextInstanceUrlHint )
+			instanceUrlTextInputLayout.hint = getString( R.string.settingsTextInputLayoutInstanceUrlHint )
 			instanceUrlEditText.isEnabled = true
+			instanceUrlTextInputLayout.isEnabled = true
 		}
 		if ( !settings.credentialsUsername.isNullOrBlank() ) {
 			credentialsUsernameEditText.setText( settings.credentialsUsername )
-			credentialsUsernameEditText.hint = getString( R.string.settingsEditTextCredentialsUsernameHint )
+			credentialsUsernameInputTextLayout.hint = getString( R.string.settingsTextInputLayoutCredentialsUsernameHint )
 			credentialsUsernameEditText.isEnabled = true
+			credentialsUsernameInputTextLayout.isEnabled = true
 		}
 		if ( !settings.credentialsPassword.isNullOrBlank() ) {
 			credentialsPasswordEditText.setText( settings.credentialsPassword )
-			credentialsPasswordEditText.hint = getString( R.string.settingsEditTextCredentialsPasswordHint )
+			credentialsPasswordInputLayout.hint = getString( R.string.settingsTextInputLayoutCredentialsPasswordHint )
 			credentialsPasswordEditText.isEnabled = true
+			credentialsPasswordInputLayout.isEnabled = true
 		}
 
 		// Disable interval input if automatic refresh is switched off
@@ -167,10 +190,26 @@ class SettingsActivity : AppCompatActivity() {
 		val credentialsUsername = credentialsUsernameEditText.text.toString()
 		val credentialsPassword = credentialsPasswordEditText.text.toString()
 		val automaticRefresh = automaticRefreshSwitch.isChecked
-		val automaticRefreshInterval = automaticRefreshIntervalEditText.text.toString().toInt()
-		val theme = themeSpinner.selectedItemPosition
+		val automaticRefreshInterval = automaticRefreshIntervalEditText.text.toString().toIntOrNull()
+		val theme = themeAutoCompleteTextView.text.toString()
 		val notificationAlwaysOngoing = notificationsAlwaysOngoingSwitch.isChecked
 		val notificationWhenIssueArises = notificationsWhenIssueArisesSwitch.isChecked
+
+		// Do not continue if the refresh interval wasn't provided
+		if ( automaticRefreshInterval == null ) {
+			enableInputs( true, settings.isSetup() )
+			showBriefMessage( this, R.string.settingsToastIntervalEmpty )
+			Log.w( Shared.logTag, "Refresh interval is empty" )
+			return
+		}
+
+		// Do not continue if the refresh interval is too low
+		if ( automaticRefreshInterval < 1 ) {
+			enableInputs( true, settings.isSetup() )
+			showBriefMessage( this, R.string.settingsToastIntervalInvalid )
+			Log.w( Shared.logTag, "Refresh interval '${ automaticRefreshInterval }' is too low" )
+			return
+		}
 
 		// Are we already setup?
 		if ( settings.isSetup() ) {
@@ -316,8 +355,8 @@ class SettingsActivity : AppCompatActivity() {
 			settings.save()
 
 			// Run the custom callback
-
 			successCallback.invoke()
+
 		}
 
 	}
@@ -334,7 +373,8 @@ class SettingsActivity : AppCompatActivity() {
 
 		automaticRefreshSwitch.isEnabled = shouldEnable
 		automaticRefreshIntervalEditText.isEnabled = shouldEnable && automaticRefreshSwitch.isChecked // Only toggle this if automatic refreshing is enabled
-		themeSpinner.isEnabled = false // TODO: Don't enable this until dark theme is implemented
+		//themeTextInputLayout.isEnabled = false // TODO: Don't enable this until dark theme is implemented
+		//themeAutoCompleteTextView.isEnabled = false // TODO: Don't enable this until dark theme is implemented
 		notificationsAlwaysOngoingSwitch.isEnabled = shouldEnable
 		notificationsWhenIssueArisesSwitch.isEnabled = shouldEnable
 		saveButton.isEnabled = shouldEnable
@@ -377,7 +417,7 @@ class SettingsActivity : AppCompatActivity() {
 		val credentialsPassword = credentialsPasswordEditText.text.toString()
 		val automaticRefresh = automaticRefreshSwitch.isChecked
 		val automaticRefreshInterval = automaticRefreshIntervalEditText.text.toString().toInt()
-		val theme = themeSpinner.selectedItemPosition
+		val theme = themeAutoCompleteTextView.text.toString()
 		val notificationAlwaysOngoing = notificationsAlwaysOngoingSwitch.isChecked
 		val notificationWhenIssueArises = notificationsWhenIssueArisesSwitch.isChecked
 

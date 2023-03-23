@@ -10,7 +10,6 @@
 	<!-- Instance URL input -->
 	<string name="setupTextInputLayoutInstanceUrlHint">Instance URL</string>
 	<string name="setupTextInputLayoutInstanceUrlHelp">Must be served over a HTTPS connection.\n\nExample: <b>https://gateway.example.com/my-instance</b></string>
-	<string name="setupTextInputLayoutInstanceUrlPrefix">https://</string>
 	<string name="setupToastInstanceUrlEmpty">Provide an instance URL.</string>
 	<string name="setupToastInstanceUrlInvalid">The provided instance URL is invalid.</string>
 

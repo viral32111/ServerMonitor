@@ -5,44 +5,41 @@
 	<string name="settingsActionBarTitle">Settings</string>
 
 	<!-- Instance URL input -->
-	<string name="settingsTextViewInstanceUrlLabel">Instance URL:</string>
-	<string name="settingsEditTextInstanceUrlHint">https://example.com/my-instance-name…</string>
-	<string name="settingsEditTextInstanceUrlSetupHint">Return to settings to set instance URL…</string>
+	<string name="settingsTextInputLayoutInstanceUrlHint">Instance URL</string>
+	<string name="settingsTextInputLayoutInstanceUrlHintSetup">Return to setup to set instance URL…</string>
+	<string name="settingsTextInputLayoutInstanceUrlHelp">Must be served over a HTTPS connection.\n\nExample: <b>https://gateway.example.com/my-instance</b></string>
 	<string name="settingsToastInstanceUrlEmpty">Provide an instance URL.</string>
 	<string name="settingsToastInstanceUrlInvalid">The provided instance URL is invalid.</string>
 
-	<!-- Label for credentials section -->
-	<string name="settingsTextViewCredentialsLabel">Authentication Credentials:</string>
-
 	<!-- Username input for authentication -->
-	<string name="settingsEditTextCredentialsUsernameHint">JohnDoe</string>
-	<string name="settingsEditTextCredentialsUsernameSetupHint">Return to settings to set username…</string>
+	<string name="settingsTextInputLayoutCredentialsUsernameHint">Username</string>
+	<string name="settingsTextInputLayoutCredentialsUsernameHintSetup">Return to setup to set username…</string>
+	<string name="settingsTextInputLayoutCredentialsUsernameHelp">Must be between 3 and 30 characters.\nLimited to alphanumerics and underscores.\n\nExample: <b>John_Doe98</b></string>
 	<string name="settingsToastCredentialsUsernameEmpty">Provide a username for authentication.</string>
 	<string name="settingsToastCredentialsUsernameInvalid">The provided username does not meet minimum requirements.</string>
 
 	<!-- Password input for authentication -->
-	<string name="settingsEditTextCredentialsPasswordHint">Sup3r_Go0d_P4ssw0rd!</string>
-	<string name="settingsEditTextCredentialsPasswordSetupHint">Return to settings to set password…</string>
+	<string name="settingsTextInputLayoutCredentialsPasswordHint">Password</string>
+	<string name="settingsTextInputLayoutCredentialsPasswordHintSetup">Return to setup to set password…</string>
+	<string name="settingsTextInputLayoutCredentialsPasswordHelp">Must be at least 8 characters.\nRequires at least 1 uppercase letter, 1 lowercase letter, 1 symbol, and 1 number.\n\nExample: <b>Sup3r_Go0d_P4ssw0rd!</b></string>
 	<string name="settingsToastCredentialsPasswordEmpty">Provide a password for authentication.</string>
 	<string name="settingsToastCredentialsPasswordInvalid">The provided password does not meet minimum requirements.</string>
 
-	<!-- Label for automatic refresh section -->
-	<string name="settingsCheckBoxAutomaticRefresh">Automatic Refresh</string>
+	<!-- Automatic refresh switch -->
+	<string name="settingsSwitchAutomaticRefresh">Automatic Refresh</string>
 
-	<!-- Interval input for automatic refresh -->
-	<string name="settingsTextViewIntervalLabel">Interval:</string>
-	<string name="settingsEditTextIntervalHint">Seconds…</string>
-	<string name="settingsToastIntervalEmpty">Provide a refresh interval.</string>
-	<string name="settingsToastIntervalInvalid">The provided refresh interval is invalid.</string>
+	<!-- Interval input automatic refresh -->
+	<string name="settingsTextInputLayoutAutomaticRefreshIntervalHint">Interval</string>
+	<string name="settingsTextInputLayoutAutomaticRefreshIntervalHelp">Minimum is 1.\nShould be set to the Prometheus scrape interval.</string>
+	<string name="settingsToastIntervalEmpty">Provide an automatic refresh interval.</string>
+	<string name="settingsToastIntervalInvalid">The automatic refresh interval is too low.</string>
 
-	<!-- Label & input for theme -->
-	<string name="settingsTextViewThemeLabel">Theme:</string>
-	<string name="settingsSpinnerTheme">Follow System</string>
+	<!-- Drop down for theme -->
+	<string name="settingsTextInputLayoutThemeHint">Theme</string>
 
-	<!-- Label & input for notifications -->
-	<string name="settingsTextViewNotificationsLabel">Notifications:</string>
-	<string name="settingsCheckBoxNotificationsAlwaysOngoing">Always ongoing</string>
-	<string name="settingsCheckBoxNotificationsWhenIssueArises">When an issue arises</string>
+	<!-- Notification switches -->
+	<string name="settingsSwitchNotificationAlwaysOngoing">Always ongoing notification</string>
+	<string name="settingsSwitchNotificationWhenIssueArises">Notify when an issue arises</string>
 
 	<!-- Save button -->
 	<string name="settingsButtonSave">Save</string>

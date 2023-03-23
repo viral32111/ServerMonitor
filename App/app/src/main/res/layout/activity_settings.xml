@@ -1,232 +1,234 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res-auto"
 	xmlns:tools="http://schemas.android.com/tools"
-	android:id="@+id/settingsConstraintLayout"
+	android:id="@+id/settingsScrollView"
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
-	tools:context=".SetupActivity">
+	android:layout_marginStart="@dimen/scrollViewEdgeStart"
+	android:layout_marginTop="@dimen/scrollViewEdgeTop"
+	android:layout_marginEnd="@dimen/scrollViewEdgeEnd"
+	android:layout_marginBottom="@dimen/scrollViewEdgeBottom"
+	android:fillViewport="true"
+	android:paddingStart="@dimen/scrollViewEdgeStart"
+	android:paddingEnd="@dimen/scrollViewEdgeEnd"
+	android:scrollbarStyle="outsideOverlay"
+	app:layout_constraintBottom_toBottomOf="parent"
+	app:layout_constraintEnd_toEndOf="parent"
+	app:layout_constraintStart_toStartOf="parent"
+	app:layout_constraintTop_toTopOf="parent"
+	tools:context=".SettingsActivity">
 
-	<TextView
-		android:id="@+id/settingsInstanceUrlLabelTextView"
-		android:layout_width="0dp"
-		android:layout_height="wrap_content"
-		android:layout_marginStart="@dimen/margin_left"
-		android:layout_marginEnd="@dimen/margin_right"
-		android:text="@string/settingsTextViewInstanceUrlLabel"
-		android:textSize="@dimen/text_size"
-		app:layout_constraintBottom_toTopOf="@+id/settingsInstanceUrlTextInputEditText"
-		app:layout_constraintEnd_toEndOf="parent"
-		app:layout_constraintHorizontal_bias="0.0"
-		app:layout_constraintStart_toStartOf="parent" />
+	<androidx.constraintlayout.widget.ConstraintLayout
+		android:id="@+id/settingsConstraintLayout"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content">
 
-	<EditText
-		android:id="@+id/settingsInstanceUrlTextInputEditText"
-		android:layout_width="0dp"
-		android:layout_height="wrap_content"
-		android:layout_marginStart="@dimen/margin_left"
-		android:layout_marginTop="48dp"
-		android:layout_marginEnd="@dimen/margin_right"
-		android:autofillHints=""
-		android:ems="10"
-		android:enabled="false"
-		android:hint="@string/settingsEditTextInstanceUrlSetupHint"
-		android:inputType="textUri"
-		android:minHeight="48dp"
-		android:textColorHint="@color/textColorHint"
-		android:textSize="@dimen/text_size"
-		app:layout_constraintEnd_toEndOf="parent"
-		app:layout_constraintHorizontal_bias="0.0"
-		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toTopOf="parent"
-		tools:ignore="VisualLintTextFieldSize" />
+		<com.google.android.material.textfield.TextInputLayout
+			android:id="@+id/settingsInstanceUrlTextInputLayout"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:enabled="false"
+			android:hint="@string/settingsTextInputLayoutInstanceUrlHintSetup"
+			app:errorEnabled="true"
+			app:helperText="@string/settingsTextInputLayoutInstanceUrlHelp"
+			app:helperTextEnabled="true"
+			app:hintAnimationEnabled="true"
+			app:hintEnabled="true"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toTopOf="parent"
+			app:startIconDrawable="@drawable/cloud"
+			app:startIconScaleType="center">
 
-	<TextView
-		android:id="@+id/settingsCredentialsLabelTextView"
-		android:layout_width="0dp"
-		android:layout_height="wrap_content"
-		android:layout_marginStart="@dimen/margin_left"
-		android:layout_marginEnd="@dimen/margin_right"
-		android:text="@string/settingsTextViewCredentialsLabel"
-		android:textSize="@dimen/text_size"
-		app:layout_constraintBottom_toTopOf="@+id/settingsCredentialsUsernameEditText"
-		app:layout_constraintEnd_toEndOf="parent"
-		app:layout_constraintHorizontal_bias="1.0"
-		app:layout_constraintStart_toStartOf="parent" />
+			<com.google.android.material.textfield.TextInputEditText
+				android:id="@+id/settingsInstanceUrlTextInputEditText"
+				android:layout_width="match_parent"
+				android:layout_height="match_parent"
+				android:autofillHints=""
+				android:ems="10"
+				android:inputType="textUri"
+				android:minHeight="48dp"
+				android:textColorHint="@color/textColorHint"
+				android:textSize="@dimen/text_size" />
 
-	<EditText
-		android:id="@+id/settingsCredentialsUsernameEditText"
-		android:layout_width="0dp"
-		android:layout_height="wrap_content"
-		android:layout_marginStart="@dimen/margin_left"
-		android:layout_marginTop="48dp"
-		android:layout_marginEnd="@dimen/margin_right"
-		android:autofillHints=""
-		android:ems="10"
-		android:enabled="false"
-		android:hint="@string/settingsEditTextCredentialsUsernameSetupHint"
-		android:inputType="textPersonName"
-		android:minHeight="48dp"
-		android:textColorHint="@color/textColorHint"
-		android:textSize="@dimen/text_size"
-		app:layout_constraintEnd_toEndOf="parent"
-		app:layout_constraintHorizontal_bias="0.0"
-		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toBottomOf="@+id/settingsInstanceUrlTextInputEditText"
-		tools:ignore="VisualLintTextFieldSize" />
+		</com.google.android.material.textfield.TextInputLayout>
 
-	<EditText
-		android:id="@+id/settingsCredentialsPasswordEditText"
-		android:layout_width="0dp"
-		android:layout_height="wrap_content"
-		android:layout_marginStart="@dimen/margin_left"
-		android:layout_marginEnd="@dimen/margin_right"
-		android:autofillHints=""
-		android:ems="10"
-		android:enabled="false"
-		android:hint="@string/settingsEditTextCredentialsPasswordSetupHint"
-		android:inputType="textPassword"
-		android:minHeight="48dp"
-		android:textColorHint="@color/textColorHint"
-		android:textSize="@dimen/text_size"
-		app:layout_constraintEnd_toEndOf="parent"
-		app:layout_constraintHorizontal_bias="0.0"
-		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toBottomOf="@+id/settingsCredentialsUsernameEditText"
-		tools:ignore="VisualLintTextFieldSize" />
+		<com.google.android.material.textfield.TextInputLayout
+			android:id="@+id/settingsCredentialsUsernameTextInputLayout"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="32dp"
+			android:enabled="false"
+			android:hint="@string/settingsTextInputLayoutCredentialsUsernameHintSetup"
+			app:counterEnabled="true"
+			app:counterMaxLength="30"
+			app:errorEnabled="true"
+			app:helperText="@string/settingsTextInputLayoutCredentialsUsernameHelp"
+			app:helperTextEnabled="true"
+			app:hintAnimationEnabled="true"
+			app:hintEnabled="true"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toBottomOf="@+id/settingsInstanceUrlTextInputLayout"
+			app:startIconDrawable="@drawable/person">
 
-	<com.google.android.material.materialswitch.MaterialSwitch
-		android:id="@+id/settingsAutomaticRefreshSwitch"
-		android:layout_width="0dp"
-		android:layout_height="wrap_content"
-		android:layout_marginStart="@dimen/margin_left"
-		android:layout_marginTop="18dp"
-		android:layout_marginEnd="@dimen/margin_right"
-		android:checked="true"
-		android:minHeight="48dp"
-		android:text="@string/settingsCheckBoxAutomaticRefresh"
-		android:textSize="@dimen/text_size"
-		app:layout_constraintEnd_toEndOf="parent"
-		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toBottomOf="@+id/settingsCredentialsPasswordEditText"
-		tools:ignore="VisualLintButtonSize" />
+			<com.google.android.material.textfield.TextInputEditText
+				android:id="@+id/settingsCredentialsUsernameTextInputEditText"
+				android:layout_width="match_parent"
+				android:layout_height="match_parent"
+				android:autofillHints=""
+				android:ems="10"
+				android:enabled="true"
+				android:inputType="textPersonName"
+				android:minHeight="48dp"
+				android:textColorHint="@color/textColorHint"
+				android:textSize="@dimen/text_size"
+				tools:ignore="VisualLintTextFieldSize" />
 
-	<TextView
-		android:id="@+id/settingsAutomaticRefreshIntervalTextView"
-		android:layout_width="0dp"
-		android:layout_height="wrap_content"
-		android:layout_marginStart="32dp"
-		android:layout_marginEnd="@dimen/margin_right"
-		android:text="@string/settingsTextViewIntervalLabel"
-		android:textSize="@dimen/text_size"
-		app:layout_constraintBottom_toTopOf="@+id/settingsAutomaticRefreshIntervalEditText"
-		app:layout_constraintEnd_toEndOf="parent"
-		app:layout_constraintStart_toStartOf="parent" />
+		</com.google.android.material.textfield.TextInputLayout>
 
-	<EditText
-		android:id="@+id/settingsAutomaticRefreshIntervalEditText"
-		android:layout_width="0dp"
-		android:layout_height="wrap_content"
-		android:layout_marginStart="32dp"
-		android:layout_marginTop="16dp"
-		android:layout_marginEnd="@dimen/margin_right"
-		android:autofillHints=""
-		android:ems="10"
-		android:hint="@string/settingsEditTextIntervalHint"
-		android:inputType="number"
-		android:minHeight="48dp"
-		android:textColorHint="@color/textColorHint"
-		android:textSize="@dimen/text_size"
-		app:layout_constraintEnd_toEndOf="parent"
-		app:layout_constraintHorizontal_bias="1.0"
-		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toBottomOf="@+id/settingsAutomaticRefreshSwitch"
-		tools:ignore="VisualLintTextFieldSize" />
+		<com.google.android.material.textfield.TextInputLayout
+			android:id="@+id/settingsCredentialsPasswordTextInputLayout"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="32dp"
+			android:enabled="false"
+			android:hint="@string/settingsTextInputLayoutCredentialsPasswordHintSetup"
+			app:errorEnabled="true"
+			app:helperText="@string/settingsTextInputLayoutCredentialsPasswordHelp"
+			app:helperTextEnabled="true"
+			app:hintEnabled="true"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toBottomOf="@+id/settingsCredentialsUsernameTextInputLayout"
+			app:passwordToggleEnabled="true"
+			app:startIconDrawable="@drawable/password">
 
-	<TextView
-		android:id="@+id/settingsThemeTextView"
-		android:layout_width="0dp"
-		android:layout_height="wrap_content"
-		android:layout_marginStart="@dimen/margin_left"
-		android:layout_marginEnd="@dimen/margin_right"
-		android:text="@string/settingsTextViewThemeLabel"
-		android:textSize="@dimen/text_size"
-		app:layout_constraintBottom_toTopOf="@+id/settingsThemeSpinner"
-		app:layout_constraintEnd_toEndOf="parent"
-		app:layout_constraintHorizontal_bias="1.0"
-		app:layout_constraintStart_toStartOf="parent" />
+			<com.google.android.material.textfield.TextInputEditText
+				android:id="@+id/settingsCredentialsPasswordTextInputEditText"
+				android:layout_width="match_parent"
+				android:layout_height="match_parent"
+				android:autofillHints=""
+				android:ems="10"
+				android:enabled="true"
+				android:inputType="textPassword"
+				android:minHeight="48dp"
+				android:textColorHint="@color/textColorHint"
+				android:textSize="@dimen/text_size"
+				tools:ignore="VisualLintTextFieldSize" />
 
-	<Spinner
-		android:id="@+id/settingsThemeSpinner"
-		android:layout_width="0dp"
-		android:layout_height="wrap_content"
-		android:layout_marginStart="@dimen/margin_left"
-		android:layout_marginTop="48dp"
-		android:layout_marginEnd="@dimen/margin_right"
-		android:entries="@array/spinnerThemes"
-		android:minHeight="48dp"
-		android:spinnerMode="dropdown"
-		app:layout_constraintEnd_toEndOf="parent"
-		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toBottomOf="@+id/settingsAutomaticRefreshIntervalEditText" />
+		</com.google.android.material.textfield.TextInputLayout>
 
-	<TextView
-		android:id="@+id/settingsNotificationsTextView"
-		android:layout_width="0dp"
-		android:layout_height="wrap_content"
-		android:layout_marginStart="@dimen/margin_left"
-		android:layout_marginEnd="@dimen/margin_right"
-		android:text="@string/settingsTextViewNotificationsLabel"
-		android:textSize="@dimen/text_size"
-		app:layout_constraintBottom_toTopOf="@+id/settingsNotificationsAlwaysOngoingSwitch"
-		app:layout_constraintEnd_toEndOf="parent"
-		app:layout_constraintHorizontal_bias="0.0"
-		app:layout_constraintStart_toStartOf="parent" />
+		<com.google.android.material.materialswitch.MaterialSwitch
+			android:id="@+id/settingsAutomaticRefreshSwitch"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="32dp"
+			android:checked="true"
+			android:minHeight="48dp"
+			android:text="@string/settingsSwitchAutomaticRefresh"
+			android:textSize="@dimen/text_size"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toBottomOf="@+id/settingsCredentialsPasswordTextInputLayout"
+			tools:ignore="VisualLintButtonSize" />
 
-	<com.google.android.material.materialswitch.MaterialSwitch
-		android:id="@+id/settingsNotificationsAlwaysOngoingSwitch"
-		android:layout_width="0dp"
-		android:layout_height="wrap_content"
-		android:layout_marginStart="@dimen/margin_left"
-		android:layout_marginTop="48dp"
-		android:layout_marginEnd="@dimen/margin_right"
-		android:checked="true"
-		android:minHeight="48dp"
-		android:text="@string/settingsCheckBoxNotificationsAlwaysOngoing"
-		android:textSize="@dimen/text_size"
-		app:layout_constraintEnd_toEndOf="parent"
-		app:layout_constraintHorizontal_bias="0.0"
-		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toBottomOf="@+id/settingsThemeSpinner"
-		tools:ignore="VisualLintButtonSize" />
+		<com.google.android.material.textfield.TextInputLayout
+			android:id="@+id/settingsAutomaticRefreshIntervalTextInputLayout"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:hint="@string/settingsTextInputLayoutAutomaticRefreshIntervalHint"
+			app:errorEnabled="true"
+			app:helperText="@string/settingsTextInputLayoutAutomaticRefreshIntervalHelp"
+			app:helperTextEnabled="true"
+			app:hintAnimationEnabled="true"
+			app:hintEnabled="true"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toBottomOf="@+id/settingsAutomaticRefreshSwitch"
+			app:startIconDrawable="@drawable/update"
+			app:startIconScaleType="center">
 
-	<com.google.android.material.materialswitch.MaterialSwitch
-		android:id="@+id/settingsNotificationsWhenIssueArisesSwitch"
-		android:layout_width="0dp"
-		android:layout_height="wrap_content"
-		android:layout_marginStart="@dimen/margin_left"
-		android:layout_marginEnd="@dimen/margin_right"
-		android:checked="true"
-		android:minHeight="48dp"
-		android:text="@string/settingsCheckBoxNotificationsWhenIssueArises"
-		android:textSize="@dimen/text_size"
-		app:layout_constraintEnd_toEndOf="parent"
-		app:layout_constraintHorizontal_bias="0.0"
-		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toBottomOf="@+id/settingsNotificationsAlwaysOngoingSwitch"
-		tools:ignore="VisualLintButtonSize" />
+			<com.google.android.material.textfield.TextInputEditText
+				android:id="@+id/settingsAutomaticRefreshIntervalTextInputEditText"
+				android:layout_width="match_parent"
+				android:layout_height="match_parent"
+				android:autofillHints=""
+				android:ems="10"
+				android:inputType="none|number"
+				android:minHeight="48dp"
+				android:textColorHint="@color/textColorHint"
+				android:textSize="@dimen/text_size" />
 
-	<Button
-		android:id="@+id/settingsSaveButton"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:layout_marginEnd="@dimen/margin_right"
-		android:layout_marginBottom="@dimen/margin_bottom"
-		android:backgroundTint="@color/blue_400"
-		android:paddingStart="@dimen/button_padding_start"
-		android:paddingEnd="@dimen/button_padding_end"
-		android:text="@string/settingsButtonSave"
-		app:layout_constraintBottom_toBottomOf="parent"
-		app:layout_constraintEnd_toEndOf="parent" />
+		</com.google.android.material.textfield.TextInputLayout>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+		<com.google.android.material.textfield.TextInputLayout
+			android:id="@+id/settingsThemeTextInputLayout"
+			style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="32dp"
+			android:labelFor="@id/settingsThemeAutoCompleteTextView"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toBottomOf="@+id/settingsAutomaticRefreshIntervalTextInputLayout"
+			app:startIconDrawable="@drawable/light_mode"
+			app:startIconScaleType="center">
+
+			<AutoCompleteTextView
+				android:id="@+id/settingsThemeAutoCompleteTextView"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:inputType="none"
+				app:simpleItems="@array/themeValues" />
+
+		</com.google.android.material.textfield.TextInputLayout>
+
+		<com.google.android.material.materialswitch.MaterialSwitch
+			android:id="@+id/settingsNotificationAlwaysOngoingSwitch"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="32dp"
+			android:checked="true"
+			android:minHeight="48dp"
+			android:text="@string/settingsSwitchNotificationAlwaysOngoing"
+			android:textSize="@dimen/text_size"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintHorizontal_bias="0.0"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toBottomOf="@+id/settingsThemeTextInputLayout"
+			tools:ignore="VisualLintButtonSize" />
+
+		<com.google.android.material.materialswitch.MaterialSwitch
+			android:id="@+id/settingsNotificationWhenIssueArisesSwitch"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:layout_marginBottom="32dp"
+			android:checked="true"
+			android:minHeight="48dp"
+			android:text="@string/settingsSwitchNotificationWhenIssueArises"
+			android:textSize="@dimen/text_size"
+			app:layout_constraintBottom_toTopOf="@+id/settingsSaveButton"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintHorizontal_bias="0.0"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toBottomOf="@id/settingsNotificationAlwaysOngoingSwitch"
+			app:layout_constraintVertical_bias="0.0"
+			tools:ignore="VisualLintButtonSize" />
+
+		<Button
+			android:id="@+id/settingsSaveButton"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:backgroundTint="@color/blue_400"
+			android:paddingStart="@dimen/button_padding_start"
+			android:paddingEnd="@dimen/button_padding_end"
+			android:text="@string/settingsButtonSave"
+			app:layout_constraintBottom_toBottomOf="parent"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintHorizontal_bias="1.0"
+			app:layout_constraintStart_toStartOf="parent" />
+
+	</androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>
