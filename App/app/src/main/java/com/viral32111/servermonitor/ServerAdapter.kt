@@ -111,7 +111,7 @@ class ServerAdapter( private val servers: Array<Server>, private val context: Co
 			// Network I/O
 			if ( server.networkInterfaces != null ) {
 				val rate = Size( server.networkInterfaces!!.fold( 0 ) { total, drive -> total + drive.rateBytesSent + drive.rateBytesReceived } ) // https://kotlinlang.org/docs/collection-aggregate.html#fold-and-reduce
-				viewHolder.networkTextView.text = String.format( context.getString( R.string.serversTextViewServerNetworkUsage ),rate.amount.roundToLong(), rate.suffix.substring( 0, 1 ) )
+				viewHolder.networkTextView.text = String.format( context.getString( R.string.serversTextViewServerNetworkUsage ), rate.amount.roundToLong().coerceAtLeast( 0 ), rate.suffix.substring( 0, 1 ) )
 				viewHolder.networkTextView.setTextColor( context.getColor( R.color.statusGood ) )
 			} else {
 				viewHolder.networkTextView.text = String.format( context.getString( R.string.serversTextViewServerNetworkUsage ), 0, "K" )
@@ -121,7 +121,7 @@ class ServerAdapter( private val servers: Array<Server>, private val context: Co
 			// Disk I/O
 			if ( server.drives != null ) {
 				val rate = Size( server.drives!!.fold( 0 ) { total, drive -> total + drive.rateBytesRead + drive.rateBytesWritten } )
-				viewHolder.diskTextView.text = String.format( context.getString( R.string.serversTextViewServerDiskUsage ), rate.amount.roundToLong(), rate.suffix.substring( 0, 1 ) )
+				viewHolder.diskTextView.text = String.format( context.getString( R.string.serversTextViewServerDiskUsage ), rate.amount.roundToLong().coerceAtLeast( 0 ), rate.suffix.substring( 0, 1 ) )
 				viewHolder.diskTextView.setTextColor( context.getColor( R.color.statusGood ) )
 			} else {
 				viewHolder.diskTextView.text = String.format( context.getString( R.string.serversTextViewServerDiskUsage ), 0, "K" )
