@@ -7,8 +7,6 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import com.android.volley.Request
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
-import com.google.gson.JsonParseException
-import com.google.gson.JsonSyntaxException
 
 // Shows a toast popup at the bottom of the activity
 // https://developer.android.com/develop/ui/views/notifications/snackbar/showing
@@ -53,20 +51,18 @@ fun createProgressDialog( activity: Activity, titleId: Int, messageId: Int, canc
 /**
  * Creates a modern Material 3 confirmation dialog.
  * @param activity The current activity.
- * @param titleId The resource to use as the of the dialog.
  * @param messageId The resource to use as the message in the dialog.
  * @param positiveCallback The callback to execute when the dialog is confirmed.
  * @param negativeCallback The callback to execute when the dialog is aborted.
  */
 fun showConfirmDialog(
 	activity: Activity,
-	titleId: Int,
 	messageId: Int,
 	positiveCallback: () -> Unit,
 	negativeCallback: () -> Unit
 ): AlertDialog =
 	MaterialAlertDialogBuilder( activity )
-		.setTitle( titleId )
+		.setTitle( R.string.dialogConfirmTitle )
 		.setMessage( messageId )
 		.setPositiveButton( R.string.dialogConfirmPositiveButton ) { _, _ ->
 			Log.d( Shared.logTag, "Confirmation dialog agreed" )

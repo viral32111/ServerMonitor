@@ -43,15 +43,43 @@ class ServerActivity : AppCompatActivity() {
 		materialToolbar?.isTitleCentered = true
 		Log.d( Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered })" )
 
-		// Open settings when its action bar menu item is clicked
+		// When an item on the action bar menu is pressed...
 		materialToolbar?.setOnMenuItemClickListener { menuItem ->
-			if ( menuItem.title?.equals( getString( R.string.action_bar_menu_settings ) ) == true ) {
-				Log.i( Shared.logTag, "Opening Settings activity..." )
+
+			// Settings
+			if ( menuItem.title?.equals( getString( R.string.actionBarMenuSettings ) ) == true ) {
+				Log.d( Shared.logTag, "Opening Settings activity..." )
+
 				startActivity( Intent( this, SettingsActivity::class.java ) )
 				overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
+
+				// Logout
+			} else if ( menuItem.title?.equals( getString( R.string.actionBarMenuLogout ) ) == true ) {
+				Log.d( Shared.logTag, "Logout menu item pressed, showing confirmation..." )
+
+				showConfirmDialog( this, R.string.dialogConfirmLogoutMessage, {
+					Log.d( Shared.logTag, "Logout confirmed" )
+
+					// Erase setup URL & credentials
+					settings.instanceUrl = null
+					settings.credentialsUsername = null
+					settings.credentialsPassword = null
+					settings.save()
+					Log.d( Shared.logTag, "Erased stored credentials" )
+
+					// Return to the setup activity
+					Log.d( Shared.logTag, "Opening Setup activity..." )
+					startActivity( Intent( this, SetupActivity::class.java ) )
+					overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
+					finish()
+				}, {
+					Log.d( Shared.logTag, "Logout aborted" )
+				} )
+
 			}
 
 			return@setOnMenuItemClickListener true
+
 		}
 
 		// Get the settings

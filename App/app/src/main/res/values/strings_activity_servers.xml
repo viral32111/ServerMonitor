@@ -6,7 +6,7 @@
 
 	<!-- Screen reader description of scroll view -->
 	<string name="serversScrollViewSpeakableText">List of servers</string>
-	
+
 	<!-- Toasts for fetch servers -->
 	<string name="serversToastServersAuthenticationUnknownUser">No credentials exist with the configured username.</string>
 	<string name="serversToastServersAuthenticationIncorrectPassword">The configured instance password is incorrect.</string>

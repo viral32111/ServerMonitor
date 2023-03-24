@@ -8,7 +8,6 @@ import android.widget.Button
 import android.widget.EditText
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.widget.doOnTextChanged
 import com.android.volley.*
 import com.google.android.material.appbar.MaterialToolbar
 
@@ -39,6 +38,9 @@ class SetupActivity : AppCompatActivity() {
 		materialToolbar?.isTitleCentered = true
 		Log.d( Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered })" )
 
+		// Hide the logout button as it is pointless during setup - https://www.tutorialspoint.com/how-do-i-hide-and-show-a-menu-item-in-the-android-actionbar
+		materialToolbar?.menu?.findItem( R.id.actionBarLogout )?.isVisible = false
+
 		// Get all the UI
 		instanceUrlEditText = findViewById( R.id.setupInstanceUrlTextInputEditText )
 		credentialsUsernameEditText = findViewById( R.id.setupCredentialsUsernameTextInputEditText )
@@ -53,12 +55,18 @@ class SetupActivity : AppCompatActivity() {
 		// Initialise our RESTful API class
 		API.initializeQueue( applicationContext )
 
-		// Open settings when its action bar menu item is clicked
+		// When an item on the action bar menu is pressed...
 		materialToolbar?.setOnMenuItemClickListener { menuItem ->
-			if ( menuItem.title?.equals( getString( R.string.action_bar_menu_settings ) ) == true ) {
+
+			// Settings
+			if ( menuItem.title?.equals( getString( R.string.actionBarMenuSettings ) ) == true ) {
 				Log.d( Shared.logTag, "Opening Settings activity..." )
 				startActivity( Intent( this, SettingsActivity::class.java ) )
 				overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
+
+			// Logout
+			} else if ( menuItem.title?.equals( getString( R.string.actionBarMenuLogout ) ) == true ) {
+				Log.w( Shared.logTag, "The user logged out from the setup activity?!" )
 			}
 
 			return@setOnMenuItemClickListener true

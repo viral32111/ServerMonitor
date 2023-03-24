@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-	<!-- Action bar options menu -->
-	<string name="action_bar_menu_settings">Settings</string>
+	<!-- Action bar menus -->
+	<string name="actionBarMenuSettings">Settings</string>
+	<string name="actionBarMenuLogout">Logout</string>
 
 </resources>

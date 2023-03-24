@@ -50,25 +50,11 @@ class ServersActivity : AppCompatActivity() {
 		supportActionBar?.setCustomView( R.layout.action_bar )
 		Log.d( Shared.logTag, "Switched to Material Toolbar" )
 
-		// Get all UI controls
-		val materialToolbar = supportActionBar?.customView?.findViewById<MaterialToolbar>( R.id.actionBarMaterialToolbar )
-		Log.d( Shared.logTag, "Got UI controls" )
-
 		// Set the title on the toolbar
-		materialToolbar?.title = getString( R.string.serversActionBarTitle )
+		val materialToolbar = supportActionBar?.customView?.findViewById<MaterialToolbar>( R.id.actionBarMaterialToolbar )
+		materialToolbar?.title = getString( R.string.setupActionBarTitle )
 		materialToolbar?.isTitleCentered = true
 		Log.d( Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered })" )
-
-		// Open settings when its action bar menu item is clicked
-		materialToolbar?.setOnMenuItemClickListener { menuItem ->
-			if ( menuItem.title?.equals( getString( R.string.action_bar_menu_settings ) ) == true ) {
-				Log.d( Shared.logTag, "Opening Settings activity..." )
-				startActivity( Intent( this, SettingsActivity::class.java ) )
-				overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
-			}
-
-			return@setOnMenuItemClickListener true
-		}
 
 		// Get all the UI
 		swipeRefreshLayout = findViewById( R.id.serversSwipeRefreshLayout )
@@ -81,9 +67,48 @@ class ServersActivity : AppCompatActivity() {
 		settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE ) )
 		Log.d( Shared.logTag, "Got settings ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
 
-		// Switch to the servers activity if we aren't servers yet
+		// When an item on the action bar menu is pressed...
+		materialToolbar?.setOnMenuItemClickListener { menuItem ->
+
+			// Settings
+			if ( menuItem.title?.equals( getString( R.string.actionBarMenuSettings ) ) == true ) {
+				Log.d( Shared.logTag, "Opening Settings activity..." )
+
+				startActivity( Intent( this, SettingsActivity::class.java ) )
+				overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
+
+			// Logout
+			} else if ( menuItem.title?.equals( getString( R.string.actionBarMenuLogout ) ) == true ) {
+				Log.d( Shared.logTag, "Logout menu item pressed, showing confirmation..." )
+
+				showConfirmDialog( this, R.string.dialogConfirmLogoutMessage, {
+					Log.d( Shared.logTag, "Logout confirmed" )
+
+					// Erase setup URL & credentials
+					settings.instanceUrl = null
+					settings.credentialsUsername = null
+					settings.credentialsPassword = null
+					settings.save()
+					Log.d( Shared.logTag, "Erased stored credentials" )
+
+					// Return to the setup activity
+					Log.d( Shared.logTag, "Opening Setup activity..." )
+					startActivity( Intent( this, SetupActivity::class.java ) )
+					overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
+					finish()
+				}, {
+					Log.d( Shared.logTag, "Logout aborted" )
+				} )
+
+			}
+
+			return@setOnMenuItemClickListener true
+
+		}
+
+		// Return to the setup activity if we aren't setup yet
 		if ( !settings.isSetup() ) {
-			Log.d( Shared.logTag, "Not setup yet, switching to servers activity..." )
+			Log.d( Shared.logTag, "Not setup yet, returning to Setup activity..." )
 			startActivity( Intent( this, SetupActivity::class.java ) )
 			overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
 			return

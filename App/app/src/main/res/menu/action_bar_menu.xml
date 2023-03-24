@@ -3,8 +3,14 @@
 	xmlns:app="http://schemas.android.com/apk/res-auto">
 
 	<item
-		android:id="@+id/actionBarOptions"
-		android:title="@string/action_bar_menu_settings"
+		android:id="@+id/actionBarSettings"
+		android:title="@string/actionBarMenuSettings"
 		android:orderInCategory="1"
+		app:showAsAction="never" />
+
+	<item
+		android:id="@+id/actionBarLogout"
+		android:title="@string/actionBarMenuLogout"
+		android:orderInCategory="2"
 		app:showAsAction="never" />
 </menu>

@@ -22,7 +22,11 @@
 	<string name="dialogProgressNegativeButton">Cancel</string>
 
 	<!-- Confirmation dialog -->
+	<string name="dialogConfirmTitle">Confirm</string>
 	<string name="dialogConfirmPositiveButton">Yes</string>
 	<string name="dialogConfirmNegativeButton">No</string>
+
+	<!-- Logout confirmation dialog -->
+	<string name="dialogConfirmLogoutMessage">Are you sure you want to logout?</string>
 
 </resources>

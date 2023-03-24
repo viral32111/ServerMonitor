@@ -45,7 +45,6 @@
 	<string name="settingsButtonSave">Save</string>
 
 	<!-- Back confirmation alert dialog -->
-	<string name="settingsDialogConfirmBackTitle">Confirm</string>
 	<string name="settingsDialogConfirmBackMessage">Are you sure you wish to go back without saving?</string>
 
 </resources>

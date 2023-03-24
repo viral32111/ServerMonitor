@@ -12,7 +12,6 @@ import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.widget.doOnTextChanged
 import com.android.volley.*
 import com.google.android.material.appbar.MaterialToolbar
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
@@ -24,9 +23,10 @@ class SettingsActivity : AppCompatActivity() {
 	private lateinit var instanceUrlEditText: TextInputEditText
 	private lateinit var credentialsUsernameInputTextLayout: TextInputLayout
 	private lateinit var credentialsUsernameEditText: TextInputEditText
-	private lateinit var credentialsPasswordInputLayout: TextInputLayout
+	private lateinit var credentialsPasswordInputTextLayout: TextInputLayout
 	private lateinit var credentialsPasswordEditText: TextInputEditText
 	private lateinit var automaticRefreshSwitch: MaterialSwitch
+	private lateinit var automaticRefreshIntervalTextInputLayout: TextInputLayout
 	private lateinit var automaticRefreshIntervalEditText: TextInputEditText
 	private lateinit var themeTextInputLayout: TextInputLayout
 	private lateinit var themeAutoCompleteTextView: AutoCompleteTextView
@@ -58,10 +58,14 @@ class SettingsActivity : AppCompatActivity() {
 		Log.d( Shared.logTag, "Disabled menu items on Material Toolbar" )
 
 		// Get all the UI
+		instanceUrlTextInputLayout = findViewById( R.id.settingsInstanceUrlTextInputLayout )
 		instanceUrlEditText = findViewById( R.id.settingsInstanceUrlTextInputEditText )
+		credentialsUsernameInputTextLayout = findViewById( R.id.settingsCredentialsUsernameTextInputLayout )
 		credentialsUsernameEditText = findViewById( R.id.settingsCredentialsUsernameTextInputEditText )
+		credentialsPasswordInputTextLayout = findViewById( R.id.settingsCredentialsPasswordTextInputLayout )
 		credentialsPasswordEditText = findViewById( R.id.settingsCredentialsPasswordTextInputEditText )
 		automaticRefreshSwitch = findViewById( R.id.settingsAutomaticRefreshSwitch )
+		automaticRefreshIntervalTextInputLayout = findViewById( R.id.settingsAutomaticRefreshIntervalTextInputLayout )
 		automaticRefreshIntervalEditText = findViewById( R.id.settingsAutomaticRefreshIntervalTextInputEditText )
 		themeTextInputLayout = findViewById( R.id.settingsThemeTextInputLayout )
 		themeAutoCompleteTextView = findViewById( R.id.settingsThemeAutoCompleteTextView )
@@ -94,6 +98,7 @@ class SettingsActivity : AppCompatActivity() {
 
 		// Disables interval input when automatic refresh is switched off
 		automaticRefreshSwitch.setOnCheckedChangeListener { _, isChecked ->
+			automaticRefreshIntervalTextInputLayout.isEnabled = isChecked
 			automaticRefreshIntervalEditText.isEnabled = isChecked
 		}
 
@@ -168,12 +173,13 @@ class SettingsActivity : AppCompatActivity() {
 		}
 		if ( !settings.credentialsPassword.isNullOrBlank() ) {
 			credentialsPasswordEditText.setText( settings.credentialsPassword )
-			credentialsPasswordInputLayout.hint = getString( R.string.settingsTextInputLayoutCredentialsPasswordHint )
+			credentialsPasswordInputTextLayout.hint = getString( R.string.settingsTextInputLayoutCredentialsPasswordHint )
 			credentialsPasswordEditText.isEnabled = true
-			credentialsPasswordInputLayout.isEnabled = true
+			credentialsPasswordInputTextLayout.isEnabled = true
 		}
 
 		// Disable interval input if automatic refresh is switched off
+		automaticRefreshIntervalTextInputLayout.isEnabled = automaticRefreshSwitch.isChecked
 		automaticRefreshIntervalEditText.isEnabled = automaticRefreshSwitch.isChecked
 
 	}
@@ -366,12 +372,18 @@ class SettingsActivity : AppCompatActivity() {
 
 		// Only change these if we're already setup
 		if ( isSetup ) {
+			instanceUrlTextInputLayout.isEnabled = shouldEnable
 			instanceUrlEditText.isEnabled = shouldEnable
+
+			credentialsUsernameInputTextLayout.isEnabled = shouldEnable
 			credentialsUsernameEditText.isEnabled = shouldEnable
+
+			credentialsPasswordInputTextLayout.isEnabled = shouldEnable
 			credentialsPasswordEditText.isEnabled = shouldEnable
 		}
 
 		automaticRefreshSwitch.isEnabled = shouldEnable
+		automaticRefreshIntervalTextInputLayout.isEnabled = shouldEnable && automaticRefreshSwitch.isChecked // Only toggle this if automatic refreshing is enabled
 		automaticRefreshIntervalEditText.isEnabled = shouldEnable && automaticRefreshSwitch.isChecked // Only toggle this if automatic refreshing is enabled
 		//themeTextInputLayout.isEnabled = false // TODO: Don't enable this until dark theme is implemented
 		//themeAutoCompleteTextView.isEnabled = false // TODO: Don't enable this until dark theme is implemented
@@ -386,7 +398,7 @@ class SettingsActivity : AppCompatActivity() {
 		if ( hasValuesChanged( settings ) ) {
 			Log.d( Shared.logTag, "Settings have changed, showing confirmation dialog..." )
 
-			showConfirmDialog( this,R.string.settingsDialogConfirmBackTitle, R.string.settingsDialogConfirmBackMessage, {
+			showConfirmDialog( this, R.string.settingsDialogConfirmBackMessage, {
 				Log.d( Shared.logTag, "Back confirmed, returning to previous activity..." )
 
 				finish()
