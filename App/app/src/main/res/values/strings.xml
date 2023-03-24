@@ -21,4 +21,8 @@
 	<!-- Progress dialog -->
 	<string name="dialogProgressNegativeButton">Cancel</string>
 
+	<!-- Confirmation dialog -->
+	<string name="dialogConfirmPositiveButton">Yes</string>
+	<string name="dialogConfirmNegativeButton">No</string>
+
 </resources>

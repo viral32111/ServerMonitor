@@ -386,19 +386,14 @@ class SettingsActivity : AppCompatActivity() {
 		if ( hasValuesChanged( settings ) ) {
 			Log.d( Shared.logTag, "Settings have changed, showing confirmation dialog..." )
 
-			MaterialAlertDialogBuilder( this )
-				.setTitle( R.string.settingsDialogConfirmBackTitle )
-				.setMessage( R.string.settingsDialogConfirmBackMessage )
-				.setPositiveButton( R.string.settingsDialogConfirmBackPositiveButton ) { _, _ ->
-					Log.d( Shared.logTag, "Back confirmed, returning to previous activity..." )
+			showConfirmDialog( this,R.string.settingsDialogConfirmBackTitle, R.string.settingsDialogConfirmBackMessage, {
+				Log.d( Shared.logTag, "Back confirmed, returning to previous activity..." )
 
-					finish()
-					overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
-				}
-				.setNegativeButton( R.string.settingsDialogConfirmBackNegativeButton ) { _, _ ->
-					Log.d( Shared.logTag, "Back aborted, not returning to previous activity" )
-				}
-				.show()
+				finish()
+				overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
+			}, {
+				Log.d( Shared.logTag, "Back aborted, not returning to previous activity" )
+			} )
 
 		} else {
 			Log.d( Shared.logTag, "Settings have not changed, not showing confirmation dialog" )

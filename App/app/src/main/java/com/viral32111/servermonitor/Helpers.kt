@@ -50,9 +50,31 @@ fun createProgressDialog( activity: Activity, titleId: Int, messageId: Int, canc
 
 }
 
-
-
-
-fun bytesToAppropriateUnit( bytes: Long ) {
-
-}
+/**
+ * Creates a modern Material 3 confirmation dialog.
+ * @param activity The current activity.
+ * @param titleId The resource to use as the of the dialog.
+ * @param messageId The resource to use as the message in the dialog.
+ * @param positiveCallback The callback to execute when the dialog is confirmed.
+ * @param negativeCallback The callback to execute when the dialog is aborted.
+ */
+fun showConfirmDialog(
+	activity: Activity,
+	titleId: Int,
+	messageId: Int,
+	positiveCallback: () -> Unit,
+	negativeCallback: () -> Unit
+): AlertDialog =
+	MaterialAlertDialogBuilder( activity )
+		.setTitle( titleId )
+		.setMessage( messageId )
+		.setPositiveButton( R.string.dialogConfirmPositiveButton ) { _, _ ->
+			Log.d( Shared.logTag, "Confirmation dialog agreed" )
+			positiveCallback()
+		}
+		.setNegativeButton( R.string.dialogConfirmNegativeButton ) { _, _ ->
+			Log.d( Shared.logTag, "Confirmation dialog declined" )
+			negativeCallback()
+		}
+		.setCancelable( false )
+		.show()
