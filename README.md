@@ -14,8 +14,8 @@ A [Prometheus time-series database](https://prometheus.io/) is required for stor
 
 1. Download the [latest release](https://github.com/viral32111/ServerMonitor/releases/latest) of the Android application (`Server-Monitor-App.apk`) & server service (`Server-Monitor-Service.zip`).
 2. Install the server service on all the servers you wish to manage (the [.NET Core 7.0 Runtime](https://dotnet.microsoft.com/download/dotnet/7.0) is required).
-   * One server must be designated as the *"connector"* (RESTful API) for the Android application to fetch metrics data from. See [Connector](#connector).
-   * All other servers must run in the *"collection"* mode for gathering & exporting metrics data for Prometheus to scrape. See [Collector](#collector).
+	* One server must be designated as the *"connector"* (RESTful API) for the Android application to fetch metrics data from. See [Connector](#connector).
+	* All other servers must run in the *"collection"* mode for gathering & exporting metrics data for Prometheus to scrape. See [Collector](#collector).
 3. Configure the server service appropriately using the JSON configuration file or environment variables ([see configuration](#configuration)).
 4. Install the Android application on your device & connect to the publicly-accessible URL of the *"connector"* service using any of the configured credentials.
 
@@ -26,20 +26,20 @@ Alternatively, a [premade Docker image](https://github.com/users/viral32111/pack
 Download & start the *"collector*" by running the following command:
 ```
 docker container run \
-  --name server-monitor-collector \
-  --mount type=bind,source=/path/to/your/config.json,target=/etc/server-monitor/config.json \
-  --mount type=bind,source=/etc/systemd,target=/etc/systemd \
-  --mount type=bind,source=/var/lib/systemd,target=/var/lib/systemd \
-  --mount type=bind,source=/usr/lib/systemd,target=/usr/lib/systemd \
-  --mount type=bind,source=/run/systemd,target=/run/systemd \
-  --mount type=bind,source=/run/dbus/system_bus_socket,target=/run/dbus/system_bus_socket \
-  --network host \
-  --privileged \
-  --user 0:0 \
-  --restart on-failure \
-  --pull always \
-  ghcr.io/viral32111/server-monitor:main-ubuntu
-  collector
+	--name server-monitor-collector \
+	--mount type=bind,source=/path/to/your/config.json,target=/etc/server-monitor/config.json \
+	--mount type=bind,source=/etc/systemd,target=/etc/systemd \
+	--mount type=bind,source=/var/lib/systemd,target=/var/lib/systemd \
+	--mount type=bind,source=/usr/lib/systemd,target=/usr/lib/systemd \
+	--mount type=bind,source=/run/systemd,target=/run/systemd \
+	--mount type=bind,source=/run/dbus/system_bus_socket,target=/run/dbus/system_bus_socket \
+	--network host \
+	--privileged \
+	--user 0:0 \
+	--restart on-failure \
+	--pull always \
+	ghcr.io/viral32111/server-monitor:main-ubuntu
+	collector
 ```
 
 * Use the `:main-windows` image tag for Windows-based Docker installations.
@@ -50,13 +50,13 @@ docker container run \
 Download & start the *"connector*" by running the following command:
 ```
 docker container run \
-  --name server-monitor-connector \
-  --mount type=bind,source=/path/to/your/config.json,target=/etc/server-monitor/config.json \
-  --publish published=127.0.0.1:6996,target=6996,protocol=tcp \
-  --restart on-failure \
-  --pull always \
-  ghcr.io/viral32111/server-monitor:main-ubuntu
-  connector
+	--name server-monitor-connector \
+	--mount type=bind,source=/path/to/your/config.json,target=/etc/server-monitor/config.json \
+	--publish published=127.0.0.1:6996,target=6996,protocol=tcp \
+	--restart on-failure \
+	--pull always \
+	ghcr.io/viral32111/server-monitor:main-ubuntu
+	connector
 ```
 
 * Use the `:main-windows` image tag for Windows-based Docker installations.
@@ -68,12 +68,12 @@ docker container run \
 ## Configuration
 
 The JSON configuration file is searched for at the following paths:
- * Windows
-   * System: `C:\ProgramData\ServerMonitor\config.json`
-   * User: `C:\Users\USERNAME\AppData\Local\ServerMonitor\config.json`
- * Linux
-   * System: `/etc/server-monitor/config.json`
-   * User: `/home/USERNAME/.config/server-monitor/config.json`
+* Windows
+	* System: `C:\ProgramData\ServerMonitor\config.json`
+	* User: `C:\Users\USERNAME\AppData\Local\ServerMonitor\config.json`
+* Linux
+	* System: `/etc/server-monitor/config.json`
+	* User: `/home/USERNAME/.config/server-monitor/config.json`
 
 Alternatively, a path to a configuration file in a non-standard location can be specified with the `--config <path>` option (use `--help` for more information).
 
@@ -166,7 +166,7 @@ To verify service existence on Windows, open the *Services* (`services.msc`) app
 ### App
 
 1. Create a key store & signing key, then [configure signing](https://github.com/viral32111/ServerMonitor/blob/main/App/app/build.gradle#L22-L25) using environment variables or the global Gradle configuration file (`~/.gradle/gradle.properties`).
-  * Alternatively remove the signing configuration from the Gradle build file to disable APK signing.
+	* Alternatively remove the signing configuration from the Gradle build file to disable APK signing.
 2. Build the Android application with Gradle by running `./gradlew assembleRelease` in the [`App`](/App/) directory.
 3. Optionally run instrumented tests by running `./gradlew test` in the [`App`](/App/) directory.
 
