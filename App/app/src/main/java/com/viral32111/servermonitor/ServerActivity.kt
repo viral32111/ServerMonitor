@@ -2,11 +2,11 @@ package com.viral32111.servermonitor
 
 import android.content.Context
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.ActionBar
+import androidx.appcompat.app.AppCompatActivity
 import com.android.volley.*
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.gson.JsonParseException
@@ -76,6 +76,10 @@ class ServerActivity : AppCompatActivity() {
 					Log.d( Shared.logTag, "Logout aborted" )
 				} )
 
+			// About
+			} else if ( menuItem.title?.equals( getString( R.string.actionBarMenuAbout ) ) == true ) {
+				Log.d( Shared.logTag, "Showing information about app dialog..." )
+				showInformationDialog( this, R.string.dialogInformationAboutTitle, R.string.dialogInformationAboutMessage )
 			}
 
 			return@setOnMenuItemClickListener true

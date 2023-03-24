@@ -29,4 +29,11 @@
 	<!-- Logout confirmation dialog -->
 	<string name="dialogConfirmLogoutMessage">Are you sure you want to logout?</string>
 
+	<!-- Information dialog -->
+	<string name="dialogInformationPositive">Okay</string>
+
+	<!-- About information dialog -->
+	<string name="dialogInformationAboutTitle">About</string>
+	<string name="dialogInformationAboutMessage">This is an app for monitoring server metrics and status information in real-time.\n\nCreated by viral32111.\nhttps://github.com/viral32111/ServerMonitor</string>
+
 </resources>

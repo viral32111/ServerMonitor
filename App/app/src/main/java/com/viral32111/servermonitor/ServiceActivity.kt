@@ -46,7 +46,7 @@ class ServiceActivity : AppCompatActivity() {
 				startActivity( Intent( this, SettingsActivity::class.java ) )
 				overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
 
-				// Logout
+			// Logout
 			} else if ( menuItem.title?.equals( getString( R.string.actionBarMenuLogout ) ) == true ) {
 				Log.d( Shared.logTag, "Logout menu item pressed, showing confirmation..." )
 
@@ -69,6 +69,10 @@ class ServiceActivity : AppCompatActivity() {
 					Log.d( Shared.logTag, "Logout aborted" )
 				} )
 
+			// About
+			} else if ( menuItem.title?.equals( getString( R.string.actionBarMenuAbout ) ) == true ) {
+				Log.d( Shared.logTag, "Showing information about app dialog..." )
+				showInformationDialog( this, R.string.dialogInformationAboutTitle, R.string.dialogInformationAboutMessage )
 			}
 
 			return@setOnMenuItemClickListener true

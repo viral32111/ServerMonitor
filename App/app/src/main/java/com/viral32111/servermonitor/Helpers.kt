@@ -74,3 +74,22 @@ fun showConfirmDialog(
 		}
 		.setCancelable( false )
 		.show()
+
+/**
+ * Creates a modern Material 3 information dialog.
+ * @param activity The current activity.
+ * @param titleId The resource to use as the title of the dialog.
+ * @param messageId The resource to use as the message in the dialog.
+ */
+fun showInformationDialog(
+	activity: Activity,
+	titleId: Int,
+	messageId: Int
+): AlertDialog =
+	MaterialAlertDialogBuilder( activity )
+		.setTitle( titleId )
+		.setMessage( messageId )
+		.setPositiveButton( R.string.dialogInformationPositive ) { _, _ ->
+			Log.d( Shared.logTag, "Information dialog acknowledged" )
+		}
+		.show()

@@ -66,7 +66,12 @@ class SetupActivity : AppCompatActivity() {
 
 			// Logout
 			} else if ( menuItem.title?.equals( getString( R.string.actionBarMenuLogout ) ) == true ) {
-				Log.w( Shared.logTag, "The user logged out from the setup activity?!" )
+				Log.w( Shared.logTag, "Logout from the setup activity?!" )
+
+			// About
+			} else if ( menuItem.title?.equals( getString( R.string.actionBarMenuAbout ) ) == true ) {
+				Log.d( Shared.logTag, "Showing information about app dialog..." )
+				showInformationDialog( this, R.string.dialogInformationAboutTitle, R.string.dialogInformationAboutMessage )
 			}
 
 			return@setOnMenuItemClickListener true

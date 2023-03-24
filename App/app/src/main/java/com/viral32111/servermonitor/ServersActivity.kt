@@ -100,6 +100,10 @@ class ServersActivity : AppCompatActivity() {
 					Log.d( Shared.logTag, "Logout aborted" )
 				} )
 
+			// About
+			} else if ( menuItem.title?.equals( getString( R.string.actionBarMenuAbout ) ) == true ) {
+				Log.d( Shared.logTag, "Showing information about app dialog..." )
+				showInformationDialog( this, R.string.dialogInformationAboutTitle, R.string.dialogInformationAboutMessage )
 			}
 
 			return@setOnMenuItemClickListener true

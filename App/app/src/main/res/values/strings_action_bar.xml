@@ -4,5 +4,6 @@
 	<!-- Action bar menus -->
 	<string name="actionBarMenuSettings">Settings</string>
 	<string name="actionBarMenuLogout">Logout</string>
+	<string name="actionBarMenuAbout">About</string>
 
 </resources>

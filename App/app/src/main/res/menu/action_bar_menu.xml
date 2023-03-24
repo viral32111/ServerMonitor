@@ -13,4 +13,10 @@
 		android:title="@string/actionBarMenuLogout"
 		android:orderInCategory="2"
 		app:showAsAction="never" />
+
+	<item
+		android:id="@+id/actionBarAbout"
+		android:title="@string/actionBarMenuAbout"
+		android:orderInCategory="3"
+		app:showAsAction="never" />
 </menu>
