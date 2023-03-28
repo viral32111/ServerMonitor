@@ -238,7 +238,15 @@ class SetupActivity : AppCompatActivity() {
 	// Tests if a connector instance is running on a given URL
 	private fun testInstance( instanceUrl: String, credentialsUsername: String, credentialsPassword: String, successCallback: () -> Unit, errorCallback: () -> Unit ) {
 		API.getHello( instanceUrl, credentialsUsername, credentialsPassword, { helloData ->
-			Log.d( Shared.logTag, "Instance '${ instanceUrl }' is running! (Message: '${ helloData?.get( "message" )?.asString }')" )
+			val message = helloData?.get( "message" )?.asString
+			val user = helloData?.get( "user" )?.asString
+			val version = helloData?.get( "version" )?.asString
+
+			val contact = helloData.get( "contact" )?.asJsonObject
+			val contactName = contact.get( "name" )?.asString
+			val contactMethods = contact.get( "methods" )?.asJsonArray
+
+			Log.d( Shared.logTag, "Instance '${ instanceUrl }' is running! (Version: '${ version }', User: '${ user }', Message: '${ message }', Contact: '${ contactName }')" )
 			successCallback.invoke() // Run the custom callback
 
 		}, { error, statusCode, errorCode ->

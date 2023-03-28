@@ -36,6 +36,10 @@ class ServersActivity : AppCompatActivity() {
 	private lateinit var progressBarAnimation: ProgressBarAnimation
 	private lateinit var settings: Settings
 
+	// Contact information
+	private val contactName: String? = null;
+	private val contactMethods = Array<String>();
+
 	// Runs when the activity is created...
 	@SuppressLint( "InflateParams" ) // We intend to pass null to our layout inflater
 	override fun onCreate(savedInstanceState: Bundle? ) {
@@ -103,7 +107,9 @@ class ServersActivity : AppCompatActivity() {
 			// About
 			} else if ( menuItem.title?.equals( getString( R.string.actionBarMenuAbout ) ) == true ) {
 				Log.d( Shared.logTag, "Showing information about app dialog..." )
-				showInformationDialog( this, R.string.dialogInformationAboutTitle, R.string.dialogInformationAboutMessage )
+
+				var contactInformation = "Contact for ${ contactName }:\n${ contactMethod.joinToString( "\n" ) }"
+				showInformationDialog( this, R.string.dialogInformationAboutTitle, String.format( "%s\n\n%s", getString( R.string.dialogInformationAboutMessage ), contactInformation ) )
 			}
 
 			return@setOnMenuItemClickListener true
@@ -390,6 +396,80 @@ class ServersActivity : AppCompatActivity() {
 		val activity = this
 		CoroutineScope( Dispatchers.Main ).launch {
 			withContext( Dispatchers.IO ) {
+
+				// Fetch the contact information
+				try {
+					val hello = API.getHello( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!! )
+
+					val contact = helloData.get( "contact" )?.asJsonObject
+					contactName = contact.get( "name" )?.asString
+
+					val contactMethodsList = ArrayList<String>()
+					for ( contactMethod in contact.get( "methods" )?.asJsonArray ) contactMethods.add( contactMethod?.asString )
+					contactMethods = contactMethodsList.toTypedArray()
+
+					Log.d( Shared.logTag, "Fetched contact information from API (Name: '${ contactName }', Methods: '${ contactMethods }')"
+
+				} catch ( exception: APIException ) {
+					Log.e( Shared.logTag, "Failed to fetch contact information from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
+
+					withContext( Dispatchers.Main ) {
+						when ( exception.volleyError ) {
+
+							// Bad authentication
+							is AuthFailureError -> when ( errorCode ) {
+								ErrorCode.UnknownUser.code -> showBriefMessage( this, R.string.toastInstanceTestAuthenticationUnknownUser )
+								ErrorCode.IncorrectPassword.code -> showBriefMessage( this, R.string.toastInstanceTestAuthenticationIncorrectPassword )
+								else -> showBriefMessage( this, R.string.toastInstanceTestAuthenticationFailure )
+							}
+
+							// HTTP 4xx
+							is ClientError -> when ( statusCode ) {
+								404 -> showBriefMessage( this, R.string.toastInstanceTestNotFound )
+								else -> showBriefMessage( this, R.string.toastInstanceTestClientFailure )
+							}
+
+							// HTTP 5xx
+							is ServerError -> when ( statusCode ) {
+								502 -> showBriefMessage( this, R.string.toastInstanceTestUnavailable )
+								503 -> showBriefMessage( this, R.string.toastInstanceTestUnavailable )
+								504 -> showBriefMessage( this, R.string.toastInstanceTestUnavailable )
+								else -> showBriefMessage( this, R.string.toastInstanceTestServerFailure )
+							}
+
+							// No Internet connection, malformed domain
+							is NoConnectionError -> showBriefMessage( this, R.string.toastInstanceTestNoConnection )
+							is NetworkError -> showBriefMessage( this, R.string.toastInstanceTestNoConnection )
+
+							// Connection timed out
+							is TimeoutError -> showBriefMessage( this, R.string.toastInstanceTestTimeout )
+
+							// ¯\_(ツ)_/¯
+							else -> showBriefMessage( this, R.string.toastInstanceTestFailure )
+
+						}
+					}
+				} catch ( exception: JsonParseException ) {
+					Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
+
+					withContext( Dispatchers.Main ) {
+						showBriefMessage( activity, R.string.serversToastServersParseFailure )
+					}
+				} catch ( exception: JsonSyntaxException ) {
+					Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
+
+					withContext( Dispatchers.Main ) {
+						showBriefMessage( activity, R.string.serversToastServersParseFailure )
+					}
+				} catch ( exception: NullPointerException ) {
+					Log.e( Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
+
+					withContext( Dispatchers.Main ) {
+						showBriefMessage( activity, R.string.serversToastServersNull )
+					}
+				}
+
+				/******************************************************************************/
 
 				// Fetch the servers
 				try {

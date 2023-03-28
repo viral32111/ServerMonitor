@@ -183,7 +183,16 @@ class API {
 		fun postServer( baseUrl: String, username: String, password: String, serverIdentifier: String, actionName: String, successCallback: ( data: JsonObject? ) -> Unit, errorCallback: ( error: VolleyError, statusCode: Int?, errorCode: Int? ) -> Unit ) = sendRequest( Request.Method.POST, "${ baseUrl }/server?id=${ serverIdentifier }&action=${ actionName }", username, password, successCallback, errorCallback )
 		fun postService( baseUrl: String, username: String, password: String, serverIdentifier: String, serviceName: String, actionName: String, successCallback: ( data: JsonObject? ) -> Unit, errorCallback: ( error: VolleyError, statusCode: Int?, errorCode: Int? ) -> Unit ) = sendRequest( Request.Method.POST, "${ baseUrl }/service?server=${ serverIdentifier }&name=${ serviceName }&action=${ actionName }", username, password, successCallback, errorCallback )
 
-		// Convenience methods for each routes (Coroutine)
+		/**
+		 * Fetches information about an instance (`GET /hello`).
+		 * @param baseUrl The base URL of the API, using the HTTPS schema.
+		 * @param username The user to authenticate as.
+		 * @param password The password to authenticate with.
+		 * @return A JSON object containing the instance information.
+		 * @throws APIException Any sort of error, such as non-success HTTP status code, network connectivity, etc.
+		 * @throws JsonParseException An error parsing the HTTP response body as JSON, when successful.
+		 * @throws JsonSyntaxException An error parsing the HTTP response body as JSON, when successful.
+		 */
 		suspend fun getHello( baseUrl: String, username: String, password: String ) = sendRequest( Request.Method.GET, "${ baseUrl }/hello", username, password )
 
 		/**

@@ -93,3 +93,16 @@ fun showInformationDialog(
 			Log.d( Shared.logTag, "Information dialog acknowledged" )
 		}
 		.show()
+
+fun showInformationDialog(
+	activity: Activity,
+	titleId: Int,
+	message: String
+): AlertDialog =
+	MaterialAlertDialogBuilder( activity )
+		.setTitle( titleId )
+		.setMessage( message )
+		.setPositiveButton( R.string.dialogInformationPositive ) { _, _ ->
+			Log.d( Shared.logTag, "Information dialog acknowledged" )
+		}
+		.show()
