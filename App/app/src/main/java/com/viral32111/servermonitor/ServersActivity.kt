@@ -37,8 +37,8 @@ class ServersActivity : AppCompatActivity() {
 	private lateinit var settings: Settings
 
 	// Contact information
-	private val contactName: String? = null;
-	private val contactMethods = Array<String>();
+	private var contactName: String? = null
+	private var contactMethods: Array<String>? = null
 
 	// Runs when the activity is created...
 	@SuppressLint( "InflateParams" ) // We intend to pass null to our layout inflater
@@ -108,8 +108,14 @@ class ServersActivity : AppCompatActivity() {
 			} else if ( menuItem.title?.equals( getString( R.string.actionBarMenuAbout ) ) == true ) {
 				Log.d( Shared.logTag, "Showing information about app dialog..." )
 
-				var contactInformation = "Contact for ${ contactName }:\n${ contactMethod.joinToString( "\n" ) }"
-				showInformationDialog( this, R.string.dialogInformationAboutTitle, String.format( "%s\n\n%s", getString( R.string.dialogInformationAboutMessage ), contactInformation ) )
+				// Get the contact information, if it exists
+				val contactInformation = if ( !contactName.isNullOrBlank() && contactMethods != null ) "Contact for ${ contactName }:\n${ contactMethods!!.joinToString( "\n" ) }" else  ""
+
+				showInformationDialog(
+					this,
+					R.string.dialogInformationAboutTitle,
+					String.format( "%s\n\n%s", getString( R.string.dialogInformationAboutMessage ), contactInformation )
+				)
 			}
 
 			return@setOnMenuItemClickListener true
@@ -399,16 +405,16 @@ class ServersActivity : AppCompatActivity() {
 
 				// Fetch the contact information
 				try {
-					val hello = API.getHello( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!! )
+					val hello = API.getHello( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!! )!!
 
-					val contact = helloData.get( "contact" )?.asJsonObject
-					contactName = contact.get( "name" )?.asString
+					val contact = hello.get( "contact" ).asJsonObject!!
+					contactName = contact.get( "name" ).asString!!
 
 					val contactMethodsList = ArrayList<String>()
-					for ( contactMethod in contact.get( "methods" )?.asJsonArray ) contactMethods.add( contactMethod?.asString )
+					for ( contactMethod in contact.get( "methods" ).asJsonArray!! ) contactMethodsList.add( contactMethod.asString!! )
 					contactMethods = contactMethodsList.toTypedArray()
 
-					Log.d( Shared.logTag, "Fetched contact information from API (Name: '${ contactName }', Methods: '${ contactMethods }')"
+					Log.d( Shared.logTag, "Fetched contact information from API (Name: '${ contactName }', Methods: '${ contactMethods }')" )
 
 				} catch ( exception: APIException ) {
 					Log.e( Shared.logTag, "Failed to fetch contact information from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
@@ -417,35 +423,35 @@ class ServersActivity : AppCompatActivity() {
 						when ( exception.volleyError ) {
 
 							// Bad authentication
-							is AuthFailureError -> when ( errorCode ) {
-								ErrorCode.UnknownUser.code -> showBriefMessage( this, R.string.toastInstanceTestAuthenticationUnknownUser )
-								ErrorCode.IncorrectPassword.code -> showBriefMessage( this, R.string.toastInstanceTestAuthenticationIncorrectPassword )
-								else -> showBriefMessage( this, R.string.toastInstanceTestAuthenticationFailure )
+							is AuthFailureError -> when ( exception.apiErrorCode ) {
+								ErrorCode.UnknownUser.code -> showBriefMessage( activity, R.string.toastInstanceTestAuthenticationUnknownUser )
+								ErrorCode.IncorrectPassword.code -> showBriefMessage( activity, R.string.toastInstanceTestAuthenticationIncorrectPassword )
+								else -> showBriefMessage( activity, R.string.toastInstanceTestAuthenticationFailure )
 							}
 
 							// HTTP 4xx
-							is ClientError -> when ( statusCode ) {
-								404 -> showBriefMessage( this, R.string.toastInstanceTestNotFound )
-								else -> showBriefMessage( this, R.string.toastInstanceTestClientFailure )
+							is ClientError -> when ( exception.httpStatusCode ) {
+								404 -> showBriefMessage( activity, R.string.toastInstanceTestNotFound )
+								else -> showBriefMessage( activity, R.string.toastInstanceTestClientFailure )
 							}
 
 							// HTTP 5xx
-							is ServerError -> when ( statusCode ) {
-								502 -> showBriefMessage( this, R.string.toastInstanceTestUnavailable )
-								503 -> showBriefMessage( this, R.string.toastInstanceTestUnavailable )
-								504 -> showBriefMessage( this, R.string.toastInstanceTestUnavailable )
-								else -> showBriefMessage( this, R.string.toastInstanceTestServerFailure )
+							is ServerError -> when ( exception.httpStatusCode ) {
+								502 -> showBriefMessage( activity, R.string.toastInstanceTestUnavailable )
+								503 -> showBriefMessage( activity, R.string.toastInstanceTestUnavailable )
+								504 -> showBriefMessage( activity, R.string.toastInstanceTestUnavailable )
+								else -> showBriefMessage( activity, R.string.toastInstanceTestServerFailure )
 							}
 
 							// No Internet connection, malformed domain
-							is NoConnectionError -> showBriefMessage( this, R.string.toastInstanceTestNoConnection )
-							is NetworkError -> showBriefMessage( this, R.string.toastInstanceTestNoConnection )
+							is NoConnectionError -> showBriefMessage( activity, R.string.toastInstanceTestNoConnection )
+							is NetworkError -> showBriefMessage( activity, R.string.toastInstanceTestNoConnection )
 
 							// Connection timed out
-							is TimeoutError -> showBriefMessage( this, R.string.toastInstanceTestTimeout )
+							is TimeoutError -> showBriefMessage( activity, R.string.toastInstanceTestTimeout )
 
 							// ¯\_(ツ)_/¯
-							else -> showBriefMessage( this, R.string.toastInstanceTestFailure )
+							else -> showBriefMessage( activity, R.string.toastInstanceTestFailure )
 
 						}
 					}

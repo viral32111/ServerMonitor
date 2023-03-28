@@ -242,9 +242,9 @@ class SetupActivity : AppCompatActivity() {
 			val user = helloData?.get( "user" )?.asString
 			val version = helloData?.get( "version" )?.asString
 
-			val contact = helloData.get( "contact" )?.asJsonObject
-			val contactName = contact.get( "name" )?.asString
-			val contactMethods = contact.get( "methods" )?.asJsonArray
+			val contact = helloData?.get( "contact" )?.asJsonObject
+			val contactName = contact?.get( "name" )?.asString
+			val contactMethods = contact?.get( "methods" )?.asJsonArray
 
 			Log.d( Shared.logTag, "Instance '${ instanceUrl }' is running! (Version: '${ version }', User: '${ user }', Message: '${ message }', Contact: '${ contactName }')" )
 			successCallback.invoke() // Run the custom callback

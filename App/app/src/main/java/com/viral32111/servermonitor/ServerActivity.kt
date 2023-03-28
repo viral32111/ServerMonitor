@@ -18,8 +18,13 @@ import kotlinx.coroutines.withContext
 
 class ServerActivity : AppCompatActivity() {
 
+	// Misc
 	private lateinit var settings: Settings
 	private lateinit var serverIdentifier: String
+
+	// Contact information
+	private var contactName: String? = null
+	private var contactMethods: Array<String>? = null
 
 	// Runs when the activity is created...
 	override fun onCreate( savedInstanceState: Bundle? ) {
@@ -53,7 +58,7 @@ class ServerActivity : AppCompatActivity() {
 				startActivity( Intent( this, SettingsActivity::class.java ) )
 				overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
 
-				// Logout
+			// Logout
 			} else if ( menuItem.title?.equals( getString( R.string.actionBarMenuLogout ) ) == true ) {
 				Log.d( Shared.logTag, "Logout menu item pressed, showing confirmation..." )
 
@@ -79,7 +84,15 @@ class ServerActivity : AppCompatActivity() {
 			// About
 			} else if ( menuItem.title?.equals( getString( R.string.actionBarMenuAbout ) ) == true ) {
 				Log.d( Shared.logTag, "Showing information about app dialog..." )
-				showInformationDialog( this, R.string.dialogInformationAboutTitle, R.string.dialogInformationAboutMessage )
+
+				// Get the contact information, if it exists
+				val contactInformation = if ( !contactName.isNullOrBlank() && contactMethods != null ) "Contact for ${ contactName }:\n${ contactMethods!!.joinToString( "\n" ) }" else  ""
+
+				showInformationDialog(
+					this,
+					R.string.dialogInformationAboutTitle,
+					String.format( "%s\n\n%s", getString( R.string.dialogInformationAboutMessage ), contactInformation )
+				)
 			}
 
 			return@setOnMenuItemClickListener true
@@ -114,7 +127,7 @@ class ServerActivity : AppCompatActivity() {
 
 	}
 
-	// Show a confirmation when the back button is pressed - https://medium.com/tech-takeaways/how-to-migrate-the-deprecated-onbackpressed-function-e66bb29fa2fd
+	// Use custom animation when the back button is pressed - https://medium.com/tech-takeaways/how-to-migrate-the-deprecated-onbackpressed-function-e66bb29fa2fd
 	private val onBackPressed: OnBackPressedCallback = object : OnBackPressedCallback( true ) {
 		override fun handleOnBackPressed() {
 			Log.d( Shared.logTag, "System back button pressed" )
@@ -147,6 +160,80 @@ class ServerActivity : AppCompatActivity() {
 		val activity = this
 		CoroutineScope( Dispatchers.Main ).launch {
 			withContext( Dispatchers.IO ) {
+
+				// Fetch the contact information
+				try {
+					val hello = API.getHello( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!! )!!
+
+					val contact = hello.get( "contact" ).asJsonObject!!
+					contactName = contact.get( "name" ).asString!!
+
+					val contactMethodsList = ArrayList<String>()
+					for ( contactMethod in contact.get( "methods" ).asJsonArray!! ) contactMethodsList.add( contactMethod.asString!! )
+					contactMethods = contactMethodsList.toTypedArray()
+
+					Log.d( Shared.logTag, "Fetched contact information from API (Name: '${ contactName }', Methods: '${ contactMethods }')" )
+
+				} catch ( exception: APIException ) {
+					Log.e( Shared.logTag, "Failed to fetch contact information from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
+
+					withContext( Dispatchers.Main ) {
+						when ( exception.volleyError ) {
+
+							// Bad authentication
+							is AuthFailureError -> when ( exception.apiErrorCode ) {
+								ErrorCode.UnknownUser.code -> showBriefMessage( activity, R.string.toastInstanceTestAuthenticationUnknownUser )
+								ErrorCode.IncorrectPassword.code -> showBriefMessage( activity, R.string.toastInstanceTestAuthenticationIncorrectPassword )
+								else -> showBriefMessage( activity, R.string.toastInstanceTestAuthenticationFailure )
+							}
+
+							// HTTP 4xx
+							is ClientError -> when ( exception.httpStatusCode ) {
+								404 -> showBriefMessage( activity, R.string.toastInstanceTestNotFound )
+								else -> showBriefMessage( activity, R.string.toastInstanceTestClientFailure )
+							}
+
+							// HTTP 5xx
+							is ServerError -> when ( exception.httpStatusCode ) {
+								502 -> showBriefMessage( activity, R.string.toastInstanceTestUnavailable )
+								503 -> showBriefMessage( activity, R.string.toastInstanceTestUnavailable )
+								504 -> showBriefMessage( activity, R.string.toastInstanceTestUnavailable )
+								else -> showBriefMessage( activity, R.string.toastInstanceTestServerFailure )
+							}
+
+							// No Internet connection, malformed domain
+							is NoConnectionError -> showBriefMessage( activity, R.string.toastInstanceTestNoConnection )
+							is NetworkError -> showBriefMessage( activity, R.string.toastInstanceTestNoConnection )
+
+							// Connection timed out
+							is TimeoutError -> showBriefMessage( activity, R.string.toastInstanceTestTimeout )
+
+							// ¯\_(ツ)_/¯
+							else -> showBriefMessage( activity, R.string.toastInstanceTestFailure )
+
+						}
+					}
+				} catch ( exception: JsonParseException ) {
+					Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
+
+					withContext( Dispatchers.Main ) {
+						showBriefMessage( activity, R.string.serversToastServersParseFailure )
+					}
+				} catch ( exception: JsonSyntaxException ) {
+					Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
+
+					withContext( Dispatchers.Main ) {
+						showBriefMessage( activity, R.string.serversToastServersParseFailure )
+					}
+				} catch ( exception: NullPointerException ) {
+					Log.e( Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
+
+					withContext( Dispatchers.Main ) {
+						showBriefMessage( activity, R.string.serversToastServersNull )
+					}
+				}
+
+				/******************************************************************************/
 
 				// Fetch the server
 				try {
