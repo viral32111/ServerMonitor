@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.ServiceProcess;
+using System.Diagnostics;
 using System.CommandLine; // https://learn.microsoft.com/en-us/dotnet/standard/commandline/get-started-tutorial
 using Mono.Unix.Native; // https://github.com/mono/mono.posix
 using Microsoft.Extensions.Logging; // https://learn.microsoft.com/en-us/dotnet/core/extensions/console-log-formatter
@@ -25,12 +26,19 @@ namespace ServerMonitor {
 		public static readonly Collector.Collector Collector = new();
 		public static readonly Connector.Connector Connector = new();
 
+		// Current version
+		public static string Version { get; private set; } = null!;
+
 		public static int Main( string[] arguments ) {
 
 			// Get the directory that the executable DLL/binary is in - https://stackoverflow.com/a/66023223
 			Assembly? executable = Assembly.GetEntryAssembly() ?? throw new Exception( "Failed to get this executable" );
 			string executableDirectory = Path.GetDirectoryName( executable.Location ) ?? throw new Exception( "Failed to get this executable's directory" );
 			logger.LogDebug( $"Executable directory: '{ executableDirectory }'" );
+
+			// Get the version of the executable
+			Version = FileVersionInfo.GetVersionInfo( executable.Location )?.FileVersion ?? throw new Exception( "Failed to get this executable's version" );
+			logger.LogDebug( $"Executable version: '{ Version }'" );
 
 			// Create the root command, no handler though as only sub-commands are allowed
 			RootCommand rootCommand = new( "The backend metrics exporter & RESTful API service for the Android app." );
@@ -156,7 +164,7 @@ namespace ServerMonitor {
 			Program.HttpClient.DefaultRequestHeaders.Add( "Connection", "close" );
 
 			// Add our custom user agent, without running it through the normalisation process
-			Program.HttpClient.DefaultRequestHeaders.TryAddWithoutValidation( "User-Agent", Configuration.Config!.HTTPClientUserAgent );
+			Program.HttpClient.DefaultRequestHeaders.TryAddWithoutValidation( "User-Agent", Configuration.Config!.HTTPClientUserAgent.Replace( "{VERSION}", Version ) );
 
 			// Add Cloudflare Access headers to the HTTP client, if configured
 			if ( string.IsNullOrWhiteSpace( Configuration.Config!.CloudflareAccessServiceTokenId ) == false ) Program.HttpClient.DefaultRequestHeaders.Add( "CF-Access-Client-Id", Configuration.Config!.CloudflareAccessServiceTokenId );

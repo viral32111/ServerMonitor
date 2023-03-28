@@ -19,6 +19,8 @@ namespace ServerMonitor.Connector.Route {
 
 			return Response.SendJson( response, data: new() {
 				{ "message", "Hello World!" },
+				{ "user", context.User!.Identity!.Name },
+				{ "version", Program.Version },
 				{ "contact", new JsonObject() {
 					{ "name", configuration.ContactName },
 					{ "methods", Helper.JSON.CreateJsonArray( configuration.ContactMethods ) }
