@@ -130,6 +130,10 @@ namespace ServerMonitor {
 		public required int CollectorActionListenPort { get; set; } = 6997;
 		public required string CollectorActionAuthenticationKey { get; set; } = "";
 
+		// Contact information for DPA compliance
+		public required string ContactName { get; set; } = "";
+		public required string[] ContactMethods { get; set; } = Array.Empty<string>();
+
 	}
 
 	// Address & port combination for an SNMP agent

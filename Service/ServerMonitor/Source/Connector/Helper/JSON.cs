@@ -16,6 +16,12 @@ namespace ServerMonitor.Connector.Helper {
 			return array;
 		} );
 
+		// Converts an array of JSON objects to a JSON array
+		public static JsonArray CreateJsonArray( string[] array ) => array.Aggregate( new JsonArray(), ( array, str ) => {
+			array.Add( str );
+			return array;
+		} );
+
 	}
 
 }

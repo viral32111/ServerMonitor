@@ -18,7 +18,11 @@ namespace ServerMonitor.Connector.Route {
 			logger.LogInformation( "Hello, {0}!", context.User!.Identity!.Name );
 
 			return Response.SendJson( response, data: new() {
-				{ "message", "Hello World!" }
+				{ "message", "Hello World!" },
+				{ "contact", new JsonObject() {
+					{ "name", configuration.ContactName },
+					{ "methods", Helper.JSON.CreateJsonArray( configuration.ContactMethods ) }
+				} }
 			} );
 		}
 

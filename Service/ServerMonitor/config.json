@@ -36,5 +36,9 @@
 	"HTTPProxyAddressHeader": "X-Forwarded-For",
 	"CollectorActionListenAddress": "127.0.0.1",
 	"CollectorActionListenPort": 6997,
-	"CollectorActionAuthenticationKey": ""
+	"CollectorActionAuthenticationKey": "",
+	"ContactName": "viral32111",
+	"ContactMethods": [
+		"https://github.com/viral32111/ServerMonitor"
+	]
 }
