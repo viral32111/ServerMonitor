@@ -272,7 +272,11 @@ namespace ServerMonitor.Collector {
 
 			logger.LogDebug( "Stopping SNMP manager..." );
 			SNMPManagerCancellationTokenSource.Cancel();
-			SNMPManager?.WaitForTrapListener();
+			try {
+				SNMPManager?.WaitForTrapListener();
+			} catch ( InvalidOperationException ) {
+				logger.LogWarning( "SNMP manager was not listening for traps" );
+			}
 			logger.LogDebug( "SNMP manager stopped" );
 
 			logger.LogDebug( "Stopping action server..." );
