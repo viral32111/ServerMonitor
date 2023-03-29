@@ -40,15 +40,15 @@
 	<string name="serversTextViewServerStatusOffline">OFFLINE</string>
 	<string name="serversTextViewServerProcessorUsage">%d%%</string>
 	<string name="serversTextViewServerProcessorLabel">Processor</string>
-	<string name="serversTextViewServerMemoryUsage">%d%s</string>
+	<string name="serversTextViewServerMemoryUsage" formatted="false">%d%s</string>
 	<string name="serversTextViewServerMemoryLabel">Memory</string>
 	<string name="serversTextViewServerTemperatureValue">%d℃</string>
 	<string name="serversTextViewServerTemperatureLabel">Temperature</string>
 	<string name="serversTextViewServerServicesCount">%d</string>
 	<string name="serversTextViewServerServicesLabel">Services</string>
-	<string name="serversTextViewServerNetworkUsage">%d%s</string>
+	<string name="serversTextViewServerNetworkUsage" formatted="false">%d%s</string>
 	<string name="serversTextViewServerNetworkLabel">Net I/O</string>
-	<string name="serversTextViewServerDiskUsage">%d%s</string>
+	<string name="serversTextViewServerDiskUsage" formatted="false">%d%s</string>
 	<string name="serversTextViewServerDiskLabel">Disk I/O</string>
 	<string name="serversTextViewServerUptime">Up for %s.</string>
 	<string name="serversTextViewServerUptimeOffline">This server is offline.</string>
