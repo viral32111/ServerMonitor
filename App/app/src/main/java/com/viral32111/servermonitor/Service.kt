@@ -14,6 +14,7 @@ class Service( data: JsonObject ) {
 	val statusCode: Int
 	val exitCode: Int
 	val uptimeSeconds: Double
+
 	// TODO: supportedActions
 	// TODO: logs
 
@@ -25,6 +26,9 @@ class Service( data: JsonObject ) {
 		statusCode = data.get( "statusCode" ).asInt
 		exitCode = data.get( "exitCode" ).asInt
 		uptimeSeconds = data.get( "uptimeSeconds" ).asDouble
+
+		// TODO: supportedActions
+		// TODO: logs
 	}
 
 	/**

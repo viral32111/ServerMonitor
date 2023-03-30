@@ -20,6 +20,8 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 	var version: String
 	var uptimeSeconds: Long
 
+	// TODO: supportedActions
+
 	var processorUsage: Float? = null
 	var processorFrequency: Float? = null
 	var processorTemperature: Float? = null
@@ -33,6 +35,10 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 	var networkInterfaces: Array<NetworkInterface>? = null
 
 	var services: Array<Service>? = null
+	var dockerContainers: Array<DockerContainer>? = null
+
+	var snmpCommunity: String? = null
+	var snmpAgents: Array<SNMPAgent>? = null
 
 	// Deseralise the JSON object
 	init {
@@ -152,6 +158,8 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 		version = data.get( "version" ).asString
 		uptimeSeconds = round( data.get( "uptimeSeconds" ).asDouble ).toLong()
 
+		// TODO: supportedActions
+
 		val resources = data.get( "resources" ).asJsonObject
 
 		// Update processor metrics
@@ -184,6 +192,18 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 		val servicesList = ArrayList<Service>()
 		for ( service in data.get( "services" ).asJsonArray ) servicesList.add( Service( service.asJsonObject ) )
 		services = servicesList.toTypedArray()
+
+		// Docker containers
+		val dockerContainersList = ArrayList<DockerContainer>()
+		for ( dockerContainer in data.get( "dockerContainers" ).asJsonArray ) dockerContainersList.add( DockerContainer( dockerContainer.asJsonObject ) )
+		dockerContainers = dockerContainersList.toTypedArray()
+
+		// SNMP
+		val snmp = data.get( "snmp" ).asJsonObject
+		snmpCommunity = snmp.get( "community" ).asString
+		val snmpAgentsList = ArrayList<SNMPAgent>()
+		for ( snmpAgent in snmp.get( "agents" ).asJsonArray ) snmpAgentsList.add( SNMPAgent( snmpAgent.asJsonObject ) )
+		snmpAgents = snmpAgentsList.toTypedArray()
 
 	}
 }
