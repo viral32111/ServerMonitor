@@ -179,16 +179,20 @@ class ServerActivity : AppCompatActivity() {
 				CoroutineScope( Dispatchers.Main ).launch { // Begin coroutine context (on the UI thread)...
 					withContext( Dispatchers.IO ) { // Run on network thread...
 
-						// Fetch the servers
-						/*
+						// Fetch the server
 						try {
-							val servers = fetchServers( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!! )
+							val server = Server( API.getServer( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, serverIdentifier )!!, true )
+							Log.d( Shared.logTag, "Fetched server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') from API" )
 
-							// Update the UI
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
 								refreshProgressBar.progress = 0
-								updateUI( servers )
+
+								// Update the UI
+								updateUI( server )
+
+								// Start the progress bar animation
+								if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
 							}
 
 						} catch ( exception: APIException ) {
@@ -258,7 +262,6 @@ class ServerActivity : AppCompatActivity() {
 								showBriefMessage( activity, R.string.serversToastServersNull )
 							}
 						}
-						*/
 
 					}
 				}
@@ -285,15 +288,19 @@ class ServerActivity : AppCompatActivity() {
 					withContext( Dispatchers.IO ) {
 
 						// Fetch the servers
-						/*
 						try {
-							val servers = fetchServers( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!! )
+							val server = Server( API.getServer( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, serverIdentifier )!!, true )
+							Log.d( Shared.logTag, "Fetched server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') from API" )
 
-							// Update the UI
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
 								refreshProgressBar.progress = 0
-								updateUI( servers )
+
+								// Update the UI
+								updateUI( server )
+
+								// Start the progress bar animation
+								if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
 							}
 
 						} catch ( exception: APIException ) {
@@ -363,7 +370,6 @@ class ServerActivity : AppCompatActivity() {
 								showBriefMessage( activity, R.string.serversToastServersNull )
 							}
 						}
-						*/
 
 					}
 				}
@@ -396,6 +402,15 @@ class ServerActivity : AppCompatActivity() {
 	override fun onPause() {
 		super.onPause()
 		Log.d( Shared.logTag, "Paused server activity" )
+
+		// Stop any current refreshing
+		swipeRefreshLayout.isRefreshing = false
+
+		// Stop the automatic refresh countdown progress bar
+		if ( settings.automaticRefresh ) {
+			refreshProgressBar.progress = 0 // Reset progress to prevent automatic refresh
+			refreshProgressBar.clearAnimation() // Will call the animation end callback
+		}
 	}
 
 	override fun onResume() {
