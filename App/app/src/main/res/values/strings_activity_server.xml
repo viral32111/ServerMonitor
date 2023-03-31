@@ -5,7 +5,8 @@
 	<string name="serverActionBarTitle">Server</string>
 
 	<!-- Status with uptime -->
-	<string name="serverTextViewStatus">%s for %s.</string>
+	<string name="serverTextViewStatusGood">%s for %s.</string>
+	<string name="serverTextViewStatusDead">UNKNOWN</string>
 
 	<!-- Action buttons -->
 	<string name="serverButtonShutdownAction">Shutdown</string>

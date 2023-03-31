@@ -8,6 +8,7 @@ import android.util.Log
 import android.view.View
 import android.view.animation.Animation
 import android.view.animation.LinearInterpolator
+import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
@@ -30,6 +31,8 @@ class ServerActivity : AppCompatActivity() {
 	private var materialToolbar: MaterialToolbar? = null
 	private lateinit var swipeRefreshLayout: SwipeRefreshLayout
 	private lateinit var statusTextView: TextView
+	private lateinit var actionShutdownButton: Button
+	private lateinit var actionRebootButton: Button
 	private lateinit var refreshProgressBar: ProgressBar
 
 	// Misc
@@ -116,6 +119,8 @@ class ServerActivity : AppCompatActivity() {
 		// Get all the UI
 		swipeRefreshLayout = findViewById( R.id.serverSwipeRefreshLayout )
 		statusTextView = findViewById( R.id.serverStatusTextView )
+		actionShutdownButton = findViewById( R.id.serverActionShutdownButton )
+		actionRebootButton = findViewById( R.id.serverActionRebootButton )
 		refreshProgressBar = findViewById( R.id.serverRefreshProgressBar )
 
 		// Get the settings
@@ -521,6 +526,9 @@ class ServerActivity : AppCompatActivity() {
 						// Update the UI
 						updateUI( server )
 
+						// Enable the UI
+						enableInputs( true )
+
 						// Start the progress bar animation
 						if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
 					}
@@ -608,7 +616,19 @@ class ServerActivity : AppCompatActivity() {
 		val colorAsHex = getColor( if ( server.isOnline() ) R.color.statusGood else R.color.statusDead ).toString( 16 ) // https://stackoverflow.com/a/41655900
 		val statusText = if ( server.isOnline() ) "ONLINE" else "OFFLINE"
 		val htmlTags = "<strong><span style=\"color: #${ colorAsHex }\">${ statusText }</span></strong>"
-		statusTextView.text = Html.fromHtml( String.format( getString( R.string.serverTextViewStatus ), htmlTags, TimeSpan( server.uptimeSeconds ).toString( true ) ), Html.FROM_HTML_MODE_LEGACY ) // https://stackoverflow.com/a/37899914
+		statusTextView.text = Html.fromHtml( String.format( getString( R.string.serverTextViewStatusGood ), htmlTags, TimeSpan( server.uptimeSeconds ).toString( true ) ), Html.FROM_HTML_MODE_LEGACY ) // https://stackoverflow.com/a/37899914
+		statusTextView.setTextColor( getColor( R.color.black ) )
+
+	}
+
+	// Enable/disable user input
+	private fun enableInputs( shouldEnable: Boolean ) {
+
+		// Action buttons
+		actionShutdownButton.isEnabled = shouldEnable
+		actionShutdownButton.setBackgroundColor( getColor( R.color.shutdownActionButton ) )
+		actionRebootButton.isEnabled = shouldEnable
+		actionRebootButton.setBackgroundColor( getColor( R.color.rebootActionButton ) )
 
 	}
 

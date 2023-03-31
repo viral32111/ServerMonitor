@@ -39,4 +39,8 @@
 	<color name="statusBad">#EF1C1C</color>
 	<color name="statusDead">#999999</color>
 
+	<!-- Action button colours -->
+	<color name="shutdownActionButton">#F44336</color>
+	<color name="rebootActionButton">#FF9800</color>
+
 </resources>
