@@ -40,7 +40,7 @@ class ServiceActivity : AppCompatActivity() {
 
 		// Set the title on the toolbar
 		val materialToolbar = supportActionBar?.customView?.findViewById<MaterialToolbar>( R.id.actionBarMaterialToolbar )
-		materialToolbar?.title = getString( R.string.setupActionBarTitle )
+		materialToolbar?.title = getString( R.string.serviceActionBarTitle )
 		materialToolbar?.isTitleCentered = true
 		Log.d( Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered })" )
 

@@ -18,6 +18,9 @@ import kotlinx.coroutines.withContext
 
 class ServerActivity : AppCompatActivity() {
 
+	// UI
+	private var materialToolbar: MaterialToolbar? = null
+
 	// Misc
 	private lateinit var settings: Settings
 	private lateinit var serverIdentifier: String
@@ -39,11 +42,8 @@ class ServerActivity : AppCompatActivity() {
 		supportActionBar?.setCustomView( R.layout.action_bar )
 		Log.d( Shared.logTag, "Switched to Material Toolbar" )
 
-		// Get all UI controls
-		val materialToolbar = supportActionBar?.customView?.findViewById<MaterialToolbar>( R.id.actionBarMaterialToolbar )
-		Log.d( Shared.logTag, "Got UI controls" )
-
 		// Set the title on the toolbar
+		materialToolbar = supportActionBar?.customView?.findViewById( R.id.actionBarMaterialToolbar )
 		materialToolbar?.title = getString( R.string.serverActionBarTitle )
 		materialToolbar?.isTitleCentered = true
 		Log.d( Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered })" )
@@ -237,10 +237,14 @@ class ServerActivity : AppCompatActivity() {
 
 				// Fetch the server
 				try {
-					val serverData = API.getServer( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, serverIdentifier )!!
-					Log.d( Shared.logTag, "Got server '${ serverIdentifier }' ('${ serverData }')" )
+					val server = Server( API.getServer( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, serverIdentifier )!!, true )
+					Log.d( Shared.logTag, "Fetched server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') from API" )
 
-					val server = Server( serverData, true )
+					// Set the title on the toolbar
+					withContext( Dispatchers.Main ) {
+						materialToolbar?.title = server.hostName.uppercase()
+						Log.d( Shared.logTag, "Set Material Toolbar title to '${ server.hostName.uppercase() }'" )
+					}
 
 				} catch ( exception: APIException ) {
 					Log.e( Shared.logTag, "Failed to fetch server '${ serverIdentifier }' from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
