@@ -125,6 +125,117 @@
 
 				</androidx.constraintlayout.widget.ConstraintLayout>
 
+				<androidx.constraintlayout.widget.ConstraintLayout
+					android:id="@+id/serverDisksConstraintLayout"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:layout_marginTop="12dp"
+					android:background="@drawable/shape_server"
+					android:paddingHorizontal="6dp"
+					android:paddingVertical="4dp"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serverResourcesConstraintLayout">
+
+					<TextView
+						android:id="@+id/serverDisksTitleTextView"
+						android:layout_width="0dp"
+						android:layout_height="wrap_content"
+						android:text="@string/serverTextViewDisksTitle"
+						android:textAlignment="center"
+						android:textSize="@dimen/text_size"
+						android:textStyle="bold"
+						app:layout_constraintEnd_toEndOf="parent"
+						app:layout_constraintStart_toStartOf="parent"
+						app:layout_constraintTop_toTopOf="parent" />
+
+					<TextView
+						android:id="@+id/serverDisksDataTextView"
+						android:layout_width="0dp"
+						android:layout_height="wrap_content"
+						android:text="@string/serverTextViewDisksDataDisk"
+						android:textAlignment="viewStart"
+						android:textSize="16sp"
+						app:layout_constraintEnd_toEndOf="parent"
+						app:layout_constraintStart_toStartOf="parent"
+						app:layout_constraintTop_toBottomOf="@+id/serverDisksTitleTextView" />
+
+				</androidx.constraintlayout.widget.ConstraintLayout>
+
+				<androidx.constraintlayout.widget.ConstraintLayout
+					android:id="@+id/serverServicesConstraintLayout"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:layout_marginTop="12dp"
+					android:background="@drawable/shape_server"
+					android:paddingHorizontal="6dp"
+					android:paddingVertical="4dp"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serverDisksConstraintLayout">
+
+					<TextView
+						android:id="@+id/serverServicesTitleTextView"
+						android:layout_width="0dp"
+						android:layout_height="wrap_content"
+						android:text="@string/serverTextViewServicesTitle"
+						android:textAlignment="center"
+						android:textSize="@dimen/text_size"
+						android:textStyle="bold"
+						app:layout_constraintEnd_toEndOf="parent"
+						app:layout_constraintStart_toStartOf="parent"
+						app:layout_constraintTop_toTopOf="parent" />
+
+					<TextView
+						android:id="@+id/serverServicesDataTextView"
+						android:layout_width="0dp"
+						android:layout_height="wrap_content"
+						android:text="@string/serverTextViewServicesData"
+						android:textAlignment="viewStart"
+						android:textSize="16sp"
+						app:layout_constraintEnd_toEndOf="parent"
+						app:layout_constraintStart_toStartOf="parent"
+						app:layout_constraintTop_toBottomOf="@+id/serverServicesTitleTextView" />
+
+				</androidx.constraintlayout.widget.ConstraintLayout>
+
+				<androidx.constraintlayout.widget.ConstraintLayout
+					android:id="@+id/serverDockerContainersConstraintLayout"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:layout_marginTop="12dp"
+					android:background="@drawable/shape_server"
+					android:paddingHorizontal="6dp"
+					android:paddingVertical="4dp"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serverServicesConstraintLayout">
+
+					<TextView
+						android:id="@+id/serverDockerContainersTitleTextView"
+						android:layout_width="0dp"
+						android:layout_height="wrap_content"
+						android:text="@string/serverTextViewDockerContainersTitle"
+						android:textAlignment="center"
+						android:textSize="@dimen/text_size"
+						android:textStyle="bold"
+						app:layout_constraintEnd_toEndOf="parent"
+						app:layout_constraintStart_toStartOf="parent"
+						app:layout_constraintTop_toTopOf="parent" />
+
+					<TextView
+						android:id="@+id/serverDockerContainersDataTextView"
+						android:layout_width="0dp"
+						android:layout_height="wrap_content"
+						android:text="@string/serverTextViewDockerContainersData"
+						android:textAlignment="viewStart"
+						android:textSize="16sp"
+						app:layout_constraintEnd_toEndOf="parent"
+						app:layout_constraintStart_toStartOf="parent"
+						app:layout_constraintTop_toBottomOf="@+id/serverDockerContainersTitleTextView" />
+
+				</androidx.constraintlayout.widget.ConstraintLayout>
+
 			</androidx.constraintlayout.widget.ConstraintLayout>
 
 		</ScrollView>
