@@ -1,10 +1,70 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- https://www.geeksforgeeks.org/android-pull-to-refresh-with-recyclerview-in-kotlin/ -->
+<androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res-auto"
 	xmlns:tools="http://schemas.android.com/tools"
-	android:id="@+id/serverConstraintLayout"
+	android:id="@+id/serverSwipeRefreshLayout"
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
+	android:orientation="vertical"
 	tools:context=".ServerActivity">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+	<androidx.constraintlayout.widget.ConstraintLayout
+		android:id="@+id/serverMainConstraintLayout"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content">
+
+		<ProgressBar
+			android:id="@+id/serverRefreshProgressBar"
+			style="?android:attr/progressBarStyleHorizontal"
+			android:layout_width="0dp"
+			android:layout_height="5dp"
+			android:indeterminate="false"
+			android:max="10000"
+			android:progress="0"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toTopOf="parent" />
+
+		<ScrollView
+			android:id="@+id/serverScrollView"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:layout_marginStart="@dimen/scrollViewEdgeStart"
+			android:layout_marginTop="@dimen/scrollViewEdgeTop"
+			android:layout_marginEnd="@dimen/scrollViewEdgeEnd"
+			android:layout_marginBottom="@dimen/scrollViewEdgeBottom"
+			android:fillViewport="true"
+			android:paddingStart="@dimen/scrollViewEdgeStart"
+			android:paddingEnd="@dimen/scrollViewEdgeEnd"
+			android:scrollbarStyle="outsideOverlay"
+			app:layout_constraintBottom_toBottomOf="parent"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toTopOf="parent"
+			tools:context=".SetupActivity">
+
+			<androidx.constraintlayout.widget.ConstraintLayout
+				android:id="@+id/serverScrollConstraintLayout"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content">
+
+				<TextView
+					android:id="@+id/serverStatusTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:text="@string/serverTextViewStatus"
+					android:textAlignment="center"
+					android:textSize="@dimen/text_size"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toTopOf="parent" />
+
+			</androidx.constraintlayout.widget.ConstraintLayout>
+
+		</ScrollView>
+
+	</androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

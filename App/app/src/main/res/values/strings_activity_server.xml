@@ -2,8 +2,10 @@
 <resources>
 
 	<!-- Title on the action bar -->
-	<!-- TODO: This will eventually be the server name! -->
 	<string name="serverActionBarTitle">Server</string>
+
+	<!-- Status with uptime -->
+	<string name="serverTextViewStatus">%s for %s.</string>
 
 	<!-- Toasts for fetch server -->
 	<string name="serverToastServerAuthenticationUnknownUser">No credentials exist with the configured username.</string>
