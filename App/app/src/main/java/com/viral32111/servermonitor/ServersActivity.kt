@@ -591,6 +591,7 @@ class ServersActivity : AppCompatActivity() {
 
 			val intent = Intent( this, ServerActivity::class.java )
 			intent.putExtra( "serverIdentifier", server.identifier )
+			intent.putExtra( "fromServersActivity", true )
 
 			startActivity( intent )
 			overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )

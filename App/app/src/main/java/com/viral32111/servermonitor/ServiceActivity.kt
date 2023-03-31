@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.content.res.AppCompatResources
 import com.android.volley.*
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.gson.JsonParseException
@@ -20,6 +21,10 @@ class ServiceActivity : AppCompatActivity() {
 
 	// Misc
 	private lateinit var settings: Settings
+
+	// Data from previous activity
+	private lateinit var serverIdentifier: String
+	private lateinit var serviceName: String
 
 	// Contact information
 	private var contactName: String? = null
@@ -107,6 +112,29 @@ class ServiceActivity : AppCompatActivity() {
 			return
 		}
 
+		// Return to the previous activity if we were not given all the required data
+		val serverIdentifier = intent.extras?.getString( "serverIdentifier" )
+		val serviceName = intent.extras?.getString( "serviceName" )
+		Log.d( Shared.logTag, "Server Identifier: '${ serverIdentifier }', Service Name: '${ serviceName }'" )
+		if ( serverIdentifier.isNullOrBlank() || serviceName.isNullOrBlank() ) {
+			Log.w( Shared.logTag, "No server identifier and/or service name passed to activity?! Returning to previous activity..." )
+			finish()
+			overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
+			return
+		}
+		this.serverIdentifier = serverIdentifier
+		this.serviceName = serviceName
+
+		// Enable the back button on the toolbar if we came from the server activity
+		if ( intent.extras?.getBoolean( "fromServerActivity" ) == true ) {
+			materialToolbar?.navigationIcon = AppCompatResources.getDrawable( this, R.drawable.ic_baseline_arrow_back_24 )
+			materialToolbar?.setNavigationOnClickListener {
+				Log.d( Shared.logTag, "Navigation back button pressed. Returning to previous activity..." )
+				finish()
+				overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
+			}
+		}
+
 		// Register the back button pressed callback - https://medium.com/tech-takeaways/how-to-migrate-the-deprecated-onbackpressed-function-e66bb29fa2fd
 		onBackPressedDispatcher.addCallback( this, onBackPressed )
 
@@ -115,8 +143,7 @@ class ServiceActivity : AppCompatActivity() {
 	// Use custom animation when the back button is pressed - https://medium.com/tech-takeaways/how-to-migrate-the-deprecated-onbackpressed-function-e66bb29fa2fd
 	private val onBackPressed: OnBackPressedCallback = object : OnBackPressedCallback( true ) {
 		override fun handleOnBackPressed() {
-			Log.d( Shared.logTag, "System back button pressed" )
-
+			Log.d( Shared.logTag, "System back button pressed. Returning to previous activity..." )
 			finish()
 			overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
 		}
