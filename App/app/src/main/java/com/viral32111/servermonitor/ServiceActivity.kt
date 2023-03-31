@@ -49,6 +49,14 @@ class ServiceActivity : AppCompatActivity() {
 		materialToolbar?.isTitleCentered = true
 		Log.d( Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered })" )
 
+		// Enable the back button on the toolbar
+		materialToolbar?.navigationIcon = AppCompatResources.getDrawable( this, R.drawable.ic_baseline_arrow_back_24 )
+		materialToolbar?.setNavigationOnClickListener {
+			Log.d( Shared.logTag, "Navigation back button pressed. Returning to previous activity..." )
+			finish()
+			overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
+		}
+
 		// Get the settings
 		settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE ) )
 		Log.d( Shared.logTag, "Got settings ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
@@ -124,16 +132,6 @@ class ServiceActivity : AppCompatActivity() {
 		}
 		this.serverIdentifier = serverIdentifier
 		this.serviceName = serviceName
-
-		// Enable the back button on the toolbar if we came from the server activity
-		if ( intent.extras?.getBoolean( "fromServerActivity" ) == true ) {
-			materialToolbar?.navigationIcon = AppCompatResources.getDrawable( this, R.drawable.ic_baseline_arrow_back_24 )
-			materialToolbar?.setNavigationOnClickListener {
-				Log.d( Shared.logTag, "Navigation back button pressed. Returning to previous activity..." )
-				finish()
-				overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
-			}
-		}
 
 		// Register the back button pressed callback - https://medium.com/tech-takeaways/how-to-migrate-the-deprecated-onbackpressed-function-e66bb29fa2fd
 		onBackPressedDispatcher.addCallback( this, onBackPressed )
