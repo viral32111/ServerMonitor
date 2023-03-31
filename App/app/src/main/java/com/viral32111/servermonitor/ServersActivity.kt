@@ -625,7 +625,7 @@ class ServersActivity : AppCompatActivity() {
 			if ( server.isOnline() ) {
 				Log.d( Shared.logTag, "Server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') is online, fetching metrics..." )
 
-				server.update( instanceUrl, credentialsUsername, credentialsPassword )
+				server.updateFromAPI( instanceUrl, credentialsUsername, credentialsPassword )
 				Log.d( Shared.logTag, "Metrics fetched for server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }')" )
 
 				serverList.add( server )

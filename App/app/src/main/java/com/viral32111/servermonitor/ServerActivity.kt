@@ -237,9 +237,10 @@ class ServerActivity : AppCompatActivity() {
 
 				// Fetch the server
 				try {
-					val server = API.getServer( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, serverIdentifier )!!
-					Log.d( Shared.logTag, "Got server '${ serverIdentifier }' ('${ server }')" )
-					// TODO: Create Server object
+					val serverData = API.getServer( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, serverIdentifier )!!
+					Log.d( Shared.logTag, "Got server '${ serverIdentifier }' ('${ serverData }')" )
+
+					val server = Server( serverData, true )
 
 				} catch ( exception: APIException ) {
 					Log.e( Shared.logTag, "Failed to fetch server '${ serverIdentifier }' from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )

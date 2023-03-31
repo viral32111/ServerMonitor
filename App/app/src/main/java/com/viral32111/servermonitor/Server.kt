@@ -52,7 +52,7 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 		version = data.get( "version" ).asString
 		uptimeSeconds = round( data.get( "uptimeSeconds" ).asDouble ).toLong()
 
-		// TODO: Everything in update() when extended is true
+		if ( extended ) updateUsingAPIData( data )
 	}
 
 	// Checks if the server is online or offline
@@ -133,19 +133,12 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 
 	/**
 	 * Updates this server's data.
-	 * @param instanceUrl The URL to the connector instance, using the HTTPS schema.
-	 * @param credentialsUsername The user to authenticate as.
-	 * @param credentialsPassword The password to authenticate with.
 	 * @throws APIException Any sort of error, such as non-success HTTP status code, network connectivity, etc.
 	 * @throws JsonParseException An error parsing the HTTP response body as JSON, when successful.
 	 * @throws JsonSyntaxException An error parsing the HTTP response body as JSON, when successful.
 	 * @throws NullPointerException The API response contained an unexpected null property.
 	 */
-	suspend fun update( instanceUrl: String, credentialsUsername: String, credentialsPassword: String ) {
-
-		// Fetch the server, will throw a null pointer exception if null
-		val data = API.getServer( instanceUrl, credentialsUsername, credentialsPassword, identifier )!!
-		Log.d( Shared.logTag, "Fetched server '${ hostName }' ('${ identifier }', '${ jobName }', '${ instanceAddress }') from API" )
+	fun updateUsingAPIData( data: JsonObject ) {
 
 		// Update basic information
 		identifier = data.get( "identifier" ).asString
@@ -204,6 +197,27 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 		val snmpAgentsList = ArrayList<SNMPAgent>()
 		for ( snmpAgent in snmp.get( "agents" ).asJsonArray ) snmpAgentsList.add( SNMPAgent( snmpAgent.asJsonObject ) )
 		snmpAgents = snmpAgentsList.toTypedArray()
+
+	}
+
+	/**
+	 * Updates this server's data.
+	 * @param instanceUrl The URL to the connector instance, using the HTTPS schema.
+	 * @param credentialsUsername The user to authenticate as.
+	 * @param credentialsPassword The password to authenticate with.
+	 * @throws APIException Any sort of error, such as non-success HTTP status code, network connectivity, etc.
+	 * @throws JsonParseException An error parsing the HTTP response body as JSON, when successful.
+	 * @throws JsonSyntaxException An error parsing the HTTP response body as JSON, when successful.
+	 * @throws NullPointerException The API response contained an unexpected null property.
+	 */
+	suspend fun updateFromAPI( instanceUrl: String, credentialsUsername: String, credentialsPassword: String ) {
+
+		// Fetch the server, will throw a null pointer exception if null
+		val data = API.getServer( instanceUrl, credentialsUsername, credentialsPassword, identifier )!!
+		Log.d( Shared.logTag, "Fetched server '${ hostName }' ('${ identifier }', '${ jobName }', '${ instanceAddress }') from API" )
+
+		// Set the properties
+		updateUsingAPIData( data )
 
 	}
 }
