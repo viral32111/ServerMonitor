@@ -150,6 +150,8 @@ class ServerActivity : AppCompatActivity() {
 		resourcesPowerTextView.text = String.format( getString( R.string.serverTextViewResourcesDataPower ), "Unknown" )
 		resourcesFansTextView.text = String.format( getString( R.string.serverTextViewResourcesDataFans ), "Unknown" )
 
+		// TODO: Default to nothing available for drives, services, Docker containers & SNMP agents
+
 		// Get the settings
 		settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE ) )
 		Log.d( Shared.logTag, "Got settings ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )

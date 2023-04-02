@@ -31,20 +31,24 @@
 
 	<!-- Drives section -->
 	<string name="serverTextViewDrivesTitle">Drives</string>
+	<string name="serverTextViewDrivesDataUnknown">The status of drives is unknown.</string>
 	<string name="serverTextViewDrivesDataDrive">%s: %d%% health</string>
 	<string name="serverTextViewDrivesDataPartition">%s: %d%s of %d%s (%d%%) @ %s</string>
 
 	<!-- Services section -->
 	<string name="serverTextViewServicesTitle">Services</string>
+	<string name="serverTextViewServicesDataUnknown">The status of services is unknown.</string>
 	<string name="serverTextViewServicesData">%s: %s for %s.</string>
 	<string name="serverButtonServicesManage">Manage</string>
 
 	<!-- Docker containers section -->
 	<string name="serverTextViewDockerTitle">Docker Containers</string>
+	<string name="serverTextViewDockerDataUnknown">The status of containers is unknown.</string>
 	<string name="serverTextViewDockerData">%s: %s for %s.</string>
 
 	<!-- SNMP section -->
 	<string name="serverTextViewSNMPTitle">SNMP Agents in \'%s\'</string>
+	<string name="serverTextViewSNMPDataUnknown">The status agents is unknown.</string>
 	<string name="serverTextViewSNMPData">%s: %s for %s.</string>
 
 	<!-- Toasts for fetch server -->
