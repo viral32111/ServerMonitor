@@ -47,6 +47,8 @@ class ServerActivity : AppCompatActivity() {
 	private lateinit var resourcesFansTextView: TextView
 	private lateinit var drivesStatusTextView: TextView
 	private lateinit var drivesRecyclerView: RecyclerView
+	private lateinit var networkStatusTextView: TextView
+	private lateinit var networkRecyclerView: RecyclerView
 	private lateinit var snmpTitleTextView: TextView
 	private lateinit var refreshProgressBar: ProgressBar
 
@@ -145,6 +147,8 @@ class ServerActivity : AppCompatActivity() {
 		resourcesFansTextView = findViewById( R.id.serverResourcesDataFansTextView )
 		drivesStatusTextView = findViewById( R.id.serverDrivesStatusTextView )
 		drivesRecyclerView = findViewById( R.id.serverDrivesRecyclerView )
+		networkStatusTextView = findViewById( R.id.serverNetworkStatusTextView )
+		networkRecyclerView = findViewById( R.id.serverNetworkRecyclerView )
 		snmpTitleTextView = findViewById( R.id.serverSNMPTitleTextView )
 		refreshProgressBar = findViewById( R.id.serverRefreshProgressBar )
 
@@ -190,14 +194,19 @@ class ServerActivity : AppCompatActivity() {
 			}
 		}
 
-		// Create a linear layout manager for the drives recycler view
-		val linearLayoutManager = LinearLayoutManager( this, LinearLayoutManager.VERTICAL, false )
-		drivesRecyclerView.layoutManager = linearLayoutManager
+		// Setup the drives recycler view
+		val drivesLinearLayoutManager = LinearLayoutManager( this, LinearLayoutManager.VERTICAL, false )
+		drivesRecyclerView.layoutManager = drivesLinearLayoutManager
+		val drivesDividerItemDecoration = DividerItemDecoration( this, drivesLinearLayoutManager.orientation )
+		drivesDividerItemDecoration.setDrawable( ContextCompat.getDrawable( this, R.drawable.shape_section_divider )!! )
+		drivesRecyclerView.addItemDecoration( drivesDividerItemDecoration )
 
-		// Set the divider between drives in its recycler view
-		val dividerItemDecoration = DividerItemDecoration( this, linearLayoutManager.orientation )
-		dividerItemDecoration.setDrawable( ContextCompat.getDrawable( this, R.drawable.shape_drive_divider )!! )
-		drivesRecyclerView.addItemDecoration( dividerItemDecoration )
+		// Setup the network interfaces recycler view
+		val networkLinearLayoutManager = LinearLayoutManager( this, LinearLayoutManager.VERTICAL, false )
+		networkRecyclerView.layoutManager = networkLinearLayoutManager
+		val networkDividerItemDecoration = DividerItemDecoration( this, networkLinearLayoutManager.orientation )
+		networkDividerItemDecoration.setDrawable( ContextCompat.getDrawable( this, R.drawable.shape_section_divider )!! )
+		networkRecyclerView.addItemDecoration( networkDividerItemDecoration )
 
 		// Create the animation for the automatic refresh countdown progress bar - https://stackoverflow.com/a/18015071
 		progressBarAnimation = ProgressBarAnimation( refreshProgressBar, refreshProgressBar.progress.toFloat(), refreshProgressBar.max.toFloat() )
@@ -766,7 +775,6 @@ class ServerActivity : AppCompatActivity() {
 		}
 
 		// Set the network resource data
-		// TODO: Separate section for this with each interface individually, as this is just a total/overview
 		if ( server.isOnline() ) {
 			val networkTransmitRateBytes = server.networkInterfaces?.fold( 0L ) { total, networkInterface -> total + networkInterface.rateBytesSent } ?: -1L
 			val networkReceiveRateBytes = server.networkInterfaces?.fold( 0L ) { total, networkInterface -> total + networkInterface.rateBytesReceived } ?: -1L
@@ -779,8 +787,8 @@ class ServerActivity : AppCompatActivity() {
 			resourcesNetworkTextView.setTextColor( getColor( R.color.black ) )
 			resourcesNetworkTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.black ) )
 			resourcesNetworkTextView.text = Html.fromHtml( String.format( getString( R.string.serverTextViewResourcesDataNetwork ), String.format( getString( R.string.serverTextViewResourcesDataNetworkValue ),
-				createColorText( roundValueOrDefault( networkTransmitRate.amount, networkTransmitRate.suffix + "/s" ), colorForValue( applicationContext, networkTransmitRateBytes, 1024L * 1024L, 1024L * 1024L * 10L ) ), // No idea what the thresholds should be, so guestimate
-				createColorText( roundValueOrDefault( networkReceiveRate.amount, networkReceiveRate.suffix + "/s" ), colorForValue( applicationContext, networkReceiveRateBytes, 1024L * 1024L, 1024L * 1024L * 10L ) ) // No idea what the thresholds should be, so guestimate
+				createColorText( roundValueOrDefault( networkTransmitRate.amount, networkTransmitRate.suffix + "/s" ), colorForValue( applicationContext, networkTransmitRateBytes, 1024L * 1024L, 1024L * 1024L * 10L ) ), // No idea what the thresholds should be, so guesstimate
+				createColorText( roundValueOrDefault( networkReceiveRate.amount, networkReceiveRate.suffix + "/s" ), colorForValue( applicationContext, networkReceiveRateBytes, 1024L * 1024L, 1024L * 1024L * 10L ) ) // No idea what the thresholds should be, so guesstimate
 			) ), Html.FROM_HTML_MODE_LEGACY )
 		} else {
 			resourcesNetworkTextView.setTextColor( getColor( R.color.statusDead ) )
@@ -801,8 +809,8 @@ class ServerActivity : AppCompatActivity() {
 			resourcesDriveTextView.setTextColor( getColor( R.color.black ) )
 			resourcesDriveTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.black ) )
 			resourcesDriveTextView.text = Html.fromHtml( String.format( getString( R.string.serverTextViewResourcesDataDrive ), String.format( getString( R.string.serverTextViewResourcesDataDriveValue ),
-				createColorText( roundValueOrDefault( driveReadRate.amount, driveReadRate.suffix + "/s" ), colorForValue( applicationContext, driveReadRateBytes, 1024L * 1024L, 1024L * 1024L * 10L ) ), // No idea what the thresholds should be, so guestimate
-				createColorText( roundValueOrDefault( driveWriteRate.amount, driveWriteRate.suffix + "/s" ), colorForValue( applicationContext, driveWriteRateBytes, 1024L * 1024L, 1024L * 1024L * 10L ) ) // No idea what the thresholds should be, so guestimate
+				createColorText( roundValueOrDefault( driveReadRate.amount, driveReadRate.suffix + "/s" ), colorForValue( applicationContext, driveReadRateBytes, 1024L * 1024L, 1024L * 1024L * 10L ) ), // No idea what the thresholds should be, so guesstimate
+				createColorText( roundValueOrDefault( driveWriteRate.amount, driveWriteRate.suffix + "/s" ), colorForValue( applicationContext, driveWriteRateBytes, 1024L * 1024L, 1024L * 1024L * 10L ) ) // No idea what the thresholds should be, so guesstimate
 			) ), Html.FROM_HTML_MODE_LEGACY )
 		} else {
 			resourcesDriveTextView.setTextColor( getColor( R.color.statusDead ) )
@@ -813,6 +821,33 @@ class ServerActivity : AppCompatActivity() {
 		// TODO: Power resource data
 
 		// TODO: Fans resource data
+
+		// Network Interfaces
+		if ( server.isOnline() ) {
+			val networkInterfaces = server.networkInterfaces?.reversedArray()
+			if ( networkInterfaces != null && networkInterfaces.isNotEmpty() ) {
+				networkStatusTextView.visibility = View.GONE
+				networkRecyclerView.visibility = View.VISIBLE
+
+				val networkInterfacesAdapter = NetworkInterfaceAdapter( networkInterfaces, applicationContext )
+				networkRecyclerView.adapter = networkInterfacesAdapter
+				networkInterfacesAdapter.notifyItemRangeChanged( 0, networkInterfaces.size )
+			} else {
+				networkRecyclerView.visibility = View.GONE
+
+				networkStatusTextView.visibility = View.VISIBLE
+				networkStatusTextView.setTextColor( getColor( R.color.statusDead ) )
+				networkStatusTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
+				networkStatusTextView.text = getString( R.string.serverTextViewNetworkEmpty )
+			}
+		} else {
+			networkRecyclerView.visibility = View.GONE
+
+			networkStatusTextView.visibility = View.VISIBLE
+			networkStatusTextView.setTextColor( getColor( R.color.statusDead ) )
+			networkStatusTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
+			networkStatusTextView.text = getString( R.string.serverTextViewNetworkUnknown )
+		}
 
 		// Drives
 		if ( server.isOnline() ) {

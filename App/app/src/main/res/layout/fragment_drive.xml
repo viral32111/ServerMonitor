@@ -12,9 +12,9 @@
 		android:layout_height="wrap_content"
 		android:drawablePadding="@dimen/serverIconPadding"
 		android:text="@string/serverTextViewDrivesDrive"
-		android:textAlignment="viewStart"
 		android:textSize="@dimen/text_size"
 		app:drawableLeftCompat="@drawable/hard_drive"
+		app:drawableTint="@color/black"
 		app:layout_constraintEnd_toEndOf="parent"
 		app:layout_constraintStart_toStartOf="parent"
 		app:layout_constraintTop_toTopOf="parent" />

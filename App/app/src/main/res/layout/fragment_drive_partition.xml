@@ -11,6 +11,7 @@
 		android:layout_height="wrap_content"
 		android:layout_marginStart="8dp"
 		android:drawablePadding="@dimen/serverIconPadding"
+		app:drawableTint="@color/black"
 		android:text="@string/serverTextViewDrivesPartition"
 		android:textSize="16sp"
 		app:drawableLeftCompat="@drawable/hard_drive_2" />
