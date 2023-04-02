@@ -83,7 +83,7 @@ class ServerAdapter( private val servers: Array<Server>, private val context: Co
 				viewHolder.memoryTextView.text = String.format( context.getString( R.string.serversTextViewServerMemoryUsage ), size.amount.roundToInt(), size.suffix.substring( 0, 1 ) )
 				viewHolder.memoryTextView.setTextColor( context.getColor( R.color.statusGood ) )
 			} else {
-				viewHolder.memoryTextView.text = String.format( context.getString( R.string.serversTextViewServerMemoryUsage ), 0, "K" )
+				viewHolder.memoryTextView.text = String.format( context.getString( R.string.serversTextViewServerMemoryUsage ), 0, "B" )
 				viewHolder.memoryTextView.setTextColor( context.getColor( R.color.statusDead ) )
 			}
 
@@ -114,7 +114,7 @@ class ServerAdapter( private val servers: Array<Server>, private val context: Co
 				viewHolder.networkTextView.text = String.format( context.getString( R.string.serversTextViewServerNetworkUsage ), rate.amount.roundToLong().coerceAtLeast( 0 ), rate.suffix.substring( 0, 1 ) )
 				viewHolder.networkTextView.setTextColor( context.getColor( R.color.statusGood ) )
 			} else {
-				viewHolder.networkTextView.text = String.format( context.getString( R.string.serversTextViewServerNetworkUsage ), 0, "K" )
+				viewHolder.networkTextView.text = String.format( context.getString( R.string.serversTextViewServerNetworkUsage ), 0, "B" )
 				viewHolder.networkTextView.setTextColor( context.getColor( R.color.statusDead ) )
 			}
 
@@ -124,7 +124,7 @@ class ServerAdapter( private val servers: Array<Server>, private val context: Co
 				viewHolder.diskTextView.text = String.format( context.getString( R.string.serversTextViewServerDiskUsage ), rate.amount.roundToLong().coerceAtLeast( 0 ), rate.suffix.substring( 0, 1 ) )
 				viewHolder.diskTextView.setTextColor( context.getColor( R.color.statusGood ) )
 			} else {
-				viewHolder.diskTextView.text = String.format( context.getString( R.string.serversTextViewServerDiskUsage ), 0, "K" )
+				viewHolder.diskTextView.text = String.format( context.getString( R.string.serversTextViewServerDiskUsage ), 0, "B" )
 				viewHolder.diskTextView.setTextColor( context.getColor( R.color.statusDead ) )
 			}
 
@@ -139,7 +139,7 @@ class ServerAdapter( private val servers: Array<Server>, private val context: Co
 			viewHolder.processorTextView.text = String.format( context.getString( R.string.serversTextViewServerProcessorUsage ), 0 )
 			viewHolder.processorTextView.setTextColor( context.getColor( R.color.statusDead ) )
 
-			viewHolder.memoryTextView.text = String.format( context.getString( R.string.serversTextViewServerMemoryUsage ), 0, "K" )
+			viewHolder.memoryTextView.text = String.format( context.getString( R.string.serversTextViewServerMemoryUsage ), 0, "B" )
 			viewHolder.memoryTextView.setTextColor( context.getColor( R.color.statusDead ) )
 
 			viewHolder.temperatureTextView.text = String.format( context.getString( R.string.serversTextViewServerTemperatureValue ), 0 )
@@ -148,10 +148,10 @@ class ServerAdapter( private val servers: Array<Server>, private val context: Co
 			viewHolder.serviceTextView.text = String.format( context.getString( R.string.serversTextViewServerServicesCount ), 0 )
 			viewHolder.serviceTextView.setTextColor( context.getColor( R.color.statusDead ) )
 
-			viewHolder.networkTextView.text = String.format( context.getString( R.string.serversTextViewServerNetworkUsage ), 0, "K" )
+			viewHolder.networkTextView.text = String.format( context.getString( R.string.serversTextViewServerNetworkUsage ), 0, "B" )
 			viewHolder.networkTextView.setTextColor( context.getColor( R.color.statusDead ) )
 
-			viewHolder.diskTextView.text = String.format( context.getString( R.string.serversTextViewServerDiskUsage ), 0, "K" )
+			viewHolder.diskTextView.text = String.format( context.getString( R.string.serversTextViewServerDiskUsage ), 0, "B" )
 			viewHolder.diskTextView.setTextColor( context.getColor( R.color.statusDead ) )
 
 			viewHolder.uptimeTextView.text = context.getString( R.string.serversTextViewServerUptimeOffline )
