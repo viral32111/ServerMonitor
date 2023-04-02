@@ -149,15 +149,13 @@ class ServerActivity : AppCompatActivity() {
 		refreshProgressBar = findViewById( R.id.serverRefreshProgressBar )
 
 		// Default to unknown for all resources - the text is already grey as defined in layout, so no need to call createColorText()
-		resourcesProcessorTextView.text = String.format( getString( R.string.serverTextViewResourcesDataProcessor ), "Unknown" )
-		resourcesMemoryTextView.text = String.format( getString( R.string.serverTextViewResourcesDataMemory ), "Unknown" )
-		resourcesSwapTextView.text = String.format( getString( R.string.serverTextViewResourcesDataSwap ), "Swap", "Unknown" ) // Assume name is swap, probably fine as most servers are Linux
-		resourcesNetworkTextView.text = String.format( getString( R.string.serverTextViewResourcesDataNetwork ), "Unknown" )
-		resourcesDriveTextView.text = String.format( getString( R.string.serverTextViewResourcesDataDrive ), "Unknown" )
-		resourcesPowerTextView.text = String.format( getString( R.string.serverTextViewResourcesDataPower ), "Unknown" )
-		resourcesFansTextView.text = String.format( getString( R.string.serverTextViewResourcesDataFans ), "Unknown" )
-
-		// TODO: Default to nothing available for drives, services, Docker containers & SNMP agents
+		resourcesProcessorTextView.text = String.format( getString( R.string.serverTextViewResourcesDataProcessor ), String.format( getString( R.string.serverTextViewResourcesDataProcessorValue ), "0%", "0Hz", "0℃" ) )
+		resourcesMemoryTextView.text = String.format( getString( R.string.serverTextViewResourcesDataMemory ), String.format( getString( R.string.serverTextViewResourcesDataMemoryValue ), "0B", "0B", "0%" ) )
+		resourcesSwapTextView.text = String.format( getString( R.string.serverTextViewResourcesDataSwap ), "Swap", String.format( getString( R.string.serverTextViewResourcesDataSwapValue ), "0B", "0B", "0%" ) ) // Assume name is swap, probably fine as most servers are Linux
+		resourcesNetworkTextView.text = String.format( getString( R.string.serverTextViewResourcesDataNetwork ), String.format( getString( R.string.serverTextViewResourcesDataNetworkValue ), "0B/s", "0B/s" ) )
+		resourcesDriveTextView.text = String.format( getString( R.string.serverTextViewResourcesDataDrive ), String.format( getString( R.string.serverTextViewResourcesDataDriveValue ), "0B/s", "0B/s" ) )
+		resourcesPowerTextView.text = String.format( getString( R.string.serverTextViewResourcesDataPower ), String.format( getString( R.string.serverTextViewResourcesDataPowerValue ), "0W", "0W" ) )
+		resourcesFansTextView.text =String.format( getString( R.string.serverTextViewResourcesDataFans ), String.format( getString( R.string.serverTextViewResourcesDataFansValue ), "0RPM" ) )
 
 		// Get the settings
 		settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE ) )
