@@ -723,8 +723,8 @@ class ServerActivity : AppCompatActivity() {
 		else getColor( R.color.statusGood )
 
 	// Rounds a given value if it is valid, fallback to default text - Suffix is not included in string format so that percentage symbols can be used
-	private fun roundValueOrDefault( value: Float?, suffix: String = "" ) = if ( value == null || value <= 0.0 ) "N/A" else String.format( "%.1f", value ) + suffix
-	private fun roundValueOrDefault( value: Double?, suffix: String = "" ) = if ( value == null || value <= 0.0 ) "N/A" else String.format( "%.1f", value ) + suffix
+	private fun roundValueOrDefault( value: Float?, suffix: String = "" ) = ( if ( value == null || value <= 0.0 ) "0" else String.format( "%.1f", value ) ) + suffix
+	private fun roundValueOrDefault( value: Double?, suffix: String = "" ) = ( if ( value == null || value <= 0.0 ) "0" else String.format( "%.1f", value ) ) + suffix
 
 	// Creates a HTML spannable tag with color styling - https://stackoverflow.com/a/41655900
 	private fun createColorText( text: String, color: Int ) = String.format( "<span style=\"color: #${ color.toString( 16 ) }\">${ text }</span>" )
