@@ -18,8 +18,8 @@
 	<string name="serverTextViewResourcesDataProcessorValue">%s at %s (%s)</string>
 	<string name="serverTextViewResourcesDataMemory">Memory: %s.</string>
 	<string name="serverTextViewResourcesDataMemoryValue">%s of %s (%s)</string>
-	<string name="serverTextViewResourcesDataSwap">Swap: %s.</string>
-	<string name="serverTextViewResourcesDataSwapValue">%d%s of %d%s (%d%%)</string>
+	<string name="serverTextViewResourcesDataSwap">%s: %s.</string>
+	<string name="serverTextViewResourcesDataSwapValue">%s of %s (%s)</string>
 	<string name="serverTextViewResourcesDataNetwork">Network: %s.</string>
 	<string name="serverTextViewResourcesDataNetworkValue">%d%s tx, %d%s rx</string>
 	<string name="serverTextViewResourcesDataDrive">Drive: %s.</string>

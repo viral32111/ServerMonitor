@@ -657,7 +657,7 @@ class ServerActivity : AppCompatActivity() {
 			resourcesProcessorTextView.text = Html.fromHtml( String.format( getString( R.string.serverTextViewResourcesDataProcessor, String.format(
 				getString( R.string.serverTextViewResourcesDataProcessorValue ),
 				createColorText( roundValueOrDefault( server.processorUsage, PERCENT ), colorForValue( server.processorUsage, 50.0f, 80.0f ) ),
-				createColorText( roundValueOrDefault( processorFrequency.amount, processorFrequency.suffix ), getColor( R.color.statusNeutral ) ),
+				createColorText( roundValueOrDefault( processorFrequency.amount, processorFrequency.suffix ), colorAsNeutral( server.processorFrequency ) ),
 				createColorText( roundValueOrDefault( server.processorTemperature, "℃" ), colorForValue( server.processorTemperature, 60.0f, 90.0f ) )
 			) ) ), Html.FROM_HTML_MODE_LEGACY )
 		} else {
@@ -685,13 +685,45 @@ class ServerActivity : AppCompatActivity() {
 			resourcesMemoryTextView.text = Html.fromHtml( String.format( getString( R.string.serverTextViewResourcesDataMemory, String.format(
 				getString( R.string.serverTextViewResourcesDataMemoryValue ),
 				createColorText( roundValueOrDefault( memoryUsed.amount, memoryUsed.suffix ), colorForValue( memoryUsedBytes.toFloat(), memoryTotalBytes / 2.0f, memoryTotalBytes / 1.25f ) ),
-				createColorText( roundValueOrDefault( memoryTotal.amount, memoryTotal.suffix ), getColor( R.color.statusNeutral ) ),
+				createColorText( roundValueOrDefault( memoryTotal.amount, memoryTotal.suffix ), colorAsNeutral( memoryTotalBytes ) ),
 				createColorText( roundValueOrDefault( memoryUsage, PERCENT ), colorForValue( memoryUsage, 50.0, 80.0 ) ),
 			) ) ), Html.FROM_HTML_MODE_LEGACY )
 		} else {
 			resourcesMemoryTextView.setTextColor( getColor( R.color.statusDead ) )
 			resourcesMemoryTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
 			resourcesMemoryTextView.text = String.format( getString( R.string.serverTextViewResourcesDataMemory ), createColorText( "Unknown", getColor( R.color.statusDead ) ) )
+		}
+
+		// Set the swap/page file details
+		val swapName = if ( server.operatingSystem.contains( "Microsoft Windows" ) ) "Page" else "Swap"
+		if ( server.isOnline() ) {
+			val swapTotalBytes = server.swapTotalBytes ?: -1L
+			val swapFreeBytes = server.swapFreeBytes ?: -1L
+			val swapUsedBytes = if ( swapTotalBytes >= 0L && swapFreeBytes >= 0L ) swapTotalBytes - swapFreeBytes else -1L
+			Log.d( Shared.logTag, "Swap Total: '${ swapTotalBytes }' bytes, Swap Free: '${ swapFreeBytes }' bytes, Swap Used: '${ swapUsedBytes }' bytes" )
+
+			val swapUsed = Size( swapUsedBytes )
+			val swapTotal = Size( swapTotalBytes )
+			Log.d( Shared.logTag, "Swap Total: '${ swapTotal.amount }' '${ swapTotal.suffix }', Swap Used: '${ swapUsed.amount }' '${ swapUsed.suffix }'" )
+
+			val swapUsage = if ( swapTotalBytes >= 0L && swapFreeBytes >= 0L ) ( swapUsedBytes.toDouble() / swapTotalBytes.toDouble() ) * 100.0 else -1.0
+			Log.d( Shared.logTag, "Swap Usage: '${ swapUsage }'" )
+
+			resourcesSwapTextView.setTextColor( getColor( R.color.black ) )
+			resourcesSwapTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.black ) )
+			resourcesSwapTextView.text = Html.fromHtml(
+				String.format( getString( R.string.serverTextViewResourcesDataSwap ),
+					swapName,
+					String.format( getString( R.string.serverTextViewResourcesDataSwapValue ),
+						createColorText( roundValueOrDefault( swapUsed.amount, swapUsed.suffix ), colorForValue( swapUsedBytes.toFloat(), swapTotalBytes / 2.0f, swapTotalBytes / 1.25f ) ),
+						createColorText( roundValueOrDefault( swapTotal.amount, swapTotal.suffix ), colorAsNeutral( swapTotalBytes ) ),
+						createColorText( roundValueOrDefault( swapUsage, PERCENT ), colorForValue( swapUsage, 50.0, 80.0 ) ),
+					)
+				), Html.FROM_HTML_MODE_LEGACY )
+		} else {
+			resourcesSwapTextView.setTextColor( getColor( R.color.statusDead ) )
+			resourcesSwapTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
+			resourcesSwapTextView.text = String.format( getString( R.string.serverTextViewResourcesDataSwap ), swapName, createColorText( "Unknown", getColor( R.color.statusDead ) ) )
 		}
 
 	}
@@ -705,7 +737,7 @@ class ServerActivity : AppCompatActivity() {
 
 	}
 
-	// Gets the color for a given value
+	// Gets the color for a given value, fallback to offline/dead
 	private fun colorForValue( value: Float?, warnThreshold: Float, badThreshold: Float ) =
 		if ( value == null || value < 0.0f ) getColor( R.color.statusDead )
 		else if ( value >= badThreshold ) getColor( R.color.statusBad )
@@ -721,6 +753,11 @@ class ServerActivity : AppCompatActivity() {
 		else if ( value >= badThreshold ) getColor( R.color.statusBad )
 		else if ( value >= warnThreshold ) getColor( R.color.statusWarning )
 		else getColor( R.color.statusGood )
+
+	// Returns neutral color for value, or fallback to offline/dead
+	private fun colorAsNeutral( value: Float? ) = if ( value == null || value < 0.0 ) getColor( R.color.statusDead ) else getColor( R.color.statusNeutral )
+	private fun colorAsNeutral( value: Double? ) = if ( value == null || value < 0.0 ) getColor( R.color.statusDead ) else getColor( R.color.statusNeutral )
+	private fun colorAsNeutral( value: Long? ) = if ( value == null || value < 0.0 ) getColor( R.color.statusDead ) else getColor( R.color.statusNeutral )
 
 	// Rounds a given value if it is valid, fallback to default text - Suffix is not included in string format so that percentage symbols can be used
 	private fun roundValueOrDefault( value: Float?, suffix: String = "" ) = ( if ( value == null || value <= 0.0 ) "0" else String.format( "%.1f", value ) ) + suffix
