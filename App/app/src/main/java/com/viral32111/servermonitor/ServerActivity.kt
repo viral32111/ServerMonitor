@@ -141,6 +141,15 @@ class ServerActivity : AppCompatActivity() {
 		resourcesFansTextView = findViewById( R.id.serverResourcesDataFansTextView )
 		refreshProgressBar = findViewById( R.id.serverRefreshProgressBar )
 
+		// Default to unknown for all resources - the text is already grey as defined in layout, so no need to call createColorText()
+		resourcesProcessorTextView.text = String.format( getString( R.string.serverTextViewResourcesDataProcessor ), "Unknown" )
+		resourcesMemoryTextView.text = String.format( getString( R.string.serverTextViewResourcesDataMemory ), "Unknown" )
+		resourcesSwapTextView.text = String.format( getString( R.string.serverTextViewResourcesDataSwap ), "Swap", "Unknown" ) // Assume name is swap, probably fine as most servers are Linux
+		resourcesNetworkTextView.text = String.format( getString( R.string.serverTextViewResourcesDataNetwork ), "Unknown" )
+		resourcesDriveTextView.text = String.format( getString( R.string.serverTextViewResourcesDataDrive ), "Unknown" )
+		resourcesPowerTextView.text = String.format( getString( R.string.serverTextViewResourcesDataPower ), "Unknown" )
+		resourcesFansTextView.text = String.format( getString( R.string.serverTextViewResourcesDataFans ), "Unknown" )
+
 		// Get the settings
 		settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE ) )
 		Log.d( Shared.logTag, "Got settings ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
