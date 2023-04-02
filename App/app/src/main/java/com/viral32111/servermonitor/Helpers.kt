@@ -130,6 +130,11 @@ fun colorForValue( context: Context, value: Int?, warnThreshold: Int, badThresho
 	else if ( value >= badThreshold ) context.getColor( R.color.statusBad )
 	else if ( value >= warnThreshold ) context.getColor( R.color.statusWarning )
 	else context.getColor( R.color.statusGood )
+fun colorForValueReverse( context: Context, value: Int?, warnThreshold: Int, badThreshold: Int ) =
+	if ( value == null || value < 0 ) context.getColor( R.color.statusDead )
+	else if ( value <= badThreshold ) context.getColor( R.color.statusBad )
+	else if ( value <= warnThreshold ) context.getColor( R.color.statusWarning )
+	else context.getColor( R.color.statusGood )
 
 // Returns neutral color for value, or fallback to offline/dead
 fun colorAsNeutral( context: Context, value: Float? ) = if ( value == null || value < 0.0 ) context.getColor( R.color.statusDead ) else context.getColor( R.color.statusNeutral )

@@ -48,7 +48,7 @@ class DriveAdapter(
 		// Drive name & S.M.A.R.T health
 		viewHolder.textView.text = Html.fromHtml( String.format( context.getString( R.string.serverTextViewDrivesDrive ),
 			drive.name,
-			createColorText( String.format( "%d%s", drive.health.coerceAtLeast( 0 ), Shared.percentSymbol ), colorForValue( context, drive.health, 99, 90 ) )
+			createColorText( String.format( "%d%s", drive.health.coerceAtLeast( 0 ), Shared.percentSymbol ), colorForValueReverse( context, drive.health, 99, 90 ) )
 		), Html.FROM_HTML_MODE_LEGACY )
 
 		// Partitions - we assume there will always be partitions
