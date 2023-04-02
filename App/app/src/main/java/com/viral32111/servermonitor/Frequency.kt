@@ -8,7 +8,7 @@ package com.viral32111.servermonitor
  */
 class Frequency( hertz: Long ) {
 
-	// Use 1000 (SI)
+	// Use 1000 (SI), not 1024
 	companion object {
 		private const val KILOHERTZ = 1000.0;
 		private const val MEGAHERTZ = KILOHERTZ * 1000.0;

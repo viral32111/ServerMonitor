@@ -671,11 +671,14 @@ class ServerActivity : AppCompatActivity() {
 			val memoryTotalBytes = server.memoryTotalBytes ?: -1L
 			val memoryFreeBytes = server.memoryFreeBytes ?: -1L
 			val memoryUsedBytes = memoryTotalBytes - memoryFreeBytes
+			Log.d( Shared.logTag, "Memory Total: '${ memoryTotalBytes }' bytes, Memory Free: '${ memoryFreeBytes }' bytes, Memory Used: '${ memoryUsedBytes }' bytes" )
 
 			val memoryUsed = Size( memoryUsedBytes )
 			val memoryTotal = Size( memoryTotalBytes )
+			Log.d( Shared.logTag, "Memory Total: '${ memoryTotal.amount }' '${ memoryTotal.suffix }', Memory Used: '${ memoryUsed.amount }' '${ memoryUsed.suffix }'" )
 
-			val memoryUsage = ( memoryUsedBytes / memoryTotalBytes ) * 100.0f
+			val memoryUsage = ( memoryUsedBytes.toDouble() / memoryTotalBytes.toDouble() ) * 100.0
+			Log.d( Shared.logTag, "Memory Usage: '${ memoryUsage }'" )
 
 			resourcesMemoryTextView.setTextColor( getColor( R.color.black ) )
 			resourcesMemoryTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.black ) )
@@ -683,7 +686,7 @@ class ServerActivity : AppCompatActivity() {
 				getString( R.string.serverTextViewResourcesDataMemoryValue ),
 				createColorText( roundValueOrDefault( memoryUsed.amount, memoryUsed.suffix ), colorForValue( memoryUsedBytes.toFloat(), memoryTotalBytes / 2.0f, memoryTotalBytes / 1.25f ) ),
 				createColorText( roundValueOrDefault( memoryTotal.amount, memoryTotal.suffix ), getColor( R.color.statusNeutral ) ),
-				createColorText( roundValueOrDefault( memoryUsage, PERCENT ), colorForValue( memoryUsage, 50.0f, 80.0f ) ),
+				createColorText( roundValueOrDefault( memoryUsage, PERCENT ), colorForValue( memoryUsage, 50.0, 80.0 ) ),
 			) ) ), Html.FROM_HTML_MODE_LEGACY )
 		} else {
 			resourcesMemoryTextView.setTextColor( getColor( R.color.statusDead ) )
@@ -704,11 +707,16 @@ class ServerActivity : AppCompatActivity() {
 
 	// Gets the color for a given value
 	private fun colorForValue( value: Float?, warnThreshold: Float, badThreshold: Float ) =
-		if ( value == null || value < 0.0 ) getColor( R.color.statusDead )
+		if ( value == null || value < 0.0f ) getColor( R.color.statusDead )
 		else if ( value >= badThreshold ) getColor( R.color.statusBad )
 		else if ( value >= warnThreshold ) getColor( R.color.statusWarning )
 		else getColor( R.color.statusGood )
 	private fun colorForValue( value: Long?, warnThreshold: Long, badThreshold: Long ) =
+		if ( value == null || value < 0L ) getColor( R.color.statusDead )
+		else if ( value >= badThreshold ) getColor( R.color.statusBad )
+		else if ( value >= warnThreshold ) getColor( R.color.statusWarning )
+		else getColor( R.color.statusGood )
+	private fun colorForValue( value: Double?, warnThreshold: Double, badThreshold: Double ) =
 		if ( value == null || value < 0.0 ) getColor( R.color.statusDead )
 		else if ( value >= badThreshold ) getColor( R.color.statusBad )
 		else if ( value >= warnThreshold ) getColor( R.color.statusWarning )

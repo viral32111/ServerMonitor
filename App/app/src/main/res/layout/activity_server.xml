@@ -304,7 +304,7 @@
 				<TextView
 					android:id="@+id/serverServicesDataTextView"
 					android:layout_width="0dp"
-					android:layout_height="36dp"
+					android:layout_height="38dp"
 					android:layout_marginTop="4dp"
 					android:drawablePadding="@dimen/serverIconPadding"
 					android:gravity="start|center_vertical"
@@ -318,7 +318,7 @@
 				<Button
 					android:id="@+id/serverServicesManageButton"
 					android:layout_width="100dp"
-					android:layout_height="36dp"
+					android:layout_height="38dp"
 					android:layout_marginTop="4dp"
 					android:includeFontPadding="false"
 					android:text="@string/serverButtonServicesManage"
