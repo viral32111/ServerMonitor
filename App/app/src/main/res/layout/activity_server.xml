@@ -27,7 +27,7 @@
 			app:layout_constraintStart_toStartOf="parent"
 			app:layout_constraintTop_toTopOf="parent" />
 
-		<ScrollView
+		<androidx.core.widget.NestedScrollView
 			android:id="@+id/serverScrollView"
 			android:layout_width="match_parent"
 			android:layout_height="match_parent"
@@ -35,7 +35,6 @@
 			android:layout_marginTop="@dimen/scrollViewEdgeTop"
 			android:layout_marginEnd="@dimen/scrollViewEdgeEnd"
 			android:layout_marginBottom="@dimen/scrollViewEdgeBottom"
-			android:fillViewport="true"
 			android:paddingStart="@dimen/scrollViewEdgeStart"
 			android:paddingEnd="@dimen/scrollViewEdgeEnd"
 			android:scrollbarStyle="outsideOverlay"
@@ -62,183 +61,331 @@
 					app:layout_constraintStart_toStartOf="parent"
 					app:layout_constraintTop_toTopOf="parent" />
 
+				<View
+					android:id="@+id/serverStatusDivider"
+					android:layout_width="0dp"
+					android:layout_height="1dp"
+					android:layout_marginTop="@dimen/serverSectionSpacing"
+					android:background="?android:attr/listDivider"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serverStatusTextView" />
+
 				<Button
 					android:id="@+id/serverActionShutdownButton"
 					android:layout_width="0dp"
 					android:layout_height="wrap_content"
-					android:layout_marginTop="12dp"
+					android:layout_marginTop="@dimen/serverSectionSpacing"
 					android:layout_marginEnd="8dp"
 					android:backgroundTint="@color/shutdownActionButton"
 					android:enabled="false"
 					android:text="@string/serverButtonShutdownAction"
 					app:layout_constraintEnd_toStartOf="@+id/serverActionRebootButton"
 					app:layout_constraintStart_toStartOf="parent"
-					app:layout_constraintTop_toBottomOf="@+id/serverStatusTextView" />
+					app:layout_constraintTop_toBottomOf="@+id/serverStatusDivider" />
 
 				<Button
 					android:id="@+id/serverActionRebootButton"
 					android:layout_width="0dp"
 					android:layout_height="wrap_content"
 					android:layout_marginStart="8dp"
-					android:layout_marginTop="12dp"
+					android:layout_marginTop="@dimen/serverSectionSpacing"
 					android:backgroundTint="@color/rebootActionButton"
 					android:enabled="false"
 					android:text="@string/serverButtonRebootAction"
 					app:layout_constraintEnd_toEndOf="parent"
 					app:layout_constraintStart_toEndOf="@+id/serverActionShutdownButton"
-					app:layout_constraintTop_toBottomOf="@+id/serverStatusTextView" />
+					app:layout_constraintTop_toBottomOf="@+id/serverStatusDivider" />
 
-				<androidx.constraintlayout.widget.ConstraintLayout
-					android:id="@+id/serverResourcesConstraintLayout"
-					android:layout_width="match_parent"
-					android:layout_height="wrap_content"
-					android:layout_marginTop="12dp"
-					android:paddingHorizontal="6dp"
-					android:paddingVertical="4dp"
-					android:background="@drawable/shape_server"
+				<View
+					android:id="@+id/serverResourcesDivider"
+					android:layout_width="0dp"
+					android:layout_height="1dp"
+					android:layout_marginTop="@dimen/serverSectionSpacing"
+					android:background="?android:attr/listDivider"
 					app:layout_constraintEnd_toEndOf="parent"
 					app:layout_constraintStart_toStartOf="parent"
-					app:layout_constraintTop_toBottomOf="@+id/serverActionShutdownButton">
+					app:layout_constraintTop_toBottomOf="@+id/serverActionShutdownButton" />
 
-					<TextView
-						android:id="@+id/serverResourcesTitleTextView"
-						android:layout_width="0dp"
-						android:layout_height="wrap_content"
-						android:text="@string/serverTextViewResourcesTitle"
-						android:textAlignment="center"
-						android:textSize="@dimen/text_size"
-						android:textStyle="bold"
-						app:layout_constraintEnd_toEndOf="parent"
-						app:layout_constraintStart_toStartOf="parent"
-						app:layout_constraintTop_toTopOf="parent" />
-
-					<TextView
-						android:id="@+id/serverResourcesDataTextView"
-						android:layout_width="0dp"
-						android:layout_height="wrap_content"
-						android:text="@string/serverTextViewResourcesData"
-						android:textAlignment="viewStart"
-						android:textSize="16sp"
-						app:layout_constraintEnd_toEndOf="parent"
-						app:layout_constraintStart_toStartOf="parent"
-						app:layout_constraintTop_toBottomOf="@+id/serverResourcesTitleTextView" />
-
-				</androidx.constraintlayout.widget.ConstraintLayout>
-
-				<androidx.constraintlayout.widget.ConstraintLayout
-					android:id="@+id/serverDisksConstraintLayout"
-					android:layout_width="match_parent"
+				<TextView
+					android:id="@+id/serverResourcesTitleTextView"
+					android:layout_width="0dp"
 					android:layout_height="wrap_content"
-					android:layout_marginTop="12dp"
-					android:background="@drawable/shape_server"
-					android:paddingHorizontal="6dp"
-					android:paddingVertical="4dp"
+					android:layout_marginTop="@dimen/serverSectionSpacing"
+					android:text="@string/serverTextViewResourcesTitle"
+					android:textAlignment="center"
+					android:textSize="@dimen/text_size"
+					android:textStyle="bold"
 					app:layout_constraintEnd_toEndOf="parent"
 					app:layout_constraintStart_toStartOf="parent"
-					app:layout_constraintTop_toBottomOf="@+id/serverResourcesConstraintLayout">
+					app:layout_constraintTop_toBottomOf="@+id/serverResourcesDivider" />
 
-					<TextView
-						android:id="@+id/serverDisksTitleTextView"
-						android:layout_width="0dp"
-						android:layout_height="wrap_content"
-						android:text="@string/serverTextViewDisksTitle"
-						android:textAlignment="center"
-						android:textSize="@dimen/text_size"
-						android:textStyle="bold"
-						app:layout_constraintEnd_toEndOf="parent"
-						app:layout_constraintStart_toStartOf="parent"
-						app:layout_constraintTop_toTopOf="parent" />
-
-					<TextView
-						android:id="@+id/serverDisksDataTextView"
-						android:layout_width="0dp"
-						android:layout_height="wrap_content"
-						android:text="@string/serverTextViewDisksDataDisk"
-						android:textAlignment="viewStart"
-						android:textSize="16sp"
-						app:layout_constraintEnd_toEndOf="parent"
-						app:layout_constraintStart_toStartOf="parent"
-						app:layout_constraintTop_toBottomOf="@+id/serverDisksTitleTextView" />
-
-				</androidx.constraintlayout.widget.ConstraintLayout>
-
-				<androidx.constraintlayout.widget.ConstraintLayout
-					android:id="@+id/serverServicesConstraintLayout"
-					android:layout_width="match_parent"
+				<TextView
+					android:id="@+id/serverResourcesDataProcessorTextView"
+					android:layout_width="0dp"
 					android:layout_height="wrap_content"
-					android:layout_marginTop="12dp"
-					android:background="@drawable/shape_server"
-					android:paddingHorizontal="6dp"
-					android:paddingVertical="4dp"
+					android:layout_marginTop="4dp"
+					android:drawablePadding="@dimen/serverIconPadding"
+					android:text="@string/serverTextViewResourcesDataProcessor"
+					android:textSize="@dimen/text_size"
+					app:drawableLeftCompat="@drawable/memory"
 					app:layout_constraintEnd_toEndOf="parent"
 					app:layout_constraintStart_toStartOf="parent"
-					app:layout_constraintTop_toBottomOf="@+id/serverDisksConstraintLayout">
+					app:layout_constraintTop_toBottomOf="@+id/serverResourcesTitleTextView" />
 
-					<TextView
-						android:id="@+id/serverServicesTitleTextView"
-						android:layout_width="0dp"
-						android:layout_height="wrap_content"
-						android:text="@string/serverTextViewServicesTitle"
-						android:textAlignment="center"
-						android:textSize="@dimen/text_size"
-						android:textStyle="bold"
-						app:layout_constraintEnd_toEndOf="parent"
-						app:layout_constraintStart_toStartOf="parent"
-						app:layout_constraintTop_toTopOf="parent" />
-
-					<TextView
-						android:id="@+id/serverServicesDataTextView"
-						android:layout_width="0dp"
-						android:layout_height="wrap_content"
-						android:text="@string/serverTextViewServicesData"
-						android:textAlignment="viewStart"
-						android:textSize="16sp"
-						app:layout_constraintEnd_toEndOf="parent"
-						app:layout_constraintStart_toStartOf="parent"
-						app:layout_constraintTop_toBottomOf="@+id/serverServicesTitleTextView" />
-
-				</androidx.constraintlayout.widget.ConstraintLayout>
-
-				<androidx.constraintlayout.widget.ConstraintLayout
-					android:id="@+id/serverDockerContainersConstraintLayout"
-					android:layout_width="match_parent"
+				<TextView
+					android:id="@+id/serverResourcesDataMemoryTextView"
+					android:layout_width="0dp"
 					android:layout_height="wrap_content"
-					android:layout_marginTop="12dp"
-					android:background="@drawable/shape_server"
-					android:paddingHorizontal="6dp"
-					android:paddingVertical="4dp"
+					android:layout_marginTop="2dp"
+					android:drawablePadding="@dimen/serverIconPadding"
+					android:text="@string/serverTextViewResourcesDataMemory"
+					android:textSize="@dimen/text_size"
+					app:drawableLeftCompat="@drawable/memory_alt"
 					app:layout_constraintEnd_toEndOf="parent"
 					app:layout_constraintStart_toStartOf="parent"
-					app:layout_constraintTop_toBottomOf="@+id/serverServicesConstraintLayout">
+					app:layout_constraintTop_toBottomOf="@+id/serverResourcesDataProcessorTextView" />
 
-					<TextView
-						android:id="@+id/serverDockerContainersTitleTextView"
-						android:layout_width="0dp"
-						android:layout_height="wrap_content"
-						android:text="@string/serverTextViewDockerContainersTitle"
-						android:textAlignment="center"
-						android:textSize="@dimen/text_size"
-						android:textStyle="bold"
-						app:layout_constraintEnd_toEndOf="parent"
-						app:layout_constraintStart_toStartOf="parent"
-						app:layout_constraintTop_toTopOf="parent" />
+				<TextView
+					android:id="@+id/serverResourcesDataSwapTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginTop="2dp"
+					android:drawablePadding="@dimen/serverIconPadding"
+					android:text="@string/serverTextViewResourcesDataSwap"
+					android:textSize="@dimen/text_size"
+					app:drawableLeftCompat="@drawable/developer_board"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serverResourcesDataMemoryTextView" />
 
-					<TextView
-						android:id="@+id/serverDockerContainersDataTextView"
-						android:layout_width="0dp"
-						android:layout_height="wrap_content"
-						android:text="@string/serverTextViewDockerContainersData"
-						android:textAlignment="viewStart"
-						android:textSize="16sp"
-						app:layout_constraintEnd_toEndOf="parent"
-						app:layout_constraintStart_toStartOf="parent"
-						app:layout_constraintTop_toBottomOf="@+id/serverDockerContainersTitleTextView" />
+				<TextView
+					android:id="@+id/serverResourcesDataNetworkTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginTop="2dp"
+					android:drawablePadding="@dimen/serverIconPadding"
+					android:text="@string/serverTextViewResourcesDataNetwork"
+					android:textSize="@dimen/text_size"
+					app:drawableLeftCompat="@drawable/signal_cellular_alt"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serverResourcesDataSwapTextView" />
 
-				</androidx.constraintlayout.widget.ConstraintLayout>
+				<TextView
+					android:id="@+id/serverResourcesDataDriveTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginTop="2dp"
+					android:drawablePadding="@dimen/serverIconPadding"
+					android:text="@string/serverTextViewResourcesDataDrive"
+					android:textSize="@dimen/text_size"
+					app:drawableLeftCompat="@drawable/hard_drive"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serverResourcesDataNetworkTextView" />
+
+				<TextView
+					android:id="@+id/serverResourcesDataPowerTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginTop="2dp"
+					android:drawablePadding="@dimen/serverIconPadding"
+					android:text="@string/serverTextViewResourcesDataPower"
+					android:textSize="@dimen/text_size"
+					app:drawableLeftCompat="@drawable/bolt"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serverResourcesDataDriveTextView" />
+
+				<TextView
+					android:id="@+id/serverResourcesDataFansTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginTop="2dp"
+					android:drawablePadding="@dimen/serverIconPadding"
+					android:text="@string/serverTextViewResourcesDataFans"
+					android:textSize="@dimen/text_size"
+					app:drawableLeftCompat="@drawable/mode_fan"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serverResourcesDataPowerTextView" />
+
+				<View
+					android:id="@+id/serverDrivesDivider"
+					android:layout_width="0dp"
+					android:layout_height="1dp"
+					android:layout_marginTop="@dimen/serverSectionSpacing"
+					android:background="?android:attr/listDivider"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serverResourcesDataFansTextView" />
+
+				<TextView
+					android:id="@+id/serverDrivesTitleTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginTop="@dimen/serverSectionSpacing"
+					android:text="@string/serverTextViewDrivesTitle"
+					android:textAlignment="center"
+					android:textSize="@dimen/text_size"
+					android:textStyle="bold"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serverDrivesDivider" />
+
+				<TextView
+					android:id="@+id/serverDrivesDataDriveTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginTop="4dp"
+					android:drawablePadding="@dimen/serverIconPadding"
+					android:text="@string/serverTextViewDrivesDataDrive"
+					android:textAlignment="viewStart"
+					android:textSize="@dimen/text_size"
+					app:drawableLeftCompat="@drawable/hard_drive"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serverDrivesTitleTextView" />
+
+				<TextView
+					android:id="@+id/serverDrivesDataPartitionTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginStart="16dp"
+					android:layout_marginTop="2dp"
+					android:drawablePadding="@dimen/serverIconPadding"
+					android:text="@string/serverTextViewDrivesDataPartition"
+					android:textAlignment="viewStart"
+					android:textSize="16sp"
+					app:drawableLeftCompat="@drawable/hard_drive_2"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serverDrivesDataDriveTextView" />
+
+				<View
+					android:id="@+id/serverServicesDivider"
+					android:layout_width="0dp"
+					android:layout_height="1dp"
+					android:layout_marginTop="@dimen/serverSectionSpacing"
+					android:background="?android:attr/listDivider"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serverDrivesDataPartitionTextView" />
+
+				<TextView
+					android:id="@+id/serverServicesTitleTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginTop="@dimen/serverSectionSpacing"
+					android:text="@string/serverTextViewServicesTitle"
+					android:textAlignment="center"
+					android:textSize="@dimen/text_size"
+					android:textStyle="bold"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serverServicesDivider" />
+
+				<TextView
+					android:id="@+id/serverServicesDataTextView"
+					android:layout_width="0dp"
+					android:layout_height="36dp"
+					android:layout_marginTop="4dp"
+					android:drawablePadding="@dimen/serverIconPadding"
+					android:gravity="start|center_vertical"
+					android:text="@string/serverTextViewServicesData"
+					android:textSize="16sp"
+					app:drawableLeftCompat="@drawable/wysiwyg"
+					app:layout_constraintEnd_toStartOf="@+id/serverServicesManageButton"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serverServicesTitleTextView" />
+
+				<Button
+					android:id="@+id/serverServicesManageButton"
+					android:layout_width="100dp"
+					android:layout_height="36dp"
+					android:layout_marginTop="4dp"
+					android:includeFontPadding="false"
+					android:text="@string/serverButtonServicesManage"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toEndOf="@+id/serverServicesDataTextView"
+					app:layout_constraintTop_toBottomOf="@+id/serverServicesTitleTextView" />
+
+				<View
+					android:id="@+id/serverDockerDivider"
+					android:layout_width="0dp"
+					android:layout_height="1dp"
+					android:layout_marginTop="@dimen/serverSectionSpacing"
+					android:background="?android:attr/listDivider"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serverServicesDataTextView" />
+
+				<TextView
+					android:id="@+id/serverDockerTitleTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginTop="@dimen/serverSectionSpacing"
+					android:text="@string/serverTextViewDockerTitle"
+					android:textAlignment="center"
+					android:textSize="@dimen/text_size"
+					android:textStyle="bold"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serverDockerDivider" />
+
+				<TextView
+					android:id="@+id/serverDockerDataTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:drawablePadding="@dimen/serverIconPadding"
+					android:text="@string/serverTextViewDockerData"
+					android:textAlignment="viewStart"
+					android:textSize="16sp"
+					app:drawableLeftCompat="@drawable/terminal"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serverDockerTitleTextView" />
+
+				<View
+					android:id="@+id/serverSNMPDivider"
+					android:layout_width="0dp"
+					android:layout_height="1dp"
+					android:layout_marginTop="@dimen/serverSectionSpacing"
+					android:background="?android:attr/listDivider"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serverDockerDataTextView" />
+
+				<TextView
+					android:id="@+id/serverSNMPTitleTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginTop="@dimen/serverSectionSpacing"
+					android:text="@string/serverTextViewSNMPTitle"
+					android:textAlignment="center"
+					android:textSize="@dimen/text_size"
+					android:textStyle="bold"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serverSNMPDivider" />
+
+				<TextView
+					android:id="@+id/serverSNMPDataTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:drawablePadding="@dimen/serverIconPadding"
+					android:text="@string/serverTextViewSNMPData"
+					android:textAlignment="viewStart"
+					android:textSize="16sp"
+					app:drawableLeftCompat="@drawable/lan"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serverSNMPTitleTextView" />
 
 			</androidx.constraintlayout.widget.ConstraintLayout>
 
-		</ScrollView>
+		</androidx.core.widget.NestedScrollView>
 
 	</androidx.constraintlayout.widget.ConstraintLayout>
 

@@ -24,4 +24,8 @@
     <dimen name="serversListPadding">16dp</dimen>
     <dimen name="serversListDividerSpace">16dp</dimen>
 
+    <!-- Server -->
+    <dimen name="serverSectionSpacing">12dp</dimen>
+    <dimen name="serverIconPadding">4dp</dimen>
+
 </resources>

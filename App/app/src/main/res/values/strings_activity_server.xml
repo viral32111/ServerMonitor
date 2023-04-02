@@ -12,22 +12,33 @@
 	<string name="serverButtonShutdownAction">Shutdown</string>
 	<string name="serverButtonRebootAction">Soft Reboot</string>
 
-	<!-- Resources box -->
+	<!-- Resources section -->
 	<string name="serverTextViewResourcesTitle">Resources</string>
-	<string name="serverTextViewResourcesData">Processor: %d%% at %d%s (%d℃).\nMemory: %d%s of %d%s (%d%%).\nSwap: %d%s of %d%s (%d%%).\nNetwork: %d%s tx, %d%s rx.\nDisk: %d%s write, %d%s read.\nPower: %d%s of %d%s.\nFans: %d%s.</string>
+	<string name="serverTextViewResourcesDataProcessor">Processor: %d%% at %d%s (%d℃).</string>
+	<string name="serverTextViewResourcesDataMemory">Memory: %d%s of %d%s (%d%%).</string>
+	<string name="serverTextViewResourcesDataSwap">Swap: %d%s of %d%s (%d%%).</string>
+	<string name="serverTextViewResourcesDataNetwork">Network: %d%s tx, %d%s rx.</string>
+	<string name="serverTextViewResourcesDataDrive">Drive: %d%s write, %d%s read.</string>
+	<string name="serverTextViewResourcesDataPower">Power: %d%s of %d%s.</string>
+	<string name="serverTextViewResourcesDataFans">Fans: %d%s.</string>
 
-	<!-- Disks box -->
-	<string name="serverTextViewDisksTitle">Disks</string>
-	<string name="serverTextViewDisksDataDisk">%s: %d%% health</string>
-	<string name="serverTextViewDisksDataPartition">\t%s: %d%s of %d%s (%d%%) @ %s</string>
+	<!-- Drives section -->
+	<string name="serverTextViewDrivesTitle">Drives</string>
+	<string name="serverTextViewDrivesDataDrive">%s: %d%% health</string>
+	<string name="serverTextViewDrivesDataPartition">%s: %d%s of %d%s (%d%%) @ %s</string>
 
-	<!-- Services box -->
+	<!-- Services section -->
 	<string name="serverTextViewServicesTitle">Services</string>
 	<string name="serverTextViewServicesData">%s: %s for %s.</string>
+	<string name="serverButtonServicesManage">Manage</string>
 
-	<!-- Docker containers box -->
-	<string name="serverTextViewDockerContainersTitle">Docker Containers</string>
-	<string name="serverTextViewDockerContainersData">%s: %s for %s.</string>
+	<!-- Docker containers section -->
+	<string name="serverTextViewDockerTitle">Docker Containers</string>
+	<string name="serverTextViewDockerData">%s: %s for %s.</string>
+
+	<!-- SNMP section -->
+	<string name="serverTextViewSNMPTitle">SNMP Agents in \'%s\'</string>
+	<string name="serverTextViewSNMPData">%s: %s for %s.</string>
 
 	<!-- Toasts for fetch server -->
 	<string name="serverToastServerAuthenticationUnknownUser">No credentials exist with the configured username.</string>
