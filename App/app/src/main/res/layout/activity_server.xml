@@ -267,7 +267,7 @@
 					android:id="@+id/serverDrivesRecyclerView"
 					android:layout_width="0dp"
 					android:layout_height="wrap_content"
-					android:layout_marginTop="@dimen/serverSectionSpacing"
+					android:layout_marginTop="4dp"
 					android:visibility="gone"
 					app:layout_constraintEnd_toEndOf="parent"
 					app:layout_constraintStart_toStartOf="parent"
@@ -299,29 +299,31 @@
 					app:layout_constraintTop_toBottomOf="@+id/serverServicesDivider" />
 
 				<TextView
-					android:id="@+id/serverServicesDataTextView"
+					android:id="@+id/serverServicesStatusTextView"
 					android:layout_width="0dp"
-					android:layout_height="38dp"
+					android:layout_height="wrap_content"
 					android:layout_marginTop="4dp"
 					android:drawablePadding="@dimen/serverIconPadding"
-					android:gravity="start|center_vertical"
-					android:text="@string/serverTextViewServicesData"
-					android:textSize="16sp"
+					android:text="@string/serverTextViewServicesUnknown"
+					android:textColor="@color/statusDead"
+					android:textSize="@dimen/text_size"
 					app:drawableLeftCompat="@drawable/wysiwyg"
-					app:layout_constraintEnd_toStartOf="@+id/serverServicesManageButton"
+					app:drawableTint="@color/statusDead"
+					app:layout_constraintEnd_toEndOf="parent"
 					app:layout_constraintStart_toStartOf="parent"
 					app:layout_constraintTop_toBottomOf="@+id/serverServicesTitleTextView" />
 
-				<Button
-					android:id="@+id/serverServicesManageButton"
-					android:layout_width="100dp"
-					android:layout_height="38dp"
+				<androidx.recyclerview.widget.RecyclerView
+					android:id="@+id/serverServicesRecyclerView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
 					android:layout_marginTop="4dp"
-					android:includeFontPadding="false"
-					android:text="@string/serverButtonServicesManage"
+					android:visibility="gone"
 					app:layout_constraintEnd_toEndOf="parent"
-					app:layout_constraintStart_toEndOf="@+id/serverServicesDataTextView"
-					app:layout_constraintTop_toBottomOf="@+id/serverServicesTitleTextView" />
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serverServicesStatusTextView"
+					tools:itemCount="0"
+					tools:listitem="@layout/fragment_service" />
 
 				<View
 					android:id="@+id/serverDockerDivider"
@@ -331,7 +333,7 @@
 					android:background="?android:attr/listDivider"
 					app:layout_constraintEnd_toEndOf="parent"
 					app:layout_constraintStart_toStartOf="parent"
-					app:layout_constraintTop_toBottomOf="@+id/serverServicesDataTextView" />
+					app:layout_constraintTop_toBottomOf="@+id/serverServicesRecyclerView" />
 
 				<TextView
 					android:id="@+id/serverDockerTitleTextView"
@@ -347,7 +349,7 @@
 					app:layout_constraintTop_toBottomOf="@+id/serverDockerDivider" />
 
 				<TextView
-					android:id="@+id/serverDockerUnknownTextView"
+					android:id="@+id/serverDockerStatusTextView"
 					android:layout_width="0dp"
 					android:layout_height="wrap_content"
 					android:layout_marginTop="4dp"
@@ -361,6 +363,18 @@
 					app:layout_constraintStart_toStartOf="parent"
 					app:layout_constraintTop_toBottomOf="@+id/serverDockerTitleTextView" />
 
+				<androidx.recyclerview.widget.RecyclerView
+					android:id="@+id/serverDockerRecyclerView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginTop="4dp"
+					android:visibility="gone"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serverDockerStatusTextView"
+					tools:itemCount="0"
+					tools:listitem="@layout/fragment_docker_container" />
+
 				<View
 					android:id="@+id/serverSNMPDivider"
 					android:layout_width="0dp"
@@ -369,7 +383,7 @@
 					android:background="?android:attr/listDivider"
 					app:layout_constraintEnd_toEndOf="parent"
 					app:layout_constraintStart_toStartOf="parent"
-					app:layout_constraintTop_toBottomOf="@+id/serverDockerUnknownTextView" />
+					app:layout_constraintTop_toBottomOf="@+id/serverDockerRecyclerView" />
 
 				<TextView
 					android:id="@+id/serverSNMPTitleTextView"
@@ -385,7 +399,7 @@
 					app:layout_constraintTop_toBottomOf="@+id/serverSNMPDivider" />
 
 				<TextView
-					android:id="@+id/serverSNMPUnknownTextView"
+					android:id="@+id/serverSNMPStatusTextView"
 					android:layout_width="0dp"
 					android:layout_height="wrap_content"
 					android:layout_marginTop="4dp"
@@ -398,6 +412,18 @@
 					app:layout_constraintEnd_toEndOf="parent"
 					app:layout_constraintStart_toStartOf="parent"
 					app:layout_constraintTop_toBottomOf="@+id/serverSNMPTitleTextView" />
+
+				<androidx.recyclerview.widget.RecyclerView
+					android:id="@+id/serverSNMPRecyclerView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginTop="4dp"
+					android:visibility="gone"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serverSNMPStatusTextView"
+					tools:itemCount="0"
+					tools:listitem="@layout/fragment_snmp_agent" />
 
 			</androidx.constraintlayout.widget.ConstraintLayout>
 
