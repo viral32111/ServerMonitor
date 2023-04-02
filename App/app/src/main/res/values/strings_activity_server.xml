@@ -58,7 +58,8 @@
 	<string name="serverTextViewDockerData">%s: %s for %s.</string>
 
 	<!-- SNMP section -->
-	<string name="serverTextViewSNMPTitle">SNMP Agents in \'%s\'</string>
+	<string name="serverTextViewSNMPTitle">SNMP Agents</string>
+	<string name="serverTextViewSNMPTitleCommunity">SNMP Agents in %s</string>
 	<string name="serverTextViewSNMPUnknown">The status of agents is unknown.</string>
 	<string name="serverTextViewSNMPData">%s: %s for %s.</string>
 

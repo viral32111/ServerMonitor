@@ -47,6 +47,7 @@ class ServerActivity : AppCompatActivity() {
 	private lateinit var resourcesFansTextView: TextView
 	private lateinit var drivesStatusTextView: TextView
 	private lateinit var drivesRecyclerView: RecyclerView
+	private lateinit var snmpTitleTextView: TextView
 	private lateinit var refreshProgressBar: ProgressBar
 
 	// Misc
@@ -144,6 +145,7 @@ class ServerActivity : AppCompatActivity() {
 		resourcesFansTextView = findViewById( R.id.serverResourcesDataFansTextView )
 		drivesStatusTextView = findViewById( R.id.serverDrivesStatusTextView )
 		drivesRecyclerView = findViewById( R.id.serverDrivesRecyclerView )
+		snmpTitleTextView = findViewById( R.id.serverSNMPTitleTextView )
 		refreshProgressBar = findViewById( R.id.serverRefreshProgressBar )
 
 		// Default to unknown for all resources - the text is already grey as defined in layout, so no need to call createColorText()
@@ -839,6 +841,13 @@ class ServerActivity : AppCompatActivity() {
 			drivesStatusTextView.setTextColor( getColor( R.color.statusDead ) )
 			drivesStatusTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
 			drivesStatusTextView.text = getString( R.string.serverTextViewDrivesUnknown )
+		}
+
+		// SNMP
+		if ( server.isOnline() ) {
+			snmpTitleTextView.text = Html.fromHtml( String.format( getString( R.string.serverTextViewSNMPTitleCommunity ), "<em>${ server.snmpCommunity }</em>" ), Html.FROM_HTML_MODE_LEGACY )
+		} else {
+			snmpTitleTextView.text = getString( R.string.serverTextViewSNMPTitle )
 		}
 
 	}
