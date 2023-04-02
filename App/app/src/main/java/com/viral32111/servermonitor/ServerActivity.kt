@@ -205,10 +205,9 @@ class ServerActivity : AppCompatActivity() {
 				// Don't refresh if we've been manually cleared
 				if ( refreshProgressBar.progress == 0 ) return
 
-				// Show refreshing spinner
+				// Show refreshing spinner & disable user input
 				swipeRefreshLayout.isRefreshing = true
-
-				// TODO: Disable user input while refreshing...
+				enableInputs( false )
 
 				CoroutineScope( Dispatchers.Main ).launch { // Begin coroutine context (on the UI thread)...
 					withContext( Dispatchers.IO ) { // Run on network thread...
@@ -222,8 +221,9 @@ class ServerActivity : AppCompatActivity() {
 								swipeRefreshLayout.isRefreshing = false
 								refreshProgressBar.progress = 0
 
-								// Update the UI
+								// Update the UI & enable user input
 								updateUI( server )
+								enableInputs( true )
 
 								// Start the progress bar animation
 								if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
@@ -235,6 +235,7 @@ class ServerActivity : AppCompatActivity() {
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
 								refreshProgressBar.progress = 0
+								enableInputs( true )
 
 								when ( exception.volleyError ) {
 
@@ -278,6 +279,7 @@ class ServerActivity : AppCompatActivity() {
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
 								refreshProgressBar.progress = 0
+								enableInputs( true )
 								showBriefMessage( activity, R.string.serversToastServersParseFailure )
 							}
 						} catch ( exception: JsonSyntaxException ) {
@@ -286,6 +288,7 @@ class ServerActivity : AppCompatActivity() {
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
 								refreshProgressBar.progress = 0
+								enableInputs( true )
 								showBriefMessage( activity, R.string.serversToastServersParseFailure )
 							}
 						} catch ( exception: NullPointerException ) {
@@ -294,6 +297,7 @@ class ServerActivity : AppCompatActivity() {
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
 								refreshProgressBar.progress = 0
+								enableInputs( true )
 								showBriefMessage( activity, R.string.serversToastServersNull )
 							}
 						}
@@ -312,8 +316,6 @@ class ServerActivity : AppCompatActivity() {
 		// When we're swiped down to refresh...
 		swipeRefreshLayout.setOnRefreshListener {
 			Log.d( Shared.logTag, "Swipe refreshed!" )
-
-			// TODO: Disable user input while refreshing...
 
 			// Stop the automatic refresh countdown progress bar, thus calling the animation callback
 			if ( settings.automaticRefresh ) {
@@ -466,10 +468,9 @@ class ServerActivity : AppCompatActivity() {
 		refreshProgressBar.isEnabled = settings.automaticRefresh
 		refreshProgressBar.visibility = if ( settings.automaticRefresh ) View.VISIBLE else View.GONE
 
-		// Show refreshing spinner
+		// Show refreshing spinner & disable user input
 		swipeRefreshLayout.isRefreshing = true
-
-		// TODO: Disable user input while refreshing...
+		enableInputs( false )
 
 		val activity = this
 		CoroutineScope( Dispatchers.Main ).launch {
@@ -488,10 +489,15 @@ class ServerActivity : AppCompatActivity() {
 
 					Log.d( Shared.logTag, "Fetched contact information from API (Name: '${ contactName }', Methods: '${ contactMethods!!.joinToString( ", " ) }')" )
 
+					// We don't enable user input & stop refreshing spinner here, as there's still another request to come
+
 				} catch ( exception: APIException ) {
 					Log.e( Shared.logTag, "Failed to fetch contact information from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
 
 					withContext( Dispatchers.Main ) {
+						swipeRefreshLayout.isRefreshing = false
+						enableInputs( true )
+
 						when ( exception.volleyError ) {
 
 							// Bad authentication
@@ -532,18 +538,24 @@ class ServerActivity : AppCompatActivity() {
 					Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
 
 					withContext( Dispatchers.Main ) {
+						swipeRefreshLayout.isRefreshing = false
+						enableInputs( true )
 						showBriefMessage( activity, R.string.serversToastServersParseFailure )
 					}
 				} catch ( exception: JsonSyntaxException ) {
 					Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
 
 					withContext( Dispatchers.Main ) {
+						swipeRefreshLayout.isRefreshing = false
+						enableInputs( true )
 						showBriefMessage( activity, R.string.serversToastServersParseFailure )
 					}
 				} catch ( exception: NullPointerException ) {
 					Log.e( Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
 
 					withContext( Dispatchers.Main ) {
+						swipeRefreshLayout.isRefreshing = false
+						enableInputs( true )
 						showBriefMessage( activity, R.string.serversToastServersNull )
 					}
 				}
@@ -559,10 +571,8 @@ class ServerActivity : AppCompatActivity() {
 						swipeRefreshLayout.isRefreshing = false
 						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
 
-						// Update the UI
+						// Update the UI & enable user input
 						updateUI( server )
-
-						// Enable the UI
 						enableInputs( true )
 
 						// Start the progress bar animation
@@ -575,6 +585,7 @@ class ServerActivity : AppCompatActivity() {
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
 						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
+						enableInputs( true )
 
 						when ( exception.volleyError ) {
 
@@ -618,6 +629,7 @@ class ServerActivity : AppCompatActivity() {
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
 						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
+						enableInputs( true )
 						showBriefMessage( activity, R.string.serverToastServerParseFailure )
 					}
 				} catch ( exception: JsonSyntaxException) {
@@ -626,6 +638,7 @@ class ServerActivity : AppCompatActivity() {
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
 						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
+						enableInputs( true )
 						showBriefMessage( activity, R.string.serverToastServerParseFailure )
 					}
 				} catch ( exception: NullPointerException ) {
@@ -634,6 +647,7 @@ class ServerActivity : AppCompatActivity() {
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
 						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
+						enableInputs( true )
 						showBriefMessage( activity, R.string.serverToastServerNull )
 					}
 				}
