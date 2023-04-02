@@ -205,6 +205,7 @@ class ServersActivity : AppCompatActivity() {
 										502 -> showBriefMessage( activity, R.string.serversToastServersUnavailable )
 										503 -> showBriefMessage( activity, R.string.serversToastServersUnavailable )
 										504 -> showBriefMessage( activity, R.string.serversToastServersUnavailable )
+										530 -> showBriefMessage( activity, R.string.serversToastServersUnavailable ) // Cloudflare
 										else -> showBriefMessage( activity, R.string.serversToastServersServerFailure )
 									}
 
@@ -308,6 +309,7 @@ class ServersActivity : AppCompatActivity() {
 										502 -> showBriefMessage( activity, R.string.serversToastServersUnavailable )
 										503 -> showBriefMessage( activity, R.string.serversToastServersUnavailable )
 										504 -> showBriefMessage( activity, R.string.serversToastServersUnavailable )
+										530 -> showBriefMessage( activity, R.string.serversToastServersUnavailable ) // Cloudflare
 										else -> showBriefMessage( activity, R.string.serversToastServersServerFailure )
 									}
 
@@ -440,6 +442,7 @@ class ServersActivity : AppCompatActivity() {
 								502 -> showBriefMessage( activity, R.string.toastInstanceTestUnavailable )
 								503 -> showBriefMessage( activity, R.string.toastInstanceTestUnavailable )
 								504 -> showBriefMessage( activity, R.string.toastInstanceTestUnavailable )
+								530 -> showBriefMessage( activity, R.string.toastInstanceTestUnavailable ) // Cloudflare
 								else -> showBriefMessage( activity, R.string.toastInstanceTestServerFailure )
 							}
 
@@ -516,6 +519,7 @@ class ServersActivity : AppCompatActivity() {
 								502 -> showBriefMessage( activity, R.string.serversToastServersUnavailable )
 								503 -> showBriefMessage( activity, R.string.serversToastServersUnavailable )
 								504 -> showBriefMessage( activity, R.string.serversToastServersUnavailable )
+								530 -> showBriefMessage( activity, R.string.serversToastServersUnavailable ) // Cloudflare
 								else -> showBriefMessage( activity, R.string.serversToastServersServerFailure )
 							}
 

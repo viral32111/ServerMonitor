@@ -227,6 +227,7 @@ class ServerActivity : AppCompatActivity() {
 										502 -> showBriefMessage( activity, R.string.serversToastServersUnavailable )
 										503 -> showBriefMessage( activity, R.string.serversToastServersUnavailable )
 										504 -> showBriefMessage( activity, R.string.serversToastServersUnavailable )
+										530 -> showBriefMessage( activity, R.string.serverToastServerUnavailable ) // Cloudflare
 										else -> showBriefMessage( activity, R.string.serversToastServersServerFailure )
 									}
 
@@ -335,6 +336,7 @@ class ServerActivity : AppCompatActivity() {
 										502 -> showBriefMessage( activity, R.string.serversToastServersUnavailable )
 										503 -> showBriefMessage( activity, R.string.serversToastServersUnavailable )
 										504 -> showBriefMessage( activity, R.string.serversToastServersUnavailable )
+										530 -> showBriefMessage( activity, R.string.serverToastServerUnavailable ) // Cloudflare
 										else -> showBriefMessage( activity, R.string.serversToastServersServerFailure )
 									}
 
@@ -477,6 +479,7 @@ class ServerActivity : AppCompatActivity() {
 								502 -> showBriefMessage( activity, R.string.toastInstanceTestUnavailable )
 								503 -> showBriefMessage( activity, R.string.toastInstanceTestUnavailable )
 								504 -> showBriefMessage( activity, R.string.toastInstanceTestUnavailable )
+								530 -> showBriefMessage( activity, R.string.serverToastServerUnavailable ) // Cloudflare
 								else -> showBriefMessage( activity, R.string.toastInstanceTestServerFailure )
 							}
 
@@ -560,6 +563,7 @@ class ServerActivity : AppCompatActivity() {
 								502 -> showBriefMessage( activity, R.string.serverToastServerUnavailable )
 								503 -> showBriefMessage( activity, R.string.serverToastServerUnavailable )
 								504 -> showBriefMessage( activity, R.string.serverToastServerUnavailable )
+								530 -> showBriefMessage( activity, R.string.serverToastServerUnavailable ) // Cloudflare
 								else -> showBriefMessage( activity, R.string.serverToastServerServerFailure )
 							}
 

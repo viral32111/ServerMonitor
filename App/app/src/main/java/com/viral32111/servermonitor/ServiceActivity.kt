@@ -208,6 +208,7 @@ class ServiceActivity : AppCompatActivity() {
 								502 -> showBriefMessage( activity, R.string.toastInstanceTestUnavailable )
 								503 -> showBriefMessage( activity, R.string.toastInstanceTestUnavailable )
 								504 -> showBriefMessage( activity, R.string.toastInstanceTestUnavailable )
+								530 -> showBriefMessage( activity, R.string.toastInstanceTestUnavailable ) // Cloudflare
 								else -> showBriefMessage( activity, R.string.toastInstanceTestServerFailure )
 							}
 
