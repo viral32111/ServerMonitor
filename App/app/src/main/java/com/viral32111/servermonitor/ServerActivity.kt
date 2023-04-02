@@ -15,6 +15,10 @@ import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.android.volley.*
 import com.google.android.material.appbar.MaterialToolbar
@@ -41,12 +45,13 @@ class ServerActivity : AppCompatActivity() {
 	private lateinit var resourcesDriveTextView: TextView
 	private lateinit var resourcesPowerTextView: TextView
 	private lateinit var resourcesFansTextView: TextView
+	private lateinit var drivesStatusTextView: TextView
+	private lateinit var drivesRecyclerView: RecyclerView
 	private lateinit var refreshProgressBar: ProgressBar
 
 	// Misc
 	private lateinit var progressBarAnimation: ProgressBarAnimation
 	private lateinit var settings: Settings
-	private val PERCENT = "&#x0025;" // Unicode for percent symbol, required for literal use inside string formatting - https://stackoverflow.com/a/16273262
 
 	// Data from previous activity
 	private lateinit var serverIdentifier: String
@@ -137,6 +142,8 @@ class ServerActivity : AppCompatActivity() {
 		resourcesDriveTextView = findViewById( R.id.serverResourcesDataDriveTextView )
 		resourcesPowerTextView = findViewById( R.id.serverResourcesDataPowerTextView )
 		resourcesFansTextView = findViewById( R.id.serverResourcesDataFansTextView )
+		drivesStatusTextView = findViewById( R.id.serverDrivesStatusTextView )
+		drivesRecyclerView = findViewById( R.id.serverDrivesRecyclerView )
 		refreshProgressBar = findViewById( R.id.serverRefreshProgressBar )
 
 		// Default to unknown for all resources - the text is already grey as defined in layout, so no need to call createColorText()
@@ -182,6 +189,15 @@ class ServerActivity : AppCompatActivity() {
 				overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
 			}
 		}
+
+		// Create a linear layout manager for the drives recycler view
+		val linearLayoutManager = LinearLayoutManager( this, LinearLayoutManager.VERTICAL, false )
+		drivesRecyclerView.layoutManager = linearLayoutManager
+
+		// Set the divider between drives in its recycler view
+		val dividerItemDecoration = DividerItemDecoration( this, linearLayoutManager.orientation )
+		dividerItemDecoration.setDrawable( ContextCompat.getDrawable( this, R.drawable.shape_drive_divider )!! )
+		drivesRecyclerView.addItemDecoration( dividerItemDecoration )
 
 		// Create the animation for the automatic refresh countdown progress bar - https://stackoverflow.com/a/18015071
 		progressBarAnimation = ProgressBarAnimation( refreshProgressBar, refreshProgressBar.progress.toFloat(), refreshProgressBar.max.toFloat() )
@@ -679,9 +695,9 @@ class ServerActivity : AppCompatActivity() {
 			resourcesProcessorTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.black ) )
 			resourcesProcessorTextView.text = Html.fromHtml( String.format( getString( R.string.serverTextViewResourcesDataProcessor, String.format(
 				getString( R.string.serverTextViewResourcesDataProcessorValue ),
-				createColorText( roundValueOrDefault( server.processorUsage, PERCENT ), colorForValue( server.processorUsage, 50.0f, 80.0f ) ),
-				createColorText( roundValueOrDefault( processorFrequency.amount, processorFrequency.suffix ), colorAsNeutral( server.processorFrequency ) ),
-				createColorText( roundValueOrDefault( server.processorTemperature, "℃" ), colorForValue( server.processorTemperature, 60.0f, 90.0f ) )
+				createColorText( roundValueOrDefault( server.processorUsage, Shared.percentSymbol ), colorForValue( applicationContext, server.processorUsage, 50.0f, 80.0f ) ),
+				createColorText( roundValueOrDefault( processorFrequency.amount, processorFrequency.suffix ), colorAsNeutral( applicationContext, server.processorFrequency ) ),
+				createColorText( roundValueOrDefault( server.processorTemperature, "℃" ), colorForValue( applicationContext, server.processorTemperature, 60.0f, 90.0f ) )
 			) ) ), Html.FROM_HTML_MODE_LEGACY )
 		} else {
 			resourcesProcessorTextView.setTextColor( getColor( R.color.statusDead ) )
@@ -707,9 +723,9 @@ class ServerActivity : AppCompatActivity() {
 			resourcesMemoryTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.black ) )
 			resourcesMemoryTextView.text = Html.fromHtml( String.format( getString( R.string.serverTextViewResourcesDataMemory, String.format(
 				getString( R.string.serverTextViewResourcesDataMemoryValue ),
-				createColorText( roundValueOrDefault( memoryUsed.amount, memoryUsed.suffix ), colorForValue( memoryUsedBytes.toFloat(), memoryTotalBytes / 2.0f, memoryTotalBytes / 1.25f ) ),
-				createColorText( roundValueOrDefault( memoryTotal.amount, memoryTotal.suffix ), colorAsNeutral( memoryTotalBytes ) ),
-				createColorText( roundValueOrDefault( memoryUsage, PERCENT ), colorForValue( memoryUsage, 50.0, 80.0 ) )
+				createColorText( roundValueOrDefault( memoryUsed.amount, memoryUsed.suffix ), colorForValue( applicationContext, memoryUsedBytes.toFloat(), memoryTotalBytes / 2.0f, memoryTotalBytes / 1.25f ) ),
+				createColorText( roundValueOrDefault( memoryTotal.amount, memoryTotal.suffix ), colorAsNeutral( applicationContext, memoryTotalBytes ) ),
+				createColorText( roundValueOrDefault( memoryUsage, Shared.percentSymbol ), colorForValue( applicationContext, memoryUsage, 50.0, 80.0 ) )
 			) ) ), Html.FROM_HTML_MODE_LEGACY )
 		} else {
 			resourcesMemoryTextView.setTextColor( getColor( R.color.statusDead ) )
@@ -738,9 +754,9 @@ class ServerActivity : AppCompatActivity() {
 				String.format( getString( R.string.serverTextViewResourcesDataSwap ),
 					swapName,
 					String.format( getString( R.string.serverTextViewResourcesDataSwapValue ),
-						createColorText( roundValueOrDefault( swapUsed.amount, swapUsed.suffix ), colorForValue( swapUsedBytes.toFloat(), swapTotalBytes / 2.0f, swapTotalBytes / 1.25f ) ),
-						createColorText( roundValueOrDefault( swapTotal.amount, swapTotal.suffix ), colorAsNeutral( swapTotalBytes ) ),
-						createColorText( roundValueOrDefault( swapUsage, PERCENT ), colorForValue( swapUsage, 50.0, 80.0 ) )
+						createColorText( roundValueOrDefault( swapUsed.amount, swapUsed.suffix ), colorForValue( applicationContext, swapUsedBytes.toFloat(), swapTotalBytes / 2.0f, swapTotalBytes / 1.25f ) ),
+						createColorText( roundValueOrDefault( swapTotal.amount, swapTotal.suffix ), colorAsNeutral( applicationContext, swapTotalBytes ) ),
+						createColorText( roundValueOrDefault( swapUsage, Shared.percentSymbol ), colorForValue( applicationContext, swapUsage, 50.0, 80.0 ) )
 					)
 				), Html.FROM_HTML_MODE_LEGACY )
 		} else {
@@ -763,8 +779,8 @@ class ServerActivity : AppCompatActivity() {
 			resourcesNetworkTextView.setTextColor( getColor( R.color.black ) )
 			resourcesNetworkTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.black ) )
 			resourcesNetworkTextView.text = Html.fromHtml( String.format( getString( R.string.serverTextViewResourcesDataNetwork ), String.format( getString( R.string.serverTextViewResourcesDataNetworkValue ),
-				createColorText( roundValueOrDefault( networkTransmitRate.amount, networkTransmitRate.suffix + "/s" ), colorForValue( networkTransmitRateBytes, 1024L * 1024L, 1024L * 1024L * 10L ) ), // No idea what the thresholds should be, so guestimate
-				createColorText( roundValueOrDefault( networkReceiveRate.amount, networkReceiveRate.suffix + "/s" ), colorForValue( networkReceiveRateBytes, 1024L * 1024L, 1024L * 1024L * 10L ) ) // No idea what the thresholds should be, so guestimate
+				createColorText( roundValueOrDefault( networkTransmitRate.amount, networkTransmitRate.suffix + "/s" ), colorForValue( applicationContext, networkTransmitRateBytes, 1024L * 1024L, 1024L * 1024L * 10L ) ), // No idea what the thresholds should be, so guestimate
+				createColorText( roundValueOrDefault( networkReceiveRate.amount, networkReceiveRate.suffix + "/s" ), colorForValue( applicationContext, networkReceiveRateBytes, 1024L * 1024L, 1024L * 1024L * 10L ) ) // No idea what the thresholds should be, so guestimate
 			) ), Html.FROM_HTML_MODE_LEGACY )
 		} else {
 			resourcesNetworkTextView.setTextColor( getColor( R.color.statusDead ) )
@@ -772,8 +788,7 @@ class ServerActivity : AppCompatActivity() {
 			resourcesNetworkTextView.text = String.format( getString( R.string.serverTextViewResourcesDataNetwork ), createColorText( "Unknown", getColor( R.color.statusDead ) ) )
 		}
 
-		// Set the drive resource data
-		// TODO: Separate section for this with each interface individually, as this is just a total/overview
+		// Set the drive resource data (this is a total)
 		if ( server.isOnline() ) {
 			val driveReadRateBytes = server.drives?.fold( 0L ) { total, drive -> total + drive.rateBytesRead } ?: -1L
 			val driveWriteRateBytes = server.drives?.fold( 0L ) { total, drive -> total + drive.rateBytesWritten } ?: -1L
@@ -786,8 +801,8 @@ class ServerActivity : AppCompatActivity() {
 			resourcesDriveTextView.setTextColor( getColor( R.color.black ) )
 			resourcesDriveTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.black ) )
 			resourcesDriveTextView.text = Html.fromHtml( String.format( getString( R.string.serverTextViewResourcesDataDrive ), String.format( getString( R.string.serverTextViewResourcesDataDriveValue ),
-				createColorText( roundValueOrDefault( driveReadRate.amount, driveReadRate.suffix + "/s" ), colorForValue( driveReadRateBytes, 1024L * 1024L, 1024L * 1024L * 10L ) ), // No idea what the thresholds should be, so guestimate
-				createColorText( roundValueOrDefault( driveWriteRate.amount, driveWriteRate.suffix + "/s" ), colorForValue( driveWriteRateBytes, 1024L * 1024L, 1024L * 1024L * 10L ) ) // No idea what the thresholds should be, so guestimate
+				createColorText( roundValueOrDefault( driveReadRate.amount, driveReadRate.suffix + "/s" ), colorForValue( applicationContext, driveReadRateBytes, 1024L * 1024L, 1024L * 1024L * 10L ) ), // No idea what the thresholds should be, so guestimate
+				createColorText( roundValueOrDefault( driveWriteRate.amount, driveWriteRate.suffix + "/s" ), colorForValue( applicationContext, driveWriteRateBytes, 1024L * 1024L, 1024L * 1024L * 10L ) ) // No idea what the thresholds should be, so guestimate
 			) ), Html.FROM_HTML_MODE_LEGACY )
 		} else {
 			resourcesDriveTextView.setTextColor( getColor( R.color.statusDead ) )
@@ -799,6 +814,33 @@ class ServerActivity : AppCompatActivity() {
 
 		// TODO: Fans resource data
 
+		// Drives
+		if ( server.isOnline() ) {
+			val drives = server.drives
+			if ( drives != null && drives.isNotEmpty() ) {
+				drivesStatusTextView.visibility = View.GONE
+				drivesRecyclerView.visibility = View.VISIBLE
+
+				val drivesAdapter = DriveAdapter( drives, applicationContext )
+				drivesRecyclerView.adapter = drivesAdapter
+				drivesAdapter.notifyItemRangeChanged( 0, drives.size )
+			} else {
+				drivesRecyclerView.visibility = View.GONE
+
+				drivesStatusTextView.visibility = View.VISIBLE
+				drivesStatusTextView.setTextColor( getColor( R.color.statusDead ) )
+				drivesStatusTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
+				drivesStatusTextView.text = getString( R.string.serverTextViewDrivesEmpty )
+			}
+		} else {
+			drivesRecyclerView.visibility = View.GONE
+
+			drivesStatusTextView.visibility = View.VISIBLE
+			drivesStatusTextView.setTextColor( getColor( R.color.statusDead ) )
+			drivesStatusTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
+			drivesStatusTextView.text = getString( R.string.serverTextViewDrivesUnknown )
+		}
+
 	}
 
 	// Enable/disable user input
@@ -809,34 +851,5 @@ class ServerActivity : AppCompatActivity() {
 		actionRebootButton.isEnabled = shouldEnable
 
 	}
-
-	// Gets the color for a given value, fallback to offline/dead
-	private fun colorForValue( value: Float?, warnThreshold: Float, badThreshold: Float ) =
-		if ( value == null || value < 0.0f ) getColor( R.color.statusDead )
-		else if ( value >= badThreshold ) getColor( R.color.statusBad )
-		else if ( value >= warnThreshold ) getColor( R.color.statusWarning )
-		else getColor( R.color.statusGood )
-	private fun colorForValue( value: Long?, warnThreshold: Long, badThreshold: Long ) =
-		if ( value == null || value < 0L ) getColor( R.color.statusDead )
-		else if ( value >= badThreshold ) getColor( R.color.statusBad )
-		else if ( value >= warnThreshold ) getColor( R.color.statusWarning )
-		else getColor( R.color.statusGood )
-	private fun colorForValue( value: Double?, warnThreshold: Double, badThreshold: Double ) =
-		if ( value == null || value < 0.0 ) getColor( R.color.statusDead )
-		else if ( value >= badThreshold ) getColor( R.color.statusBad )
-		else if ( value >= warnThreshold ) getColor( R.color.statusWarning )
-		else getColor( R.color.statusGood )
-
-	// Returns neutral color for value, or fallback to offline/dead
-	private fun colorAsNeutral( value: Float? ) = if ( value == null || value < 0.0 ) getColor( R.color.statusDead ) else getColor( R.color.statusNeutral )
-	private fun colorAsNeutral( value: Double? ) = if ( value == null || value < 0.0 ) getColor( R.color.statusDead ) else getColor( R.color.statusNeutral )
-	private fun colorAsNeutral( value: Long? ) = if ( value == null || value < 0.0 ) getColor( R.color.statusDead ) else getColor( R.color.statusNeutral )
-
-	// Rounds a given value if it is valid, fallback to default text - Suffix is not included in string format so that percentage symbols can be used
-	private fun roundValueOrDefault( value: Float?, suffix: String = "" ) = ( if ( value == null || value <= 0.0 ) "0" else String.format( "%.1f", value ) ) + suffix
-	private fun roundValueOrDefault( value: Double?, suffix: String = "" ) = ( if ( value == null || value <= 0.0 ) "0" else String.format( "%.1f", value ) ) + suffix
-
-	// Creates a HTML spannable tag with color styling - https://stackoverflow.com/a/41655900
-	private fun createColorText( text: String, color: Int ) = String.format( "<span style=\"color: #${ color.toString( 16 ) }\">${ text }</span>" )
 
 }

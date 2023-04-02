@@ -1,6 +1,7 @@
 package com.viral32111.servermonitor
 
 import android.app.Activity
+import android.content.Context
 import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -106,3 +107,38 @@ fun showInformationDialog(
 			Log.d( Shared.logTag, "Information dialog acknowledged" )
 		}
 		.show()
+
+
+// Gets the color for a given value, fallback to offline/dead
+fun colorForValue( context: Context, value: Float?, warnThreshold: Float, badThreshold: Float ) =
+	if ( value == null || value < 0.0f ) context.getColor( R.color.statusDead )
+	else if ( value >= badThreshold ) context.getColor( R.color.statusBad )
+	else if ( value >= warnThreshold ) context.getColor( R.color.statusWarning )
+	else context.getColor( R.color.statusGood )
+fun colorForValue( context: Context, value: Long?, warnThreshold: Long, badThreshold: Long ) =
+	if ( value == null || value < 0L ) context.getColor( R.color.statusDead )
+	else if ( value >= badThreshold ) context.getColor( R.color.statusBad )
+	else if ( value >= warnThreshold ) context.getColor( R.color.statusWarning )
+	else context.getColor( R.color.statusGood )
+fun colorForValue( context: Context, value: Double?, warnThreshold: Double, badThreshold: Double ) =
+	if ( value == null || value < 0.0 ) context.getColor( R.color.statusDead )
+	else if ( value >= badThreshold ) context.getColor( R.color.statusBad )
+	else if ( value >= warnThreshold ) context.getColor( R.color.statusWarning )
+	else context.getColor( R.color.statusGood )
+fun colorForValue( context: Context, value: Int?, warnThreshold: Int, badThreshold: Int ) =
+	if ( value == null || value < 0 ) context.getColor( R.color.statusDead )
+	else if ( value >= badThreshold ) context.getColor( R.color.statusBad )
+	else if ( value >= warnThreshold ) context.getColor( R.color.statusWarning )
+	else context.getColor( R.color.statusGood )
+
+// Returns neutral color for value, or fallback to offline/dead
+fun colorAsNeutral( context: Context, value: Float? ) = if ( value == null || value < 0.0 ) context.getColor( R.color.statusDead ) else context.getColor( R.color.statusNeutral )
+fun colorAsNeutral( context: Context, value: Double? ) = if ( value == null || value < 0.0 ) context.getColor( R.color.statusDead ) else context.getColor( R.color.statusNeutral )
+fun colorAsNeutral( context: Context, value: Long? ) = if ( value == null || value < 0.0 ) context.getColor( R.color.statusDead ) else context.getColor( R.color.statusNeutral )
+
+// Rounds a given value if it is valid, fallback to default text - Suffix is not included in string format so that percentage symbols can be used
+fun roundValueOrDefault( value: Float?, suffix: String = "" ) = ( if ( value == null || value <= 0.0f ) "0" else String.format( "%.1f", value ) ) + suffix
+fun roundValueOrDefault( value: Double?, suffix: String = "" ) = ( if ( value == null || value <= 0.0 ) "0" else String.format( "%.1f", value ) ) + suffix
+
+// Creates a HTML spannable tag with color styling - https://stackoverflow.com/a/41655900
+fun createColorText( text: String, color: Int ) = String.format( "<span style=\"color: #${ color.toString( 16 ) }\">${ text }</span>" )

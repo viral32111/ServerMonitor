@@ -173,7 +173,7 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 
 		// Drives
 		val drivesList = ArrayList<Drive>()
-		for ( drive in resources.get( "drives" ).asJsonArray ) drivesList.add( Drive( drive.asJsonObject ) )
+		for ( drive in resources.get( "drives" ).asJsonArray.reversed() ) drivesList.add( Drive( drive.asJsonObject ) )
 		drives = drivesList.toTypedArray()
 
 		// Network Interfaces

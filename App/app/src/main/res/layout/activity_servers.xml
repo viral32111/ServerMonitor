@@ -81,7 +81,7 @@
 				android:scrollbars="horizontal"
 				android:showDividers="middle"
 				tools:itemCount="0"
-				tools:listitem="@layout/server" />
+				tools:listitem="@layout/fragment_server" />
 		</androidx.core.widget.NestedScrollView>
 
 	</androidx.constraintlayout.widget.ConstraintLayout>

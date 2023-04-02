@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- https://www.geeksforgeeks.org/android-pull-to-refresh-with-recyclerview-in-kotlin/ -->
-<androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-	xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.swiperefreshlayout.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res-auto"
 	xmlns:tools="http://schemas.android.com/tools"
 	android:id="@+id/serverSwipeRefreshLayout"
@@ -250,33 +249,31 @@
 					app:layout_constraintTop_toBottomOf="@+id/serverDrivesDivider" />
 
 				<TextView
-					android:id="@+id/serverDrivesDataDriveTextView"
+					android:id="@+id/serverDrivesStatusTextView"
 					android:layout_width="0dp"
 					android:layout_height="wrap_content"
 					android:layout_marginTop="4dp"
 					android:drawablePadding="@dimen/serverIconPadding"
-					android:text="@string/serverTextViewDrivesDataDrive"
-					android:textAlignment="viewStart"
+					android:text="@string/serverTextViewDrivesUnknown"
+					android:textColor="@color/statusDead"
 					android:textSize="@dimen/text_size"
 					app:drawableLeftCompat="@drawable/hard_drive"
+					app:drawableTint="@color/statusDead"
 					app:layout_constraintEnd_toEndOf="parent"
 					app:layout_constraintStart_toStartOf="parent"
 					app:layout_constraintTop_toBottomOf="@+id/serverDrivesTitleTextView" />
 
-				<TextView
-					android:id="@+id/serverDrivesDataPartitionTextView"
+				<androidx.recyclerview.widget.RecyclerView
+					android:id="@+id/serverDrivesRecyclerView"
 					android:layout_width="0dp"
 					android:layout_height="wrap_content"
-					android:layout_marginStart="16dp"
-					android:layout_marginTop="2dp"
-					android:drawablePadding="@dimen/serverIconPadding"
-					android:text="@string/serverTextViewDrivesDataPartition"
-					android:textAlignment="viewStart"
-					android:textSize="16sp"
-					app:drawableLeftCompat="@drawable/hard_drive_2"
+					android:layout_marginTop="@dimen/serverSectionSpacing"
+					android:visibility="gone"
 					app:layout_constraintEnd_toEndOf="parent"
 					app:layout_constraintStart_toStartOf="parent"
-					app:layout_constraintTop_toBottomOf="@+id/serverDrivesDataDriveTextView" />
+					app:layout_constraintTop_toBottomOf="@+id/serverDrivesStatusTextView"
+					tools:itemCount="0"
+					tools:listitem="@layout/fragment_drive" />
 
 				<View
 					android:id="@+id/serverServicesDivider"
@@ -286,7 +283,7 @@
 					android:background="?android:attr/listDivider"
 					app:layout_constraintEnd_toEndOf="parent"
 					app:layout_constraintStart_toStartOf="parent"
-					app:layout_constraintTop_toBottomOf="@+id/serverDrivesDataPartitionTextView" />
+					app:layout_constraintTop_toBottomOf="@+id/serverDrivesRecyclerView" />
 
 				<TextView
 					android:id="@+id/serverServicesTitleTextView"
@@ -350,16 +347,16 @@
 					app:layout_constraintTop_toBottomOf="@+id/serverDockerDivider" />
 
 				<TextView
-					android:id="@+id/serverDockerDataTextView"
+					android:id="@+id/serverDockerUnknownTextView"
 					android:layout_width="0dp"
 					android:layout_height="wrap_content"
+					android:layout_marginTop="4dp"
 					android:drawablePadding="@dimen/serverIconPadding"
-					android:drawableTint="@color/statusDead"
-					android:text="@string/serverTextViewDockerDataUnknown"
-					android:textAlignment="viewStart"
+					android:text="@string/serverTextViewDockerUnknown"
 					android:textColor="@color/statusDead"
-					android:textSize="16sp"
+					android:textSize="@dimen/text_size"
 					app:drawableLeftCompat="@drawable/terminal"
+					app:drawableTint="@color/statusDead"
 					app:layout_constraintEnd_toEndOf="parent"
 					app:layout_constraintStart_toStartOf="parent"
 					app:layout_constraintTop_toBottomOf="@+id/serverDockerTitleTextView" />
@@ -372,7 +369,7 @@
 					android:background="?android:attr/listDivider"
 					app:layout_constraintEnd_toEndOf="parent"
 					app:layout_constraintStart_toStartOf="parent"
-					app:layout_constraintTop_toBottomOf="@+id/serverDockerDataTextView" />
+					app:layout_constraintTop_toBottomOf="@+id/serverDockerUnknownTextView" />
 
 				<TextView
 					android:id="@+id/serverSNMPTitleTextView"
@@ -388,16 +385,16 @@
 					app:layout_constraintTop_toBottomOf="@+id/serverSNMPDivider" />
 
 				<TextView
-					android:id="@+id/serverSNMPDataTextView"
+					android:id="@+id/serverSNMPUnknownTextView"
 					android:layout_width="0dp"
 					android:layout_height="wrap_content"
+					android:layout_marginTop="4dp"
 					android:drawablePadding="@dimen/serverIconPadding"
-					android:drawableTint="@color/statusDead"
-					android:text="@string/serverTextViewSNMPDataUnknown"
-					android:textAlignment="viewStart"
+					android:text="@string/serverTextViewSNMPUnknown"
 					android:textColor="@color/statusDead"
-					android:textSize="16sp"
+					android:textSize="@dimen/text_size"
 					app:drawableLeftCompat="@drawable/lan"
+					app:drawableTint="@color/statusDead"
 					app:layout_constraintEnd_toEndOf="parent"
 					app:layout_constraintStart_toStartOf="parent"
 					app:layout_constraintTop_toBottomOf="@+id/serverSNMPTitleTextView" />

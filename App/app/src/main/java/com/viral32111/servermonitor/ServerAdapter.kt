@@ -46,7 +46,7 @@ class ServerAdapter( private val servers: Array<Server>, private val context: Co
 	// Creates new views - called by the layout manager
 	override fun onCreateViewHolder( viewGroup: ViewGroup, viewType: Int ): ViewHolder {
 		Log.d( Shared.logTag, "Creating new server view..." )
-		return ViewHolder( LayoutInflater.from( viewGroup.context ).inflate( R.layout.server, viewGroup, false ) )
+		return ViewHolder( LayoutInflater.from( viewGroup.context ).inflate( R.layout.fragment_server, viewGroup, false ) )
 	}
 
 	// Replaces the contents of a view - called by the layout manager

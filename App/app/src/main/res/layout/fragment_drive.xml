@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:id="@+id/driveConstraintLayout"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content">
+
+	<TextView
+		android:id="@+id/driveTextView"
+		android:layout_width="0dp"
+		android:layout_height="wrap_content"
+		android:drawablePadding="@dimen/serverIconPadding"
+		android:text="@string/serverTextViewDrivesDrive"
+		android:textAlignment="viewStart"
+		android:textSize="@dimen/text_size"
+		app:drawableLeftCompat="@drawable/hard_drive"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toTopOf="parent" />
+
+	<androidx.recyclerview.widget.RecyclerView
+		android:id="@+id/drivePartitionsRecyclerView"
+		android:layout_width="0dp"
+		android:layout_height="wrap_content"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toBottomOf="@+id/driveTextView"
+		tools:itemCount="0"
+		tools:listitem="@layout/fragment_drive_partition" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
