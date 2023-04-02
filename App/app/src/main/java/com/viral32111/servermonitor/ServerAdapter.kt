@@ -110,7 +110,7 @@ class ServerAdapter( private val servers: Array<Server>, private val context: Co
 
 			// Network I/O
 			if ( server.networkInterfaces != null ) {
-				val rate = Size( server.networkInterfaces!!.fold( 0 ) { total, drive -> total + drive.rateBytesSent + drive.rateBytesReceived } ) // https://kotlinlang.org/docs/collection-aggregate.html#fold-and-reduce
+				val rate = Size( server.networkInterfaces!!.fold( 0 ) { total, networkInterface -> total + networkInterface.rateBytesSent + networkInterface.rateBytesReceived } ) // https://kotlinlang.org/docs/collection-aggregate.html#fold-and-reduce
 				viewHolder.networkTextView.text = String.format( context.getString( R.string.serversTextViewServerNetworkUsage ), rate.amount.roundToLong().coerceAtLeast( 0 ), rate.suffix.substring( 0, 1 ) )
 				viewHolder.networkTextView.setTextColor( context.getColor( R.color.statusGood ) )
 			} else {

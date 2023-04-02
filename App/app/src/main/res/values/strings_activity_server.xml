@@ -21,7 +21,7 @@
 	<string name="serverTextViewResourcesDataSwap">%s: %s.</string>
 	<string name="serverTextViewResourcesDataSwapValue">%s of %s (%s)</string>
 	<string name="serverTextViewResourcesDataNetwork">Network: %s.</string>
-	<string name="serverTextViewResourcesDataNetworkValue">%d%s tx, %d%s rx</string>
+	<string name="serverTextViewResourcesDataNetworkValue">%s tx, %s rx</string>
 	<string name="serverTextViewResourcesDataDrive">Drive: %s.</string>
 	<string name="serverTextViewResourcesDataDriveValue">%d%s write, %d%s read</string>
 	<string name="serverTextViewResourcesDataPower">Power: %s.</string>

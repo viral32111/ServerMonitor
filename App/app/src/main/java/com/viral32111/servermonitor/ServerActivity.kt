@@ -697,7 +697,7 @@ class ServerActivity : AppCompatActivity() {
 				getString( R.string.serverTextViewResourcesDataMemoryValue ),
 				createColorText( roundValueOrDefault( memoryUsed.amount, memoryUsed.suffix ), colorForValue( memoryUsedBytes.toFloat(), memoryTotalBytes / 2.0f, memoryTotalBytes / 1.25f ) ),
 				createColorText( roundValueOrDefault( memoryTotal.amount, memoryTotal.suffix ), colorAsNeutral( memoryTotalBytes ) ),
-				createColorText( roundValueOrDefault( memoryUsage, PERCENT ), colorForValue( memoryUsage, 50.0, 80.0 ) ),
+				createColorText( roundValueOrDefault( memoryUsage, PERCENT ), colorForValue( memoryUsage, 50.0, 80.0 ) )
 			) ) ), Html.FROM_HTML_MODE_LEGACY )
 		} else {
 			resourcesMemoryTextView.setTextColor( getColor( R.color.statusDead ) )
@@ -728,13 +728,36 @@ class ServerActivity : AppCompatActivity() {
 					String.format( getString( R.string.serverTextViewResourcesDataSwapValue ),
 						createColorText( roundValueOrDefault( swapUsed.amount, swapUsed.suffix ), colorForValue( swapUsedBytes.toFloat(), swapTotalBytes / 2.0f, swapTotalBytes / 1.25f ) ),
 						createColorText( roundValueOrDefault( swapTotal.amount, swapTotal.suffix ), colorAsNeutral( swapTotalBytes ) ),
-						createColorText( roundValueOrDefault( swapUsage, PERCENT ), colorForValue( swapUsage, 50.0, 80.0 ) ),
+						createColorText( roundValueOrDefault( swapUsage, PERCENT ), colorForValue( swapUsage, 50.0, 80.0 ) )
 					)
 				), Html.FROM_HTML_MODE_LEGACY )
 		} else {
 			resourcesSwapTextView.setTextColor( getColor( R.color.statusDead ) )
 			resourcesSwapTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
 			resourcesSwapTextView.text = String.format( getString( R.string.serverTextViewResourcesDataSwap ), swapName, createColorText( "Unknown", getColor( R.color.statusDead ) ) )
+		}
+
+		// Set the network details
+		// TODO: Separate section for this with each interface individually, as this is just a total/overview
+		if ( server.isOnline() ) {
+			val networkTransmitRateBytes = server.networkInterfaces?.fold( 0L ) { total, networkInterface -> total + networkInterface.rateBytesSent } ?: -1L
+			val networkReceiveRateBytes = server.networkInterfaces?.fold( 0L ) { total, networkInterface -> total + networkInterface.rateBytesReceived } ?: -1L
+			Log.d( Shared.logTag, "Network Transmit Rate: '${ networkTransmitRateBytes }' bytes, Network Receive Rate: '${ networkReceiveRateBytes }' bytes" )
+
+			val networkTransmitRate = Size( networkTransmitRateBytes )
+			val networkReceiveRate = Size( networkReceiveRateBytes )
+			Log.d( Shared.logTag, "Network Transmit Rate: '${ networkTransmitRate.amount }' '${ networkTransmitRate.suffix }', Network Receive Rate: '${ networkReceiveRate.amount }' '${ networkReceiveRate.suffix }'" )
+
+			resourcesNetworkTextView.setTextColor( getColor( R.color.black ) )
+			resourcesNetworkTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.black ) )
+			resourcesNetworkTextView.text = Html.fromHtml( String.format( getString( R.string.serverTextViewResourcesDataNetwork ), String.format( getString( R.string.serverTextViewResourcesDataNetworkValue ),
+				createColorText( roundValueOrDefault( networkTransmitRate.amount, networkTransmitRate.suffix + "/s" ), colorForValue( networkTransmitRateBytes, 1024L * 1024L, 1024L * 1024L * 10L ) ),
+				createColorText( roundValueOrDefault( networkReceiveRate.amount, networkReceiveRate.suffix + "/s" ), colorForValue( networkReceiveRateBytes, 1024L * 1024L, 1024L * 1024L * 10L ) )
+			) ), Html.FROM_HTML_MODE_LEGACY )
+		} else {
+			resourcesNetworkTextView.setTextColor( getColor( R.color.statusDead ) )
+			resourcesNetworkTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
+			resourcesNetworkTextView.text = String.format( getString( R.string.serverTextViewResourcesDataNetwork ), createColorText( "Unknown", getColor( R.color.statusDead ) ) )
 		}
 
 	}
