@@ -626,9 +626,7 @@ class ServerActivity : AppCompatActivity() {
 
 		// Action buttons
 		actionShutdownButton.isEnabled = shouldEnable
-		actionShutdownButton.setBackgroundColor( getColor( R.color.shutdownActionButton ) )
 		actionRebootButton.isEnabled = shouldEnable
-		actionRebootButton.setBackgroundColor( getColor( R.color.rebootActionButton ) )
 
 	}
 
