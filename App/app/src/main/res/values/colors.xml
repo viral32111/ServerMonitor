@@ -38,6 +38,7 @@
 	<color name="statusWarning">#E88E27</color>
 	<color name="statusBad">#EF1C1C</color>
 	<color name="statusDead">#999999</color>
+	<color name="statusNeutral">#2196F3</color>
 
 	<!-- Action button colours -->
 	<color name="shutdownActionButton">#F44336</color>

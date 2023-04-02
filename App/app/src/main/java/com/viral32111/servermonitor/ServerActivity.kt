@@ -24,6 +24,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.lang.Math.round
+import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 
 class ServerActivity : AppCompatActivity() {
 
@@ -33,11 +36,19 @@ class ServerActivity : AppCompatActivity() {
 	private lateinit var statusTextView: TextView
 	private lateinit var actionShutdownButton: Button
 	private lateinit var actionRebootButton: Button
+	private lateinit var resourcesProcessorTextView: TextView
+	private lateinit var resourcesMemoryTextView: TextView
+	private lateinit var resourcesSwapTextView: TextView
+	private lateinit var resourcesNetworkTextView: TextView
+	private lateinit var resourcesDriveTextView: TextView
+	private lateinit var resourcesPowerTextView: TextView
+	private lateinit var resourcesFansTextView: TextView
 	private lateinit var refreshProgressBar: ProgressBar
 
 	// Misc
 	private lateinit var progressBarAnimation: ProgressBarAnimation
 	private lateinit var settings: Settings
+	private val PERCENT = "&#x0025;" // Unicode for percent symbol, required for literal use inside string formatting - https://stackoverflow.com/a/16273262
 
 	// Data from previous activity
 	private lateinit var serverIdentifier: String
@@ -121,6 +132,13 @@ class ServerActivity : AppCompatActivity() {
 		statusTextView = findViewById( R.id.serverStatusTextView )
 		actionShutdownButton = findViewById( R.id.serverActionShutdownButton )
 		actionRebootButton = findViewById( R.id.serverActionRebootButton )
+		resourcesProcessorTextView = findViewById( R.id.serverResourcesDataProcessorTextView )
+		resourcesMemoryTextView = findViewById( R.id.serverResourcesDataMemoryTextView )
+		resourcesSwapTextView = findViewById( R.id.serverResourcesDataSwapTextView )
+		resourcesNetworkTextView = findViewById( R.id.serverResourcesDataNetworkTextView )
+		resourcesDriveTextView = findViewById( R.id.serverResourcesDataDriveTextView )
+		resourcesPowerTextView = findViewById( R.id.serverResourcesDataPowerTextView )
+		resourcesFansTextView = findViewById( R.id.serverResourcesDataFansTextView )
 		refreshProgressBar = findViewById( R.id.serverRefreshProgressBar )
 
 		// Get the settings
@@ -180,6 +198,8 @@ class ServerActivity : AppCompatActivity() {
 
 				// Show refreshing spinner
 				swipeRefreshLayout.isRefreshing = true
+
+				// TODO: Disable user input while refreshing...
 
 				CoroutineScope( Dispatchers.Main ).launch { // Begin coroutine context (on the UI thread)...
 					withContext( Dispatchers.IO ) { // Run on network thread...
@@ -283,6 +303,8 @@ class ServerActivity : AppCompatActivity() {
 		// When we're swiped down to refresh...
 		swipeRefreshLayout.setOnRefreshListener {
 			Log.d( Shared.logTag, "Swipe refreshed!" )
+
+			// TODO: Disable user input while refreshing...
 
 			// Stop the automatic refresh countdown progress bar, thus calling the animation callback
 			if ( settings.automaticRefresh ) {
@@ -437,6 +459,8 @@ class ServerActivity : AppCompatActivity() {
 
 		// Show refreshing spinner
 		swipeRefreshLayout.isRefreshing = true
+
+		// TODO: Disable user input while refreshing...
 
 		val activity = this
 		CoroutineScope( Dispatchers.Main ).launch {
@@ -616,12 +640,31 @@ class ServerActivity : AppCompatActivity() {
 		materialToolbar?.title = server.hostName.uppercase()
 		Log.d( Shared.logTag, "Set Material Toolbar title to '${ server.hostName.uppercase() }'" )
 
-		// Set the status text
-		val colorAsHex = getColor( if ( server.isOnline() ) R.color.statusGood else R.color.statusDead ).toString( 16 ) // https://stackoverflow.com/a/41655900
-		val statusText = if ( server.isOnline() ) "ONLINE" else "OFFLINE"
-		val htmlTags = "<strong><span style=\"color: #${ colorAsHex }\">${ statusText }</span></strong>"
-		statusTextView.text = Html.fromHtml( String.format( getString( R.string.serverTextViewStatusGood ), htmlTags, TimeSpan( server.uptimeSeconds ).toString( true ) ), Html.FROM_HTML_MODE_LEGACY ) // https://stackoverflow.com/a/37899914
-		statusTextView.setTextColor( getColor( R.color.black ) )
+		// Set the overall status - https://stackoverflow.com/a/37899914
+		statusTextView.setTextColor( getColor( if ( server.isOnline() ) R.color.black else R.color.statusDead ) )
+		statusTextView.text = Html.fromHtml( String.format(
+			getString( R.string.serverTextViewStatusGood ),
+			"<strong><span style=\"color: #${ getColor( if ( server.isOnline() ) R.color.statusGood else R.color.statusDead ).toString( 16 ) }\">${ if ( server.isOnline() ) "ONLINE" else "OFFLINE" }</span></strong>",
+			TimeSpan( server.uptimeSeconds ).toString( true )
+		), Html.FROM_HTML_MODE_LEGACY )
+
+		// Set the processor details
+		if ( server.isOnline() ) {
+			val processorFrequency = Frequency( server.processorFrequency?.roundToLong()?.times( 1000L * 1000L ) ?: -1L ) // Value from API is already in MHz
+
+			resourcesProcessorTextView.setTextColor( getColor( R.color.black ) )
+			resourcesProcessorTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.black ) )
+			resourcesProcessorTextView.text = Html.fromHtml( String.format( getString( R.string.serverTextViewResourcesDataProcessor, String.format(
+				getString( R.string.serverTextViewResourcesDataProcessorValue ),
+				createColorText( roundValueOrDefault( server.processorUsage, PERCENT ), colorForValue( server.processorUsage, 50.0f, 80.0f ) ),
+				createColorText( roundValueOrDefault( processorFrequency.amount, processorFrequency.suffix ), getColor( R.color.statusNeutral ) ),
+				createColorText( roundValueOrDefault( server.processorTemperature, "℃" ), colorForValue( server.processorTemperature, 60.0f, 90.0f ) )
+			) ) ), Html.FROM_HTML_MODE_LEGACY )
+		} else {
+			resourcesProcessorTextView.setTextColor( getColor( R.color.statusDead ) )
+			resourcesProcessorTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
+			resourcesProcessorTextView.text = String.format( getString( R.string.serverTextViewResourcesDataProcessor ), createColorText( "Unknown", getColor( R.color.statusDead ) ) )
+		}
 
 	}
 
@@ -633,5 +676,19 @@ class ServerActivity : AppCompatActivity() {
 		actionRebootButton.isEnabled = shouldEnable
 
 	}
+
+	// Gets the color for a given value
+	private fun colorForValue( value: Float?, warnThreshold: Float, badThreshold: Float ) =
+		if ( value == null || value < 0.0 ) getColor( R.color.statusDead )
+		else if ( value >= badThreshold ) getColor( R.color.statusBad )
+		else if ( value >= warnThreshold ) getColor( R.color.statusWarning )
+		else getColor( R.color.statusGood )
+
+	// Rounds a given value if it is valid, fallback to default text - Suffix is not included in string format so that percentage symbols can be used
+	private fun roundValueOrDefault( value: Float?, suffix: String = "" ) = if ( value == null || value <= 0.0 ) "N/A" else String.format( "%.1f", value ) + suffix
+	private fun roundValueOrDefault( value: Double?, suffix: String = "" ) = if ( value == null || value <= 0.0 ) "N/A" else String.format( "%.1f", value ) + suffix
+
+	// Creates a HTML spannable tag with color styling - https://stackoverflow.com/a/41655900
+	private fun createColorText( text: String, color: Int ) = String.format( "<span style=\"color: #${ color.toString( 16 ) }\">${ text }</span>" )
 
 }
