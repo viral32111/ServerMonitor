@@ -226,7 +226,7 @@
 					app:layout_constraintTop_toBottomOf="@+id/serverResourcesDataPowerTextView" />
 
 				<View
-					android:id="@+id/serverDrivesDivider"
+					android:id="@+id/serverNetworkDivider"
 					android:layout_width="0dp"
 					android:layout_height="1dp"
 					android:layout_marginTop="@dimen/serverSectionSpacing"
@@ -234,6 +234,56 @@
 					app:layout_constraintEnd_toEndOf="parent"
 					app:layout_constraintStart_toStartOf="parent"
 					app:layout_constraintTop_toBottomOf="@+id/serverResourcesDataFansTextView" />
+
+				<TextView
+					android:id="@+id/serverNetworkTitleTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginTop="@dimen/serverSectionSpacing"
+					android:text="@string/serverTextViewNetworkTitle"
+					android:textAlignment="center"
+					android:textSize="@dimen/text_size"
+					android:textStyle="bold"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serverNetworkDivider" />
+
+				<TextView
+					android:id="@+id/serverNetworkStatusTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginTop="4dp"
+					android:drawablePadding="@dimen/serverIconPadding"
+					android:text="@string/serverTextViewNetworkUnknown"
+					android:textColor="@color/statusDead"
+					android:textSize="@dimen/text_size"
+					app:drawableLeftCompat="@drawable/hard_drive"
+					app:drawableTint="@color/statusDead"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serverNetworkTitleTextView" />
+
+				<androidx.recyclerview.widget.RecyclerView
+					android:id="@+id/serverNetworkRecyclerView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginTop="4dp"
+					android:visibility="gone"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serverNetworkStatusTextView"
+					tools:itemCount="0"
+					tools:listitem="@layout/fragment_network_interface" />
+
+				<View
+					android:id="@+id/serverDrivesDivider"
+					android:layout_width="0dp"
+					android:layout_height="1dp"
+					android:layout_marginTop="@dimen/serverSectionSpacing"
+					android:background="?android:attr/listDivider"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serverNetworkRecyclerView" />
 
 				<TextView
 					android:id="@+id/serverDrivesTitleTextView"

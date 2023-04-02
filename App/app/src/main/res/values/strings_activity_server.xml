@@ -29,6 +29,14 @@
 	<string name="serverTextViewResourcesDataFans">Fans: %s.</string>
 	<string name="serverTextViewResourcesDataFansValue">%d%s</string>
 
+	<!-- Network interfaces section -->
+	<string name="serverTextViewNetworkTitle">Network Interfaces</string>
+	<string name="serverTextViewNetworkUnknown">The status of interfaces is unknown.</string>
+	<string name="serverTextViewNetworkEmpty">There are no interfaces.</string>
+	<string name="serverTextViewNetworkInterface">%s: %s (%s total)</string> <!-- eth0: 98KiB/s (102MiB total) -->
+	<string name="serverTextViewNetworkInterfaceTransmit">Transmit: %s (%s total)</string> <!-- Transmit: 20KiB/s (30MiB total) -->
+	<string name="serverTextViewNetworkInterfaceReceive">Receive: %s (%s total)</string> <!-- Receive: 78KiB/s (72MiB total) -->
+
 	<!-- Drives section -->
 	<string name="serverTextViewDrivesTitle">Drives</string>
 	<string name="serverTextViewDrivesUnknown">The status of drives is unknown.</string>
@@ -39,12 +47,14 @@
 	<!-- Services section -->
 	<string name="serverTextViewServicesTitle">Services</string>
 	<string name="serverTextViewServicesUnknown">The status of services is unknown.</string>
+	<string name="serverTextViewServicesEmpty">There are no services.</string>
 	<string name="serverTextViewServicesData">%s: %s for %s.</string>
 	<string name="serverButtonServicesManage">Manage</string>
 
 	<!-- Docker containers section -->
 	<string name="serverTextViewDockerTitle">Docker Containers</string>
 	<string name="serverTextViewDockerUnknown">The status of containers is unknown.</string>
+	<string name="serverTextViewDockerEmpty">There are no containers.</string>
 	<string name="serverTextViewDockerData">%s: %s for %s.</string>
 
 	<!-- SNMP section -->
