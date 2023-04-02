@@ -24,8 +24,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.lang.Math.round
-import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
 class ServerActivity : AppCompatActivity() {
@@ -659,7 +657,7 @@ class ServerActivity : AppCompatActivity() {
 			TimeSpan( server.uptimeSeconds ).toString( true )
 		), Html.FROM_HTML_MODE_LEGACY )
 
-		// Set the processor details
+		// Set the processor resource data
 		if ( server.isOnline() ) {
 			val processorFrequency = Frequency( server.processorFrequency?.roundToLong()?.times( 1000L * 1000L ) ?: -1L ) // Value from API is already in MHz
 
@@ -677,7 +675,7 @@ class ServerActivity : AppCompatActivity() {
 			resourcesProcessorTextView.text = String.format( getString( R.string.serverTextViewResourcesDataProcessor ), createColorText( "Unknown", getColor( R.color.statusDead ) ) )
 		}
 
-		// Set the memory details
+		// Set the memory resource data
 		if ( server.isOnline() ) {
 			val memoryTotalBytes = server.memoryTotalBytes ?: -1L
 			val memoryFreeBytes = server.memoryFreeBytes ?: -1L
@@ -705,7 +703,7 @@ class ServerActivity : AppCompatActivity() {
 			resourcesMemoryTextView.text = String.format( getString( R.string.serverTextViewResourcesDataMemory ), createColorText( "Unknown", getColor( R.color.statusDead ) ) )
 		}
 
-		// Set the swap/page file details
+		// Set the swap/page-file resource data
 		val swapName = if ( server.operatingSystem.contains( "Microsoft Windows" ) ) "Page" else "Swap"
 		if ( server.isOnline() ) {
 			val swapTotalBytes = server.swapTotalBytes ?: -1L
@@ -737,7 +735,7 @@ class ServerActivity : AppCompatActivity() {
 			resourcesSwapTextView.text = String.format( getString( R.string.serverTextViewResourcesDataSwap ), swapName, createColorText( "Unknown", getColor( R.color.statusDead ) ) )
 		}
 
-		// Set the network details
+		// Set the network resource data
 		// TODO: Separate section for this with each interface individually, as this is just a total/overview
 		if ( server.isOnline() ) {
 			val networkTransmitRateBytes = server.networkInterfaces?.fold( 0L ) { total, networkInterface -> total + networkInterface.rateBytesSent } ?: -1L
@@ -751,14 +749,41 @@ class ServerActivity : AppCompatActivity() {
 			resourcesNetworkTextView.setTextColor( getColor( R.color.black ) )
 			resourcesNetworkTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.black ) )
 			resourcesNetworkTextView.text = Html.fromHtml( String.format( getString( R.string.serverTextViewResourcesDataNetwork ), String.format( getString( R.string.serverTextViewResourcesDataNetworkValue ),
-				createColorText( roundValueOrDefault( networkTransmitRate.amount, networkTransmitRate.suffix + "/s" ), colorForValue( networkTransmitRateBytes, 1024L * 1024L, 1024L * 1024L * 10L ) ),
-				createColorText( roundValueOrDefault( networkReceiveRate.amount, networkReceiveRate.suffix + "/s" ), colorForValue( networkReceiveRateBytes, 1024L * 1024L, 1024L * 1024L * 10L ) )
+				createColorText( roundValueOrDefault( networkTransmitRate.amount, networkTransmitRate.suffix + "/s" ), colorForValue( networkTransmitRateBytes, 1024L * 1024L, 1024L * 1024L * 10L ) ), // No idea what the thresholds should be, so guestimate
+				createColorText( roundValueOrDefault( networkReceiveRate.amount, networkReceiveRate.suffix + "/s" ), colorForValue( networkReceiveRateBytes, 1024L * 1024L, 1024L * 1024L * 10L ) ) // No idea what the thresholds should be, so guestimate
 			) ), Html.FROM_HTML_MODE_LEGACY )
 		} else {
 			resourcesNetworkTextView.setTextColor( getColor( R.color.statusDead ) )
 			resourcesNetworkTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
 			resourcesNetworkTextView.text = String.format( getString( R.string.serverTextViewResourcesDataNetwork ), createColorText( "Unknown", getColor( R.color.statusDead ) ) )
 		}
+
+		// Set the drive resource data
+		// TODO: Separate section for this with each interface individually, as this is just a total/overview
+		if ( server.isOnline() ) {
+			val driveReadRateBytes = server.drives?.fold( 0L ) { total, drive -> total + drive.rateBytesRead } ?: -1L
+			val driveWriteRateBytes = server.drives?.fold( 0L ) { total, drive -> total + drive.rateBytesWritten } ?: -1L
+			Log.d( Shared.logTag, "Drive Read Rate: '${ driveReadRateBytes }' bytes, Drive Write Rate: '${ driveWriteRateBytes }' bytes" )
+
+			val driveReadRate = Size( driveReadRateBytes )
+			val driveWriteRate = Size( driveWriteRateBytes )
+			Log.d( Shared.logTag, "Drive Read Rate: '${ driveReadRate.amount }' '${ driveReadRate.suffix }', Drive Write Rate: '${ driveWriteRate.amount }' '${ driveWriteRate.suffix }'" )
+
+			resourcesDriveTextView.setTextColor( getColor( R.color.black ) )
+			resourcesDriveTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.black ) )
+			resourcesDriveTextView.text = Html.fromHtml( String.format( getString( R.string.serverTextViewResourcesDataDrive ), String.format( getString( R.string.serverTextViewResourcesDataDriveValue ),
+				createColorText( roundValueOrDefault( driveReadRate.amount, driveReadRate.suffix + "/s" ), colorForValue( driveReadRateBytes, 1024L * 1024L, 1024L * 1024L * 10L ) ), // No idea what the thresholds should be, so guestimate
+				createColorText( roundValueOrDefault( driveWriteRate.amount, driveWriteRate.suffix + "/s" ), colorForValue( driveWriteRateBytes, 1024L * 1024L, 1024L * 1024L * 10L ) ) // No idea what the thresholds should be, so guestimate
+			) ), Html.FROM_HTML_MODE_LEGACY )
+		} else {
+			resourcesDriveTextView.setTextColor( getColor( R.color.statusDead ) )
+			resourcesDriveTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
+			resourcesDriveTextView.text = String.format( getString( R.string.serverTextViewResourcesDataDrive ), createColorText( "Unknown", getColor( R.color.statusDead ) ) )
+		}
+
+		// TODO: Power resource data
+
+		// TODO: Fans resource data
 
 	}
 

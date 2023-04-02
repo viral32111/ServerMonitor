@@ -23,7 +23,7 @@
 	<string name="serverTextViewResourcesDataNetwork">Network: %s.</string>
 	<string name="serverTextViewResourcesDataNetworkValue">%s tx, %s rx</string>
 	<string name="serverTextViewResourcesDataDrive">Drive: %s.</string>
-	<string name="serverTextViewResourcesDataDriveValue">%d%s write, %d%s read</string>
+	<string name="serverTextViewResourcesDataDriveValue">%s write, %s read</string>
 	<string name="serverTextViewResourcesDataPower">Power: %s.</string>
 	<string name="serverTextViewResourcesDataPowerValue">%d%s of %d%s</string>
 	<string name="serverTextViewResourcesDataFans">Fans: %s.</string>
