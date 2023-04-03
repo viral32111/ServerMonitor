@@ -3,29 +3,49 @@
 	xmlns:app="http://schemas.android.com/apk/res-auto"
 	android:id="@+id/serviceConstraintLayout"
 	android:layout_width="match_parent"
-	android:layout_height="match_parent">
+	android:layout_height="wrap_content">
 
 	<TextView
-		android:id="@+id/serviceTextView"
+		android:id="@+id/serviceNameTextView"
 		android:layout_width="0dp"
-		android:layout_height="38dp"
+		android:layout_height="wrap_content"
+		android:layout_marginEnd="8dp"
 		android:drawablePadding="@dimen/serverIconPadding"
-		android:gravity="start|center_vertical"
-		android:text="@string/serverTextViewServicesData"
-		android:textSize="@dimen/text_size"
+		android:ellipsize="end"
+		android:singleLine="true"
+		android:textSize="16sp"
 		app:drawableLeftCompat="@drawable/wysiwyg"
+		app:drawableTint="@color/black"
 		app:layout_constraintEnd_toStartOf="@+id/serviceManageButton"
 		app:layout_constraintStart_toStartOf="parent"
 		app:layout_constraintTop_toTopOf="parent" />
 
+	<TextView
+		android:id="@+id/serviceStatusTextView"
+		android:layout_width="0dp"
+		android:layout_height="wrap_content"
+		android:layout_marginStart="8dp"
+		android:layout_marginEnd="8dp"
+		android:drawablePadding="@dimen/serverIconPadding"
+		android:ellipsize="end"
+		android:gravity="start|center_vertical"
+		android:singleLine="true"
+		android:text="@string/serverTextViewServicesServiceStatus"
+		android:textSize="12sp"
+		app:drawableLeftCompat="@drawable/schedule"
+		app:drawableTint="@color/black"
+		app:layout_constraintEnd_toStartOf="@+id/serviceManageButton"
+		app:layout_constraintHorizontal_bias="0.0"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toBottomOf="@+id/serviceNameTextView" />
+
 	<Button
 		android:id="@+id/serviceManageButton"
 		android:layout_width="100dp"
-		android:layout_height="38dp"
+		android:layout_height="wrap_content"
 		android:includeFontPadding="false"
 		android:text="@string/serverButtonServicesManage"
 		app:layout_constraintEnd_toEndOf="parent"
-		app:layout_constraintStart_toEndOf="@+id/serviceTextView"
 		app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

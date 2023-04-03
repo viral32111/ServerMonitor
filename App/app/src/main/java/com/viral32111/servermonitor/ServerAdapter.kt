@@ -54,7 +54,7 @@ class ServerAdapter( private val servers: Array<Server>, private val context: Co
 		val server = servers[ index ]
 		Log.d( Shared.logTag, "Replacing view for server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }')..." )
 
-		// Forward click events to the given listener - https://stackoverflow.com/a/49969478
+		// Forward click events - https://stackoverflow.com/a/49969478
 		viewHolder.constraintLayout.setOnClickListener {
 			Log.d( Shared.logTag, "Server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') pressed" )
 			onServerClickListener.invoke( server )
@@ -158,7 +158,7 @@ class ServerAdapter( private val servers: Array<Server>, private val context: Co
 		}
 	}
 
-	// Returns the number of servers - called by the layout manager
+	// Returns the number of views - called by the layout manager
 	override fun getItemCount() = servers.size
 
 }

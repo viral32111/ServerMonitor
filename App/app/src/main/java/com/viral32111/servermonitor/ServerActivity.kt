@@ -49,6 +49,8 @@ class ServerActivity : AppCompatActivity() {
 	private lateinit var drivesRecyclerView: RecyclerView
 	private lateinit var networkStatusTextView: TextView
 	private lateinit var networkRecyclerView: RecyclerView
+	private lateinit var servicesStatusTextView: TextView
+	private lateinit var servicesRecyclerView: RecyclerView
 	private lateinit var snmpTitleTextView: TextView
 	private lateinit var refreshProgressBar: ProgressBar
 
@@ -149,6 +151,8 @@ class ServerActivity : AppCompatActivity() {
 		drivesRecyclerView = findViewById( R.id.serverDrivesRecyclerView )
 		networkStatusTextView = findViewById( R.id.serverNetworkStatusTextView )
 		networkRecyclerView = findViewById( R.id.serverNetworkRecyclerView )
+		servicesStatusTextView = findViewById( R.id.serverServicesStatusTextView )
+		servicesRecyclerView = findViewById( R.id.serverServicesRecyclerView )
 		snmpTitleTextView = findViewById( R.id.serverSNMPTitleTextView )
 		refreshProgressBar = findViewById( R.id.serverRefreshProgressBar )
 
@@ -207,6 +211,13 @@ class ServerActivity : AppCompatActivity() {
 		val networkDividerItemDecoration = DividerItemDecoration( this, networkLinearLayoutManager.orientation )
 		networkDividerItemDecoration.setDrawable( ContextCompat.getDrawable( this, R.drawable.shape_section_divider )!! )
 		networkRecyclerView.addItemDecoration( networkDividerItemDecoration )
+
+		// Setup the services recycler view
+		val servicesLinearLayoutManager = LinearLayoutManager( this, LinearLayoutManager.VERTICAL, false )
+		servicesRecyclerView.layoutManager = servicesLinearLayoutManager
+		val servicesDividerItemDecoration = DividerItemDecoration( this, servicesLinearLayoutManager.orientation )
+		servicesDividerItemDecoration.setDrawable( ContextCompat.getDrawable( this, R.drawable.shape_section_divider )!! )
+		servicesRecyclerView.addItemDecoration( servicesDividerItemDecoration )
 
 		// Create the animation for the automatic refresh countdown progress bar - https://stackoverflow.com/a/18015071
 		progressBarAnimation = ProgressBarAnimation( refreshProgressBar, refreshProgressBar.progress.toFloat(), refreshProgressBar.max.toFloat() )
@@ -876,11 +887,37 @@ class ServerActivity : AppCompatActivity() {
 			drivesStatusTextView.text = getString( R.string.serverTextViewDrivesUnknown )
 		}
 
-		// TODO: Services
+		// Services
+		if ( server.isOnline() ) {
+			val services = server.services?.let { sortServices( it ) }
+
+			if ( services != null && services.isNotEmpty() ) {
+				servicesStatusTextView.visibility = View.GONE
+				servicesRecyclerView.visibility = View.VISIBLE
+
+				val servicesAdapter = ServiceAdapter( services, applicationContext ) { service -> onServiceManagePressed( service ) }
+				servicesRecyclerView.adapter = servicesAdapter
+				servicesAdapter.notifyItemRangeChanged( 0, services.size )
+			} else {
+				servicesRecyclerView.visibility = View.GONE
+
+				servicesStatusTextView.visibility = View.VISIBLE
+				servicesStatusTextView.setTextColor( getColor( R.color.statusDead ) )
+				servicesStatusTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
+				servicesStatusTextView.text = getString( R.string.serverTextViewServicesEmpty )
+			}
+		} else {
+			servicesRecyclerView.visibility = View.GONE
+
+			servicesStatusTextView.visibility = View.VISIBLE
+			servicesStatusTextView.setTextColor( getColor( R.color.statusDead ) )
+			servicesStatusTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
+			servicesStatusTextView.text = getString( R.string.serverTextViewServicesUnknown )
+		}
 
 		// TODO: Docker containers
 
-		// SNMP
+		// TODO: SNMP
 		if ( server.isOnline() ) {
 			snmpTitleTextView.text = Html.fromHtml( String.format( getString( R.string.serverTextViewSNMPTitleCommunity ), "<em>${ server.snmpCommunity }</em>" ), Html.FROM_HTML_MODE_LEGACY )
 		} else {
@@ -896,6 +933,23 @@ class ServerActivity : AppCompatActivity() {
 		actionShutdownButton.isEnabled = shouldEnable
 		actionRebootButton.isEnabled = shouldEnable
 
+	}
+
+	// Runs when a service's manage button is pressed...
+	private fun onServiceManagePressed( service: Service ) {
+		// TODO: Switch to service activity
+	}
+
+	// Sorts services by status code - this makes running services appear at the top, above stopped services - https://stackoverflow.com/a/59402330
+	private fun sortServices( services: Array<Service> ): Array<Service> {
+		val statusCodeComparator = Comparator { service1: Service, service2: Service ->
+			return@Comparator service1.statusCode - service2.statusCode
+		}
+
+		val servicesCopy = arrayListOf<Service>().apply { addAll( services ) }
+		servicesCopy.sortWith( statusCodeComparator )
+
+		return servicesCopy.toTypedArray().reversedArray()
 	}
 
 }
