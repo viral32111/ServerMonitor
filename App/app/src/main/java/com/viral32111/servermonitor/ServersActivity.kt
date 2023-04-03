@@ -136,7 +136,7 @@ class ServersActivity : AppCompatActivity() {
 
 		// Set the divider between servers in the recycler view - https://stackoverflow.com/q/40528012
 		val dividerItemDecoration = DividerItemDecoration( this, linearLayoutManager.orientation )
-		dividerItemDecoration.setDrawable( ContextCompat.getDrawable( this, R.drawable.shape_divider )!! )
+		dividerItemDecoration.setDrawable( ContextCompat.getDrawable( this, R.drawable.shape_server_divider )!! )
 		recyclerView.addItemDecoration( dividerItemDecoration )
 
 		// Create the animation for the automatic refresh countdown progress bar - https://stackoverflow.com/a/18015071

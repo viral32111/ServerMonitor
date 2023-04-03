@@ -22,7 +22,7 @@
 
     <!-- Servers list -->
     <dimen name="serversListPadding">16dp</dimen>
-    <dimen name="serversListDividerSpace">16dp</dimen>
+    <dimen name="serversListDividerHeight">20dp</dimen>
 
     <!-- Server -->
     <dimen name="serverSectionSpacing">12dp</dimen>

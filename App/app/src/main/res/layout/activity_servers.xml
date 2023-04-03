@@ -75,7 +75,7 @@
 				android:id="@+id/serversRecyclerView"
 				android:layout_width="match_parent"
 				android:layout_height="wrap_content"
-				android:divider="@drawable/shape_divider"
+				android:divider="@drawable/shape_server_divider"
 				android:orientation="vertical"
 				android:paddingHorizontal="@dimen/serversListPadding"
 				android:scrollbars="horizontal"

@@ -29,7 +29,8 @@
 
 	<color name="textColorHint">#A1887F</color>
 
-	<!-- Server in server list -->
+	<!-- Servers list -->
+	<color name="serversListDivider">#E0DCDF</color>
 	<color name="serverBackground">#F2F2F2</color>
 	<color name="serverStroke">#EDEDED</color>
 
