@@ -30,6 +30,7 @@ class ServerAdapter( private val servers: Array<Server>, private val context: Co
 		init {
 			Log.d( Shared.logTag, "Initialising new view holder..." )
 
+			// Get relevant UI
 			constraintLayout = view.findViewById( R.id.serverConstraintLayout )
 			titleTextView = view.findViewById( R.id.serverTitleTextView )
 			statusTextView = view.findViewById( R.id.serverStatusTextView )

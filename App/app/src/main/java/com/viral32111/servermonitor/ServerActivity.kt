@@ -54,6 +54,8 @@ class ServerActivity : AppCompatActivity() {
 	private lateinit var dockerStatusTextView: TextView
 	private lateinit var dockerRecyclerView: RecyclerView
 	private lateinit var snmpTitleTextView: TextView
+	private lateinit var snmpStatusTextView: TextView
+	private lateinit var snmpRecyclerView: RecyclerView
 	private lateinit var refreshProgressBar: ProgressBar
 
 	// Misc
@@ -158,6 +160,8 @@ class ServerActivity : AppCompatActivity() {
 		dockerStatusTextView = findViewById( R.id.serverDockerStatusTextView )
 		dockerRecyclerView = findViewById( R.id.serverDockerRecyclerView )
 		snmpTitleTextView = findViewById( R.id.serverSNMPTitleTextView )
+		snmpStatusTextView = findViewById( R.id.serverSNMPStatusTextView )
+		snmpRecyclerView = findViewById( R.id.serverSNMPRecyclerView )
 		refreshProgressBar = findViewById( R.id.serverRefreshProgressBar )
 
 		// Default to unknown for all resources - the text is already grey as defined in layout, so no need to call createColorText()
@@ -229,6 +233,13 @@ class ServerActivity : AppCompatActivity() {
 		val dockerDividerItemDecoration = DividerItemDecoration( this, dockerLinearLayoutManager.orientation )
 		dockerDividerItemDecoration.setDrawable( ContextCompat.getDrawable( this, R.drawable.shape_section_divider )!! )
 		dockerRecyclerView.addItemDecoration( dockerDividerItemDecoration )
+
+		// Setup the SNMP agents recycler view
+		val snmpLinearLayoutManager = LinearLayoutManager( this, LinearLayoutManager.VERTICAL, false )
+		snmpRecyclerView.layoutManager = snmpLinearLayoutManager
+		val snmpDividerItemDecoration = DividerItemDecoration( this, dockerLinearLayoutManager.orientation )
+		snmpDividerItemDecoration.setDrawable( ContextCompat.getDrawable( this, R.drawable.shape_section_divider )!! )
+		snmpRecyclerView.addItemDecoration( dockerDividerItemDecoration )
 
 		// Create the animation for the automatic refresh countdown progress bar - https://stackoverflow.com/a/18015071
 		progressBarAnimation = ProgressBarAnimation( refreshProgressBar, refreshProgressBar.progress.toFloat(), refreshProgressBar.max.toFloat() )
@@ -954,11 +965,36 @@ class ServerActivity : AppCompatActivity() {
 			dockerStatusTextView.text = getString( R.string.serverTextViewDockerUnknown )
 		}
 
-		// TODO: SNMP
+		// SNMP
 		if ( server.isOnline() ) {
 			snmpTitleTextView.text = Html.fromHtml( String.format( getString( R.string.serverTextViewSNMPTitleCommunity ), "<em>${ server.snmpCommunity }</em>" ), Html.FROM_HTML_MODE_LEGACY )
+
+			val snmpAgents = server.snmpAgents
+
+			if ( snmpAgents != null && snmpAgents.isNotEmpty() ) {
+				snmpStatusTextView.visibility = View.GONE
+				snmpRecyclerView.visibility = View.VISIBLE
+
+				val snmpAgentsAdapter = SNMPAgentAdapter( snmpAgents, applicationContext )
+				snmpRecyclerView.adapter = snmpAgentsAdapter
+				snmpAgentsAdapter.notifyItemRangeChanged( 0, snmpAgents.size )
+			} else {
+				snmpRecyclerView.visibility = View.GONE
+
+				snmpStatusTextView.visibility = View.VISIBLE
+				snmpStatusTextView.setTextColor( getColor( R.color.statusDead ) )
+				snmpStatusTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
+				snmpStatusTextView.text = getString( R.string.serverTextViewSNMPEmpty )
+			}
 		} else {
 			snmpTitleTextView.text = getString( R.string.serverTextViewSNMPTitle )
+
+			snmpRecyclerView.visibility = View.GONE
+
+			snmpStatusTextView.visibility = View.VISIBLE
+			snmpStatusTextView.setTextColor( getColor( R.color.statusDead ) )
+			snmpStatusTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
+			snmpStatusTextView.text = getString( R.string.serverTextViewSNMPUnknown )
 		}
 
 	}

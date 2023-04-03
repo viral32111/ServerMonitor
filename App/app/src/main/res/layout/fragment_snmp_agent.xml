@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:id="@+id/snmpAgentConstraintLayout"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content">
+
+	<TextView
+		android:id="@+id/snmpAgentNameTextView"
+		android:layout_width="0dp"
+		android:layout_height="wrap_content"
+		android:drawablePadding="@dimen/serverIconPadding"
+		android:ellipsize="end"
+		android:singleLine="true"
+		android:text="@string/serverTextViewSNMPAgentName"
+		android:textSize="@dimen/text_size"
+		app:drawableLeftCompat="@drawable/lan"
+		app:drawableTint="@color/black"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toTopOf="parent" />
+
+	<TextView
+		android:id="@+id/snmpAgentDescriptionTextView"
+		android:layout_width="0dp"
+		android:layout_height="wrap_content"
+		android:layout_marginStart="8dp"
+		android:drawablePadding="@dimen/serverIconPadding"
+		android:ellipsize="end"
+		android:gravity="start|center_vertical"
+		android:singleLine="true"
+		android:textSize="14sp"
+		app:drawableLeftCompat="@drawable/dvr"
+		app:drawableTint="@color/black"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toBottomOf="@+id/snmpAgentNameTextView" />
+
+	<TextView
+		android:id="@+id/snmpAgentStatusTextView"
+		android:layout_width="0dp"
+		android:layout_height="wrap_content"
+		android:layout_marginStart="8dp"
+		android:drawablePadding="@dimen/serverIconPadding"
+		android:ellipsize="end"
+		android:gravity="start|center_vertical"
+		android:singleLine="true"
+		android:text="@string/serverTextViewSNMPAgentStatus"
+		android:textSize="14sp"
+		app:drawableLeftCompat="@drawable/schedule"
+		app:drawableTint="@color/black"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toBottomOf="@+id/snmpAgentDescriptionTextView" />
+
+	<TextView
+		android:id="@+id/snmpAgentLocationTextView"
+		android:layout_width="0dp"
+		android:layout_height="wrap_content"
+		android:layout_marginStart="8dp"
+		android:drawablePadding="@dimen/serverIconPadding"
+		android:ellipsize="end"
+		android:gravity="start|center_vertical"
+		android:singleLine="true"
+		android:text="@string/serverTextViewSNMPAgentLocation"
+		android:textSize="14sp"
+		app:drawableLeftCompat="@drawable/location_on"
+		app:drawableTint="@color/black"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toBottomOf="@+id/snmpAgentStatusTextView" />
+
+	<TextView
+		android:id="@+id/snmpAgentContactTextView"
+		android:layout_width="0dp"
+		android:layout_height="wrap_content"
+		android:layout_marginStart="8dp"
+		android:drawablePadding="@dimen/serverIconPadding"
+		android:ellipsize="end"
+		android:gravity="start|center_vertical"
+		android:singleLine="true"
+		android:text="@string/serverTextViewSNMPAgentContact"
+		android:textSize="14sp"
+		app:drawableLeftCompat="@drawable/phone_in_talk"
+		app:drawableTint="@color/black"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toBottomOf="@+id/snmpAgentLocationTextView" />
+
+	<TextView
+		android:id="@+id/snmpAgentServicesTextView"
+		android:layout_width="0dp"
+		android:layout_height="wrap_content"
+		android:layout_marginStart="8dp"
+		android:drawablePadding="@dimen/serverIconPadding"
+		android:ellipsize="end"
+		android:gravity="start|center_vertical"
+		android:singleLine="true"
+		android:text="@string/serverTextViewSNMPAgentServices"
+		android:textSize="14sp"
+		app:drawableLeftCompat="@drawable/wysiwyg_20dp"
+		app:drawableTint="@color/black"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toBottomOf="@+id/snmpAgentContactTextView" />
+
+	<TextView
+		android:id="@+id/snmpAgentTrapsTextView"
+		android:layout_width="0dp"
+		android:layout_height="wrap_content"
+		android:layout_marginStart="8dp"
+		android:drawablePadding="@dimen/serverIconPadding"
+		android:ellipsize="end"
+		android:gravity="start|center_vertical"
+		android:singleLine="true"
+		android:text="@string/serverTextViewSNMPAgentTraps"
+		android:textSize="14sp"
+		app:drawableLeftCompat="@drawable/report"
+		app:drawableTint="@color/black"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toBottomOf="@+id/snmpAgentServicesTextView" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

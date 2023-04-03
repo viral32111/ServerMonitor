@@ -25,6 +25,7 @@ class ServiceAdapter(
 		init {
 			Log.d( Shared.logTag, "Initialising new service view holder..." )
 
+			// Get relevant UI
 			nameTextView = view.findViewById( R.id.serviceNameTextView )
 			statusTextView = view.findViewById( R.id.serviceStatusTextView )
 			manageButton = view.findViewById( R.id.serviceManageButton )

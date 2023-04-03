@@ -23,6 +23,7 @@ class DockerContainerAdapter(
 		init {
 			Log.d( Shared.logTag, "Initialising new Docker container view holder..." )
 
+			// Get relevant UI
 			nameTextView = view.findViewById( R.id.dockerContainerNameTextView )
 			statusTextView = view.findViewById( R.id.dockerContainerStatusTextView )
 			imageTextView = view.findViewById( R.id.dockerContainerImageTextView )
