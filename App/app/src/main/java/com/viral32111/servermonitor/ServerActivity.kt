@@ -474,6 +474,16 @@ class ServerActivity : AppCompatActivity() {
 			}
 		}
 
+		// TODO: When the shutdown action button is pressed...
+		actionShutdownButton.setOnClickListener {
+			Log.d( Shared.logTag, "Shutdown server button pressed!" )
+		}
+
+		// TODO: When the reboot action button is pressed...
+		actionRebootButton.setOnClickListener {
+			Log.d( Shared.logTag, "Reboot server button pressed!" )
+		}
+
 		// Register the back button pressed callback - https://medium.com/tech-takeaways/how-to-migrate-the-deprecated-onbackpressed-function-e66bb29fa2fd
 		onBackPressedDispatcher.addCallback( this, onBackPressed )
 
@@ -1026,7 +1036,7 @@ class ServerActivity : AppCompatActivity() {
 		// Convert fixed array to list
 		val servicesCopy = arrayListOf<Service>().apply { addAll( services ) }
 
-		// Sort by name in alphabetical order
+		// Sort by name in alphabetical order - https://stackoverflow.com/a/53354117
 		servicesCopy.sortBy { it.displayName }
 
 		// Sort by status code - groups up services with the same status (running, stopped, etc.)

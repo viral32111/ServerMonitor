@@ -406,6 +406,9 @@ class ServiceActivity : AppCompatActivity() {
 			}
 		}
 
+		// TODO: When the start/stop action button is pressed...
+		// TODO: When the restart action button is pressed...
+
 		// Register the back button pressed callback - https://medium.com/tech-takeaways/how-to-migrate-the-deprecated-onbackpressed-function-e66bb29fa2fd
 		onBackPressedDispatcher.addCallback( this, onBackPressed )
 
