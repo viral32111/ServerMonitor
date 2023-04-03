@@ -1037,15 +1037,27 @@ class ServerActivity : AppCompatActivity() {
 		// Sort by familiar services - groups up commonly used/recognised services
 		servicesCopy.sortWith( compareBy { it.serviceName in arrayOf(
 
+			// Windows
+			"Schedule", "EventLog",
+			"pla", // Performance Logs & Alerts
+			"VBoxService", // VirtualBox Guest Additions
+			"wuauserv", // Windows Update
+			"W32Time", // Windows Time
+			"mpssvc", // Windows Defender Firewall
+			"TermService", // Remote Desktop Services
+			"Cloudflared",
+			"Dhcp", "DHCPServer",
+			"Dnscache", "DNS",
+			"SNMP", "SNMPTRAP",
+
 			// Linux
 			"apparmor",
 			"thermald",
 			"snapd", "unattended-upgrades",
 			"lvm2-monitor", "lvm",
+			"cloudflared",
 			"ssh", "sshd", "ssh-agent",
 			"docker", "dockerd", "containerd",
-
-			// TODO: Windows
 
 		) } )
 

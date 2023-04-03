@@ -43,11 +43,12 @@ class NetworkInterfaceAdapter(
 		Log.d( Shared.logTag, "Replacing view for network interface '${ networkInterface.name }'..." )
 
 		// Change icon depending on type of interface (e.g., Ethernet, Wi-Fi, etc.)
-		if ( networkInterface.name.startsWith( "enp" ) || networkInterface.name.startsWith( "eth" ) ) {
+		val interfaceName = networkInterface.name.lowercase()
+		if ( interfaceName.startsWith( "enp" ) || interfaceName.startsWith( "eth" ) || interfaceName.contains( "ethernet" ) ) {
 			viewHolder.textView.setCompoundDrawablesWithIntrinsicBounds( AppCompatResources.getDrawable( context, R.drawable.cable ), null, null, null )
-		} else if ( networkInterface.name.startsWith( "wlo" ) || networkInterface.name.startsWith( "wlan" ) ) {
+		} else if ( interfaceName.startsWith( "wlo" ) || interfaceName.startsWith( "wlan" ) || interfaceName.contains( "wireless" ) || interfaceName.contains( "Wi-Fi" ) ) {
 			viewHolder.textView.setCompoundDrawablesWithIntrinsicBounds( AppCompatResources.getDrawable( context, R.drawable.wifi ), null, null, null )
-		} else if ( networkInterface.name.startsWith( "lo" ) ) {
+		} else if ( interfaceName.startsWith( "lo" ) || interfaceName.contains( "loopback" ) ) {
 			viewHolder.textView.setCompoundDrawablesWithIntrinsicBounds( AppCompatResources.getDrawable( context, R.drawable.laps ), null, null, null )
 
 			// No point in showing separate values for loopback, as they'll always be the same
