@@ -94,12 +94,12 @@ namespace ServerMonitor.Collector {
 					StatusCode = service.Status switch {
 						ServiceControllerStatus.Stopped => 0, // Linux equivalent: inactive
 						ServiceControllerStatus.Running => 1, // Linux equivalent: active
-						ServiceControllerStatus.StartPending => 2, // Linux equivalent: reloading
-						ServiceControllerStatus.StopPending => 2, // Linux equivalent: reloading
-						// Skip 3 & 4 as they are for Linux only
-						ServiceControllerStatus.ContinuePending => 5, // No Linux equivalent
-						ServiceControllerStatus.PausePending => 6, // No Linux equivalent
-						ServiceControllerStatus.Paused => 7, // No Linux equivalent
+						ServiceControllerStatus.StartPending => 2, // Linux equivalent: activating
+						ServiceControllerStatus.StopPending => 3,
+						// Skip 4, 5 & 6 as Windows has no restarting equivalent
+						ServiceControllerStatus.ContinuePending => 7,
+						ServiceControllerStatus.PausePending => 8,
+						ServiceControllerStatus.Paused => 9,
 						_ => throw new Exception( $"Unknown service status '{ service.Status }' for service '{ service.ServiceName }'" )
 					},
 					ExitCode = exitCode,
@@ -207,10 +207,11 @@ namespace ServerMonitor.Collector {
 					"inactive" => 0, // Windows equivalent: Stopped
 					"active" => 1, // Windows equivalent: Running
 					"activating" => 2, // Windows equivalent: StartPending
-					"reloading" => 2, // Windows equivalent: StartPending, StopPending
-					"failed" => 3, // No Windows equivalent
-					"exited" => 4, // No Windows equivalent
-					// Skip 5, 6 & 7 as they are for Windows only
+					// Skip 3 as Linux has no stop pending equivalent
+					"reloading" => 4,
+					"failed" => 5,
+					"exited" => 6,
+					// Skip 7, 8 & 9 as Linux has no continue/pause equivalents
 					_ => throw new Exception( $"Unrecognised status '{ serviceData[ "ActiveState" ] }' for service '{ serviceName }'" )
 				};
 
