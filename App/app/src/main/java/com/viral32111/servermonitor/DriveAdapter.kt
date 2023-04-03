@@ -7,7 +7,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
@@ -18,14 +17,13 @@ class DriveAdapter(
 
 	// Holds all the UI
 	class ViewHolder( view: View ) : RecyclerView.ViewHolder( view ) {
-		val constraintLayout: ConstraintLayout
 		val textView: TextView
 		val partitionsRecyclerView: RecyclerView
 
 		init {
 			Log.d( Shared.logTag, "Initialising new drive view holder..." )
 
-			constraintLayout = view.findViewById( R.id.driveConstraintLayout )
+			// Get relevant UI
 			textView = view.findViewById( R.id.driveTextView )
 			partitionsRecyclerView = view.findViewById( R.id.drivePartitionsRecyclerView )
 

@@ -822,7 +822,7 @@ class ServerActivity : AppCompatActivity() {
 
 		// TODO: Fans resource data
 
-		// Network Interfaces
+		// Network interfaces
 		if ( server.isOnline() ) {
 			val networkInterfaces = server.networkInterfaces?.reversedArray()
 			if ( networkInterfaces != null && networkInterfaces.isNotEmpty() ) {
@@ -875,6 +875,10 @@ class ServerActivity : AppCompatActivity() {
 			drivesStatusTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
 			drivesStatusTextView.text = getString( R.string.serverTextViewDrivesUnknown )
 		}
+
+		// TODO: Services
+
+		// TODO: Docker containers
 
 		// SNMP
 		if ( server.isOnline() ) {
