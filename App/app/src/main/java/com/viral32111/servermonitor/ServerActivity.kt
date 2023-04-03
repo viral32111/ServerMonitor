@@ -51,6 +51,8 @@ class ServerActivity : AppCompatActivity() {
 	private lateinit var networkRecyclerView: RecyclerView
 	private lateinit var servicesStatusTextView: TextView
 	private lateinit var servicesRecyclerView: RecyclerView
+	private lateinit var dockerStatusTextView: TextView
+	private lateinit var dockerRecyclerView: RecyclerView
 	private lateinit var snmpTitleTextView: TextView
 	private lateinit var refreshProgressBar: ProgressBar
 
@@ -153,6 +155,8 @@ class ServerActivity : AppCompatActivity() {
 		networkRecyclerView = findViewById( R.id.serverNetworkRecyclerView )
 		servicesStatusTextView = findViewById( R.id.serverServicesStatusTextView )
 		servicesRecyclerView = findViewById( R.id.serverServicesRecyclerView )
+		dockerStatusTextView = findViewById( R.id.serverDockerStatusTextView )
+		dockerRecyclerView = findViewById( R.id.serverDockerRecyclerView )
 		snmpTitleTextView = findViewById( R.id.serverSNMPTitleTextView )
 		refreshProgressBar = findViewById( R.id.serverRefreshProgressBar )
 
@@ -218,6 +222,13 @@ class ServerActivity : AppCompatActivity() {
 		val servicesDividerItemDecoration = DividerItemDecoration( this, servicesLinearLayoutManager.orientation )
 		servicesDividerItemDecoration.setDrawable( ContextCompat.getDrawable( this, R.drawable.shape_section_divider )!! )
 		servicesRecyclerView.addItemDecoration( servicesDividerItemDecoration )
+
+		// Setup the Docker containers recycler view
+		val dockerLinearLayoutManager = LinearLayoutManager( this, LinearLayoutManager.VERTICAL, false )
+		dockerRecyclerView.layoutManager = dockerLinearLayoutManager
+		val dockerDividerItemDecoration = DividerItemDecoration( this, dockerLinearLayoutManager.orientation )
+		dockerDividerItemDecoration.setDrawable( ContextCompat.getDrawable( this, R.drawable.shape_section_divider )!! )
+		dockerRecyclerView.addItemDecoration( dockerDividerItemDecoration )
 
 		// Create the animation for the automatic refresh countdown progress bar - https://stackoverflow.com/a/18015071
 		progressBarAnimation = ProgressBarAnimation( refreshProgressBar, refreshProgressBar.progress.toFloat(), refreshProgressBar.max.toFloat() )
@@ -915,7 +926,33 @@ class ServerActivity : AppCompatActivity() {
 			servicesStatusTextView.text = getString( R.string.serverTextViewServicesUnknown )
 		}
 
-		// TODO: Docker containers
+		// Docker containers
+		if ( server.isOnline() ) {
+			val dockerContainers = server.dockerContainers
+
+			if ( dockerContainers != null && dockerContainers.isNotEmpty() ) {
+				dockerStatusTextView.visibility = View.GONE
+				dockerRecyclerView.visibility = View.VISIBLE
+
+				val dockerContainersAdapter = DockerContainerAdapter( dockerContainers, applicationContext )
+				dockerRecyclerView.adapter = dockerContainersAdapter
+				dockerContainersAdapter.notifyItemRangeChanged( 0, dockerContainers.size )
+			} else {
+				dockerRecyclerView.visibility = View.GONE
+
+				dockerStatusTextView.visibility = View.VISIBLE
+				dockerStatusTextView.setTextColor( getColor( R.color.statusDead ) )
+				dockerStatusTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
+				dockerStatusTextView.text = getString( R.string.serverTextViewDockerEmpty )
+			}
+		} else {
+			dockerRecyclerView.visibility = View.GONE
+
+			dockerStatusTextView.visibility = View.VISIBLE
+			dockerStatusTextView.setTextColor( getColor( R.color.statusDead ) )
+			dockerStatusTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
+			dockerStatusTextView.text = getString( R.string.serverTextViewDockerUnknown )
+		}
 
 		// TODO: SNMP
 		if ( server.isOnline() ) {

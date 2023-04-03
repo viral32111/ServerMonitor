@@ -81,9 +81,8 @@ class ServiceAdapter(
 		// Update the name text
 		viewHolder.nameTextView.text = service.displayName
 
-		// Update the uptime text
-		val uptimeSeconds = service.uptimeSeconds.toLong()
-		val uptimeText = TimeSpan( uptimeSeconds ).toString( false )
+		// Update the status text
+		val uptimeText = TimeSpan( service.uptimeSeconds.toLong() ).toString( false )
 		viewHolder.statusTextView.text = Html.fromHtml( String.format( context.getString( R.string.serverTextViewServicesServiceStatus ),
 			createColorText( statusText, statusColor ),
 			createColorText(
