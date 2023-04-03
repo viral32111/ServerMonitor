@@ -2,7 +2,21 @@
 <resources>
 
 	<!-- Title on the action bar -->
-	<!-- TODO: Will eventually be service name! -->
 	<string name="serviceActionBarTitle">Service</string>
+
+	<!-- Toasts for fetch server -->
+	<string name="serviceToastServerAuthenticationUnknownUser">No credentials exist with the configured username.</string>
+	<string name="serviceToastServerAuthenticationIncorrectPassword">The configured instance password is incorrect.</string>
+	<string name="serviceToastServerAuthenticationFailure">The configured instance credentials are incorrect.</string>
+	<string name="serviceToastServerNotFound">Unable to find the fetch server API route.</string>
+	<string name="serviceToastServerClientFailure">The device encountered an error sending the request.</string>
+	<string name="serviceToastServerUnavailable">The configured instance is unavailable at the moment.</string>
+	<string name="serviceToastServerServerFailure">The API encountered an error processing the request.</string>
+	<string name="serviceToastServerNoConnection">Unable to connect to API. Is the instance URL correct and are you connected to the Internet?</string>
+	<string name="serviceToastServerTimeout">Connection to API timed out. Are you connected to the Internet?</string>
+	<string name="serviceToastServerParseFailure">Failed to parse API response as JSON. Is the URL correct?</string>
+	<string name="serviceToastServerFailure">An unknown issue occurred while fetching the server.</string>
+	<string name="serviceToastServerCancel">The API request was cancelled.</string>
+	<string name="serviceToastServerNull">Null property encountered in API response JSON.</string>
 
 </resources>

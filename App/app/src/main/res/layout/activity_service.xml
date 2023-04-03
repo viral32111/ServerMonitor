@@ -1,9 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.swiperefreshlayout.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
 	xmlns:tools="http://schemas.android.com/tools"
-	android:id="@+id/serviceConstraintLayout"
+	android:id="@+id/serviceSwipeRefreshLayout"
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
+	android:orientation="vertical"
 	tools:context=".ServiceActivity">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+	<androidx.constraintlayout.widget.ConstraintLayout
+		android:id="@+id/serviceMainConstraintLayout"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content">
+
+		<ProgressBar
+			android:id="@+id/serviceRefreshProgressBar"
+			style="?android:attr/progressBarStyleHorizontal"
+			android:layout_width="0dp"
+			android:layout_height="5dp"
+			android:indeterminate="false"
+			android:max="10000"
+			android:progress="0"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toTopOf="parent" />
+
+		<androidx.core.widget.NestedScrollView
+			android:id="@+id/serviceScrollView"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:layout_marginStart="@dimen/scrollViewEdgeStart"
+			android:layout_marginTop="@dimen/scrollViewEdgeTop"
+			android:layout_marginEnd="@dimen/scrollViewEdgeEnd"
+			android:layout_marginBottom="@dimen/scrollViewEdgeBottom"
+			android:paddingStart="@dimen/scrollViewEdgeStart"
+			android:paddingEnd="@dimen/scrollViewEdgeEnd"
+			android:scrollbarStyle="outsideOverlay"
+			app:layout_constraintBottom_toBottomOf="parent"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toTopOf="parent">
+
+			<androidx.constraintlayout.widget.ConstraintLayout
+				android:id="@+id/serviceScrollConstraintLayout"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content">
+
+			</androidx.constraintlayout.widget.ConstraintLayout>
+
+		</androidx.core.widget.NestedScrollView>
+
+	</androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

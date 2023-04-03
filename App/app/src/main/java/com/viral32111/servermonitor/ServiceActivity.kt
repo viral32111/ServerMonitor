@@ -4,10 +4,15 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.View
+import android.view.animation.Animation
+import android.view.animation.LinearInterpolator
+import android.widget.ProgressBar
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.android.volley.*
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.gson.JsonParseException
@@ -19,7 +24,13 @@ import kotlinx.coroutines.withContext
 
 class ServiceActivity : AppCompatActivity() {
 
+	// UI
+	private var materialToolbar: MaterialToolbar? = null
+	private lateinit var swipeRefreshLayout: SwipeRefreshLayout
+	private lateinit var refreshProgressBar: ProgressBar
+
 	// Misc
+	private lateinit var progressBarAnimation: ProgressBarAnimation
 	private lateinit var settings: Settings
 
 	// Data from previous activity
@@ -44,7 +55,7 @@ class ServiceActivity : AppCompatActivity() {
 		Log.d( Shared.logTag, "Switched to Material Toolbar" )
 
 		// Set the title on the toolbar
-		val materialToolbar = supportActionBar?.customView?.findViewById<MaterialToolbar>( R.id.actionBarMaterialToolbar )
+		materialToolbar = supportActionBar?.customView?.findViewById( R.id.actionBarMaterialToolbar )
 		materialToolbar?.title = getString( R.string.serviceActionBarTitle )
 		materialToolbar?.isTitleCentered = true
 		Log.d( Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered })" )
@@ -57,10 +68,6 @@ class ServiceActivity : AppCompatActivity() {
 			overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
 		}
 
-		// Get the settings
-		settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE ) )
-		Log.d( Shared.logTag, "Got settings ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
-
 		// When an item on the action bar menu is pressed...
 		materialToolbar?.setOnMenuItemClickListener { menuItem ->
 
@@ -71,7 +78,7 @@ class ServiceActivity : AppCompatActivity() {
 				startActivity( Intent( this, SettingsActivity::class.java ) )
 				overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
 
-			// Logout
+				// Logout
 			} else if ( menuItem.title?.equals( getString( R.string.actionBarMenuLogout ) ) == true ) {
 				Log.d( Shared.logTag, "Logout menu item pressed, showing confirmation..." )
 
@@ -94,7 +101,7 @@ class ServiceActivity : AppCompatActivity() {
 					Log.d( Shared.logTag, "Logout aborted" )
 				} )
 
-			// About
+				// About
 			} else if ( menuItem.title?.equals( getString( R.string.actionBarMenuAbout ) ) == true ) {
 				Log.d( Shared.logTag, "Showing information about app dialog..." )
 
@@ -111,6 +118,14 @@ class ServiceActivity : AppCompatActivity() {
 			return@setOnMenuItemClickListener true
 
 		}
+
+		// Get all the UI
+		swipeRefreshLayout = findViewById( R.id.serviceSwipeRefreshLayout )
+		refreshProgressBar = findViewById( R.id.serviceRefreshProgressBar )
+
+		// Get the settings
+		settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE ) )
+		Log.d( Shared.logTag, "Got settings ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
 
 		// Return to the setup activity if we aren't setup yet
 		if ( !settings.isSetup() ) {
@@ -132,6 +147,77 @@ class ServiceActivity : AppCompatActivity() {
 		}
 		this.serverIdentifier = serverIdentifier
 		this.serviceName = serviceName
+
+		// Create the animation for the automatic refresh countdown progress bar - https://stackoverflow.com/a/18015071
+		progressBarAnimation = ProgressBarAnimation( refreshProgressBar, refreshProgressBar.progress.toFloat(), refreshProgressBar.max.toFloat() )
+		progressBarAnimation.interpolator = LinearInterpolator() // We want linear, not accelerate-decelerate interpolation
+
+		// Store this activity for later use in showing snackbar messages
+		val activity = this
+
+		// Event listeners for the automatic refresh countdown progress bar animation - https://medium.com/android-news/handsome-codes-with-kotlin-6e183db4c7e5
+		progressBarAnimation.setAnimationListener( object : Animation.AnimationListener {
+
+			// When the animation starts...
+			override fun onAnimationStart( animation: Animation? ) {
+				Log.d( Shared.logTag, "Automatic refresh countdown progress bar animation started" )
+			}
+
+			// When the animation finishes or is manually cleared...
+			override fun onAnimationEnd( animation: Animation? ) {
+				Log.d( Shared.logTag, "Automatic refresh countdown progress bar animation ended (${ animation?.hasEnded() }, ${ animation?.hasStarted() }, ${ refreshProgressBar.progress }, ${ refreshProgressBar.isAnimating })" )
+
+				// Don't refresh if we've been manually cleared
+				if ( refreshProgressBar.progress == 0 ) return
+
+				// Show refreshing spinner & disable user input
+				swipeRefreshLayout.isRefreshing = true
+				enableInputs( false )
+
+				CoroutineScope( Dispatchers.Main ).launch {
+					withContext( Dispatchers.IO ) {
+
+						// TODO: Fetch the server & this service
+						swipeRefreshLayout.isRefreshing = false
+						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
+						// updateUI()
+						enableInputs( true )
+						if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
+
+					}
+				}
+			}
+
+			// When the animation repeats...
+			override fun onAnimationRepeat( animation: Animation? ) {
+				Log.d( Shared.logTag, "Automatic refresh countdown progress bar animation repeated" )
+			}
+
+		} )
+
+		// When we're swiped down to refresh...
+		swipeRefreshLayout.setOnRefreshListener {
+			Log.d( Shared.logTag, "Swipe refreshed!" )
+
+			// Stop the automatic refresh countdown progress bar, thus calling the animation callback
+			if ( settings.automaticRefresh ) {
+				refreshProgressBar.clearAnimation()
+
+			// If automatic refresh is disabled, then do the refresh manually...
+			} else {
+				CoroutineScope( Dispatchers.Main ).launch {
+					withContext( Dispatchers.IO ) {
+
+						// TODO: Fetch the server
+						swipeRefreshLayout.isRefreshing = false
+						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
+						// updateUI()
+						if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
+
+					}
+				}
+			}
+		}
 
 		// Register the back button pressed callback - https://medium.com/tech-takeaways/how-to-migrate-the-deprecated-onbackpressed-function-e66bb29fa2fd
 		onBackPressedDispatcher.addCallback( this, onBackPressed )
@@ -159,13 +245,35 @@ class ServiceActivity : AppCompatActivity() {
 	override fun onPause() {
 		super.onPause()
 		Log.d( Shared.logTag, "Paused service activity" )
+
+		// Stop any current refreshing
+		swipeRefreshLayout.isRefreshing = false
+
+		// Stop the automatic refresh countdown progress bar
+		if ( settings.automaticRefresh ) {
+			refreshProgressBar.progress = 0 // Reset progress to prevent automatic refresh
+			refreshProgressBar.clearAnimation() // Will call the animation end callback
+		}
 	}
 
 	override fun onResume() {
 		super.onResume()
 		Log.d( Shared.logTag, "Resumed service activity" )
 
-		// TODO: Progress dialog
+		// Reload settings in case they have changed
+		settings.read()
+		Log.d( Shared.logTag, "Reloaded settings (Automatic Refresh: '${ settings.automaticRefresh }', Automatic Refresh Interval: '${ settings.automaticRefreshInterval }')" )
+
+		// Set the progress bar animation duration to the automatic refresh interval
+		progressBarAnimation.duration = settings.automaticRefreshInterval * 1000L // Convert seconds to milliseconds
+
+		// Toggle the countdown progress bar depending on the automatic refresh setting
+		refreshProgressBar.isEnabled = settings.automaticRefresh
+		refreshProgressBar.visibility = if ( settings.automaticRefresh ) View.VISIBLE else View.GONE
+
+		// Show refreshing spinner & disable user input
+		swipeRefreshLayout.isRefreshing = true
+		enableInputs( false )
 
 		val activity = this
 		CoroutineScope( Dispatchers.Main ).launch {
@@ -184,10 +292,15 @@ class ServiceActivity : AppCompatActivity() {
 
 					Log.d( Shared.logTag, "Fetched contact information from API (Name: '${ contactName }', Methods: '${ contactMethods!!.joinToString( ", " ) }')" )
 
+					// We don't enable user input & stop refreshing spinner here, as there's still another request to come
+
 				} catch ( exception: APIException ) {
 					Log.e( Shared.logTag, "Failed to fetch contact information from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
 
 					withContext( Dispatchers.Main ) {
+						swipeRefreshLayout.isRefreshing = false
+						enableInputs( true )
+
 						when ( exception.volleyError ) {
 
 							// Bad authentication
@@ -228,24 +341,55 @@ class ServiceActivity : AppCompatActivity() {
 					Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
 
 					withContext( Dispatchers.Main ) {
-						showBriefMessage( activity, R.string.serversToastServersParseFailure )
+						swipeRefreshLayout.isRefreshing = false
+						enableInputs( true )
+						showBriefMessage( activity, R.string.serviceToastServerParseFailure )
 					}
 				} catch ( exception: JsonSyntaxException ) {
 					Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
 
 					withContext( Dispatchers.Main ) {
-						showBriefMessage( activity, R.string.serversToastServersParseFailure )
+						swipeRefreshLayout.isRefreshing = false
+						enableInputs( true )
+						showBriefMessage( activity, R.string.serviceToastServerParseFailure )
 					}
 				} catch ( exception: NullPointerException ) {
 					Log.e( Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
 
 					withContext( Dispatchers.Main ) {
-						showBriefMessage( activity, R.string.serversToastServersNull )
+						swipeRefreshLayout.isRefreshing = false
+						enableInputs( true )
+						showBriefMessage( activity, R.string.serviceToastServerNull )
 					}
 				}
 
+				/******************************************************************************/
+
+				// TODO: Fetch the server & this service
+				swipeRefreshLayout.isRefreshing = false
+				if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
+				// updateUI()
+				enableInputs( true )
+				if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
+
 			}
 		}
+	}
+
+	// Updates the UI with the given service
+	private fun updateUI( service: Service ) {
+
+		// Set the title on the toolbar
+		materialToolbar?.title = service.displayName.uppercase()
+		Log.d( Shared.logTag, "Set Material Toolbar title to '${ service.displayName.uppercase() }'" )
+
+		// TODO
+
+	}
+
+	// Enables/disables user input
+	private fun enableInputs( shouldEnable: Boolean ) {
+		// TODO
 	}
 
 }

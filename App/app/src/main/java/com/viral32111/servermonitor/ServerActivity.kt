@@ -277,7 +277,7 @@ class ServerActivity : AppCompatActivity() {
 
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
-								refreshProgressBar.progress = 0
+								if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
 
 								// Update the UI & enable user input
 								updateUI( server )
@@ -299,35 +299,35 @@ class ServerActivity : AppCompatActivity() {
 
 									// Bad authentication
 									is AuthFailureError -> when ( exception.apiErrorCode ) {
-										ErrorCode.UnknownUser.code -> showBriefMessage( activity, R.string.serversToastServersAuthenticationUnknownUser )
-										ErrorCode.IncorrectPassword.code -> showBriefMessage( activity, R.string.serversToastServersAuthenticationIncorrectPassword )
-										else -> showBriefMessage( activity, R.string.serversToastServersAuthenticationFailure )
+										ErrorCode.UnknownUser.code -> showBriefMessage( activity, R.string.serverToastServerAuthenticationUnknownUser )
+										ErrorCode.IncorrectPassword.code -> showBriefMessage( activity, R.string.serverToastServerAuthenticationIncorrectPassword )
+										else -> showBriefMessage( activity, R.string.serverToastServerAuthenticationFailure )
 									}
 
 									// HTTP 4xx
 									is ClientError -> when ( exception.httpStatusCode ) {
-										404 -> showBriefMessage( activity, R.string.serversToastServersNotFound )
-										else -> showBriefMessage( activity, R.string.serversToastServersClientFailure )
+										404 -> showBriefMessage( activity, R.string.serverToastServerNotFound )
+										else -> showBriefMessage( activity, R.string.serverToastServerClientFailure )
 									}
 
 									// HTTP 5xx
 									is ServerError -> when ( exception.httpStatusCode ) {
-										502 -> showBriefMessage( activity, R.string.serversToastServersUnavailable )
-										503 -> showBriefMessage( activity, R.string.serversToastServersUnavailable )
-										504 -> showBriefMessage( activity, R.string.serversToastServersUnavailable )
+										502 -> showBriefMessage( activity, R.string.serverToastServerUnavailable )
+										503 -> showBriefMessage( activity, R.string.serverToastServerUnavailable )
+										504 -> showBriefMessage( activity, R.string.serverToastServerUnavailable )
 										530 -> showBriefMessage( activity, R.string.serverToastServerUnavailable ) // Cloudflare
-										else -> showBriefMessage( activity, R.string.serversToastServersServerFailure )
+										else -> showBriefMessage( activity, R.string.serverToastServerServerFailure )
 									}
 
 									// No Internet connection, malformed domain
-									is NoConnectionError -> showBriefMessage( activity, R.string.serversToastServersNoConnection )
-									is NetworkError -> showBriefMessage( activity, R.string.serversToastServersNoConnection )
+									is NoConnectionError -> showBriefMessage( activity, R.string.serverToastServerNoConnection )
+									is NetworkError -> showBriefMessage( activity, R.string.serverToastServerNoConnection )
 
 									// Connection timed out
-									is TimeoutError -> showBriefMessage( activity, R.string.serversToastServersTimeout )
+									is TimeoutError -> showBriefMessage( activity, R.string.serverToastServerTimeout )
 
 									// ¯\_(ツ)_/¯
-									else -> showBriefMessage( activity, R.string.serversToastServersFailure )
+									else -> showBriefMessage( activity, R.string.serverToastServerFailure )
 
 								}
 							}
@@ -338,7 +338,7 @@ class ServerActivity : AppCompatActivity() {
 								swipeRefreshLayout.isRefreshing = false
 								refreshProgressBar.progress = 0
 								enableInputs( true )
-								showBriefMessage( activity, R.string.serversToastServersParseFailure )
+								showBriefMessage( activity, R.string.serverToastServerParseFailure )
 							}
 						} catch ( exception: JsonSyntaxException ) {
 							Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
@@ -347,7 +347,7 @@ class ServerActivity : AppCompatActivity() {
 								swipeRefreshLayout.isRefreshing = false
 								refreshProgressBar.progress = 0
 								enableInputs( true )
-								showBriefMessage( activity, R.string.serversToastServersParseFailure )
+								showBriefMessage( activity, R.string.serverToastServerParseFailure )
 							}
 						} catch ( exception: NullPointerException ) {
 							Log.e( Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
@@ -356,7 +356,7 @@ class ServerActivity : AppCompatActivity() {
 								swipeRefreshLayout.isRefreshing = false
 								refreshProgressBar.progress = 0
 								enableInputs( true )
-								showBriefMessage( activity, R.string.serversToastServersNull )
+								showBriefMessage( activity, R.string.serverToastServerNull )
 							}
 						}
 
@@ -384,7 +384,7 @@ class ServerActivity : AppCompatActivity() {
 				CoroutineScope( Dispatchers.Main ).launch {
 					withContext( Dispatchers.IO ) {
 
-						// Fetch the servers
+						// Fetch the server
 						try {
 							val server = Server( API.getServer( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, serverIdentifier )!!, true )
 							Log.d( Shared.logTag, "Fetched server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') from API" )
@@ -411,35 +411,35 @@ class ServerActivity : AppCompatActivity() {
 
 									// Bad authentication
 									is AuthFailureError -> when ( exception.apiErrorCode ) {
-										ErrorCode.UnknownUser.code -> showBriefMessage( activity, R.string.serversToastServersAuthenticationUnknownUser )
-										ErrorCode.IncorrectPassword.code -> showBriefMessage( activity, R.string.serversToastServersAuthenticationIncorrectPassword )
-										else -> showBriefMessage( activity, R.string.serversToastServersAuthenticationFailure )
+										ErrorCode.UnknownUser.code -> showBriefMessage( activity, R.string.serverToastServerAuthenticationUnknownUser )
+										ErrorCode.IncorrectPassword.code -> showBriefMessage( activity, R.string.serverToastServerAuthenticationIncorrectPassword )
+										else -> showBriefMessage( activity, R.string.serverToastServerAuthenticationFailure )
 									}
 
 									// HTTP 4xx
 									is ClientError -> when ( exception.httpStatusCode ) {
-										404 -> showBriefMessage( activity, R.string.serversToastServersNotFound )
-										else -> showBriefMessage( activity, R.string.serversToastServersClientFailure )
+										404 -> showBriefMessage( activity, R.string.serverToastServerNotFound )
+										else -> showBriefMessage( activity, R.string.serverToastServerClientFailure )
 									}
 
 									// HTTP 5xx
 									is ServerError -> when ( exception.httpStatusCode ) {
-										502 -> showBriefMessage( activity, R.string.serversToastServersUnavailable )
-										503 -> showBriefMessage( activity, R.string.serversToastServersUnavailable )
-										504 -> showBriefMessage( activity, R.string.serversToastServersUnavailable )
+										502 -> showBriefMessage( activity, R.string.serverToastServerUnavailable )
+										503 -> showBriefMessage( activity, R.string.serverToastServerUnavailable )
+										504 -> showBriefMessage( activity, R.string.serverToastServerUnavailable )
 										530 -> showBriefMessage( activity, R.string.serverToastServerUnavailable ) // Cloudflare
-										else -> showBriefMessage( activity, R.string.serversToastServersServerFailure )
+										else -> showBriefMessage( activity, R.string.serverToastServerServerFailure )
 									}
 
 									// No Internet connection, malformed domain
-									is NoConnectionError -> showBriefMessage( activity, R.string.serversToastServersNoConnection )
-									is NetworkError -> showBriefMessage( activity, R.string.serversToastServersNoConnection )
+									is NoConnectionError -> showBriefMessage( activity, R.string.serverToastServerNoConnection )
+									is NetworkError -> showBriefMessage( activity, R.string.serverToastServerNoConnection )
 
 									// Connection timed out
-									is TimeoutError -> showBriefMessage( activity, R.string.serversToastServersTimeout )
+									is TimeoutError -> showBriefMessage( activity, R.string.serverToastServerTimeout )
 
 									// ¯\_(ツ)_/¯
-									else -> showBriefMessage( activity, R.string.serversToastServersFailure )
+									else -> showBriefMessage( activity, R.string.serverToastServerFailure )
 
 								}
 							}
@@ -449,7 +449,7 @@ class ServerActivity : AppCompatActivity() {
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
 								refreshProgressBar.progress = 0
-								showBriefMessage( activity, R.string.serversToastServersParseFailure )
+								showBriefMessage( activity, R.string.serverToastServerParseFailure )
 							}
 						} catch ( exception: JsonSyntaxException ) {
 							Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
@@ -457,7 +457,7 @@ class ServerActivity : AppCompatActivity() {
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
 								refreshProgressBar.progress = 0
-								showBriefMessage( activity, R.string.serversToastServersParseFailure )
+								showBriefMessage( activity, R.string.serverToastServerParseFailure )
 							}
 						} catch ( exception: NullPointerException ) {
 							Log.e( Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
@@ -465,7 +465,7 @@ class ServerActivity : AppCompatActivity() {
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
 								refreshProgressBar.progress = 0
-								showBriefMessage( activity, R.string.serversToastServersNull )
+								showBriefMessage( activity, R.string.serverToastServerNull )
 							}
 						}
 
@@ -598,7 +598,7 @@ class ServerActivity : AppCompatActivity() {
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
 						enableInputs( true )
-						showBriefMessage( activity, R.string.serversToastServersParseFailure )
+						showBriefMessage( activity, R.string.serverToastServerParseFailure )
 					}
 				} catch ( exception: JsonSyntaxException ) {
 					Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
@@ -606,7 +606,7 @@ class ServerActivity : AppCompatActivity() {
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
 						enableInputs( true )
-						showBriefMessage( activity, R.string.serversToastServersParseFailure )
+						showBriefMessage( activity, R.string.serverToastServerParseFailure )
 					}
 				} catch ( exception: NullPointerException ) {
 					Log.e( Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
@@ -614,7 +614,7 @@ class ServerActivity : AppCompatActivity() {
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
 						enableInputs( true )
-						showBriefMessage( activity, R.string.serversToastServersNull )
+						showBriefMessage( activity, R.string.serverToastServerNull )
 					}
 				}
 
@@ -1010,7 +1010,14 @@ class ServerActivity : AppCompatActivity() {
 
 	// Runs when a service's manage button is pressed...
 	private fun onServiceManagePressed( service: Service ) {
-		// TODO: Switch to service activity
+		Log.d( Shared.logTag, "Switching to Service activity..." )
+
+		val intent = Intent( this, ServiceActivity::class.java )
+		intent.putExtra( "serverIdentifier", serverIdentifier )
+		intent.putExtra( "serviceName", service.serviceName )
+
+		startActivity( intent )
+		overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
 	}
 
 	// Sorts services by status code - this makes running services appear at the top, above stopped services - https://stackoverflow.com/a/59402330
