@@ -181,12 +181,105 @@ class ServiceActivity : AppCompatActivity() {
 				CoroutineScope( Dispatchers.Main ).launch {
 					withContext( Dispatchers.IO ) {
 
-						// TODO: Fetch the server & this service
-						swipeRefreshLayout.isRefreshing = false
-						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
-						// updateUI()
-						enableInputs( true )
-						if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
+						// Fetch the server
+						try {
+							val server = Server( API.getServer( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, serverIdentifier )!!, true )
+							Log.d( Shared.logTag, "Fetched server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') from API" )
+
+							withContext( Dispatchers.Main ) {
+								swipeRefreshLayout.isRefreshing = false
+								if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
+
+								// Get this service
+								val service = server.services?.find { service -> service.serviceName == serviceName }
+								if ( service != null ) {
+
+									// Update the UI & enable user input
+									updateUI( service )
+									enableInputs( true )
+
+									// Start the progress bar animation
+									if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
+
+								} else {
+									Log.e( Shared.logTag, "Service '${ serviceName }' does not exist? Returning to previous activity..." )
+									finish()
+									overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
+								}
+							}
+
+						} catch ( exception: APIException ) {
+							Log.e( Shared.logTag, "Failed to fetch server '${ serverIdentifier }' from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
+
+							withContext( Dispatchers.Main ) {
+								swipeRefreshLayout.isRefreshing = false
+								if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
+								enableInputs( true )
+
+								when ( exception.volleyError ) {
+
+									// Bad authentication
+									is AuthFailureError -> when ( exception.apiErrorCode ) {
+										ErrorCode.UnknownUser.code -> showBriefMessage( activity, R.string.serviceToastServerAuthenticationUnknownUser )
+										ErrorCode.IncorrectPassword.code -> showBriefMessage( activity, R.string.serviceToastServerAuthenticationIncorrectPassword )
+										else -> showBriefMessage( activity, R.string.serviceToastServerAuthenticationFailure )
+									}
+
+									// HTTP 4xx
+									is ClientError -> when ( exception.httpStatusCode ) {
+										404 -> showBriefMessage( activity, R.string.serviceToastServerNotFound )
+										else -> showBriefMessage( activity, R.string.serviceToastServerClientFailure )
+									}
+
+									// HTTP 5xx
+									is ServerError -> when ( exception.httpStatusCode ) {
+										502 -> showBriefMessage( activity, R.string.serviceToastServerUnavailable )
+										503 -> showBriefMessage( activity, R.string.serviceToastServerUnavailable )
+										504 -> showBriefMessage( activity, R.string.serviceToastServerUnavailable )
+										530 -> showBriefMessage( activity, R.string.serviceToastServerUnavailable ) // Cloudflare
+										else -> showBriefMessage( activity, R.string.serviceToastServerServerFailure )
+									}
+
+									// No Internet connection, malformed domain
+									is NoConnectionError -> showBriefMessage( activity, R.string.serviceToastServerNoConnection )
+									is NetworkError -> showBriefMessage( activity, R.string.serviceToastServerNoConnection )
+
+									// Connection timed out
+									is TimeoutError -> showBriefMessage( activity, R.string.serviceToastServerTimeout )
+
+									// ¯\_(ツ)_/¯
+									else -> showBriefMessage( activity, R.string.serviceToastServerFailure )
+
+								}
+							}
+						} catch ( exception: JsonParseException) {
+							Log.e( Shared.logTag, "Failed to parse fetch server API response as JSON due to '${ exception.message }'" )
+
+							withContext( Dispatchers.Main ) {
+								swipeRefreshLayout.isRefreshing = false
+								if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
+								enableInputs( true )
+								showBriefMessage( activity, R.string.serviceToastServerParseFailure )
+							}
+						} catch ( exception: JsonSyntaxException) {
+							Log.e( Shared.logTag, "Failed to parse fetch server API response as JSON due to '${ exception.message }'" )
+
+							withContext( Dispatchers.Main ) {
+								swipeRefreshLayout.isRefreshing = false
+								if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
+								enableInputs( true )
+								showBriefMessage( activity, R.string.serviceToastServerParseFailure )
+							}
+						} catch ( exception: NullPointerException ) {
+							Log.e( Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
+
+							withContext( Dispatchers.Main ) {
+								swipeRefreshLayout.isRefreshing = false
+								if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
+								enableInputs( true )
+								showBriefMessage( activity, R.string.serviceToastServerNull )
+							}
+						}
 
 					}
 				}
@@ -212,11 +305,101 @@ class ServiceActivity : AppCompatActivity() {
 				CoroutineScope( Dispatchers.Main ).launch {
 					withContext( Dispatchers.IO ) {
 
-						// TODO: Fetch the server
-						swipeRefreshLayout.isRefreshing = false
-						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
-						// updateUI()
-						if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
+						// Fetch the server
+						try {
+							val server = Server( API.getServer( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, serverIdentifier )!!, true )
+							Log.d( Shared.logTag, "Fetched server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') from API" )
+
+							withContext( Dispatchers.Main ) {
+								swipeRefreshLayout.isRefreshing = false
+								if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
+
+								// Get this service
+								val service = server.services?.find { service -> service.serviceName == serviceName }
+								if ( service != null ) {
+
+									// Update the UI
+									updateUI( service )
+
+									// Start the progress bar animation
+									if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
+
+								} else {
+									Log.e( Shared.logTag, "Service '${ serviceName }' does not exist? Returning to previous activity..." )
+									finish()
+									overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
+								}
+							}
+
+						} catch ( exception: APIException ) {
+							Log.e( Shared.logTag, "Failed to fetch server '${ serverIdentifier }' from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
+
+							withContext( Dispatchers.Main ) {
+								swipeRefreshLayout.isRefreshing = false
+								if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
+								enableInputs( true )
+
+								when ( exception.volleyError ) {
+
+									// Bad authentication
+									is AuthFailureError -> when ( exception.apiErrorCode ) {
+										ErrorCode.UnknownUser.code -> showBriefMessage( activity, R.string.serviceToastServerAuthenticationUnknownUser )
+										ErrorCode.IncorrectPassword.code -> showBriefMessage( activity, R.string.serviceToastServerAuthenticationIncorrectPassword )
+										else -> showBriefMessage( activity, R.string.serviceToastServerAuthenticationFailure )
+									}
+
+									// HTTP 4xx
+									is ClientError -> when ( exception.httpStatusCode ) {
+										404 -> showBriefMessage( activity, R.string.serviceToastServerNotFound )
+										else -> showBriefMessage( activity, R.string.serviceToastServerClientFailure )
+									}
+
+									// HTTP 5xx
+									is ServerError -> when ( exception.httpStatusCode ) {
+										502 -> showBriefMessage( activity, R.string.serviceToastServerUnavailable )
+										503 -> showBriefMessage( activity, R.string.serviceToastServerUnavailable )
+										504 -> showBriefMessage( activity, R.string.serviceToastServerUnavailable )
+										530 -> showBriefMessage( activity, R.string.serviceToastServerUnavailable ) // Cloudflare
+										else -> showBriefMessage( activity, R.string.serviceToastServerServerFailure )
+									}
+
+									// No Internet connection, malformed domain
+									is NoConnectionError -> showBriefMessage( activity, R.string.serviceToastServerNoConnection )
+									is NetworkError -> showBriefMessage( activity, R.string.serviceToastServerNoConnection )
+
+									// Connection timed out
+									is TimeoutError -> showBriefMessage( activity, R.string.serviceToastServerTimeout )
+
+									// ¯\_(ツ)_/¯
+									else -> showBriefMessage( activity, R.string.serviceToastServerFailure )
+
+								}
+							}
+						} catch ( exception: JsonParseException) {
+							Log.e( Shared.logTag, "Failed to parse fetch server API response as JSON due to '${ exception.message }'" )
+
+							withContext( Dispatchers.Main ) {
+								swipeRefreshLayout.isRefreshing = false
+								if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
+								showBriefMessage( activity, R.string.serviceToastServerParseFailure )
+							}
+						} catch ( exception: JsonSyntaxException) {
+							Log.e( Shared.logTag, "Failed to parse fetch server API response as JSON due to '${ exception.message }'" )
+
+							withContext( Dispatchers.Main ) {
+								swipeRefreshLayout.isRefreshing = false
+								if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
+								showBriefMessage( activity, R.string.serviceToastServerParseFailure )
+							}
+						} catch ( exception: NullPointerException ) {
+							Log.e( Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
+
+							withContext( Dispatchers.Main ) {
+								swipeRefreshLayout.isRefreshing = false
+								if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
+								showBriefMessage( activity, R.string.serviceToastServerNull )
+							}
+						}
 
 					}
 				}
@@ -369,12 +552,106 @@ class ServiceActivity : AppCompatActivity() {
 
 				/******************************************************************************/
 
-				// TODO: Fetch the server & this service
-				swipeRefreshLayout.isRefreshing = false
-				if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
-				// updateUI()
-				enableInputs( true )
-				if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
+				// Fetch the server
+				try {
+					val server = Server( API.getServer( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, serverIdentifier )!!, true )
+					Log.d( Shared.logTag, "Fetched server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') from API" )
+
+					withContext( Dispatchers.Main ) {
+						swipeRefreshLayout.isRefreshing = false
+						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
+
+						// Get this service
+						val service = server.services?.find { service -> service.serviceName == serviceName }
+						if ( service != null ) {
+							Log.d( Shared.logTag, "Got service '${ service.serviceName }' ('${ service.displayName }', '${ service.description }')" )
+
+							// Update the UI & enable user input
+							updateUI( service )
+							enableInputs( true )
+
+							// Start the progress bar animation
+							if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
+
+						} else {
+							Log.e( Shared.logTag, "Service '${ serviceName }' does not exist? Returning to previous activity..." )
+							finish()
+							overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
+						}
+					}
+
+				} catch ( exception: APIException ) {
+					Log.e( Shared.logTag, "Failed to fetch server '${ serverIdentifier }' from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
+
+					withContext( Dispatchers.Main ) {
+						swipeRefreshLayout.isRefreshing = false
+						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
+						enableInputs( true )
+
+						when ( exception.volleyError ) {
+
+							// Bad authentication
+							is AuthFailureError -> when ( exception.apiErrorCode ) {
+								ErrorCode.UnknownUser.code -> showBriefMessage( activity, R.string.serviceToastServerAuthenticationUnknownUser )
+								ErrorCode.IncorrectPassword.code -> showBriefMessage( activity, R.string.serviceToastServerAuthenticationIncorrectPassword )
+								else -> showBriefMessage( activity, R.string.serviceToastServerAuthenticationFailure )
+							}
+
+							// HTTP 4xx
+							is ClientError -> when ( exception.httpStatusCode ) {
+								404 -> showBriefMessage( activity, R.string.serviceToastServerNotFound )
+								else -> showBriefMessage( activity, R.string.serviceToastServerClientFailure )
+							}
+
+							// HTTP 5xx
+							is ServerError -> when ( exception.httpStatusCode ) {
+								502 -> showBriefMessage( activity, R.string.serviceToastServerUnavailable )
+								503 -> showBriefMessage( activity, R.string.serviceToastServerUnavailable )
+								504 -> showBriefMessage( activity, R.string.serviceToastServerUnavailable )
+								530 -> showBriefMessage( activity, R.string.serviceToastServerUnavailable ) // Cloudflare
+								else -> showBriefMessage( activity, R.string.serviceToastServerServerFailure )
+							}
+
+							// No Internet connection, malformed domain
+							is NoConnectionError -> showBriefMessage( activity, R.string.serviceToastServerNoConnection )
+							is NetworkError -> showBriefMessage( activity, R.string.serviceToastServerNoConnection )
+
+							// Connection timed out
+							is TimeoutError -> showBriefMessage( activity, R.string.serviceToastServerTimeout )
+
+							// ¯\_(ツ)_/¯
+							else -> showBriefMessage( activity, R.string.serviceToastServerFailure )
+
+						}
+					}
+				} catch ( exception: JsonParseException) {
+					Log.e( Shared.logTag, "Failed to parse fetch server API response as JSON due to '${ exception.message }'" )
+
+					withContext( Dispatchers.Main ) {
+						swipeRefreshLayout.isRefreshing = false
+						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
+						enableInputs( true )
+						showBriefMessage( activity, R.string.serviceToastServerParseFailure )
+					}
+				} catch ( exception: JsonSyntaxException) {
+					Log.e( Shared.logTag, "Failed to parse fetch server API response as JSON due to '${ exception.message }'" )
+
+					withContext( Dispatchers.Main ) {
+						swipeRefreshLayout.isRefreshing = false
+						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
+						enableInputs( true )
+						showBriefMessage( activity, R.string.serviceToastServerParseFailure )
+					}
+				} catch ( exception: NullPointerException ) {
+					Log.e( Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
+
+					withContext( Dispatchers.Main ) {
+						swipeRefreshLayout.isRefreshing = false
+						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
+						enableInputs( true )
+						showBriefMessage( activity, R.string.serviceToastServerNull )
+					}
+				}
 
 			}
 		}

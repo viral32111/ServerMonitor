@@ -41,11 +41,11 @@ class ServiceAdapter(
 	// Replaces the contents of a view - called by the layout manager
 	override fun onBindViewHolder( viewHolder: ViewHolder, index: Int ) {
 		val service = services[ index ]
-		Log.d( Shared.logTag, "Replacing view for service '${ service.displayName }' ('${ service.serviceName }', '${ service.description }')..." )
+		Log.d( Shared.logTag, "Replacing view for service '${ service.serviceName }' ('${ service.displayName }', '${ service.description }')..." )
 
 		// Forward button click events
 		viewHolder.manageButton.setOnClickListener {
-			Log.d( Shared.logTag, "Service '${ service.displayName }' ('${ service.serviceName }', '${ service.description }') pressed" )
+			Log.d( Shared.logTag, "Service '${ service.serviceName }' ('${ service.displayName }', '${ service.description }') pressed" )
 			onClickListener.invoke( service )
 		}
 
