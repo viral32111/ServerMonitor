@@ -1020,16 +1020,41 @@ class ServerActivity : AppCompatActivity() {
 		overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
 	}
 
-	// Sorts services by status code - this makes running services appear at the top, above stopped services - https://stackoverflow.com/a/59402330
+	// Sorts the services before showing them - https://stackoverflow.com/a/59402330
 	private fun sortServices( services: Array<Service> ): Array<Service> {
-		val statusCodeComparator = Comparator { service1: Service, service2: Service ->
-			return@Comparator service1.statusCode - service2.statusCode
-		}
 
+		// Convert fixed array to list
 		val servicesCopy = arrayListOf<Service>().apply { addAll( services ) }
-		servicesCopy.sortWith( statusCodeComparator )
 
-		return servicesCopy.toTypedArray().reversedArray()
+		// Sort by name in alphabetical order
+		servicesCopy.sortBy { it.displayName }
+
+		// Sort by status code - groups up services with the same status (running, stopped, etc.)
+		servicesCopy.sortWith( Comparator { service1: Service, service2: Service ->
+			return@Comparator service1.statusCode - service2.statusCode
+		} )
+
+		// Sort by familiar services - groups up commonly used/recognised services
+		servicesCopy.sortWith( compareBy { it.serviceName in arrayOf(
+
+			// Linux
+			"apparmor",
+			"thermald",
+			"snapd", "unattended-upgrades",
+			"lvm2-monitor", "lvm",
+			"ssh", "sshd", "ssh-agent",
+			"docker", "dockerd", "containerd",
+
+			// TODO: Windows
+
+		) } )
+
+		// Reverse the order - moves familiar & running services to the top
+		servicesCopy.reverse()
+
+		// Convert back to fixed array before returning
+		return servicesCopy.toTypedArray()
+
 	}
 
 }

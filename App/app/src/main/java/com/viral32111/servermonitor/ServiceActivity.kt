@@ -148,6 +148,10 @@ class ServiceActivity : AppCompatActivity() {
 		this.serverIdentifier = serverIdentifier
 		this.serviceName = serviceName
 
+		// Set the title on the toolbar (will be overridden later when we have the display name for the service)
+		materialToolbar?.title = serviceName.uppercase()
+		Log.d( Shared.logTag, "Set Material Toolbar title to '${ serviceName.uppercase() }'" )
+
 		// Create the animation for the automatic refresh countdown progress bar - https://stackoverflow.com/a/18015071
 		progressBarAnimation = ProgressBarAnimation( refreshProgressBar, refreshProgressBar.progress.toFloat(), refreshProgressBar.max.toFloat() )
 		progressBarAnimation.interpolator = LinearInterpolator() // We want linear, not accelerate-decelerate interpolation
