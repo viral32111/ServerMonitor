@@ -11,6 +11,8 @@
 		android:layout_width="0dp"
 		android:layout_height="wrap_content"
 		android:drawablePadding="@dimen/serverIconPadding"
+		android:ellipsize="end"
+		android:singleLine="true"
 		android:text="@string/serverTextViewDrivesDrive"
 		android:textSize="@dimen/text_size"
 		app:drawableLeftCompat="@drawable/hard_drive"
