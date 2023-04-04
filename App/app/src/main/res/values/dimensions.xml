@@ -1,31 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- Edge margin (constraint length) for all controls -->
-    <dimen name="margin_left">24dp</dimen>
-    <dimen name="margin_right">24dp</dimen>
-    <dimen name="margin_top">16dp</dimen>
-    <dimen name="margin_bottom">16dp</dimen>
+	<!-- Edge margin (constraint length) for all controls -->
+	<dimen name="margin_left">24dp</dimen>
+	<dimen name="margin_right">24dp</dimen>
+	<dimen name="margin_top">16dp</dimen>
+	<dimen name="margin_bottom">16dp</dimen>
 
-    <!-- Edge margins & padding for scroll views -->
-    <dimen name="scrollViewEdgeStart">12dp</dimen>
-    <dimen name="scrollViewEdgeEnd">12dp</dimen>
-    <dimen name="scrollViewEdgeTop">24dp</dimen>
-    <dimen name="scrollViewEdgeBottom">24dp</dimen>
+	<!-- Edge margins & padding for scroll views -->
+	<dimen name="scrollViewEdgeStart">12dp</dimen>
+	<dimen name="scrollViewEdgeEnd">12dp</dimen>
+	<dimen name="scrollViewEdgeTop">24dp</dimen>
+	<dimen name="scrollViewEdgeBottom">24dp</dimen>
 
-    <!-- Default text size -->
-    <dimen name="text_size">18sp</dimen>
+	<!-- Default text size -->
+	<dimen name="text_size">18sp</dimen>
 
-    <!-- Continue button padding -->
-    <dimen name="button_padding_start">48dp</dimen>
-    <dimen name="button_padding_end">48dp</dimen>
+	<!-- Continue button padding -->
+	<dimen name="button_padding_start">48dp</dimen>
+	<dimen name="button_padding_end">48dp</dimen>
 
-    <!-- Servers list -->
-    <dimen name="serversListPadding">16dp</dimen>
-    <dimen name="serversListDividerHeight">20dp</dimen>
+	<!-- Servers list -->
+	<dimen name="serversListPadding">16dp</dimen>
+	<dimen name="serversListDividerHeight">20dp</dimen>
 
-    <!-- Server -->
-    <dimen name="serverSectionSpacing">12dp</dimen>
-    <dimen name="serverIconPadding">4dp</dimen>
+	<!-- Server -->
+	<dimen name="serverSectionSpacing">12dp</dimen>
+	<dimen name="serverIconPadding">4dp</dimen>
+
+	<!-- Service -->
+	<dimen name="serviceSectionSpacing">12dp</dimen>
+	<dimen name="serviceIconPadding">4dp</dimen>
 
 </resources>

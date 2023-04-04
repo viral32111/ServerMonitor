@@ -27,10 +27,10 @@ class ServersActivity : AppCompatActivity() {
 
 	// UI
 	private lateinit var swipeRefreshLayout: SwipeRefreshLayout
+	private lateinit var refreshProgressBar: ProgressBar
 	private lateinit var recyclerView: RecyclerView
 	private lateinit var statusTitleTextView: TextView
 	private lateinit var statusDescriptionTextView: TextView
-	private lateinit var refreshProgressBar: ProgressBar
 
 	// Misc
 	private lateinit var progressBarAnimation: ProgressBarAnimation
@@ -62,10 +62,10 @@ class ServersActivity : AppCompatActivity() {
 
 		// Get all the UI
 		swipeRefreshLayout = findViewById( R.id.serversSwipeRefreshLayout )
+		refreshProgressBar = findViewById( R.id.serversRefreshProgressBar )
 		recyclerView = findViewById( R.id.serversRecyclerView )
 		statusTitleTextView = findViewById( R.id.serversStatusTitleTextView )
 		statusDescriptionTextView = findViewById( R.id.serversStatusDescriptionTextView )
-		refreshProgressBar = findViewById( R.id.serversRefreshProgressBar )
 
 		// Get the settings
 		settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE ) )

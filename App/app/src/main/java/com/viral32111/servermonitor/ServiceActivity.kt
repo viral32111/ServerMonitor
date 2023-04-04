@@ -3,15 +3,19 @@ package com.viral32111.servermonitor
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.text.Html
 import android.util.Log
 import android.view.View
 import android.view.animation.Animation
 import android.view.animation.LinearInterpolator
+import android.widget.Button
 import android.widget.ProgressBar
+import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.android.volley.*
 import com.google.android.material.appbar.MaterialToolbar
@@ -28,6 +32,15 @@ class ServiceActivity : AppCompatActivity() {
 	private var materialToolbar: MaterialToolbar? = null
 	private lateinit var swipeRefreshLayout: SwipeRefreshLayout
 	private lateinit var refreshProgressBar: ProgressBar
+	private lateinit var statusTextView: TextView
+	private lateinit var actionStartStopButton: Button
+	private lateinit var actionRestartButton: Button
+	private lateinit var informationServiceNameTextView: TextView
+	private lateinit var informationDisplayNameTextView: TextView
+	private lateinit var informationDescriptionTextView: TextView
+	private lateinit var informationRunLevelTextView: TextView
+	private lateinit var logsStatusTextView: TextView
+	private lateinit var logsRecyclerView: RecyclerView
 
 	// Misc
 	private lateinit var progressBarAnimation: ProgressBarAnimation
@@ -78,7 +91,7 @@ class ServiceActivity : AppCompatActivity() {
 				startActivity( Intent( this, SettingsActivity::class.java ) )
 				overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
 
-				// Logout
+			// Logout
 			} else if ( menuItem.title?.equals( getString( R.string.actionBarMenuLogout ) ) == true ) {
 				Log.d( Shared.logTag, "Logout menu item pressed, showing confirmation..." )
 
@@ -101,7 +114,7 @@ class ServiceActivity : AppCompatActivity() {
 					Log.d( Shared.logTag, "Logout aborted" )
 				} )
 
-				// About
+			// About
 			} else if ( menuItem.title?.equals( getString( R.string.actionBarMenuAbout ) ) == true ) {
 				Log.d( Shared.logTag, "Showing information about app dialog..." )
 
@@ -122,6 +135,15 @@ class ServiceActivity : AppCompatActivity() {
 		// Get all the UI
 		swipeRefreshLayout = findViewById( R.id.serviceSwipeRefreshLayout )
 		refreshProgressBar = findViewById( R.id.serviceRefreshProgressBar )
+		statusTextView = findViewById( R.id.serviceStatusTextView )
+		actionStartStopButton = findViewById( R.id.serviceActionStartStopButton )
+		actionRestartButton = findViewById( R.id.serviceActionRestartButton )
+		informationServiceNameTextView = findViewById( R.id.serviceInformationServiceNameTextView )
+		informationDisplayNameTextView = findViewById( R.id.serviceInformationDisplayNameTextView )
+		informationDescriptionTextView = findViewById( R.id.serviceInformationDescriptionTextView )
+		informationRunLevelTextView = findViewById( R.id.serviceInformationRunLevelTextView )
+		logsStatusTextView = findViewById( R.id.serviceLogsStatusTextView )
+		logsRecyclerView = findViewById( R.id.serviceLogsRecyclerView )
 
 		// Get the settings
 		settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE ) )
@@ -174,9 +196,8 @@ class ServiceActivity : AppCompatActivity() {
 				// Don't refresh if we've been manually cleared
 				if ( refreshProgressBar.progress == 0 ) return
 
-				// Show refreshing spinner & disable user input
+				// Show refreshing spinner
 				swipeRefreshLayout.isRefreshing = true
-				enableInputs( false )
 
 				CoroutineScope( Dispatchers.Main ).launch {
 					withContext( Dispatchers.IO ) {
@@ -194,9 +215,8 @@ class ServiceActivity : AppCompatActivity() {
 								val service = server.services?.find { service -> service.serviceName == serviceName }
 								if ( service != null ) {
 
-									// Update the UI & enable user input
+									// Update the UI
 									updateUI( service )
-									enableInputs( true )
 
 									// Start the progress bar animation
 									if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
@@ -214,7 +234,6 @@ class ServiceActivity : AppCompatActivity() {
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
 								if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
-								enableInputs( true )
 
 								when ( exception.volleyError ) {
 
@@ -258,7 +277,6 @@ class ServiceActivity : AppCompatActivity() {
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
 								if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
-								enableInputs( true )
 								showBriefMessage( activity, R.string.serviceToastServerParseFailure )
 							}
 						} catch ( exception: JsonSyntaxException) {
@@ -267,7 +285,6 @@ class ServiceActivity : AppCompatActivity() {
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
 								if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
-								enableInputs( true )
 								showBriefMessage( activity, R.string.serviceToastServerParseFailure )
 							}
 						} catch ( exception: NullPointerException ) {
@@ -276,7 +293,6 @@ class ServiceActivity : AppCompatActivity() {
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
 								if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
-								enableInputs( true )
 								showBriefMessage( activity, R.string.serviceToastServerNull )
 							}
 						}
@@ -337,7 +353,6 @@ class ServiceActivity : AppCompatActivity() {
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
 								if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
-								enableInputs( true )
 
 								when ( exception.volleyError ) {
 
@@ -407,7 +422,18 @@ class ServiceActivity : AppCompatActivity() {
 		}
 
 		// TODO: When the start/stop action button is pressed...
+		actionStartStopButton.setOnClickListener {
+			if ( actionStartStopButton.text == getString( R.string.serviceButtonStartAction ) ) {
+				Log.d( Shared.logTag, "Start service button pressed!" )
+			} else if ( actionStartStopButton.text == getString( R.string.serviceButtonStopAction ) ) {
+				Log.d( Shared.logTag, "Stop service button pressed!" )
+			}
+		}
+
 		// TODO: When the restart action button is pressed...
+		actionRestartButton.setOnClickListener {
+			Log.d( Shared.logTag, "Restart service button pressed!" )
+		}
 
 		// Register the back button pressed callback - https://medium.com/tech-takeaways/how-to-migrate-the-deprecated-onbackpressed-function-e66bb29fa2fd
 		onBackPressedDispatcher.addCallback( this, onBackPressed )
@@ -461,9 +487,8 @@ class ServiceActivity : AppCompatActivity() {
 		refreshProgressBar.isEnabled = settings.automaticRefresh
 		refreshProgressBar.visibility = if ( settings.automaticRefresh ) View.VISIBLE else View.GONE
 
-		// Show refreshing spinner & disable user input
+		// Show refreshing spinner
 		swipeRefreshLayout.isRefreshing = true
-		enableInputs( false )
 
 		val activity = this
 		CoroutineScope( Dispatchers.Main ).launch {
@@ -489,7 +514,6 @@ class ServiceActivity : AppCompatActivity() {
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
-						enableInputs( true )
 
 						when ( exception.volleyError ) {
 
@@ -532,7 +556,6 @@ class ServiceActivity : AppCompatActivity() {
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
-						enableInputs( true )
 						showBriefMessage( activity, R.string.serviceToastServerParseFailure )
 					}
 				} catch ( exception: JsonSyntaxException ) {
@@ -540,7 +563,6 @@ class ServiceActivity : AppCompatActivity() {
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
-						enableInputs( true )
 						showBriefMessage( activity, R.string.serviceToastServerParseFailure )
 					}
 				} catch ( exception: NullPointerException ) {
@@ -548,7 +570,6 @@ class ServiceActivity : AppCompatActivity() {
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
-						enableInputs( true )
 						showBriefMessage( activity, R.string.serviceToastServerNull )
 					}
 				}
@@ -569,9 +590,8 @@ class ServiceActivity : AppCompatActivity() {
 						if ( service != null ) {
 							Log.d( Shared.logTag, "Got service '${ service.serviceName }' ('${ service.displayName }', '${ service.description }')" )
 
-							// Update the UI & enable user input
+							// Update the UI
 							updateUI( service )
-							enableInputs( true )
 
 							// Start the progress bar animation
 							if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
@@ -589,7 +609,6 @@ class ServiceActivity : AppCompatActivity() {
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
 						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
-						enableInputs( true )
 
 						when ( exception.volleyError ) {
 
@@ -633,7 +652,6 @@ class ServiceActivity : AppCompatActivity() {
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
 						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
-						enableInputs( true )
 						showBriefMessage( activity, R.string.serviceToastServerParseFailure )
 					}
 				} catch ( exception: JsonSyntaxException) {
@@ -642,7 +660,6 @@ class ServiceActivity : AppCompatActivity() {
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
 						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
-						enableInputs( true )
 						showBriefMessage( activity, R.string.serviceToastServerParseFailure )
 					}
 				} catch ( exception: NullPointerException ) {
@@ -651,7 +668,6 @@ class ServiceActivity : AppCompatActivity() {
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
 						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
-						enableInputs( true )
 						showBriefMessage( activity, R.string.serviceToastServerNull )
 					}
 				}
@@ -667,13 +683,41 @@ class ServiceActivity : AppCompatActivity() {
 		materialToolbar?.title = service.displayName.uppercase()
 		Log.d( Shared.logTag, "Set Material Toolbar title to '${ service.displayName.uppercase() }'" )
 
-		// TODO
+		// Update the action buttons
+		if ( service.isRunning() ) {
+			actionStartStopButton.text = getString( R.string.serviceButtonStopAction )
+			actionStartStopButton.setBackgroundColor( getColor( R.color.stopActionButton ) )
+			actionRestartButton.isEnabled = true
+		} else {
+			actionStartStopButton.text = getString( R.string.serviceButtonStartAction )
+			actionStartStopButton.setBackgroundColor( getColor( R.color.startActionButton ) )
+			actionRestartButton.isEnabled = false
+		}
+		actionStartStopButton.isEnabled = true
 
-	}
+		// Update the status
+		val uptimeText = TimeSpan( service.uptimeSeconds.toLong() ).toString( true )
+		statusTextView.setTextColor( getColor( R.color.black ) )
+		statusTextView.text = Html.fromHtml( String.format( getString( R.string.serviceTextViewStatusGood ),
+			createColorText( service.getStatusText(), service.getStatusColor( applicationContext ) ),
+			createColorText(
+				uptimeText.ifBlank { "an unknown duration" },
+				applicationContext.getColor( if ( uptimeText.isNotBlank() ) R.color.black else R.color.statusDead )
+			)
+		), Html.FROM_HTML_MODE_LEGACY )
 
-	// Enables/disables user input
-	private fun enableInputs( shouldEnable: Boolean ) {
-		// TODO
+		// Update the name, description & run level
+		informationServiceNameTextView.setTextColor( getColor( R.color.black ) )
+		informationServiceNameTextView.text = String.format( getString( R.string.serviceTextViewInformationServiceName ), service.serviceName )
+		informationDisplayNameTextView.setTextColor( getColor( R.color.black ) )
+		informationDisplayNameTextView.text = String.format( getString( R.string.serviceTextViewInformationDisplayName ), service.displayName )
+		informationDescriptionTextView.setTextColor( getColor( R.color.black ) )
+		informationDescriptionTextView.text = String.format( getString( R.string.serviceTextViewInformationDescription ), service.description )
+		informationRunLevelTextView.setTextColor( getColor( R.color.black ) )
+		informationRunLevelTextView.text = String.format( getString( R.string.serviceTextViewInformationRunLevel ), service.runLevel )
+
+		// TODO: Update the logs
+
 	}
 
 }

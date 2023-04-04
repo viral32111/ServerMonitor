@@ -46,6 +46,198 @@
 				android:layout_width="match_parent"
 				android:layout_height="wrap_content">
 
+				<TextView
+					android:id="@+id/serviceStatusTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:text="@string/serviceTextViewStatusDead"
+					android:textAlignment="center"
+					android:textColor="@color/statusDead"
+					android:textSize="16sp"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toTopOf="parent" />
+
+				<View
+					android:id="@+id/serviceStatusDivider"
+					android:layout_width="0dp"
+					android:layout_height="1dp"
+					android:layout_marginTop="@dimen/serviceSectionSpacing"
+					android:background="?android:attr/listDivider"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serviceStatusTextView" />
+
+				<Button
+					android:id="@+id/serviceActionStartStopButton"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginTop="@dimen/serviceSectionSpacing"
+					android:layout_marginEnd="8dp"
+					android:backgroundTint="@color/startActionButton"
+					android:enabled="false"
+					android:text="@string/serviceButtonStartAction"
+					app:layout_constraintEnd_toStartOf="@+id/serviceActionRestartButton"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serviceStatusDivider" />
+
+				<Button
+					android:id="@+id/serviceActionRestartButton"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginStart="8dp"
+					android:layout_marginTop="@dimen/serviceSectionSpacing"
+					android:backgroundTint="@color/restartActionButton"
+					android:enabled="false"
+					android:text="@string/serviceButtonRestartAction"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toEndOf="@+id/serviceActionStartStopButton"
+					app:layout_constraintTop_toBottomOf="@+id/serviceStatusDivider" />
+
+				<View
+					android:id="@+id/serviceInformationDivider"
+					android:layout_width="0dp"
+					android:layout_height="1dp"
+					android:layout_marginTop="@dimen/serviceSectionSpacing"
+					android:background="?android:attr/listDivider"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serviceActionStartStopButton" />
+
+				<TextView
+					android:id="@+id/serviceInformationTitleTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginTop="@dimen/serviceSectionSpacing"
+					android:text="@string/serviceTextViewInformationTitle"
+					android:textAlignment="center"
+					android:textSize="@dimen/text_size"
+					android:textStyle="bold"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serviceInformationDivider" />
+
+				<TextView
+					android:id="@+id/serviceInformationServiceNameTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginTop="4dp"
+					android:drawablePadding="@dimen/serverIconPadding"
+					android:ellipsize="end"
+					android:singleLine="true"
+					android:text="@string/serviceTextViewInformationServiceName"
+					android:textColor="@color/statusDead"
+					android:textSize="@dimen/text_size"
+					app:drawableLeftCompat="@drawable/fingerprint"
+					app:drawableTint="@color/statusDead"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serviceInformationTitleTextView" />
+
+				<TextView
+					android:id="@+id/serviceInformationDisplayNameTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginTop="4dp"
+					android:drawablePadding="@dimen/serverIconPadding"
+					android:ellipsize="end"
+					android:singleLine="true"
+					android:text="@string/serviceTextViewInformationDisplayName"
+					android:textColor="@color/statusDead"
+					android:textSize="@dimen/text_size"
+					app:drawableLeftCompat="@drawable/description"
+					app:drawableTint="@color/statusDead"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serviceInformationServiceNameTextView" />
+
+				<TextView
+					android:id="@+id/serviceInformationDescriptionTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginTop="4dp"
+					android:drawablePadding="@dimen/serverIconPadding"
+					android:ellipsize="end"
+					android:singleLine="true"
+					android:text="@string/serviceTextViewInformationDescription"
+					android:textColor="@color/statusDead"
+					android:textSize="@dimen/text_size"
+					app:drawableLeftCompat="@drawable/description"
+					app:drawableTint="@color/statusDead"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serviceInformationDisplayNameTextView" />
+
+				<TextView
+					android:id="@+id/serviceInformationRunLevelTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginTop="4dp"
+					android:drawablePadding="@dimen/serverIconPadding"
+					android:ellipsize="end"
+					android:singleLine="true"
+					android:text="@string/serviceTextViewInformationRunLevel"
+					android:textColor="@color/statusDead"
+					android:textSize="@dimen/text_size"
+					app:drawableLeftCompat="@drawable/settings_ethernet"
+					app:drawableTint="@color/statusDead"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serviceInformationDescriptionTextView" />
+
+				<View
+					android:id="@+id/serviceLogsDivider"
+					android:layout_width="0dp"
+					android:layout_height="1dp"
+					android:layout_marginTop="@dimen/serviceSectionSpacing"
+					android:background="?android:attr/listDivider"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serviceInformationRunLevelTextView" />
+
+				<TextView
+					android:id="@+id/serviceLogsTitleTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginTop="@dimen/serviceSectionSpacing"
+					android:text="@string/serviceTextViewLogsTitle"
+					android:textAlignment="center"
+					android:textSize="@dimen/text_size"
+					android:textStyle="bold"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serviceLogsDivider" />
+
+				<TextView
+					android:id="@+id/serviceLogsStatusTextView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginTop="4dp"
+					android:drawablePadding="@dimen/serverIconPadding"
+					android:ellipsize="end"
+					android:singleLine="true"
+					android:text="@string/serviceTextViewLogsEmpty"
+					android:textColor="@color/statusDead"
+					android:textSize="@dimen/text_size"
+					app:drawableLeftCompat="@drawable/receipt_long"
+					app:drawableTint="@color/statusDead"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serviceLogsTitleTextView" />
+
+				<androidx.recyclerview.widget.RecyclerView
+					android:id="@+id/serviceLogsRecyclerView"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginTop="4dp"
+					android:isScrollContainer="false"
+					android:nestedScrollingEnabled="false"
+					android:visibility="gone"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toBottomOf="@+id/serviceLogsStatusTextView"
+					tools:itemCount="0" />
+
 			</androidx.constraintlayout.widget.ConstraintLayout>
 
 		</androidx.core.widget.NestedScrollView>

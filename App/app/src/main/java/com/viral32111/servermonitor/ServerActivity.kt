@@ -35,6 +35,7 @@ class ServerActivity : AppCompatActivity() {
 	// UI
 	private var materialToolbar: MaterialToolbar? = null
 	private lateinit var swipeRefreshLayout: SwipeRefreshLayout
+	private lateinit var refreshProgressBar: ProgressBar
 	private lateinit var statusTextView: TextView
 	private lateinit var actionShutdownButton: Button
 	private lateinit var actionRebootButton: Button
@@ -56,7 +57,6 @@ class ServerActivity : AppCompatActivity() {
 	private lateinit var snmpTitleTextView: TextView
 	private lateinit var snmpStatusTextView: TextView
 	private lateinit var snmpRecyclerView: RecyclerView
-	private lateinit var refreshProgressBar: ProgressBar
 
 	// Misc
 	private lateinit var progressBarAnimation: ProgressBarAnimation
@@ -141,6 +141,7 @@ class ServerActivity : AppCompatActivity() {
 
 		// Get all the UI
 		swipeRefreshLayout = findViewById( R.id.serverSwipeRefreshLayout )
+		refreshProgressBar = findViewById( R.id.serverRefreshProgressBar )
 		statusTextView = findViewById( R.id.serverStatusTextView )
 		actionShutdownButton = findViewById( R.id.serverActionShutdownButton )
 		actionRebootButton = findViewById( R.id.serverActionRebootButton )
@@ -162,7 +163,6 @@ class ServerActivity : AppCompatActivity() {
 		snmpTitleTextView = findViewById( R.id.serverSNMPTitleTextView )
 		snmpStatusTextView = findViewById( R.id.serverSNMPStatusTextView )
 		snmpRecyclerView = findViewById( R.id.serverSNMPRecyclerView )
-		refreshProgressBar = findViewById( R.id.serverRefreshProgressBar )
 
 		// Default to unknown for all resources - the text is already grey as defined in layout, so no need to call createColorText()
 		resourcesProcessorTextView.text = String.format( getString( R.string.serverTextViewResourcesDataProcessor ), String.format( getString( R.string.serverTextViewResourcesDataProcessorValue ), "0%", "0Hz", "0℃" ) )

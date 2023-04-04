@@ -4,6 +4,26 @@
 	<!-- Title on the action bar -->
 	<string name="serviceActionBarTitle">Service</string>
 
+	<!-- Status with uptime -->
+	<string name="serviceTextViewStatusGood">%s for %s.</string>
+	<string name="serviceTextViewStatusDead">Status &amp; uptime is unknown.</string>
+
+	<!-- Action buttons -->
+	<string name="serviceButtonStartAction">Start</string>
+	<string name="serviceButtonStopAction">Stop</string>
+	<string name="serviceButtonRestartAction">Restart</string>
+
+	<!-- Information section -->
+	<string name="serviceTextViewInformationTitle">Information</string>
+	<string name="serviceTextViewInformationServiceName">Name: %s.</string>
+	<string name="serviceTextViewInformationDisplayName">Display Name: %s.</string>
+	<string name="serviceTextViewInformationDescription">Description: %s.</string>
+	<string name="serviceTextViewInformationRunLevel">Run Level: %s.</string>
+
+	<!-- Logs section -->
+	<string name="serviceTextViewLogsTitle">Logs</string>
+	<string name="serviceTextViewLogsEmpty">There are no logs.</string>
+
 	<!-- Toasts for fetch server -->
 	<string name="serviceToastServerAuthenticationUnknownUser">No credentials exist with the configured username.</string>
 	<string name="serviceToastServerAuthenticationIncorrectPassword">The configured instance password is incorrect.</string>

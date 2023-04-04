@@ -49,43 +49,13 @@ class ServiceAdapter(
 			onClickListener.invoke( service )
 		}
 
-		// Convert the status code to text
-		val statusText = when ( service.statusCode ) {
-			0 -> "Stopped" // Linux: inactive, Windows: Stopped
-			1 -> "Running" // Linux: active, Windows: Running
-			2 -> "Starting" // Linux: activating, Windows: StartPending
-			3 -> "Stopping" // Windows: StopPending
-			4 -> "Restarting" // Linux: reloading
-			5 -> "Failing" // Linux: failed
-			6 -> "Finished" // Linux: exited
-			7 -> "Continuing" // Windows: ContinuePending
-			8 -> "Pausing" // Windows: PausePending
-			9 -> "Paused" // Windows: Paused
-			else -> "Unknown"
-		}
-
-		// Get an appropriate color for the status
-		val statusColor = context.getColor( when ( statusText ) {
-			"Stopped" -> R.color.statusNeutral
-			"Running" -> R.color.statusGood
-			"Starting" -> R.color.statusWarning
-			"Stopping" -> R.color.statusWarning
-			"Restarting" -> R.color.statusWarning
-			"Failing" -> R.color.statusBad
-			"Finished" -> R.color.statusNeutral
-			"Continuing" -> R.color.statusWarning
-			"Pausing" -> R.color.statusWarning
-			"Paused" -> R.color.statusWarning
-			else -> R.color.statusDead
-		} )
-
 		// Update the name text
 		viewHolder.nameTextView.text = service.displayName
 
 		// Update the status text
 		val uptimeText = TimeSpan( service.uptimeSeconds.toLong() ).toString( false )
 		viewHolder.statusTextView.text = Html.fromHtml( String.format( context.getString( R.string.serverTextViewServicesServiceStatus ),
-			createColorText( statusText, statusColor ),
+			createColorText( service.getStatusText(), service.getStatusColor( context ) ),
 			createColorText(
 				uptimeText.ifBlank { "an unknown duration" },
 				context.getColor( if ( uptimeText.isNotBlank() ) R.color.black else R.color.statusDead )

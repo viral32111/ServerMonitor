@@ -45,4 +45,9 @@
 	<color name="shutdownActionButton">#F44336</color>
 	<color name="rebootActionButton">#FF9800</color>
 
+	<color name="startActionButton">#4CAF50</color>
+	<color name="stopActionButton">@color/shutdownActionButton</color>
+	<color name="restartActionButton">@color/rebootActionButton</color>
+
+
 </resources>
