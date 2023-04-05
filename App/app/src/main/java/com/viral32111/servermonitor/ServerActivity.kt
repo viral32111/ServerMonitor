@@ -476,7 +476,89 @@ class ServerActivity : AppCompatActivity() {
 
 		// TODO: When the shutdown action button is pressed...
 		actionShutdownButton.setOnClickListener {
-			Log.d( Shared.logTag, "Shutdown server button pressed!" )
+			Log.d( Shared.logTag, "Shutdown server button pressed, sending API request..." )
+
+			CoroutineScope( Dispatchers.Main ).launch {
+				withContext( Dispatchers.IO ) {
+
+					try {
+						val action = API.postServer( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, serverIdentifier, "blahaj" )
+						Log.d( Shared.logTag, "Executed shutdown action on server '${ serverIdentifier}': '${ action.toString() }'" )
+
+					} catch ( exception: APIException ) {
+						Log.e( Shared.logTag, "Failed to execute shutdown action on API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
+
+						withContext( Dispatchers.Main ) {
+							swipeRefreshLayout.isRefreshing = false
+							enableInputs( true )
+
+							when ( exception.volleyError ) {
+
+								// Bad authentication
+								is AuthFailureError -> when ( exception.apiErrorCode ) {
+									ErrorCode.UnknownUser.code -> showBriefMessage( activity, R.string.serverToastActionAuthenticationUnknownUser )
+									ErrorCode.IncorrectPassword.code -> showBriefMessage( activity, R.string.serverToastActionAuthenticationIncorrectPassword )
+									else -> showBriefMessage( activity, R.string.serverToastActionAuthenticationFailure )
+								}
+
+								// HTTP 4xx
+								is ClientError -> when ( exception.httpStatusCode ) {
+									404 -> showBriefMessage( activity, R.string.serverToastActionNotFound )
+									else -> showBriefMessage( activity, R.string.serverToastActionClientFailure )
+								}
+
+								// HTTP 5xx
+								is ServerError -> when ( exception.apiErrorCode ) {
+									ErrorCode.ActionServerOffline.code -> showBriefMessage( activity, R.string.serverToastActionOffline )
+									else -> when ( exception.httpStatusCode ) {
+										502 -> showBriefMessage( activity, R.string.serverToastActionUnavailable )
+										503 -> showBriefMessage( activity, R.string.serverToastActionUnavailable )
+										504 -> showBriefMessage( activity, R.string.serverToastActionUnavailable )
+										530 -> showBriefMessage( activity, R.string.serverToastActionUnavailable ) // Cloudflare
+										else -> showBriefMessage( activity, R.string.serverToastActionServerFailure )
+									}
+								}
+
+								// No Internet connection, malformed domain
+								is NoConnectionError -> showBriefMessage( activity, R.string.serverToastActionNoConnection )
+								is NetworkError -> showBriefMessage( activity, R.string.serverToastActionNoConnection )
+
+								// Connection timed out
+								is TimeoutError -> showBriefMessage( activity, R.string.serverToastActionTimeout )
+
+								// ¯\_(ツ)_/¯
+								else -> showBriefMessage( activity, R.string.serverToastActionFailure )
+
+							}
+						}
+					} catch ( exception: JsonParseException ) {
+						Log.e( Shared.logTag, "Failed to parse execute server action API response as JSON due to '${ exception.message }'" )
+
+						withContext( Dispatchers.Main ) {
+							swipeRefreshLayout.isRefreshing = false
+							enableInputs( true )
+							showBriefMessage( activity, R.string.serverToastActionParseFailure )
+						}
+					} catch ( exception: JsonSyntaxException ) {
+						Log.e( Shared.logTag, "Failed to parse execute server action API response as JSON due to '${ exception.message }'" )
+
+						withContext( Dispatchers.Main ) {
+							swipeRefreshLayout.isRefreshing = false
+							enableInputs( true )
+							showBriefMessage( activity, R.string.serverToastActionParseFailure )
+						}
+					} catch ( exception: NullPointerException ) {
+						Log.e( Shared.logTag, "Encountered null property value in execute server action API response ('${ exception.message }')" )
+
+						withContext( Dispatchers.Main ) {
+							swipeRefreshLayout.isRefreshing = false
+							enableInputs( true )
+							showBriefMessage( activity, R.string.serverToastActionNull )
+						}
+					}
+
+				}
+			}
 		}
 
 		// TODO: When the reboot action button is pressed...

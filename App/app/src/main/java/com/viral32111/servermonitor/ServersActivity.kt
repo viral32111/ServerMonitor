@@ -264,7 +264,7 @@ class ServersActivity : AppCompatActivity() {
 
 			// Stop the automatic refresh countdown progress bar, thus calling the animation callback
 			if ( settings.automaticRefresh ) {
-				refreshProgressBar.clearAnimation()
+				refreshProgressBar.clearAnimation() // TODO: What if the progress bar is already cleared, such as after a failed connection...
 
 			// If automatic refresh is disabled, then do the refresh manually...
 			} else {

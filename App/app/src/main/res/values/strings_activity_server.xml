@@ -85,4 +85,20 @@
 	<string name="serverToastServerCancel">The API request was cancelled.</string>
 	<string name="serverToastServerNull">Null property encountered in API response JSON.</string>
 
+	<!-- Toasts for execute action -->
+	<string name="serverToastActionAuthenticationUnknownUser">No credentials exist with the configured username.</string>
+	<string name="serverToastActionAuthenticationIncorrectPassword">The configured instance password is incorrect.</string>
+	<string name="serverToastActionAuthenticationFailure">The configured instance credentials are incorrect.</string>
+	<string name="serverToastActionNotFound">Unable to find the execute server action API route.</string>
+	<string name="serverToastActionClientFailure">The device encountered an error sending the request.</string>
+	<string name="serverToastActionOffline">The action server is unavailable at the moment.</string>
+	<string name="serverToastActionUnavailable">The configured instance is unavailable at the moment.</string>
+	<string name="serverToastActionServerFailure">The API encountered an error processing the request.</string>
+	<string name="serverToastActionNoConnection">Unable to connect to API. Is the instance URL correct and are you connected to the Internet?</string>
+	<string name="serverToastActionTimeout">Connection to API timed out. Are you connected to the Internet?</string>
+	<string name="serverToastActionParseFailure">Failed to parse API response as JSON. Is the URL correct?</string>
+	<string name="serverToastActionFailure">An unknown issue occurred while executing the action.</string>
+	<string name="serverToastActionCancel">The API request was cancelled.</string>
+	<string name="serverToastActionNull">Null property encountered in API response JSON.</string>
+
 </resources>

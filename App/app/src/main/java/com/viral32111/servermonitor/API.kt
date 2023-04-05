@@ -219,7 +219,33 @@ class API {
 		 */
 		suspend fun getServer( baseUrl: String, username: String, password: String, serverIdentifier: String ) = sendRequest( Request.Method.GET, "${ baseUrl }/server?id=${ serverIdentifier }", username, password )
 
+		/**
+		 * Sends an action to a server (`POST /server`).
+		 * @param baseUrl The base URL of the API, using the HTTPS schema.
+		 * @param username The user to authenticate as.
+		 * @param password The password to authenticate with.
+		 * @param serverIdentifier The Base64-encoded unique identifier of a server.
+		 * @param actionName The name of the action to execute (e.g., shutdown, reboot).
+		 * @return A JSON object containing the instance information.
+		 * @throws APIException Any sort of error, such as non-success HTTP status code, network connectivity, etc.
+		 * @throws JsonParseException An error parsing the HTTP response body as JSON, when successful.
+		 * @throws JsonSyntaxException An error parsing the HTTP response body as JSON, when successful.
+		 */
 		suspend fun postServer( baseUrl: String, username: String, password: String, serverIdentifier: String, actionName: String ) = sendRequest( Request.Method.POST, "${ baseUrl }/server?id=${ serverIdentifier }&action=${ actionName }", username, password )
+
+		/**
+		 * Sends an action to a service on a server (`POST /service`).
+		 * @param baseUrl The base URL of the API, using the HTTPS schema.
+		 * @param username The user to authenticate as.
+		 * @param password The password to authenticate with.
+		 * @param serverIdentifier The Base64-encoded unique identifier of a server.
+		 * @param serviceName The name of the service to target (e.g., sshd).
+		 * @param actionName The name of the action to execute (e.g., shutdown, reboot).
+		 * @return A JSON object containing the instance information.
+		 * @throws APIException Any sort of error, such as non-success HTTP status code, network connectivity, etc.
+		 * @throws JsonParseException An error parsing the HTTP response body as JSON, when successful.
+		 * @throws JsonSyntaxException An error parsing the HTTP response body as JSON, when successful.
+		 */
 		suspend fun postService( baseUrl: String, username: String, password: String, serverIdentifier: String, serviceName: String, actionName: String ) = sendRequest( Request.Method.POST, "${ baseUrl }/service?server=${ serverIdentifier }&name=${ serviceName }&action=${ actionName }", username, password )
 
 	}
