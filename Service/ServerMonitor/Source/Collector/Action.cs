@@ -284,7 +284,7 @@ namespace ServerMonitor.Collector {
 		// Returns a list of actions this server supports
 		// NOTE: These are always true, because if this code is running then the server is obviously running too
 		private HttpListenerResponse ReturnServerActions( HttpListenerResponse response ) =>
-			Response.SendJson( response, statusCode: HttpStatusCode.NotImplemented, errorCode: ErrorCode.ExampleData, data: new() {
+			Response.SendJson( response, statusCode: HttpStatusCode.OK, errorCode: ErrorCode.ExampleData, data: new() {
 				{ "shutdown", true },
 				{ "reboot", true }
 			} );
