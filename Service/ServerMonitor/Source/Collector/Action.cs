@@ -284,7 +284,7 @@ namespace ServerMonitor.Collector {
 		// Returns a list of actions this server supports
 		// NOTE: These are always true, because if this code is running then the server is obviously running too
 		private HttpListenerResponse ReturnServerActions( HttpListenerResponse response ) =>
-			Response.SendJson( response, statusCode: HttpStatusCode.OK, errorCode: ErrorCode.ExampleData, data: new() {
+			Response.SendJson( response, statusCode: HttpStatusCode.OK, errorCode: ErrorCode.Success, data: new() {
 				{ "shutdown", true },
 				{ "reboot", true }
 			} );
@@ -321,6 +321,7 @@ namespace ServerMonitor.Collector {
 
 		// Executes the specified action on the server
 		private HttpListenerResponse ExecuteServerAction( HttpListenerResponse response, string actionName ) {
+
 			// Create the command
 			Process command = new() {
 				StartInfo = new() {

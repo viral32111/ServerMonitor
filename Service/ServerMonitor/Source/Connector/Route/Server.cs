@@ -196,7 +196,7 @@ namespace ServerMonitor.Connector.Route {
 				logger.LogDebug( "Error Code: '{0}', Data: '{1}'", errorCode, data.ToJsonString() );
 
 				// Ensure success
-				if ( responsePayload.NestedGet<int>( "errorCode" ) != ( int ) ErrorCode.Success ) throw new Exception( $"Failed to execute action '{ actionName }'" );
+				if ( responsePayload.NestedGet<int>( "errorCode" ) != ( int ) ErrorCode.Success ) throw new Exception( $"Failed to execute action '{ actionName }' due to non-success API error code" );
 
 				// Respond with the data (as a copy, not a reference)
 				return Response.SendJson( response, statusCode: HttpStatusCode.OK, errorCode: ErrorCode.Success, data: data.Clone()!.AsObject() );
@@ -243,7 +243,7 @@ namespace ServerMonitor.Connector.Route {
 					logger.LogDebug( "Error Code: '{0}', Data: '{1}'", errorCode, data.ToJsonString() );
 
 					// Ensure success
-					if ( responsePayload.NestedGet<int>( "errorCode" ) != ( int ) ErrorCode.Success ) throw new Exception( "Failed to fetch supported actions" );
+					if ( responsePayload.NestedGet<int>( "errorCode" ) != ( int ) ErrorCode.Success ) throw new Exception( "API error code is non-successful" );
 
 					// Return the data (as a copy, not a reference)
 					return data.Clone()!.AsObject();
