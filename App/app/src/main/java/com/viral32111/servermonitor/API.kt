@@ -185,7 +185,7 @@ class API {
 		fun getServers( baseUrl: String, username: String, password: String, successCallback: ( data: JsonObject? ) -> Unit, errorCallback: ( error: VolleyError, statusCode: Int?, errorCode: Int? ) -> Unit ) = sendRequest( Request.Method.GET, "${ baseUrl }/servers", username, password, successCallback, errorCallback )
 		fun getServer( baseUrl: String, username: String, password: String, serverIdentifier: String, successCallback: ( data: JsonObject? ) -> Unit, errorCallback: ( error: VolleyError, statusCode: Int?, errorCode: Int? ) -> Unit ) = sendRequest( Request.Method.GET, "${ baseUrl }/server?id=${ serverIdentifier }", username, password, successCallback, errorCallback )
 		fun postServer( baseUrl: String, username: String, password: String, serverIdentifier: String, actionName: String, successCallback: ( data: JsonObject? ) -> Unit, errorCallback: ( error: VolleyError, statusCode: Int?, errorCode: Int? ) -> Unit ) = sendRequest( Request.Method.POST, "${ baseUrl }/server?id=${ serverIdentifier }&action=${ actionName }", username, password, successCallback, errorCallback )
-		fun postService( baseUrl: String, username: String, password: String, serverIdentifier: String, serviceName: String, actionName: String, successCallback: ( data: JsonObject? ) -> Unit, errorCallback: ( error: VolleyError, statusCode: Int?, errorCode: Int? ) -> Unit ) = sendRequest( Request.Method.POST, "${ baseUrl }/service?server=${ serverIdentifier }&name=${ serviceName }&action=${ actionName }", username, password, successCallback, errorCallback )
+		fun postService( baseUrl: String, username: String, password: String, serverIdentifier: String, serviceName: String, actionName: String, successCallback: ( data: JsonObject? ) -> Unit, errorCallback: ( error: VolleyError, statusCode: Int?, errorCode: Int? ) -> Unit ) = sendRequest( Request.Method.POST, "${ baseUrl }/service?id=${ serverIdentifier }&name=${ serviceName }&action=${ actionName }", username, password, successCallback, errorCallback )
 
 		/**
 		 * Fetches information about an instance (`GET /hello`).
@@ -250,7 +250,7 @@ class API {
 		 * @throws JsonParseException An error parsing the HTTP response body as JSON, when successful.
 		 * @throws JsonSyntaxException An error parsing the HTTP response body as JSON, when successful.
 		 */
-		suspend fun postService( baseUrl: String, username: String, password: String, serverIdentifier: String, serviceName: String, actionName: String ) = sendRequest( Request.Method.POST, "${ baseUrl }/service?server=${ serverIdentifier }&name=${ serviceName }&action=${ actionName }", username, password )
+		suspend fun postService( baseUrl: String, username: String, password: String, serverIdentifier: String, serviceName: String, actionName: String ) = sendRequest( Request.Method.POST, "${ baseUrl }/service?id=${ serverIdentifier }&name=${ serviceName }&action=${ actionName }", username, password )
 
 	}
 

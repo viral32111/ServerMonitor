@@ -1,5 +1,6 @@
 package com.viral32111.servermonitor
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -421,18 +422,21 @@ class ServiceActivity : AppCompatActivity() {
 			}
 		}
 
-		// TODO: When the start/stop action button is pressed...
+		// When the start/stop action button is pressed...
 		actionStartStopButton.setOnClickListener {
 			if ( actionStartStopButton.text == getString( R.string.serviceButtonStartAction ) ) {
 				Log.d( Shared.logTag, "Start service button pressed!" )
+				executeServiceAction( activity, "start" )
 			} else if ( actionStartStopButton.text == getString( R.string.serviceButtonStopAction ) ) {
 				Log.d( Shared.logTag, "Stop service button pressed!" )
+				executeServiceAction( activity, "stop" )
 			}
 		}
 
-		// TODO: When the restart action button is pressed...
+		// When the restart action button is pressed...
 		actionRestartButton.setOnClickListener {
 			Log.d( Shared.logTag, "Restart service button pressed!" )
+			executeServiceAction( activity, "restart" )
 		}
 
 		// Register the back button pressed callback - https://medium.com/tech-takeaways/how-to-migrate-the-deprecated-onbackpressed-function-e66bb29fa2fd
@@ -718,6 +722,116 @@ class ServiceActivity : AppCompatActivity() {
 
 		// TODO: Update the logs
 
+	}
+
+	// Executes an action on the server
+	private fun executeServiceAction( activity: Activity, actionName: String ) {
+		CoroutineScope( Dispatchers.Main ).launch {
+
+			// Show progress dialog
+			val progressDialog = createProgressDialog( activity, R.string.serviceDialogProgressActionExecuteTitle, R.string.serviceDialogProgressActionExecuteMessage ) {
+				API.cancelQueue()
+				showBriefMessage( activity, R.string.serviceDialogProgressActionExecuteCancel )
+			}
+			progressDialog.show()
+
+			withContext( Dispatchers.IO ) {
+
+				// Try to execute the action
+				try {
+					val action = API.postService( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, serverIdentifier, serviceName, actionName )
+					val exitCode = action?.get( "exitCode" )?.asInt
+					var outputText = action?.get( "outputText" )?.asString?.trim()
+					var errorText = action?.get( "errorText" )?.asString?.trim()
+
+					if ( outputText.isNullOrBlank() ) outputText = "N/A"
+					if ( errorText.isNullOrBlank() ) errorText = "N/A"
+
+					Log.d( Shared.logTag, "Executed action '${ actionName }' for service '${ serviceName }' on server '${ serverIdentifier }': '${ outputText }', '${ errorText }' (Exit Code: '${ exitCode }')" )
+
+					withContext( Dispatchers.Main ) {
+						progressDialog.dismiss()
+
+						if ( exitCode == 0 ) showInformationDialog( activity, R.string.serviceDialogActionExecuteTitle, String.format( getString( R.string.serviceDialogActionExecuteMessageSuccess, outputText, errorText ) ) )
+						else showInformationDialog( activity, R.string.serviceDialogActionExecuteTitle, String.format( getString( R.string.serviceDialogActionExecuteMessageFailure, exitCode, errorText, outputText ) ) )
+					}
+
+				} catch ( exception: APIException ) {
+					Log.e( Shared.logTag, "Failed to execute action '${ actionName }' on API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
+
+					withContext( Dispatchers.Main ) {
+						progressDialog.dismiss()
+
+						when ( exception.volleyError ) {
+
+							// Bad authentication
+							is AuthFailureError -> when ( exception.apiErrorCode ) {
+								ErrorCode.UnknownUser.code -> showBriefMessage( activity, R.string.serviceToastActionAuthenticationUnknownUser )
+								ErrorCode.IncorrectPassword.code -> showBriefMessage( activity, R.string.serviceToastActionAuthenticationIncorrectPassword )
+								else -> showBriefMessage( activity, R.string.serviceToastActionAuthenticationFailure )
+							}
+
+							// HTTP 4xx
+							is ClientError -> when ( exception.apiErrorCode ) {
+								ErrorCode.InvalidParameter.code -> showBriefMessage( activity, R.string.serviceToastActionInvalidParameter )
+								ErrorCode.UnknownAction.code -> showBriefMessage( activity, R.string.serviceToastActionUnknownAction )
+								ErrorCode.ActionNotExecutable.code -> showBriefMessage( activity, R.string.serviceToastActionActionNotExecutable )
+								ErrorCode.ActionServerUnknown.code -> showBriefMessage( activity, R.string.serviceToastActionActionServerUnknown )
+								else -> when ( exception.httpStatusCode ) {
+									404 -> showBriefMessage( activity, R.string.serviceToastActionNotFound )
+									else -> showBriefMessage( activity, R.string.serviceToastActionClientFailure )
+								}
+							}
+
+							// HTTP 5xx
+							is ServerError -> when ( exception.apiErrorCode ) {
+								ErrorCode.ActionServerOffline.code -> showBriefMessage( activity, R.string.serviceToastActionOffline )
+								else -> when ( exception.httpStatusCode ) {
+									502 -> showBriefMessage( activity, R.string.serviceToastActionUnavailable )
+									503 -> showBriefMessage( activity, R.string.serviceToastActionUnavailable )
+									504 -> showBriefMessage( activity, R.string.serviceToastActionUnavailable )
+									530 -> showBriefMessage( activity, R.string.serviceToastActionUnavailable ) // Cloudflare
+									else -> showBriefMessage( activity, R.string.serviceToastActionServerFailure )
+								}
+							}
+
+							// No Internet connection, malformed domain
+							is NoConnectionError -> showBriefMessage( activity, R.string.serviceToastActionNoConnection )
+							is NetworkError -> showBriefMessage( activity, R.string.serviceToastActionNoConnection )
+
+							// Connection timed out
+							is TimeoutError -> showBriefMessage( activity, R.string.serviceToastActionTimeout )
+
+							// ¯\_(ツ)_/¯
+							else -> showBriefMessage( activity, R.string.serviceToastActionFailure )
+
+						}
+					}
+				} catch ( exception: JsonParseException ) {
+					Log.e( Shared.logTag, "Failed to parse execute server action API response as JSON due to '${ exception.message }'" )
+
+					withContext( Dispatchers.Main ) {
+						progressDialog.dismiss()
+						showBriefMessage( activity, R.string.serviceToastActionParseFailure )
+					}
+				} catch ( exception: JsonSyntaxException ) {
+					Log.e( Shared.logTag, "Failed to parse execute server action API response as JSON due to '${ exception.message }'" )
+
+					withContext( Dispatchers.Main ) {
+						progressDialog.dismiss()
+						showBriefMessage( activity, R.string.serviceToastActionParseFailure )
+					}
+				} catch ( exception: NullPointerException ) {
+					Log.e( Shared.logTag, "Encountered null property value in execute server action API response ('${ exception.message }')" )
+
+					withContext( Dispatchers.Main ) {
+						progressDialog.dismiss()
+						showBriefMessage( activity, R.string.serviceToastActionNull )
+					}
+				}
+
+			}
+		}
 	}
 
 }

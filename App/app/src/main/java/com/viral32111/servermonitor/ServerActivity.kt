@@ -1064,17 +1064,31 @@ class ServerActivity : AppCompatActivity() {
 	// Executes an action on the server
 	private fun executeServerAction( activity: Activity, actionName: String ) {
 		CoroutineScope( Dispatchers.Main ).launch {
+
+			// Show progress dialog
+			val progressDialog = createProgressDialog( activity, R.string.serverDialogProgressActionExecuteTitle, R.string.serverDialogProgressActionExecuteMessage ) {
+				API.cancelQueue()
+				showBriefMessage( activity, R.string.serverDialogProgressActionExecuteCancel )
+			}
+			progressDialog.show()
+
 			withContext( Dispatchers.IO ) {
 
 				// Try to execute the action
 				try {
 					val action = API.postServer( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, serverIdentifier, actionName )
 					val exitCode = action?.get( "exitCode" )?.asInt
-					val outputText = action?.get( "outputText" )?.asString?.trim()
-					val errorText = action?.get( "errorText" )?.asString?.trim()
+					var outputText = action?.get( "outputText" )?.asString?.trim()
+					var errorText = action?.get( "errorText" )?.asString?.trim()
+
+					if ( outputText.isNullOrBlank() ) outputText = "N/A"
+					if ( errorText.isNullOrBlank() ) errorText = "N/A"
+
 					Log.d( Shared.logTag, "Executed action '${ actionName }' on server '${ serverIdentifier }': '${ outputText }', '${ errorText }' (Exit Code: '${ exitCode }')" )
 
 					withContext( Dispatchers.Main ) {
+						progressDialog.dismiss()
+
 						if ( exitCode == 0 ) showInformationDialog( activity, R.string.serverDialogActionExecuteTitle, String.format( getString( R.string.serverDialogActionExecuteMessageSuccess, outputText, errorText ) ) )
 						else showInformationDialog( activity, R.string.serverDialogActionExecuteTitle, String.format( getString( R.string.serverDialogActionExecuteMessageFailure, exitCode, errorText, outputText ) ) )
 					}
@@ -1083,6 +1097,8 @@ class ServerActivity : AppCompatActivity() {
 					Log.e( Shared.logTag, "Failed to execute action '${ actionName }' on API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
 
 					withContext( Dispatchers.Main ) {
+						progressDialog.dismiss()
+
 						when ( exception.volleyError ) {
 
 							// Bad authentication
@@ -1132,18 +1148,21 @@ class ServerActivity : AppCompatActivity() {
 					Log.e( Shared.logTag, "Failed to parse execute server action API response as JSON due to '${ exception.message }'" )
 
 					withContext( Dispatchers.Main ) {
+						progressDialog.dismiss()
 						showBriefMessage( activity, R.string.serverToastActionParseFailure )
 					}
 				} catch ( exception: JsonSyntaxException ) {
 					Log.e( Shared.logTag, "Failed to parse execute server action API response as JSON due to '${ exception.message }'" )
 
 					withContext( Dispatchers.Main ) {
+						progressDialog.dismiss()
 						showBriefMessage( activity, R.string.serverToastActionParseFailure )
 					}
 				} catch ( exception: NullPointerException ) {
 					Log.e( Shared.logTag, "Encountered null property value in execute server action API response ('${ exception.message }')" )
 
 					withContext( Dispatchers.Main ) {
+						progressDialog.dismiss()
 						showBriefMessage( activity, R.string.serverToastActionNull )
 					}
 				}

@@ -39,4 +39,35 @@
 	<string name="serviceToastServerCancel">The API request was cancelled.</string>
 	<string name="serviceToastServerNull">Null property encountered in API response JSON.</string>
 
+	<!-- Toasts for execute action -->
+	<string name="serviceToastActionAuthenticationUnknownUser">No credentials exist with the configured username.</string>
+	<string name="serviceToastActionAuthenticationIncorrectPassword">The configured instance password is incorrect.</string>
+	<string name="serviceToastActionAuthenticationFailure">The configured instance credentials are incorrect.</string>
+	<string name="serviceToastActionInvalidParameter">The API reported an invalid parameter was sent.</string>
+	<string name="serviceToastActionUnknownAction">The API did not recognise the requested action.</string>
+	<string name="serviceToastActionActionNotExecutable">The API was not able to execute the requested action.</string>
+	<string name="serviceToastActionActionServerUnknown">The action server is currently unknown. Is it running?</string>
+	<string name="serviceToastActionNotFound">Unable to find the execute service action API route.</string>
+	<string name="serviceToastActionClientFailure">The device encountered an error sending the request.</string>
+	<string name="serviceToastActionOffline">The action server is unavailable at the moment.</string>
+	<string name="serviceToastActionUnavailable">The configured instance is unavailable at the moment.</string>
+	<string name="serviceToastActionServerFailure">The API encountered an error processing the request.</string>
+	<string name="serviceToastActionNoConnection">Unable to connect to API. Is the instance URL correct and are you connected to the Internet?</string>
+	<string name="serviceToastActionTimeout">Connection to API timed out. Are you connected to the Internet?</string>
+	<string name="serviceToastActionParseFailure">Failed to parse API response as JSON. Is the URL correct?</string>
+	<string name="serviceToastActionFailure">An unknown issue occurred while executing the action.</string>
+	<string name="serviceToastActionCancel">The API request was cancelled.</string>
+	<string name="serviceToastActionNull">Null property encountered in API response JSON.</string>
+
+	<!-- Dialog for executed action -->
+	<string name="serviceDialogActionExecuteTitle">Action Execution</string>
+	<string name="serviceDialogActionExecuteMessageSuccess">The action has been executed on the service, it may take some time to fulfill.\n\nThe action server responded with: %s (%s).</string>-->
+	<string name="serviceDialogActionExecuteMessageFailure">The action failed to execute on the service (code %d).\n\nThe action server responded with: %s (%s).</string>-->
+
+	<!-- Dialog for progress -->
+	<string name="serviceDialogProgressActionExecuteTitle">Action Execution</string>
+	<string name="serviceDialogProgressActionExecuteMessage">Executing action on the service…</string>
+	<string name="serviceDialogProgressActionExecuteCancel">Action execution cancelled.</string>
+
+
 </resources>
