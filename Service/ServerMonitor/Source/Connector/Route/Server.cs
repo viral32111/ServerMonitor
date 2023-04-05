@@ -151,7 +151,7 @@ namespace ServerMonitor.Connector.Route {
 			} );
 
 			// Ensure the action is valid
-			if ( supportedActions.ContainsKey( actionName ) == false ) return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.InvalidParameter, data: new() {
+			if ( supportedActions.ContainsKey( actionName ) == false ) return Response.SendJson( response, statusCode: HttpStatusCode.BadRequest, errorCode: ErrorCode.UnknownAction, data: new() {
 				{ "parameter", "action" },
 				{ "supportedActions", supportedActions }
 			} );
