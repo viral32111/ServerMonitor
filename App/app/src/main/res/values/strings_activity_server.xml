@@ -89,6 +89,10 @@
 	<string name="serverToastActionAuthenticationUnknownUser">No credentials exist with the configured username.</string>
 	<string name="serverToastActionAuthenticationIncorrectPassword">The configured instance password is incorrect.</string>
 	<string name="serverToastActionAuthenticationFailure">The configured instance credentials are incorrect.</string>
+	<string name="serverToastActionInvalidParameter">The API reported an invalid parameter was sent.</string>
+	<string name="serverToastActionUnknownAction">The API did not recognise the requested action.</string>
+	<string name="serverToastActionActionNotExecutable">The API was not able to execute the requested action.</string>
+	<string name="serverToastActionActionServerUnknown">The action server is currently unknown. Is it running?</string>
 	<string name="serverToastActionNotFound">Unable to find the execute server action API route.</string>
 	<string name="serverToastActionClientFailure">The device encountered an error sending the request.</string>
 	<string name="serverToastActionOffline">The action server is unavailable at the moment.</string>
@@ -100,5 +104,10 @@
 	<string name="serverToastActionFailure">An unknown issue occurred while executing the action.</string>
 	<string name="serverToastActionCancel">The API request was cancelled.</string>
 	<string name="serverToastActionNull">Null property encountered in API response JSON.</string>
+
+	<!-- Dialog for executed action -->
+	<string name="serverDialogActionExecuteTitle">Action Execution</string>
+	<string name="serverDialogActionExecuteMessageSuccess">The action has been executed on the server, it may take some time to fulfill.\n\nThe action server responded with: %s (%s).</string>-->
+	<string name="serverDialogActionExecuteMessageFailure">The action failed to execute on the server (code %d).\n\nThe action server responded with: %s (%s).</string>-->
 
 </resources>

@@ -18,7 +18,8 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 	var version: String
 	var uptimeSeconds: Long
 
-	// TODO: supportedActions
+	var isShutdownActionSupported: Boolean? = null
+	var isRebootActionSupported: Boolean? = null
 
 	var processorUsage: Float? = null
 	var processorFrequency: Float? = null
@@ -63,7 +64,7 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 	 * @throws JsonSyntaxException An error parsing the HTTP response body as JSON, when successful.
 	 * @throws NullPointerException The API response contained an unexpected null property.
 	 */
-	fun updateUsingAPIData( data: JsonObject ) {
+	private fun updateUsingAPIData( data: JsonObject ) {
 
 		// Update basic information
 		identifier = data.get( "identifier" ).asString
@@ -76,7 +77,9 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 		version = data.get( "version" ).asString
 		uptimeSeconds = round( data.get( "uptimeSeconds" ).asDouble ).toLong()
 
-		// TODO: supportedActions
+		val supportedActions = data.get( "supportedActions" ).asJsonObject
+		isShutdownActionSupported = supportedActions.get( "shutdown" ).asBoolean
+		isRebootActionSupported = supportedActions.get( "reboot" ).asBoolean
 
 		val resources = data.get( "resources" ).asJsonObject
 

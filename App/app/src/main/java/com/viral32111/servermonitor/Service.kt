@@ -1,7 +1,6 @@
 package com.viral32111.servermonitor
 
 import android.content.Context
-import android.graphics.Color
 import com.google.gson.JsonObject
 
 /**
@@ -17,7 +16,10 @@ class Service( data: JsonObject ) {
 	val exitCode: Int
 	val uptimeSeconds: Double
 
-	// TODO: supportedActions
+	var isStartActionSupported: Boolean? = null
+	var isStopActionSupported: Boolean? = null
+	var isRestartActionSupported: Boolean? = null
+
 	// TODO: logs
 
 	init {
@@ -29,7 +31,11 @@ class Service( data: JsonObject ) {
 		exitCode = data.get( "exitCode" ).asInt
 		uptimeSeconds = data.get( "uptimeSeconds" ).asDouble
 
-		// TODO: supportedActions
+		val supportedActions = data.get( "supportedActions" ).asJsonObject
+		isStartActionSupported = supportedActions.get( "start" ).asBoolean
+		isStopActionSupported = supportedActions.get( "stop" ).asBoolean
+		isRestartActionSupported = supportedActions.get( "restart" ).asBoolean
+
 		// TODO: logs
 	}
 

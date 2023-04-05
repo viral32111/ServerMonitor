@@ -1,5 +1,6 @@
 package com.viral32111.servermonitor
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -263,9 +264,8 @@ class ServerActivity : AppCompatActivity() {
 				// Don't refresh if we've been manually cleared
 				if ( refreshProgressBar.progress == 0 ) return
 
-				// Show refreshing spinner & disable user input
+				// Show refreshing spinner
 				swipeRefreshLayout.isRefreshing = true
-				enableInputs( false )
 
 				CoroutineScope( Dispatchers.Main ).launch { // Begin coroutine context (on the UI thread)...
 					withContext( Dispatchers.IO ) { // Run on network thread...
@@ -279,9 +279,8 @@ class ServerActivity : AppCompatActivity() {
 								swipeRefreshLayout.isRefreshing = false
 								if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
 
-								// Update the UI & enable user input
+								// Update the UI
 								updateUI( server )
-								enableInputs( true )
 
 								// Start the progress bar animation
 								if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
@@ -293,7 +292,6 @@ class ServerActivity : AppCompatActivity() {
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
 								refreshProgressBar.progress = 0
-								enableInputs( true )
 
 								when ( exception.volleyError ) {
 
@@ -337,7 +335,6 @@ class ServerActivity : AppCompatActivity() {
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
 								refreshProgressBar.progress = 0
-								enableInputs( true )
 								showBriefMessage( activity, R.string.serverToastServerParseFailure )
 							}
 						} catch ( exception: JsonSyntaxException ) {
@@ -346,7 +343,6 @@ class ServerActivity : AppCompatActivity() {
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
 								refreshProgressBar.progress = 0
-								enableInputs( true )
 								showBriefMessage( activity, R.string.serverToastServerParseFailure )
 							}
 						} catch ( exception: NullPointerException ) {
@@ -355,7 +351,6 @@ class ServerActivity : AppCompatActivity() {
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
 								refreshProgressBar.progress = 0
-								enableInputs( true )
 								showBriefMessage( activity, R.string.serverToastServerNull )
 							}
 						}
@@ -474,96 +469,16 @@ class ServerActivity : AppCompatActivity() {
 			}
 		}
 
-		// TODO: When the shutdown action button is pressed...
+		// When the shutdown action button is pressed...
 		actionShutdownButton.setOnClickListener {
 			Log.d( Shared.logTag, "Shutdown server button pressed, sending API request..." )
-
-			CoroutineScope( Dispatchers.Main ).launch {
-				withContext( Dispatchers.IO ) {
-
-					try {
-						val action = API.postServer( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, serverIdentifier, "blahaj" )
-						Log.d( Shared.logTag, "Executed shutdown action on server '${ serverIdentifier}': '${ action.toString() }'" )
-
-					} catch ( exception: APIException ) {
-						Log.e( Shared.logTag, "Failed to execute shutdown action on API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
-
-						withContext( Dispatchers.Main ) {
-							swipeRefreshLayout.isRefreshing = false
-							enableInputs( true )
-
-							when ( exception.volleyError ) {
-
-								// Bad authentication
-								is AuthFailureError -> when ( exception.apiErrorCode ) {
-									ErrorCode.UnknownUser.code -> showBriefMessage( activity, R.string.serverToastActionAuthenticationUnknownUser )
-									ErrorCode.IncorrectPassword.code -> showBriefMessage( activity, R.string.serverToastActionAuthenticationIncorrectPassword )
-									else -> showBriefMessage( activity, R.string.serverToastActionAuthenticationFailure )
-								}
-
-								// HTTP 4xx
-								is ClientError -> when ( exception.httpStatusCode ) {
-									404 -> showBriefMessage( activity, R.string.serverToastActionNotFound )
-									else -> showBriefMessage( activity, R.string.serverToastActionClientFailure )
-								}
-
-								// HTTP 5xx
-								is ServerError -> when ( exception.apiErrorCode ) {
-									ErrorCode.ActionServerOffline.code -> showBriefMessage( activity, R.string.serverToastActionOffline )
-									else -> when ( exception.httpStatusCode ) {
-										502 -> showBriefMessage( activity, R.string.serverToastActionUnavailable )
-										503 -> showBriefMessage( activity, R.string.serverToastActionUnavailable )
-										504 -> showBriefMessage( activity, R.string.serverToastActionUnavailable )
-										530 -> showBriefMessage( activity, R.string.serverToastActionUnavailable ) // Cloudflare
-										else -> showBriefMessage( activity, R.string.serverToastActionServerFailure )
-									}
-								}
-
-								// No Internet connection, malformed domain
-								is NoConnectionError -> showBriefMessage( activity, R.string.serverToastActionNoConnection )
-								is NetworkError -> showBriefMessage( activity, R.string.serverToastActionNoConnection )
-
-								// Connection timed out
-								is TimeoutError -> showBriefMessage( activity, R.string.serverToastActionTimeout )
-
-								// ¯\_(ツ)_/¯
-								else -> showBriefMessage( activity, R.string.serverToastActionFailure )
-
-							}
-						}
-					} catch ( exception: JsonParseException ) {
-						Log.e( Shared.logTag, "Failed to parse execute server action API response as JSON due to '${ exception.message }'" )
-
-						withContext( Dispatchers.Main ) {
-							swipeRefreshLayout.isRefreshing = false
-							enableInputs( true )
-							showBriefMessage( activity, R.string.serverToastActionParseFailure )
-						}
-					} catch ( exception: JsonSyntaxException ) {
-						Log.e( Shared.logTag, "Failed to parse execute server action API response as JSON due to '${ exception.message }'" )
-
-						withContext( Dispatchers.Main ) {
-							swipeRefreshLayout.isRefreshing = false
-							enableInputs( true )
-							showBriefMessage( activity, R.string.serverToastActionParseFailure )
-						}
-					} catch ( exception: NullPointerException ) {
-						Log.e( Shared.logTag, "Encountered null property value in execute server action API response ('${ exception.message }')" )
-
-						withContext( Dispatchers.Main ) {
-							swipeRefreshLayout.isRefreshing = false
-							enableInputs( true )
-							showBriefMessage( activity, R.string.serverToastActionNull )
-						}
-					}
-
-				}
-			}
+			executeServerAction( activity, "shutdown" )
 		}
 
-		// TODO: When the reboot action button is pressed...
+		// When the reboot action button is pressed...
 		actionRebootButton.setOnClickListener {
-			Log.d( Shared.logTag, "Reboot server button pressed!" )
+			Log.d( Shared.logTag, "Reboot server button pressed, sending API request..." )
+			executeServerAction( activity, "reboot" )
 		}
 
 		// Register the back button pressed callback - https://medium.com/tech-takeaways/how-to-migrate-the-deprecated-onbackpressed-function-e66bb29fa2fd
@@ -618,9 +533,8 @@ class ServerActivity : AppCompatActivity() {
 		refreshProgressBar.isEnabled = settings.automaticRefresh
 		refreshProgressBar.visibility = if ( settings.automaticRefresh ) View.VISIBLE else View.GONE
 
-		// Show refreshing spinner & disable user input
+		// Show refreshing spinner
 		swipeRefreshLayout.isRefreshing = true
-		enableInputs( false )
 
 		val activity = this
 		CoroutineScope( Dispatchers.Main ).launch {
@@ -646,7 +560,6 @@ class ServerActivity : AppCompatActivity() {
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
-						enableInputs( true )
 
 						when ( exception.volleyError ) {
 
@@ -689,7 +602,6 @@ class ServerActivity : AppCompatActivity() {
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
-						enableInputs( true )
 						showBriefMessage( activity, R.string.serverToastServerParseFailure )
 					}
 				} catch ( exception: JsonSyntaxException ) {
@@ -697,7 +609,6 @@ class ServerActivity : AppCompatActivity() {
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
-						enableInputs( true )
 						showBriefMessage( activity, R.string.serverToastServerParseFailure )
 					}
 				} catch ( exception: NullPointerException ) {
@@ -705,7 +616,6 @@ class ServerActivity : AppCompatActivity() {
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
-						enableInputs( true )
 						showBriefMessage( activity, R.string.serverToastServerNull )
 					}
 				}
@@ -721,9 +631,8 @@ class ServerActivity : AppCompatActivity() {
 						swipeRefreshLayout.isRefreshing = false
 						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
 
-						// Update the UI & enable user input
+						// Update the UI
 						updateUI( server )
-						enableInputs( true )
 
 						// Start the progress bar animation
 						if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
@@ -735,7 +644,6 @@ class ServerActivity : AppCompatActivity() {
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
 						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
-						enableInputs( true )
 
 						when ( exception.volleyError ) {
 
@@ -779,7 +687,6 @@ class ServerActivity : AppCompatActivity() {
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
 						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
-						enableInputs( true )
 						showBriefMessage( activity, R.string.serverToastServerParseFailure )
 					}
 				} catch ( exception: JsonSyntaxException) {
@@ -788,7 +695,6 @@ class ServerActivity : AppCompatActivity() {
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
 						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
-						enableInputs( true )
 						showBriefMessage( activity, R.string.serverToastServerParseFailure )
 					}
 				} catch ( exception: NullPointerException ) {
@@ -797,7 +703,6 @@ class ServerActivity : AppCompatActivity() {
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
 						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
-						enableInputs( true )
 						showBriefMessage( activity, R.string.serverToastServerNull )
 					}
 				}
@@ -812,6 +717,10 @@ class ServerActivity : AppCompatActivity() {
 		// Set the title on the toolbar
 		materialToolbar?.title = server.hostName.uppercase()
 		Log.d( Shared.logTag, "Set Material Toolbar title to '${ server.hostName.uppercase() }'" )
+
+		// Enable/disable action buttons
+		actionShutdownButton.isEnabled = server.isShutdownActionSupported == true
+		actionRebootButton.isEnabled = server.isRebootActionSupported == true
 
 		// Set the overall status - https://stackoverflow.com/a/37899914
 		statusTextView.setTextColor( getColor( if ( server.isOnline() ) R.color.black else R.color.statusDead ) )
@@ -1091,15 +1000,6 @@ class ServerActivity : AppCompatActivity() {
 
 	}
 
-	// Enable/disable user input
-	private fun enableInputs( shouldEnable: Boolean ) {
-
-		// Action buttons
-		actionShutdownButton.isEnabled = shouldEnable
-		actionRebootButton.isEnabled = shouldEnable
-
-	}
-
 	// Runs when a service's manage button is pressed...
 	private fun onServiceManagePressed( service: Service ) {
 		Log.d( Shared.logTag, "Switching to Service activity..." )
@@ -1159,6 +1059,97 @@ class ServerActivity : AppCompatActivity() {
 		// Convert back to fixed array before returning
 		return servicesCopy.toTypedArray()
 
+	}
+
+	// Executes an action on the server
+	private fun executeServerAction( activity: Activity, actionName: String ) {
+		CoroutineScope( Dispatchers.Main ).launch {
+			withContext( Dispatchers.IO ) {
+
+				// Try to execute the action
+				try {
+					val action = API.postServer( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, serverIdentifier, actionName )
+					val exitCode = action?.get( "exitCode" )?.asInt
+					val outputText = action?.get( "outputText" )?.asString?.trim()
+					val errorText = action?.get( "errorText" )?.asString?.trim()
+					Log.d( Shared.logTag, "Executed action '${ actionName }' on server '${ serverIdentifier }': '${ outputText }', '${ errorText }' (Exit Code: '${ exitCode }')" )
+
+					withContext( Dispatchers.Main ) {
+						if ( exitCode == 0 ) showInformationDialog( activity, R.string.serverDialogActionExecuteTitle, String.format( getString( R.string.serverDialogActionExecuteMessageSuccess, outputText, errorText ) ) )
+						else showInformationDialog( activity, R.string.serverDialogActionExecuteTitle, String.format( getString( R.string.serverDialogActionExecuteMessageFailure, exitCode, errorText, outputText ) ) )
+					}
+
+				} catch ( exception: APIException ) {
+					Log.e( Shared.logTag, "Failed to execute action '${ actionName }' on API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
+
+					withContext( Dispatchers.Main ) {
+						when ( exception.volleyError ) {
+
+							// Bad authentication
+							is AuthFailureError -> when ( exception.apiErrorCode ) {
+								ErrorCode.UnknownUser.code -> showBriefMessage( activity, R.string.serverToastActionAuthenticationUnknownUser )
+								ErrorCode.IncorrectPassword.code -> showBriefMessage( activity, R.string.serverToastActionAuthenticationIncorrectPassword )
+								else -> showBriefMessage( activity, R.string.serverToastActionAuthenticationFailure )
+							}
+
+							// HTTP 4xx
+							is ClientError -> when ( exception.apiErrorCode ) {
+								ErrorCode.InvalidParameter.code -> showBriefMessage( activity, R.string.serverToastActionInvalidParameter )
+								ErrorCode.UnknownAction.code -> showBriefMessage( activity, R.string.serverToastActionUnknownAction )
+								ErrorCode.ActionNotExecutable.code -> showBriefMessage( activity, R.string.serverToastActionActionNotExecutable )
+								ErrorCode.ActionServerUnknown.code -> showBriefMessage( activity, R.string.serverToastActionActionServerUnknown )
+								else -> when ( exception.httpStatusCode ) {
+									404 -> showBriefMessage( activity, R.string.serverToastActionNotFound )
+									else -> showBriefMessage( activity, R.string.serverToastActionClientFailure )
+								}
+							}
+
+							// HTTP 5xx
+							is ServerError -> when ( exception.apiErrorCode ) {
+								ErrorCode.ActionServerOffline.code -> showBriefMessage( activity, R.string.serverToastActionOffline )
+								else -> when ( exception.httpStatusCode ) {
+									502 -> showBriefMessage( activity, R.string.serverToastActionUnavailable )
+									503 -> showBriefMessage( activity, R.string.serverToastActionUnavailable )
+									504 -> showBriefMessage( activity, R.string.serverToastActionUnavailable )
+									530 -> showBriefMessage( activity, R.string.serverToastActionUnavailable ) // Cloudflare
+									else -> showBriefMessage( activity, R.string.serverToastActionServerFailure )
+								}
+							}
+
+							// No Internet connection, malformed domain
+							is NoConnectionError -> showBriefMessage( activity, R.string.serverToastActionNoConnection )
+							is NetworkError -> showBriefMessage( activity, R.string.serverToastActionNoConnection )
+
+							// Connection timed out
+							is TimeoutError -> showBriefMessage( activity, R.string.serverToastActionTimeout )
+
+							// ¯\_(ツ)_/¯
+							else -> showBriefMessage( activity, R.string.serverToastActionFailure )
+
+						}
+					}
+				} catch ( exception: JsonParseException ) {
+					Log.e( Shared.logTag, "Failed to parse execute server action API response as JSON due to '${ exception.message }'" )
+
+					withContext( Dispatchers.Main ) {
+						showBriefMessage( activity, R.string.serverToastActionParseFailure )
+					}
+				} catch ( exception: JsonSyntaxException ) {
+					Log.e( Shared.logTag, "Failed to parse execute server action API response as JSON due to '${ exception.message }'" )
+
+					withContext( Dispatchers.Main ) {
+						showBriefMessage( activity, R.string.serverToastActionParseFailure )
+					}
+				} catch ( exception: NullPointerException ) {
+					Log.e( Shared.logTag, "Encountered null property value in execute server action API response ('${ exception.message }')" )
+
+					withContext( Dispatchers.Main ) {
+						showBriefMessage( activity, R.string.serverToastActionNull )
+					}
+				}
+
+			}
+		}
 	}
 
 }

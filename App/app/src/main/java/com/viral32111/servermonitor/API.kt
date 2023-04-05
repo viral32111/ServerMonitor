@@ -56,6 +56,7 @@ class API {
 					if ( errorCode == ErrorCode.Success.code ) {
 						successCallback.invoke( payload.get( "data" )?.asJsonObject )
 					} else {
+						Log.e( Shared.logTag, "JSON response payload for API error code code '${ errorCode }': '${ payload }'" )
 						errorCallback.invoke( VolleyError( "Received non-success code '${ errorCode }' from server" ), null, errorCode )
 					}
 				} catch ( exception: JsonParseException ) {
@@ -69,6 +70,7 @@ class API {
 				// Get useful response data to pass to our callback
 				val statusCode = error.networkResponse?.statusCode
 				val body = error.networkResponse?.data?.toString( Charset.defaultCharset() )
+				Log.e( Shared.logTag, "HTTP response body for status code '${ statusCode }': '${ body }'" )
 
 				// Attempt to pass our custom error code to the callback
 				if ( body != null ) {
@@ -128,6 +130,7 @@ class API {
 					if ( errorCode == ErrorCode.Success.code ) {
 						continuation.resume( payload.get( "data" )?.asJsonObject )
 					} else {
+						Log.e( Shared.logTag, "JSON response payload for API error code code '${ errorCode }': '${ payload }'" )
 						continuation.resumeWithException( APIException( "Unexpected response code '${ errorCode }' for '${ url }'", null, null, errorCode ) )
 					}
 
@@ -142,6 +145,7 @@ class API {
 				// Get useful response data to pass to our callback
 				val statusCode = error.networkResponse?.statusCode
 				val body = error.networkResponse?.data?.toString( Charset.defaultCharset() )
+				Log.e( Shared.logTag, "HTTP response body for status code '${ statusCode }': '${ body }'" )
 
 				// Attempt to pass our custom error code to the callback, if the JSON parse fails then just resume with the original exception and a null custom error code
 				if ( body != null ) {

@@ -687,13 +687,13 @@ class ServiceActivity : AppCompatActivity() {
 		if ( service.isRunning() ) {
 			actionStartStopButton.text = getString( R.string.serviceButtonStopAction )
 			actionStartStopButton.setBackgroundColor( getColor( R.color.stopActionButton ) )
-			actionRestartButton.isEnabled = true
+			actionRestartButton.isEnabled = service.isRestartActionSupported == true
 		} else {
 			actionStartStopButton.text = getString( R.string.serviceButtonStartAction )
 			actionStartStopButton.setBackgroundColor( getColor( R.color.startActionButton ) )
-			actionRestartButton.isEnabled = false
+			actionRestartButton.isEnabled = service.isRestartActionSupported == true
 		}
-		actionStartStopButton.isEnabled = true
+		actionStartStopButton.isEnabled = service.isStartActionSupported == true || service.isStopActionSupported == true
 
 		// Update the status
 		val uptimeText = TimeSpan( service.uptimeSeconds.toLong() ).toString( true )
