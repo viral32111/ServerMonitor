@@ -1,12 +1,16 @@
 # Server Monitor
 
-[![App](https://github.com/viral32111/ServerMonitor/actions/workflows/app.yml/badge.svg)](https://github.com/viral32111/ServerMonitor/actions/workflows/app.yml) [![Service](https://github.com/viral32111/ServerMonitor/actions/workflows/service.yml/badge.svg)](https://github.com/viral32111/ServerMonitor/actions/workflows/service.yml) [![CodeQL](https://github.com/viral32111/ServerMonitor/actions/workflows/codeql.yml/badge.svg)](https://github.com/viral32111/ServerMonitor/actions/workflows/codeql.yml) [![MVP](https://img.shields.io/github/v/release/viral32111/ServerMonitor?include_prereleases&label=Latest%20MVP)](https://github.com/viral32111/ServerMonitor/releases/latest) [![Issues](https://img.shields.io/github/issues-raw/viral32111/ServerMonitor?label=Issues)](https://github.com/viral32111/ServerMonitor/issues) [![Size](https://img.shields.io/github/repo-size/viral32111/ServerMonitor?label=Size)](https://github.com/viral32111/ServerMonitor) [![Commits](https://img.shields.io/github/commit-activity/w/viral32111/ServerMonitor?label=Commits)](https://github.com/viral32111/ServerMonitor/commits/main)
+[![App](https://github.com/viral32111/ServerMonitor/actions/workflows/app.yml/badge.svg)](https://github.com/viral32111/ServerMonitor/actions/workflows/app.yml)
+[![Service](https://github.com/viral32111/ServerMonitor/actions/workflows/service.yml/badge.svg)](https://github.com/viral32111/ServerMonitor/actions/workflows/service.yml)
+[![CodeQL](https://github.com/viral32111/ServerMonitor/actions/workflows/codeql.yml/badge.svg)](https://github.com/viral32111/ServerMonitor/actions/workflows/codeql.yml)
+[![MVP](https://img.shields.io/github/v/release/viral32111/ServerMonitor?include_prereleases&label=Latest%20MVP)](https://github.com/viral32111/ServerMonitor/releases/latest)
+[![Issues](https://img.shields.io/github/issues-raw/viral32111/ServerMonitor?label=Issues)](https://github.com/viral32111/ServerMonitor/issues)
+[![Size](https://img.shields.io/github/repo-size/viral32111/ServerMonitor?label=Size)](https://github.com/viral32111/ServerMonitor)
+[![Commits](https://img.shields.io/github/commit-activity/w/viral32111/ServerMonitor?label=Commits)](https://github.com/viral32111/ServerMonitor/commits/main)
 
 A mobile app for monitoring server metrics & status information in real-time.
 
 The [front-end client](/App/) is a modern [Material 3](https://m3.material.io/) Android application written in Kotlin for displaying, and the [back-end server service](/Service/) is a [.NET Core 7.0](https://dotnet.microsoft.com/) console application written in C# that acts as either a RESTful API or a Prometheus metrics exporter.
-
-**NOTE: This project is currently under development, so functionality is not guaranteed!**
 
 ## Usage
 
