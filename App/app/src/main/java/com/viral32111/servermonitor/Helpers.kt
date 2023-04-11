@@ -8,6 +8,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import com.android.volley.Request
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
+import kotlin.math.roundToInt
 
 // Shows a toast popup at the bottom of the activity
 // https://developer.android.com/develop/ui/views/notifications/snackbar/showing
@@ -158,3 +159,6 @@ fun roundValueOrDefault( value: Double?, suffix: String = "" ) =
 // Creates a HTML spannable tag with color styling - https://stackoverflow.com/a/41655900
 fun createColorText( text: String, color: Int ) =
 	String.format( "<span style=\"color: #${ color.toString( 16 ) }\">${ text }</span>" )
+
+// Generates a random number in a range
+fun generateRandomInteger( min: Int, max: Int ): Int = ( ( Math.random() * ( max - min ) ) + min ).roundToInt()

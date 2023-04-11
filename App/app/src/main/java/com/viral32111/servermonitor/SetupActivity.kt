@@ -1,13 +1,21 @@
 package com.viral32111.servermonitor
 
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import android.widget.EditText
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import com.android.volley.*
 import com.google.android.material.appbar.MaterialToolbar
 
@@ -219,6 +227,16 @@ class SetupActivity : AppCompatActivity() {
 			if ( !hasFocus ) credentialsPasswordEditText.error = if ( !validateCredentialsPassword( credentialsPasswordEditText.text.toString() ) ) getString( R.string.setupToastCredentialsPasswordInvalid ) else null
 		}
 		*/
+
+		Notify.initialise( this, applicationContext )
+
+		Notify.sendNotification( this, Notify.createTextNotification( this, Intent( this, SetupActivity::class.java ).apply {
+			flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+		}, Notify.Channel.TEST, R.string.notificationTestTitle, R.string.notificationTestText ) )
+
+		Notify.sendNotification( this, Notify.createProgressNotification( this, Intent( this, ServersActivity::class.java ).apply {
+			flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+		}, Notify.Channel.TEST, R.string.notificationOngoingTitle, R.string.notificationOngoingText ) )
 
 	}
 
