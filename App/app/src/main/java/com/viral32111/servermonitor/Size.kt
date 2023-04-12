@@ -10,10 +10,10 @@ class Size( bytes: Long ) {
 
 	// Use 1024 (Binary), not 1000
 	companion object {
-		private const val KIBIBYTE = 1024.0;
-		private const val MEBIBYTE = KIBIBYTE * 1024.0;
-		private const val GIBIBYTE = MEBIBYTE * 1024.0;
-		private const val TEBIBYTE = GIBIBYTE * 1024.0;
+		private const val KIBIBYTE = 1024.0
+		private const val MEBIBYTE = KIBIBYTE * 1024.0
+		private const val GIBIBYTE = MEBIBYTE * 1024.0
+		private const val TEBIBYTE = GIBIBYTE * 1024.0
 	}
 
 	val amount: Double

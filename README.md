@@ -12,7 +12,7 @@ A mobile app for monitoring server metrics & status information in real-time.
 
 The [front-end client](/App/) is a modern [Material 3](https://m3.material.io/) Android application written in Kotlin for displaying, and the [back-end server service](/Service/) is a [.NET Core 7.0](https://dotnet.microsoft.com/) console application written in C# that acts as either a RESTful API or a Prometheus metrics exporter.
 
-## Usage
+## 📥 Usage
 
 A [Prometheus time-series database](https://prometheus.io/) is required for storing the metrics data. Additionally, a [Cloudflare Tunnel](https://www.cloudflare.com/en-gb/products/tunnel/) (or other secure HTTP tunnel) is highly recommended to expose the RESTful API service to the Internet, allowing secure access to it from the Android application.
 
@@ -23,7 +23,7 @@ A [Prometheus time-series database](https://prometheus.io/) is required for stor
 3. Configure the server service appropriately using the JSON configuration file or environment variables ([see configuration](#configuration)).
 4. Install the Android application on your device & connect to the publicly-accessible URL of the *"connector"* service using any of the configured credentials.
 
-### Docker
+### 🐳 Docker
 
 Alternatively, a [premade Docker image](https://github.com/users/viral32111/packages/container/package/server-monitor) of the back-end server service is available to simplify the process of deployment.
 
@@ -69,7 +69,7 @@ docker container run \
 
 **NOTE: Some features of the Docker image in *"collector"* mode are tedious on some systems due to availability of system API functions, especially on Windows-based Docker installations. It is recommended to only use the Docker image for the *"connector"* mode, then a regular installation for the *"collector"* mode.**
 
-## Configuration
+## ⚙️ Configuration
 
 The JSON configuration file is searched for at the following paths:
 * Windows
@@ -91,9 +91,9 @@ The configuration priority is as follows (higher entries will override previousl
 
 See [config.json](/Service/ServerMonitor/config.json) for an example configuration file.
 
-## Modes
+## 💿 Modes
 
-### Collector
+### 🖥️ Collector
 
 This mode exports metrics from configured sources for Prometheus to scrape.
 
@@ -127,7 +127,7 @@ WantedBy=multi-user.target
 
 Then run `systemctl daemon-reload` to reload service files, followed by `systemctl enable server-monitor-collector` so the service launches on system startup.
 
-### Connector
+### 🛰️ Connector
 
 This mode serve metrics from Prometheus to the Android app via a RESTful API.
 
@@ -165,7 +165,7 @@ To verify service existence on Windows, open the *Services* (`services.msc`) app
 
 ![Screenshot of Windows Services MMC](Screenshots/Windows-Services.png)
 
-## Building
+## 🏗️ Building
 
 ### App
 
@@ -184,7 +184,7 @@ The APK file will be created at `App/app/build/outputs/apk/release/app-release.a
 
 The resulting DLL file & dependencies will be created at `Service/ServerMonitor/bin/Release/net7.0/ServerMonitor.dll`.
 
-## Progress
+## ✔️ Progress
 
 There is a [Kanban board](https://github.com/users/viral32111/projects/7/views/1) that uses [the issues](https://github.com/viral32111/ServerMonitor/issues) for tracking progress on individual steps of the project.
 
@@ -192,6 +192,6 @@ There are also [dated milestones](https://github.com/viral32111/ServerMonitor/mi
 
 See the [releases page](https://github.com/viral32111/ServerMonitor/releases) for minimum-viable products from most stages/tasks.
 
-## License
+## ⚖️ License
 
 This project is licensed under the Creative Commons Attribution-ShareAlike 4.0 International license, see the [license file](/LICENSE.md) for more information.
