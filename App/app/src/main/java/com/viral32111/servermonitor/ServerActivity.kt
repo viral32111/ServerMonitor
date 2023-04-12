@@ -726,9 +726,11 @@ class ServerActivity : AppCompatActivity() {
 		statusTextView.setTextColor( getColor( if ( server.isOnline() ) R.color.black else R.color.statusDead ) )
 		statusTextView.text = Html.fromHtml( String.format(
 			getString( R.string.serverTextViewStatusGood ),
-			"<strong><span style=\"color: #${ getColor( if ( server.isOnline() ) R.color.statusGood else R.color.statusDead ).toString( 16 ) }\">${ if ( server.isOnline() ) "ONLINE" else "OFFLINE" }</span></strong>",
+			"<strong>" + createColorText( if ( server.isOnline() ) "ONLINE" else "OFFLINE", getColor( if ( server.isOnline() ) R.color.statusGood else R.color.statusDead ) ) + "</strong>",
 			TimeSpan( server.uptimeSeconds ).toString( true )
 		), Html.FROM_HTML_MODE_LEGACY )
+
+		// TODO: One big if statement for server.isOnline() instead a bunch of small ones, like in ServerAdapter
 
 		// Set the processor resource data
 		if ( server.isOnline() ) {
@@ -738,9 +740,9 @@ class ServerActivity : AppCompatActivity() {
 			resourcesProcessorTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.black ) )
 			resourcesProcessorTextView.text = Html.fromHtml( String.format( getString( R.string.serverTextViewResourcesDataProcessor, String.format(
 				getString( R.string.serverTextViewResourcesDataProcessorValue ),
-				createColorText( roundValueOrDefault( server.processorUsage, Shared.percentSymbol ), colorForValue( applicationContext, server.processorUsage, 50.0f, 80.0f ) ),
+				createColorText( roundValueOrDefault( server.processorUsage, Shared.percentSymbol ), colorForValue( applicationContext, server.processorUsage, Server.processorUsageWarningThreshold, Server.processorUsageDangerThreshold ) ),
 				createColorText( roundValueOrDefault( processorFrequency.amount, processorFrequency.suffix ), colorAsNeutral( applicationContext, server.processorFrequency ) ),
-				createColorText( roundValueOrDefault( server.processorTemperature, "℃" ), colorForValue( applicationContext, server.processorTemperature, 60.0f, 90.0f ) )
+				createColorText( roundValueOrDefault( server.processorTemperature, Shared.degreesCelsiusSymbol ), colorForValue( applicationContext, server.processorTemperature, Server.processorTemperatureWarningThreshold, Server.processorTemperatureDangerThreshold ) )
 			) ) ), Html.FROM_HTML_MODE_LEGACY )
 		} else {
 			resourcesProcessorTextView.setTextColor( getColor( R.color.statusDead ) )
@@ -759,16 +761,16 @@ class ServerActivity : AppCompatActivity() {
 			val memoryTotal = Size( memoryTotalBytes )
 			Log.d( Shared.logTag, "Memory Total: '${ memoryTotal.amount }' '${ memoryTotal.suffix }', Memory Used: '${ memoryUsed.amount }' '${ memoryUsed.suffix }'" )
 
-			val memoryUsage = ( memoryUsedBytes.toDouble() / memoryTotalBytes.toDouble() ) * 100.0
+			val memoryUsage = server.getMemoryUsage()
 			Log.d( Shared.logTag, "Memory Usage: '${ memoryUsage }'" )
 
 			resourcesMemoryTextView.setTextColor( getColor( R.color.black ) )
 			resourcesMemoryTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.black ) )
 			resourcesMemoryTextView.text = Html.fromHtml( String.format( getString( R.string.serverTextViewResourcesDataMemory, String.format(
 				getString( R.string.serverTextViewResourcesDataMemoryValue ),
-				createColorText( roundValueOrDefault( memoryUsed.amount, memoryUsed.suffix ), colorForValue( applicationContext, memoryUsedBytes.toFloat(), memoryTotalBytes / 2.0f, memoryTotalBytes / 1.25f ) ),
+				createColorText( roundValueOrDefault( memoryUsed.amount, memoryUsed.suffix ), colorForValue( applicationContext, memoryUsedBytes, Server.memoryUsedWarningThreshold( memoryTotalBytes ), Server.memoryUsedDangerThreshold( memoryTotalBytes ) ) ),
 				createColorText( roundValueOrDefault( memoryTotal.amount, memoryTotal.suffix ), colorAsNeutral( applicationContext, memoryTotalBytes ) ),
-				createColorText( roundValueOrDefault( memoryUsage, Shared.percentSymbol ), colorForValue( applicationContext, memoryUsage, 50.0, 80.0 ) )
+				createColorText( roundValueOrDefault( memoryUsage, Shared.percentSymbol ), colorForValue( applicationContext, memoryUsage, Server.memoryUsageWarningThreshold, Server.memoryUsageDangerThreshold ) )
 			) ) ), Html.FROM_HTML_MODE_LEGACY )
 		} else {
 			resourcesMemoryTextView.setTextColor( getColor( R.color.statusDead ) )
@@ -788,7 +790,7 @@ class ServerActivity : AppCompatActivity() {
 			val swapTotal = Size( swapTotalBytes )
 			Log.d( Shared.logTag, "Swap Total: '${ swapTotal.amount }' '${ swapTotal.suffix }', Swap Used: '${ swapUsed.amount }' '${ swapUsed.suffix }'" )
 
-			val swapUsage = if ( swapTotalBytes >= 0L && swapFreeBytes >= 0L ) ( swapUsedBytes.toDouble() / swapTotalBytes.toDouble() ) * 100.0 else -1.0
+			val swapUsage = server.getSwapUsage()
 			Log.d( Shared.logTag, "Swap Usage: '${ swapUsage }'" )
 
 			resourcesSwapTextView.setTextColor( getColor( R.color.black ) )
@@ -797,9 +799,9 @@ class ServerActivity : AppCompatActivity() {
 				String.format( getString( R.string.serverTextViewResourcesDataSwap ),
 					swapName,
 					String.format( getString( R.string.serverTextViewResourcesDataSwapValue ),
-						createColorText( roundValueOrDefault( swapUsed.amount, swapUsed.suffix ), colorForValue( applicationContext, swapUsedBytes.toFloat(), swapTotalBytes / 2.0f, swapTotalBytes / 1.25f ) ),
+						createColorText( roundValueOrDefault( swapUsed.amount, swapUsed.suffix ), colorForValue( applicationContext, swapUsedBytes, Server.swapUsedWarningThreshold( swapTotalBytes ), Server.swapUsedDangerThreshold( swapTotalBytes ) ) ),
 						createColorText( roundValueOrDefault( swapTotal.amount, swapTotal.suffix ), colorAsNeutral( applicationContext, swapTotalBytes ) ),
-						createColorText( roundValueOrDefault( swapUsage, Shared.percentSymbol ), colorForValue( applicationContext, swapUsage, 50.0, 80.0 ) )
+						createColorText( roundValueOrDefault( swapUsage, Shared.percentSymbol ), colorForValue( applicationContext, swapUsage, Server.swapUsageWarningThreshold, Server.swapUsageDangerThreshold ) )
 					)
 				), Html.FROM_HTML_MODE_LEGACY )
 		} else {
@@ -808,7 +810,7 @@ class ServerActivity : AppCompatActivity() {
 			resourcesSwapTextView.text = String.format( getString( R.string.serverTextViewResourcesDataSwap ), swapName, createColorText( "Unknown", getColor( R.color.statusDead ) ) )
 		}
 
-		// Set the network resource data
+		// Set the network resource data (this is a total of all interfaces)
 		if ( server.isOnline() ) {
 			val networkTransmitRateBytes = server.networkInterfaces?.fold( 0L ) { total, networkInterface -> total + networkInterface.rateBytesSent } ?: -1L
 			val networkReceiveRateBytes = server.networkInterfaces?.fold( 0L ) { total, networkInterface -> total + networkInterface.rateBytesReceived } ?: -1L
@@ -821,8 +823,8 @@ class ServerActivity : AppCompatActivity() {
 			resourcesNetworkTextView.setTextColor( getColor( R.color.black ) )
 			resourcesNetworkTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.black ) )
 			resourcesNetworkTextView.text = Html.fromHtml( String.format( getString( R.string.serverTextViewResourcesDataNetwork ), String.format( getString( R.string.serverTextViewResourcesDataNetworkValue ),
-				createColorText( roundValueOrDefault( networkTransmitRate.amount, networkTransmitRate.suffix + "/s" ), colorForValue( applicationContext, networkTransmitRateBytes, 1024L * 1024L, 1024L * 1024L * 10L ) ), // No idea what the thresholds should be, so guesstimate
-				createColorText( roundValueOrDefault( networkReceiveRate.amount, networkReceiveRate.suffix + "/s" ), colorForValue( applicationContext, networkReceiveRateBytes, 1024L * 1024L, 1024L * 1024L * 10L ) ) // No idea what the thresholds should be, so guesstimate
+				createColorText( roundValueOrDefault( networkTransmitRate.amount, networkTransmitRate.suffix + "/s" ), colorForValue( applicationContext, networkTransmitRateBytes, Server.networkTransmitRateWarningThreshold, Server.networkTransmitRateDangerThreshold ) ),
+				createColorText( roundValueOrDefault( networkReceiveRate.amount, networkReceiveRate.suffix + "/s" ), colorForValue( applicationContext, networkReceiveRateBytes, Server.networkReceiveRateWarningThreshold, Server.networkReceiveRateDangerThreshold ) )
 			) ), Html.FROM_HTML_MODE_LEGACY )
 		} else {
 			resourcesNetworkTextView.setTextColor( getColor( R.color.statusDead ) )
@@ -830,7 +832,7 @@ class ServerActivity : AppCompatActivity() {
 			resourcesNetworkTextView.text = String.format( getString( R.string.serverTextViewResourcesDataNetwork ), createColorText( "Unknown", getColor( R.color.statusDead ) ) )
 		}
 
-		// Set the drive resource data (this is a total)
+		// Set the drive resource data (this is a total of all drives)
 		if ( server.isOnline() ) {
 			val driveReadRateBytes = server.drives?.fold( 0L ) { total, drive -> total + drive.rateBytesRead } ?: -1L
 			val driveWriteRateBytes = server.drives?.fold( 0L ) { total, drive -> total + drive.rateBytesWritten } ?: -1L
@@ -843,8 +845,8 @@ class ServerActivity : AppCompatActivity() {
 			resourcesDriveTextView.setTextColor( getColor( R.color.black ) )
 			resourcesDriveTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.black ) )
 			resourcesDriveTextView.text = Html.fromHtml( String.format( getString( R.string.serverTextViewResourcesDataDrive ), String.format( getString( R.string.serverTextViewResourcesDataDriveValue ),
-				createColorText( roundValueOrDefault( driveReadRate.amount, driveReadRate.suffix + "/s" ), colorForValue( applicationContext, driveReadRateBytes, 1024L * 1024L, 1024L * 1024L * 10L ) ), // No idea what the thresholds should be, so guesstimate
-				createColorText( roundValueOrDefault( driveWriteRate.amount, driveWriteRate.suffix + "/s" ), colorForValue( applicationContext, driveWriteRateBytes, 1024L * 1024L, 1024L * 1024L * 10L ) ) // No idea what the thresholds should be, so guesstimate
+				createColorText( roundValueOrDefault( driveReadRate.amount, driveReadRate.suffix + "/s" ), colorForValue( applicationContext, driveReadRateBytes, Server.driveReadRateWarningThreshold, Server.driveReadRateDangerThreshold ) ),
+				createColorText( roundValueOrDefault( driveWriteRate.amount, driveWriteRate.suffix + "/s" ), colorForValue( applicationContext, driveWriteRateBytes, Server.driveWriteRateWarningThreshold, Server.driveWriteRateDangerThreshold ) )
 			) ), Html.FROM_HTML_MODE_LEGACY )
 		} else {
 			resourcesDriveTextView.setTextColor( getColor( R.color.statusDead ) )

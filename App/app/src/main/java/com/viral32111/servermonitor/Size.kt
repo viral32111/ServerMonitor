@@ -26,7 +26,11 @@ class Size( bytes: Long ) {
 		val gibibytes: Double = bytes / GIBIBYTE
 		val tebibyte: Double = bytes / TEBIBYTE
 
-		if ( tebibyte >= 1.0 ) {
+		if ( bytes < 0L ) {
+			amount = 0.0
+			suffix = ""
+
+		} else if ( tebibyte >= 1.0 ) {
 			amount = tebibyte
 			suffix = "TiB"
 		} else if ( gibibytes >= 1.0 ) {

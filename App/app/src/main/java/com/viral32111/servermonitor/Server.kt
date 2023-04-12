@@ -5,9 +5,48 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonParseException
 import com.google.gson.JsonSyntaxException
 import kotlin.math.round
+import kotlin.math.roundToLong
 
 // Holds data about a server
 class Server( data: JsonObject, extended: Boolean = false ) {
+	companion object {
+
+		// Processor
+		const val processorUsageWarningThreshold = 50.0f;
+		const val processorUsageDangerThreshold = 80.0f;
+		const val processorTemperatureWarningThreshold = 60.0f;
+		const val processorTemperatureDangerThreshold = 90.0f;
+
+		// Memory
+		fun memoryUsedWarningThreshold( totalBytes: Long ): Long = ( totalBytes / 2.0 ).roundToLong() // 50%
+		fun memoryUsedDangerThreshold( totalBytes: Long ): Long = ( totalBytes / 1.25 ).roundToLong() // 80%
+		const val memoryUsageWarningThreshold = 50.0f;
+		const val memoryUsageDangerThreshold = 80.0f;
+
+		// Swap
+		fun swapUsedWarningThreshold( totalBytes: Long ): Long = ( totalBytes / 1.4 ).roundToLong() // 70%
+		fun swapUsedDangerThreshold( totalBytes: Long ): Long = ( totalBytes / 1.1 ).roundToLong() // 90%
+		const val swapUsageWarningThreshold = 70.0f;
+		const val swapUsageDangerThreshold = 90.0f;
+
+		// Network - no idea what the thresholds should be, so guesstimate
+		const val networkTransmitRateWarningThreshold = 1024L * 1024L // 1 MiB
+		const val networkTransmitRateDangerThreshold = 1024L * 1024L * 10L // 10 MiB
+		const val networkReceiveRateWarningThreshold = 1024L * 1024L // 1 MiB
+		const val networkReceiveRateDangerThreshold = 1024L * 1024L * 10L // 10 MiB
+		const val networkTotalRateWarningThreshold = networkTransmitRateWarningThreshold + networkReceiveRateWarningThreshold
+		const val networkTotalRateDangerThreshold = networkTransmitRateDangerThreshold + networkReceiveRateDangerThreshold
+
+		// Drive - no idea what the thresholds should be, so guesstimate
+		const val driveWriteRateWarningThreshold = 1024L * 1024L // 1 MiB
+		const val driveWriteRateDangerThreshold = 1024L * 1024L * 10L // 10 MiB
+		const val driveReadRateWarningThreshold = 1024L * 1024L // 1 MiB
+		const val driveReadRateDangerThreshold = 1024L * 1024L * 10L // 10 MiB
+		const val driveTotalRateWarningThreshold = driveReadRateWarningThreshold + driveWriteRateWarningThreshold
+		const val driveTotalRateDangerThreshold = driveReadRateDangerThreshold + driveWriteRateDangerThreshold
+
+	}
+
 	var identifier: String
 	var jobName: String
 	var instanceAddress: String
@@ -56,6 +95,78 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 
 	// Checks if the server is online or offline
 	fun isOnline(): Boolean = uptimeSeconds >= 0
+
+	/******************************************************/
+
+	// Gets the processor usage/temperature
+	fun getProcessorUsage() = this.processorUsage ?: -1.0f
+	fun getProcessorTemperature() = this.processorTemperature ?: -1.0f
+
+	/******************************************************/
+
+	// Gets the total/free/used memory in bytes
+	fun getMemoryTotal() = this.memoryTotalBytes ?: -1L
+	fun getMemoryFree() = this.memoryFreeBytes ?: -1L
+	fun getMemoryUsed( freeBytes: Long? = this.getMemoryFree(), totalBytes: Long? = this.getMemoryTotal() ): Long = getBytesUsed( freeBytes, totalBytes )
+
+	// Gets the used memory as a percentage
+	fun getMemoryUsage( freeBytes: Long? = this.getMemoryFree(), totalBytes: Long? = this.getMemoryTotal() ): Float = getBytesUsage( freeBytes, totalBytes )
+
+	/******************************************************/
+
+	// Gets the total/free swap in bytes
+	fun getSwapTotal() = this.swapTotalBytes ?: -1L
+	fun getSwapFree() = this.swapFreeBytes ?: -1L
+	fun getSwapUsed( freeBytes: Long? = this.getSwapFree(), totalBytes: Long? = this.getSwapTotal() ): Long = getBytesUsed( freeBytes, totalBytes )
+
+	// Gets the used swap as a percentage
+	fun getSwapUsage( freeBytes: Long? = this.getSwapFree(), totalBytes: Long? = this.getSwapTotal() ): Float = getBytesUsage( freeBytes, totalBytes )
+
+	/******************************************************/
+
+	// Gets a list of only the services that are running
+	fun getRunningServices(): Array<Service> = this.services?.filter { it.isRunning() }?.toTypedArray() ?: emptyArray()
+
+	/******************************************************/
+
+	// Gets the total network transmit/receive rate in bytes
+	fun getNetworkTotalTransmitRate() = this.networkInterfaces?.fold( 0L ) { total, networkInterface -> total + networkInterface.rateBytesSent } ?: -1L
+	fun getNetworkTotalReceiveRate() = this.networkInterfaces?.fold( 0L ) { total, networkInterface -> total + networkInterface.rateBytesReceived } ?: -1L
+	fun getNetworkTotalRate() = this.networkInterfaces?.fold( 0L ) { total, networkInterface -> total + networkInterface.rateBytesSent + networkInterface.rateBytesReceived } ?: -1L
+
+	/******************************************************/
+
+	// Gets the total drive read/write rate in bytes
+	fun getDriveTotalReadRate() = this.drives?.fold( 0L ) { total, drive -> total + drive.rateBytesRead } ?: -1L
+	fun getDriveTotalWriteRate() = this.drives?.fold( 0L ) { total, drive -> total + drive.rateBytesWritten } ?: -1L
+	fun getDriveTotalRate() = this.drives?.fold( 0L ) { total, drive -> total + drive.rateBytesRead + drive.rateBytesWritten } ?: -1L
+
+	/******************************************************/
+
+	// Calculates the number of used bytes
+	private fun getBytesUsed( freeBytes: Long?, totalBytes: Long? ): Long {
+		if ( freeBytes == null || totalBytes == null ) return -1L // Not fetched yet
+		if ( freeBytes < 0L || totalBytes < 0L ) return -1L // No metrics yet
+
+		return ( totalBytes - freeBytes ).coerceAtLeast( 0 ) // Clamp to be safe
+	}
+
+	// Calculates the percentage of used bytes
+	private fun getBytesUsage( freeBytes: Long?, totalBytes: Long? ): Float {
+		if ( freeBytes == null || totalBytes == null ) return -1.0f // Not fetched yet
+		if ( freeBytes < 0L || totalBytes < 0L ) return -1.0f // No metrics yet
+
+		val usedBytes = getBytesUsed( freeBytes, totalBytes )
+		val usagePercentage = ( usedBytes.toDouble() / totalBytes.toDouble() ) * 100.0f
+
+		return usagePercentage.toFloat().coerceIn( 0.0f, 100.0f ) // Clamp to be safe
+	}
+
+	/******************************************************/
+
+	// TODO: getIssues() to return all the current issues (e.g., temperature or usage too high, any essential services not running, any services exited/failed, unhealthy Docker containers, SNMP agents with traps received, etc.)
+
+	/******************************************************/
 
 	/**
 	 * Updates this server's data.
@@ -148,4 +259,5 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 		updateUsingAPIData( data )
 
 	}
+
 }

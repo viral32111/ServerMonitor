@@ -9,6 +9,7 @@ import com.android.volley.Request
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 
 // Shows a toast popup at the bottom of the activity
 // https://developer.android.com/develop/ui/views/notifications/snackbar/showing
@@ -116,29 +117,29 @@ fun showInformationDialog(
 		.show()
 
 // Gets the color for a given value, fallback to offline/dead
-fun colorForValue( context: Context, value: Float?, warnThreshold: Float, badThreshold: Float ) =
+fun colorForValue( context: Context, value: Float?, warnThreshold: Float, dangerThreshold: Float ) =
 	if ( value == null || value < 0.0f ) context.getColor( R.color.statusDead )
-	else if ( value >= badThreshold ) context.getColor( R.color.statusBad )
+	else if ( value >= dangerThreshold ) context.getColor( R.color.statusBad )
 	else if ( value >= warnThreshold ) context.getColor( R.color.statusWarning )
 	else context.getColor( R.color.statusGood )
-fun colorForValue( context: Context, value: Long?, warnThreshold: Long, badThreshold: Long ) =
+fun colorForValue( context: Context, value: Long?, warnThreshold: Long, dangerThreshold: Long ) =
 	if ( value == null || value < 0L ) context.getColor( R.color.statusDead )
-	else if ( value >= badThreshold ) context.getColor( R.color.statusBad )
+	else if ( value >= dangerThreshold ) context.getColor( R.color.statusBad )
 	else if ( value >= warnThreshold ) context.getColor( R.color.statusWarning )
 	else context.getColor( R.color.statusGood )
-fun colorForValue( context: Context, value: Double?, warnThreshold: Double, badThreshold: Double ) =
+fun colorForValue( context: Context, value: Double?, warnThreshold: Double, dangerThreshold: Double ) =
 	if ( value == null || value < 0.0 ) context.getColor( R.color.statusDead )
-	else if ( value >= badThreshold ) context.getColor( R.color.statusBad )
+	else if ( value >= dangerThreshold ) context.getColor( R.color.statusBad )
 	else if ( value >= warnThreshold ) context.getColor( R.color.statusWarning )
 	else context.getColor( R.color.statusGood )
-fun colorForValue( context: Context, value: Int?, warnThreshold: Int, badThreshold: Int ) =
+fun colorForValue( context: Context, value: Int?, warnThreshold: Int, dangerThreshold: Int ) =
 	if ( value == null || value < 0 ) context.getColor( R.color.statusDead )
-	else if ( value >= badThreshold ) context.getColor( R.color.statusBad )
+	else if ( value >= dangerThreshold ) context.getColor( R.color.statusBad )
 	else if ( value >= warnThreshold ) context.getColor( R.color.statusWarning )
 	else context.getColor( R.color.statusGood )
-fun colorForValueReverse( context: Context, value: Int?, warnThreshold: Int, badThreshold: Int ) =
+fun colorForValueReverse( context: Context, value: Int?, warnThreshold: Int, dangerThreshold: Int ) =
 	if ( value == null || value < 0 ) context.getColor( R.color.statusDead )
-	else if ( value <= badThreshold ) context.getColor( R.color.statusBad )
+	else if ( value <= dangerThreshold ) context.getColor( R.color.statusBad )
 	else if ( value <= warnThreshold ) context.getColor( R.color.statusWarning )
 	else context.getColor( R.color.statusGood )
 
@@ -162,3 +163,6 @@ fun createColorText( text: String, color: Int ) =
 
 // Generates a random number in a range
 fun generateRandomInteger( min: Int, max: Int ): Int = ( ( Math.random() * ( max - min ) ) + min ).roundToInt()
+
+fun Float.atLeastInt( minimum: Int ) = this.roundToInt().coerceAtLeast( minimum )
+fun Double.atLeastLong( minimum: Long ) = this.roundToLong().coerceAtLeast( minimum )

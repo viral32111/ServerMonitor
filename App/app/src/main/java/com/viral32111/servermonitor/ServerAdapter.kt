@@ -70,59 +70,44 @@ class ServerAdapter( private val servers: Array<Server>, private val context: Co
 			viewHolder.statusTextView.setTextColor( context.getColor( R.color.statusGood ) )
 
 			// Processor Usage
-			if ( server.processorUsage != null ) {
-				viewHolder.processorTextView.text = String.format( context.getString( R.string.serversTextViewServerProcessorUsage ), server.processorUsage!!.toInt() )
-				viewHolder.processorTextView.setTextColor( context.getColor( R.color.statusGood ) )
-			} else {
-				viewHolder.processorTextView.text = String.format( context.getString( R.string.serversTextViewServerProcessorUsage ), 0 )
-				viewHolder.processorTextView.setTextColor( context.getColor( R.color.statusDead ) )
-			}
+			val processorUsage = server.getProcessorUsage()
+			viewHolder.processorTextView.text = String.format( context.getString( R.string.serversTextViewServerProcessorUsage ), processorUsage.atLeastInt( 0 ) )
+			viewHolder.processorTextView.setTextColor( colorForValue( context, processorUsage, Server.processorUsageWarningThreshold, Server.processorUsageDangerThreshold ) )
 
 			// Memory Used
-			if ( server.memoryTotalBytes != null && server.memoryFreeBytes != null ) {
-				val size = Size( server.memoryTotalBytes!! - server.memoryFreeBytes!! )
-				viewHolder.memoryTextView.text = String.format( context.getString( R.string.serversTextViewServerMemoryUsage ), size.amount.roundToInt(), size.suffix.substring( 0, 1 ) )
-				viewHolder.memoryTextView.setTextColor( context.getColor( R.color.statusGood ) )
-			} else {
-				viewHolder.memoryTextView.text = String.format( context.getString( R.string.serversTextViewServerMemoryUsage ), 0, "B" )
-				viewHolder.memoryTextView.setTextColor( context.getColor( R.color.statusDead ) )
-			}
+			val memoryTotalBytes = server.getMemoryTotal()
+			val memoryFreeBytes = server.getMemoryFree()
+			val memoryUsedBytes = server.getMemoryUsed( memoryTotalBytes, memoryFreeBytes )
+			val memoryUsed = Size( memoryUsedBytes )
+			viewHolder.memoryTextView.text = String.format( context.getString( R.string.serversTextViewServerMemoryUsage ), memoryUsed.amount.atLeastLong( 0 ), memoryUsed.suffix.first() )
+			viewHolder.memoryTextView.setTextColor( colorForValue( context, memoryUsedBytes, Server.memoryUsedWarningThreshold( memoryTotalBytes ), Server.memoryUsedDangerThreshold( memoryTotalBytes ) ) )
 
 			// Processor Temperature
-			if ( server.processorTemperature != null && server.processorTemperature!! >= 0f ) {
-				viewHolder.temperatureTextView.text = String.format( context.getString( R.string.serversTextViewServerTemperatureValue ), server.processorTemperature!!.toInt() )
-				viewHolder.temperatureTextView.setTextColor( context.getColor( R.color.statusGood ) )
-			} else {
-				viewHolder.temperatureTextView.text = String.format( context.getString( R.string.serversTextViewServerTemperatureValue ), 0 )
-				viewHolder.temperatureTextView.setTextColor( context.getColor( R.color.statusDead ) )
-			}
+			val processorTemperature = server.getProcessorTemperature()
+			viewHolder.temperatureTextView.text = String.format( context.getString( R.string.serversTextViewServerTemperatureValue ), processorTemperature.atLeastInt( 0 ) )
+			viewHolder.temperatureTextView.setTextColor( colorForValue( context, processorTemperature, Server.processorTemperatureWarningThreshold, Server.processorTemperatureDangerThreshold ) )
 
 			// Running Services Count
-			if ( server.services != null ) {
-				val runningServices = ArrayList<Service>()
-				for ( service in server.services!! ) if ( service.isRunning() ) runningServices.add( service )
-
-				viewHolder.serviceTextView.text = String.format( context.getString( R.string.serversTextViewServerServicesCount ), runningServices.size )
-				viewHolder.serviceTextView.setTextColor( context.getColor( R.color.statusGood ) )
-			} else {
-				viewHolder.serviceTextView.text = String.format( context.getString( R.string.serversTextViewServerServicesCount ), server.services!!.size )
-				viewHolder.serviceTextView.setTextColor( context.getColor( R.color.statusDead ) )
-			}
+			val runningServices = server.getRunningServices()
+			viewHolder.serviceTextView.text = String.format( context.getString( R.string.serversTextViewServerServicesCount ), runningServices.size )
+			viewHolder.serviceTextView.setTextColor( context.getColor( R.color.statusGood ) ) // Not really possible for this to have warning/danger
 
 			// Network I/O
-			if ( server.networkInterfaces != null ) {
-				val rate = Size( server.networkInterfaces!!.fold( 0 ) { total, networkInterface -> total + networkInterface.rateBytesSent + networkInterface.rateBytesReceived } ) // https://kotlinlang.org/docs/collection-aggregate.html#fold-and-reduce
-				viewHolder.networkTextView.text = String.format( context.getString( R.string.serversTextViewServerNetworkUsage ), rate.amount.roundToLong().coerceAtLeast( 0 ), rate.suffix.substring( 0, 1 ) )
-				viewHolder.networkTextView.setTextColor( context.getColor( R.color.statusGood ) )
-			} else {
-				viewHolder.networkTextView.text = String.format( context.getString( R.string.serversTextViewServerNetworkUsage ), 0, "B" )
-				viewHolder.networkTextView.setTextColor( context.getColor( R.color.statusDead ) )
-			}
+			val networkTotalRateBytes = server.getNetworkTotalRate()
+			val networkTotalRate = Size( networkTotalRateBytes )
+			viewHolder.networkTextView.text = String.format( context.getString( R.string.serversTextViewServerNetworkUsage ), networkTotalRate.amount.atLeastLong( 0 ), networkTotalRate.suffix.first() )
+			viewHolder.networkTextView.setTextColor( colorForValue( context, networkTotalRateBytes, Server.networkTotalRateWarningThreshold, Server.networkTotalRateDangerThreshold ) )
 
 			// Disk I/O
+			val driveTotalRateBytes = server.getDriveTotalRate()
+			val driveTotalRate = Size( driveTotalRateBytes )
+			viewHolder.networkTextView.text = String.format( context.getString( R.string.serversTextViewServerNetworkUsage ), driveTotalRate.amount.atLeastLong( 0 ), driveTotalRate.suffix.first() )
+			viewHolder.networkTextView.setTextColor( colorForValue( context, networkTotalRateBytes, Server.driveTotalRateWarningThreshold, Server.driveTotalRateDangerThreshold ) )
+
+
 			if ( server.drives != null ) {
 				val rate = Size( server.drives!!.fold( 0 ) { total, drive -> total + drive.rateBytesRead + drive.rateBytesWritten } )
-				viewHolder.diskTextView.text = String.format( context.getString( R.string.serversTextViewServerDiskUsage ), rate.amount.roundToLong().coerceAtLeast( 0 ), rate.suffix.substring( 0, 1 ) )
+				viewHolder.diskTextView.text = String.format( context.getString( R.string.serversTextViewServerDiskUsage ), rate.amount.roundToLong().coerceAtLeast( 0 ), rate.suffix.first() )
 				viewHolder.diskTextView.setTextColor( context.getColor( R.color.statusGood ) )
 			} else {
 				viewHolder.diskTextView.text = String.format( context.getString( R.string.serversTextViewServerDiskUsage ), 0, "B" )
