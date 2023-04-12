@@ -28,7 +28,7 @@ class Size( bytes: Long ) {
 
 		if ( bytes < 0L ) {
 			amount = 0.0
-			suffix = ""
+			suffix = "B"
 
 		} else if ( tebibyte >= 1.0 ) {
 			amount = tebibyte
@@ -43,7 +43,7 @@ class Size( bytes: Long ) {
 			amount = kibibytes
 			suffix = "KiB"
 		} else {
-			amount = bytes.toDouble()
+			amount = bytes.toDouble() // This is pointless
 			suffix = "B"
 		}
 	}
