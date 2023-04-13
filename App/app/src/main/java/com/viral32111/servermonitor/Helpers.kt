@@ -2,7 +2,9 @@ package com.viral32111.servermonitor
 
 import android.app.Activity
 import android.content.Context
+import android.text.Html
 import android.util.Log
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.android.volley.Request
@@ -116,7 +118,33 @@ fun showInformationDialog(
 		}
 		.show()
 
-// Gets the color for a given value, fallback to offline/dead
+// Gets the color appropriate for a given value - neutral if thresholds not provided, or dead if invalid value
+fun Float?.getAppropriateColor( warningThreshold: Float? = null, dangerThreshold: Float? = null ): Int =
+	if ( this == null || this < 0.0f ) R.color.statusDead
+	else if ( warningThreshold == null || dangerThreshold == null ) R.color.statusNeutral
+	else if ( this >= dangerThreshold ) R.color.statusBad
+	else if ( this >= warningThreshold ) R.color.statusWarning
+	else R.color.statusGood
+fun Double?.getAppropriateColor( warningThreshold: Double? = null, dangerThreshold: Double? = null ): Int =
+	if ( this == null || this < 0.0 ) R.color.statusDead
+	else if ( warningThreshold == null || dangerThreshold == null ) R.color.statusNeutral
+	else if ( this >= dangerThreshold ) R.color.statusBad
+	else if ( this >= warningThreshold ) R.color.statusWarning
+	else R.color.statusGood
+fun Int?.getAppropriateColor( warningThreshold: Int? = null, dangerThreshold: Int? = null ): Int =
+	if ( this == null || this < 0 ) R.color.statusDead
+	else if ( warningThreshold == null || dangerThreshold == null ) R.color.statusNeutral
+	else if ( this >= dangerThreshold ) R.color.statusBad
+	else if ( this >= warningThreshold ) R.color.statusWarning
+	else R.color.statusGood
+fun Long?.getAppropriateColor( warningThreshold: Long? = null, dangerThreshold: Long? = null ): Int =
+	if ( this == null || this < 0L ) R.color.statusDead
+	else if ( warningThreshold == null || dangerThreshold == null ) R.color.statusNeutral
+	else if ( this >= dangerThreshold ) R.color.statusBad
+	else if ( this >= warningThreshold ) R.color.statusWarning
+	else R.color.statusGood
+
+// Obsolete
 fun colorForValue( context: Context, value: Float?, warnThreshold: Float, dangerThreshold: Float ) =
 	if ( value == null || value < 0.0f ) context.getColor( R.color.statusDead )
 	else if ( value >= dangerThreshold ) context.getColor( R.color.statusBad )
@@ -143,7 +171,7 @@ fun colorForValueReverse( context: Context, value: Int?, warnThreshold: Int, dan
 	else if ( value <= warnThreshold ) context.getColor( R.color.statusWarning )
 	else context.getColor( R.color.statusGood )
 
-// Returns neutral color for value, or fallback to offline/dead
+// Returns neutral color for value, or fallback to offline/dead - Obsolete
 fun colorAsNeutral( context: Context, value: Float? ) =
 	if ( value == null || value < 0.0 ) context.getColor( R.color.statusDead ) else context.getColor( R.color.statusNeutral )
 fun colorAsNeutral( context: Context, value: Double? ) =
@@ -157,12 +185,46 @@ fun roundValueOrDefault( value: Float?, suffix: String = "" ) =
 fun roundValueOrDefault( value: Double?, suffix: String = "" ) =
 	( if ( value == null || value <= 0.0 ) "0" else String.format( "%.1f", value ) ) + suffix
 
-// Creates a HTML spannable tag with color styling - https://stackoverflow.com/a/41655900
-fun createColorText( text: String, color: Int ) =
-	String.format( "<span style=\"color: #${ color.toString( 16 ) }\">${ text }</span>" )
+// Creates a HTML spannable tag with color styling - https://stackoverflow.com/a/41655900 - Obsolete
+fun createColorText( text: String, color: Int, bold: Boolean = false ) =
+	String.format( "%s<span style=\"color: #%s\">%s</span>%s", if ( bold ) "<strong>" else "", color.toString( 16 ), text, if ( bold ) "</strong>" else "" )
+
+// Creates a HTML spannable tag with color styling & optional boldness - https://stackoverflow.com/a/41655900
+fun Context.htmlColorText( text: String, color: Int, asBold: Boolean = false ) = String.format(
+	"%s<span style=\"color: #%s\">%s</span>%s",
+	if ( asBold ) "<strong>" else "",
+	this.getColor( color ).toString( 16 ),
+	text,
+	if ( asBold ) "</strong>" else ""
+)
 
 // Generates a random number in a range
 fun generateRandomInteger( min: Int, max: Int ): Int = ( ( Math.random() * ( max - min ) ) + min ).roundToInt()
 
+// Rounds & clamps a float/double to an int/long respectively
 fun Float.atLeastInt( minimum: Int ) = this.roundToInt().coerceAtLeast( minimum )
 fun Double.atLeastLong( minimum: Long ) = this.roundToLong().coerceAtLeast( minimum )
+
+// Sets the color of a text view's content & drawable
+fun TextView.setTextIconColor( color: Int ) {
+	this.setTextColor( color )
+	this.compoundDrawables[ 0 ].setTint( color )
+}
+
+// Updates a text view's content using HTML
+fun TextView.setTextFromHTML( html: String ) {
+	this.text = Html.fromHtml( html, Html.FROM_HTML_MODE_LEGACY )
+}
+
+// Rounds a float/double to a given decimal place and returns as a string
+fun Float.roundToString( decimals: Int ) = String.format( "%.${ decimals }f", this )
+fun Double.roundToString( decimals: Int ) = String.format( "%.${ decimals }f", this )
+
+// Clamps a float/double at a minimum and rounds it using the function above
+fun Float.atLeastRoundToString( minimum: Float, decimals: Int ) = this.coerceAtLeast( minimum ).roundToString( decimals )
+fun Double.atLeastRoundToString( minimum: Double, decimals: Int ) = this.coerceAtLeast( minimum ).roundToString( decimals )
+
+// Concatenate strings
+fun String.concat( string: String ) = this + string
+fun String.suffixWith( string: String ) = this.concat( string )
+fun String.prefixWith( string: String ) = string.concat( this )

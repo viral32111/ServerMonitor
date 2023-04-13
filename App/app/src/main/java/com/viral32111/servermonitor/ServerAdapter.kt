@@ -64,6 +64,8 @@ class ServerAdapter( private val servers: Array<Server>, private val context: Co
 		// Set the title to the server's name
 		viewHolder.titleTextView.text = server.hostName.uppercase()
 
+		// TODO: Rewrite these to use the new helper functions
+
 		// The server is online...
 		if ( server.isOnline() ) {
 			viewHolder.statusTextView.text = context.getString( R.string.serversTextViewServerStatusOnline )

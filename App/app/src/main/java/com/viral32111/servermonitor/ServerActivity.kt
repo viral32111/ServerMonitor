@@ -722,61 +722,62 @@ class ServerActivity : AppCompatActivity() {
 		actionShutdownButton.isEnabled = server.isShutdownActionSupported == true
 		actionRebootButton.isEnabled = server.isRebootActionSupported == true
 
-		// Set the overall status - https://stackoverflow.com/a/37899914
-		statusTextView.setTextColor( getColor( if ( server.isOnline() ) R.color.black else R.color.statusDead ) )
-		statusTextView.text = Html.fromHtml( String.format(
-			getString( R.string.serverTextViewStatusGood ),
-			"<strong>" + createColorText( if ( server.isOnline() ) "ONLINE" else "OFFLINE", getColor( if ( server.isOnline() ) R.color.statusGood else R.color.statusDead ) ) + "</strong>",
-			TimeSpan( server.uptimeSeconds ).toString( true )
-		), Html.FROM_HTML_MODE_LEGACY )
-
-		// TODO: One big if statement for server.isOnline() instead a bunch of small ones, like in ServerAdapter
-
-		// Set the processor resource data
+		// Is the server running?
 		if ( server.isOnline() ) {
-			val processorFrequency = Frequency( server.processorFrequency?.roundToLong()?.times( 1000L * 1000L ) ?: -1L ) // Value from API is already in MHz
 
-			resourcesProcessorTextView.setTextColor( getColor( R.color.black ) )
-			resourcesProcessorTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.black ) )
-			resourcesProcessorTextView.text = Html.fromHtml( String.format( getString( R.string.serverTextViewResourcesDataProcessor, String.format(
-				getString( R.string.serverTextViewResourcesDataProcessorValue ),
-				createColorText( roundValueOrDefault( server.processorUsage, Shared.percentSymbol ), colorForValue( applicationContext, server.processorUsage, Server.processorUsageWarningThreshold, Server.processorUsageDangerThreshold ) ),
-				createColorText( roundValueOrDefault( processorFrequency.amount, processorFrequency.suffix ), colorAsNeutral( applicationContext, server.processorFrequency ) ),
-				createColorText( roundValueOrDefault( server.processorTemperature, Shared.degreesCelsiusSymbol ), colorForValue( applicationContext, server.processorTemperature, Server.processorTemperatureWarningThreshold, Server.processorTemperatureDangerThreshold ) )
-			) ) ), Html.FROM_HTML_MODE_LEGACY )
-		} else {
-			resourcesProcessorTextView.setTextColor( getColor( R.color.statusDead ) )
-			resourcesProcessorTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
-			resourcesProcessorTextView.text = String.format( getString( R.string.serverTextViewResourcesDataProcessor ), createColorText( "Unknown", getColor( R.color.statusDead ) ) )
-		}
+			// Overall status - https://stackoverflow.com/a/37899914
+			statusTextView.setTextColor( getColor( R.color.black ) )
+			statusTextView.setTextFromHTML( getString( R.string.serverTextViewStatusGood ).format(
+				createColorText( "ONLINE", getColor( R.color.statusGood ), true ),
+				TimeSpan( server.uptimeSeconds ).toString( true )
+			) )
 
-		// Set the memory resource data
-		if ( server.isOnline() ) {
-			val memoryTotalBytes = server.memoryTotalBytes ?: -1L
-			val memoryFreeBytes = server.memoryFreeBytes ?: -1L
-			val memoryUsedBytes = memoryTotalBytes - memoryFreeBytes
-			Log.d( Shared.logTag, "Memory Total: '${ memoryTotalBytes }' bytes, Memory Free: '${ memoryFreeBytes }' bytes, Memory Used: '${ memoryUsedBytes }' bytes" )
+			// Processor
+			val processorUsage = server.getProcessorUsage()
+			val processorFrequency = Frequency( server.getProcessorFrequency() )
+			val processorTemperature = server.getProcessorTemperature()
+			resourcesProcessorTextView.setTextIconColor( getColor( R.color.black ) )
+			resourcesProcessorTextView.setTextFromHTML( getString( R.string.serverTextViewResourcesProcessor ).format(
+				applicationContext.htmlColorText( processorUsage.atLeastRoundToString( 0.0f, 1 ).suffixWith( Shared.percentSymbol ), processorUsage.getAppropriateColor( Server.processorUsageWarningThreshold, Server.processorUsageDangerThreshold ) ),
+				applicationContext.htmlColorText( processorFrequency.amount.atLeastRoundToString( 0.0f, 1 ).suffixWith( processorFrequency.suffix ), server.processorFrequency.getAppropriateColor() ),
+				applicationContext.htmlColorText( processorTemperature.atLeastRoundToString( 0.0f, 1 ).suffixWith( Shared.degreesCelsiusSymbol ), processorTemperature.getAppropriateColor( Server.processorTemperatureWarningThreshold, Server.processorTemperatureDangerThreshold ) )
+			) )
 
-			val memoryUsed = Size( memoryUsedBytes )
+			// Memory
+			val memoryTotalBytes = server.getMemoryTotal()
+			val memoryFreeBytes = server.getMemoryFree()
+			val memoryUsedBytes = server.getMemoryUsed( memoryFreeBytes, memoryTotalBytes )
 			val memoryTotal = Size( memoryTotalBytes )
-			Log.d( Shared.logTag, "Memory Total: '${ memoryTotal.amount }' '${ memoryTotal.suffix }', Memory Used: '${ memoryUsed.amount }' '${ memoryUsed.suffix }'" )
-
+			val memoryUsed = Size( memoryUsedBytes )
 			val memoryUsage = server.getMemoryUsage()
-			Log.d( Shared.logTag, "Memory Usage: '${ memoryUsage }'" )
+			resourcesMemoryTextView.setTextIconColor( getColor( R.color.black ) )
+			resourcesMemoryTextView.setTextFromHTML( getString( R.string.serverTextViewResourcesMemory ).format (
+				applicationContext.htmlColorText( memoryUsed.amount.atLeastRoundToString( 0.0, 1 ).suffixWith( memoryUsed.suffix ), memoryUsedBytes.getAppropriateColor( Server.memoryUsedWarningThreshold( memoryTotalBytes ), Server.memoryUsedDangerThreshold( memoryTotalBytes ) ) ),
+				applicationContext.htmlColorText( memoryTotal.amount.atLeastRoundToString( 0.0, 1 ).suffixWith( memoryTotal.suffix ), memoryTotalBytes.getAppropriateColor() ),
+				applicationContext.htmlColorText( memoryUsage.roundToString( 0 ).suffixWith( Shared.percentSymbol ), memoryUsage.getAppropriateColor( Server.memoryUsageWarningThreshold, Server.memoryUsageDangerThreshold ) )
+			) )
 
-			resourcesMemoryTextView.setTextColor( getColor( R.color.black ) )
-			resourcesMemoryTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.black ) )
-			resourcesMemoryTextView.text = Html.fromHtml( String.format( getString( R.string.serverTextViewResourcesDataMemory, String.format(
-				getString( R.string.serverTextViewResourcesDataMemoryValue ),
-				createColorText( roundValueOrDefault( memoryUsed.amount, memoryUsed.suffix ), colorForValue( applicationContext, memoryUsedBytes, Server.memoryUsedWarningThreshold( memoryTotalBytes ), Server.memoryUsedDangerThreshold( memoryTotalBytes ) ) ),
-				createColorText( roundValueOrDefault( memoryTotal.amount, memoryTotal.suffix ), colorAsNeutral( applicationContext, memoryTotalBytes ) ),
-				createColorText( roundValueOrDefault( memoryUsage, Shared.percentSymbol ), colorForValue( applicationContext, memoryUsage, Server.memoryUsageWarningThreshold, Server.memoryUsageDangerThreshold ) )
-			) ) ), Html.FROM_HTML_MODE_LEGACY )
+		// The server is not running...
 		} else {
-			resourcesMemoryTextView.setTextColor( getColor( R.color.statusDead ) )
-			resourcesMemoryTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
-			resourcesMemoryTextView.text = String.format( getString( R.string.serverTextViewResourcesDataMemory ), createColorText( "Unknown", getColor( R.color.statusDead ) ) )
+
+			// Overall status
+			statusTextView.setTextColor( getColor( R.color.statusDead ) )
+			statusTextView.setTextFromHTML( getString( R.string.serverTextViewStatusGood ).format(
+				createColorText( "OFFLINE", getColor( R.color.statusDead ), true ),
+				TimeSpan( server.uptimeSeconds ).toString( true )
+			) )
+
+			// Processor
+			resourcesProcessorTextView.setTextIconColor( getColor( R.color.statusDead ) )
+			resourcesProcessorTextView.text = getString( R.string.serverTextViewResourcesProcessorUnknown )
+
+			// Memory
+			resourcesMemoryTextView.setTextIconColor( getColor( R.color.statusDead ) )
+			resourcesMemoryTextView.text = getString( R.string.serverTextViewResourcesMemoryUnknown )
+
 		}
+
+		// TODO: Rewrite the ones below here!
 
 		// Set the swap/page-file resource data
 		val swapName = if ( server.operatingSystem.contains( "Microsoft Windows" ) ) "Page" else "Swap"

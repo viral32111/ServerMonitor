@@ -29,6 +29,21 @@
 	<string name="serverTextViewResourcesDataFans">Fans: %s.</string>
 	<string name="serverTextViewResourcesDataFansValue">%s</string>
 
+	<string name="serverTextViewResourcesProcessorUnknown">Processor: Unknown.</string>
+	<string name="serverTextViewResourcesProcessor">Processor: %s at %s (%s).</string>
+	<string name="serverTextViewResourcesMemoryUnknown">Memory: Unknown.</string>
+	<string name="serverTextViewResourcesMemory">Memory: %s of %s (%s).</string>
+	<string name="serverTextViewResourcesSwapUnknown">%s: Unknown.</string>
+	<string name="serverTextViewResourcesSwap">%s: %s of %s (%s).</string>
+	<string name="serverTextViewResourcesNetworkUnknown">Network: Unknown.</string>
+	<string name="serverTextViewResourcesNetwork">Network: %s tx, %s rx.</string>
+	<string name="serverTextViewResourcesDriveUnknown">Drive: Unknown.</string>
+	<string name="serverTextViewResourcesDrive">Drive: %s write, %s read.</string>
+	<string name="serverTextViewResourcesPowerUnknown">Power: Unknown.</string>
+	<string name="serverTextViewResourcesPower">Power: %s of %s.</string>
+	<string name="serverTextViewResourcesFansUnknown">Fans: Unknown.</string>
+	<string name="serverTextViewResourcesFans">Fans: %s.</string>
+
 	<!-- Network interfaces section -->
 	<string name="serverTextViewNetworkTitle">Network Interfaces</string>
 	<string name="serverTextViewNetworkUnknown">The status of interfaces is unknown.</string>

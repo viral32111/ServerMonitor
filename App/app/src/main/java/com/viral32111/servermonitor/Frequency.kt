@@ -6,34 +6,38 @@ package com.viral32111.servermonitor
  * @property amount The hertz converted to its appropriate notation.
  * @property suffix The suffix for the appropriate notation.
  */
-class Frequency( hertz: Long ) {
+class Frequency( hertz: Int ) {
 
 	// Use 1000 (SI), not 1024
 	companion object {
-		private const val KILOHERTZ = 1000.0;
-		private const val MEGAHERTZ = KILOHERTZ * 1000.0;
-		private const val GIGAHERTZ = MEGAHERTZ * 1000.0;
+		private const val KILOHERTZ = 1000.0f
+		private const val MEGAHERTZ = KILOHERTZ * 1000.0f
+		private const val GIGAHERTZ = MEGAHERTZ * 1000.0f
 	}
 
-	val amount: Double
+	val amount: Float
 	val suffix: String
 
 	init {
-		val kilohertz: Double = hertz / KILOHERTZ
-		val megahertz: Double = hertz / MEGAHERTZ
-		val gigahertz: Double = hertz / GIGAHERTZ
+		val kilohertz: Float = hertz / KILOHERTZ
+		val megahertz: Float = hertz / MEGAHERTZ
+		val gigahertz: Float = hertz / GIGAHERTZ
 
-		if ( gigahertz >= 1.0 ) {
+		if ( hertz < 0 ) {
+			amount = 0.0f
+			suffix = "Hz"
+
+		} else if ( gigahertz >= 1.0f ) {
 			amount = gigahertz
 			suffix = "GHz"
-		} else if ( megahertz >= 1.0 ) {
+		} else if ( megahertz >= 1.0f ) {
 			amount = megahertz
 			suffix = "MHz"
-		} else if ( kilohertz >= 1.0 ) {
+		} else if ( kilohertz >= 1.0f ) {
 			amount = kilohertz
 			suffix = "kHz"
 		} else {
-			amount = hertz.toDouble()
+			amount = hertz.toFloat() // Also pointless
 			suffix = "Hz"
 		}
 	}
