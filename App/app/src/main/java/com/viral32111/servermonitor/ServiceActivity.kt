@@ -213,7 +213,7 @@ class ServiceActivity : AppCompatActivity() {
 								if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
 
 								// Get this service
-								val service = server.services?.find { service -> service.serviceName == serviceName }
+								val service = server.getServices().find { service -> service.serviceName == serviceName }
 								if ( service != null ) {
 
 									// Update the UI
@@ -332,7 +332,7 @@ class ServiceActivity : AppCompatActivity() {
 								if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
 
 								// Get this service
-								val service = server.services?.find { service -> service.serviceName == serviceName }
+								val service = server.getServices().find { service -> service.serviceName == serviceName }
 								if ( service != null ) {
 
 									// Update the UI
@@ -590,7 +590,7 @@ class ServiceActivity : AppCompatActivity() {
 						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
 
 						// Get this service
-						val service = server.services?.find { service -> service.serviceName == serviceName }
+						val service = server.getServices().find { service -> service.serviceName == serviceName }
 						if ( service != null ) {
 							Log.d( Shared.logTag, "Got service '${ service.serviceName }' ('${ service.displayName }', '${ service.description }')" )
 

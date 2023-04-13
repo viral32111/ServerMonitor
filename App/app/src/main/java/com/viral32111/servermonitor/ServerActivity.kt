@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.text.Html
 import android.util.Log
 import android.view.View
 import android.view.animation.Animation
@@ -29,7 +28,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.math.roundToLong
 
 class ServerActivity : AppCompatActivity() {
 
@@ -165,14 +163,14 @@ class ServerActivity : AppCompatActivity() {
 		snmpStatusTextView = findViewById( R.id.serverSNMPStatusTextView )
 		snmpRecyclerView = findViewById( R.id.serverSNMPRecyclerView )
 
-		// Default to unknown for all resources - the text is already grey as defined in layout, so no need to call createColorText()
-		resourcesProcessorTextView.text = String.format( getString( R.string.serverTextViewResourcesDataProcessor ), String.format( getString( R.string.serverTextViewResourcesDataProcessorValue ), "0%", "0Hz", "0℃" ) )
-		resourcesMemoryTextView.text = String.format( getString( R.string.serverTextViewResourcesDataMemory ), String.format( getString( R.string.serverTextViewResourcesDataMemoryValue ), "0B", "0B", "0%" ) )
-		resourcesSwapTextView.text = String.format( getString( R.string.serverTextViewResourcesDataSwap ), "Swap", String.format( getString( R.string.serverTextViewResourcesDataSwapValue ), "0B", "0B", "0%" ) ) // Assume name is swap, probably fine as most servers are Linux
-		resourcesNetworkTextView.text = String.format( getString( R.string.serverTextViewResourcesDataNetwork ), String.format( getString( R.string.serverTextViewResourcesDataNetworkValue ), "0B/s", "0B/s" ) )
-		resourcesDriveTextView.text = String.format( getString( R.string.serverTextViewResourcesDataDrive ), String.format( getString( R.string.serverTextViewResourcesDataDriveValue ), "0B/s", "0B/s" ) )
-		resourcesPowerTextView.text = String.format( getString( R.string.serverTextViewResourcesDataPower ), String.format( getString( R.string.serverTextViewResourcesDataPowerValue ), "0W", "0W" ) )
-		resourcesFansTextView.text =String.format( getString( R.string.serverTextViewResourcesDataFans ), String.format( getString( R.string.serverTextViewResourcesDataFansValue ), "0RPM" ) )
+		// Default to unknown for all resources - the text is already grey as defined in layout, so no need color it here
+		resourcesProcessorTextView.text = getString( R.string.serverTextViewResourcesProcessor ).format( "0%", "0Hz", "0℃" )
+		resourcesMemoryTextView.text = getString( R.string.serverTextViewResourcesMemory ).format( "0B", "0B", "0%" )
+		resourcesSwapTextView.text = getString( R.string.serverTextViewResourcesSwap ).format( "Swap", "0B", "0B", "0%" ) // Assume name is swap, probably fine as most servers are Linux
+		resourcesNetworkTextView.text = getString( R.string.serverTextViewResourcesNetwork ).format( "0B/s", "0B/s" )
+		resourcesDriveTextView.text = getString( R.string.serverTextViewResourcesDrive ).format( "0B/s", "0B/s" )
+		resourcesPowerTextView.text = getString( R.string.serverTextViewResourcesPower ).format( "0W", "0W" )
+		resourcesFansTextView.text = getString( R.string.serverTextViewResourcesFans ).format( "0RPM" )
 
 		// Get the settings
 		settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE ) )
@@ -722,260 +720,158 @@ class ServerActivity : AppCompatActivity() {
 		actionShutdownButton.isEnabled = server.isShutdownActionSupported == true
 		actionRebootButton.isEnabled = server.isRebootActionSupported == true
 
+		// Swap should be called page file if this server is running Windows
+		val swapName = if ( server.isOperatingSystemWindows() ) "Page File" else "Swap"
+
 		// Is the server running?
 		if ( server.isOnline() ) {
 
-			// Overall status - https://stackoverflow.com/a/37899914
+			// Overall status
 			statusTextView.setTextColor( getColor( R.color.black ) )
-			statusTextView.setTextFromHTML( getString( R.string.serverTextViewStatusGood ).format(
-				createColorText( "ONLINE", getColor( R.color.statusGood ), true ),
+			statusTextView.setTextFromHTML( getString( R.string.serverTextViewStatus ).format(
+				createColorText( getString( R.string.serverTextViewStatusOnline ), getColor( R.color.statusGood ), true ),
 				TimeSpan( server.uptimeSeconds ).toString( true )
 			) )
 
-			// Processor
+			// Resources -> Processor
 			val processorUsage = server.getProcessorUsage()
 			val processorFrequency = Frequency( server.getProcessorFrequency() )
 			val processorTemperature = server.getProcessorTemperature()
 			resourcesProcessorTextView.setTextIconColor( getColor( R.color.black ) )
 			resourcesProcessorTextView.setTextFromHTML( getString( R.string.serverTextViewResourcesProcessor ).format(
-				applicationContext.htmlColorText( processorUsage.atLeastRoundToString( 0.0f, 1 ).suffixWith( Shared.percentSymbol ), processorUsage.getAppropriateColor( Server.processorUsageWarningThreshold, Server.processorUsageDangerThreshold ) ),
-				applicationContext.htmlColorText( processorFrequency.amount.atLeastRoundToString( 0.0f, 1 ).suffixWith( processorFrequency.suffix ), server.processorFrequency.getAppropriateColor() ),
-				applicationContext.htmlColorText( processorTemperature.atLeastRoundToString( 0.0f, 1 ).suffixWith( Shared.degreesCelsiusSymbol ), processorTemperature.getAppropriateColor( Server.processorTemperatureWarningThreshold, Server.processorTemperatureDangerThreshold ) )
+				applicationContext.createHTMLColoredText( processorUsage.atLeastRoundToString( 0.0f, 1 ).suffixWith( Shared.percentSymbol ), processorUsage.getAppropriateColor( Server.processorUsageWarningThreshold, Server.processorUsageDangerThreshold ) ),
+				applicationContext.createHTMLColoredText( processorFrequency.amount.atLeastRoundToString( 0.0f, 1 ).suffixWith( processorFrequency.suffix ), server.processorFrequency.getAppropriateColor() ),
+				applicationContext.createHTMLColoredText( processorTemperature.atLeastRoundToString( 0.0f, 1 ).suffixWith( Shared.degreesCelsiusSymbol ), processorTemperature.getAppropriateColor( Server.processorTemperatureWarningThreshold, Server.processorTemperatureDangerThreshold ) )
 			) )
 
-			// Memory
+			// Resources -> Memory
 			val memoryTotalBytes = server.getMemoryTotal()
 			val memoryFreeBytes = server.getMemoryFree()
 			val memoryUsedBytes = server.getMemoryUsed( memoryFreeBytes, memoryTotalBytes )
 			val memoryTotal = Size( memoryTotalBytes )
 			val memoryUsed = Size( memoryUsedBytes )
-			val memoryUsage = server.getMemoryUsage()
+			val memoryUsage = server.getMemoryUsage( memoryFreeBytes, memoryTotalBytes )
 			resourcesMemoryTextView.setTextIconColor( getColor( R.color.black ) )
-			resourcesMemoryTextView.setTextFromHTML( getString( R.string.serverTextViewResourcesMemory ).format (
-				applicationContext.htmlColorText( memoryUsed.amount.atLeastRoundToString( 0.0, 1 ).suffixWith( memoryUsed.suffix ), memoryUsedBytes.getAppropriateColor( Server.memoryUsedWarningThreshold( memoryTotalBytes ), Server.memoryUsedDangerThreshold( memoryTotalBytes ) ) ),
-				applicationContext.htmlColorText( memoryTotal.amount.atLeastRoundToString( 0.0, 1 ).suffixWith( memoryTotal.suffix ), memoryTotalBytes.getAppropriateColor() ),
-				applicationContext.htmlColorText( memoryUsage.roundToString( 0 ).suffixWith( Shared.percentSymbol ), memoryUsage.getAppropriateColor( Server.memoryUsageWarningThreshold, Server.memoryUsageDangerThreshold ) )
+			resourcesMemoryTextView.setTextFromHTML( getString( R.string.serverTextViewResourcesMemory ).format(
+				applicationContext.createHTMLColoredText( memoryUsed.amount.atLeastRoundToString( 0.0, 1 ).suffixWith( memoryUsed.suffix ), memoryUsedBytes.getAppropriateColor( Server.memoryUsedWarningThreshold( memoryTotalBytes ), Server.memoryUsedDangerThreshold( memoryTotalBytes ) ) ),
+				applicationContext.createHTMLColoredText( memoryTotal.amount.atLeastRoundToString( 0.0, 1 ).suffixWith( memoryTotal.suffix ), memoryTotalBytes.getAppropriateColor() ),
+				applicationContext.createHTMLColoredText( memoryUsage.roundToString( 1 ).suffixWith( Shared.percentSymbol ), memoryUsage.getAppropriateColor( Server.memoryUsageWarningThreshold, Server.memoryUsageDangerThreshold ) )
 			) )
 
-		// The server is not running...
-		} else {
-
-			// Overall status
-			statusTextView.setTextColor( getColor( R.color.statusDead ) )
-			statusTextView.setTextFromHTML( getString( R.string.serverTextViewStatusGood ).format(
-				createColorText( "OFFLINE", getColor( R.color.statusDead ), true ),
-				TimeSpan( server.uptimeSeconds ).toString( true )
-			) )
-
-			// Processor
-			resourcesProcessorTextView.setTextIconColor( getColor( R.color.statusDead ) )
-			resourcesProcessorTextView.text = getString( R.string.serverTextViewResourcesProcessorUnknown )
-
-			// Memory
-			resourcesMemoryTextView.setTextIconColor( getColor( R.color.statusDead ) )
-			resourcesMemoryTextView.text = getString( R.string.serverTextViewResourcesMemoryUnknown )
-
-		}
-
-		// TODO: Rewrite the ones below here!
-
-		// Set the swap/page-file resource data
-		val swapName = if ( server.operatingSystem.contains( "Microsoft Windows" ) ) "Page" else "Swap"
-		if ( server.isOnline() ) {
-			val swapTotalBytes = server.swapTotalBytes ?: -1L
-			val swapFreeBytes = server.swapFreeBytes ?: -1L
-			val swapUsedBytes = if ( swapTotalBytes >= 0L && swapFreeBytes >= 0L ) swapTotalBytes - swapFreeBytes else -1L
-			Log.d( Shared.logTag, "Swap Total: '${ swapTotalBytes }' bytes, Swap Free: '${ swapFreeBytes }' bytes, Swap Used: '${ swapUsedBytes }' bytes" )
-
-			val swapUsed = Size( swapUsedBytes )
+			// Resources -> Swap
+			val swapTotalBytes = server.getSwapTotal()
+			val swapFreeBytes = server.getSwapFree()
+			val swapUsedBytes = server.getSwapUsed( swapFreeBytes, swapTotalBytes )
 			val swapTotal = Size( swapTotalBytes )
-			Log.d( Shared.logTag, "Swap Total: '${ swapTotal.amount }' '${ swapTotal.suffix }', Swap Used: '${ swapUsed.amount }' '${ swapUsed.suffix }'" )
+			val swapUsed = Size( swapUsedBytes )
+			val swapUsage = server.getSwapUsage( swapFreeBytes, swapTotalBytes )
+			resourcesSwapTextView.setTextIconColor( getColor( R.color.black ) )
+			resourcesSwapTextView.setTextFromHTML( getString( R.string.serverTextViewResourcesSwap ).format(
+				swapName,
+				applicationContext.createHTMLColoredText( swapUsed.amount.atLeastRoundToString( 0.0, 1 ).suffixWith( swapUsed.suffix ), swapUsedBytes.getAppropriateColor( Server.swapUsedWarningThreshold( swapTotalBytes ), Server.swapUsedDangerThreshold( swapTotalBytes ) ) ),
+				applicationContext.createHTMLColoredText( swapTotal.amount.atLeastRoundToString( 0.0, 1 ).suffixWith( swapTotal.suffix ), swapTotalBytes.getAppropriateColor() ),
+				applicationContext.createHTMLColoredText( swapUsage.roundToString( 1 ).suffixWith( Shared.percentSymbol ), swapUsage.getAppropriateColor( Server.swapUsageWarningThreshold, Server.swapUsageDangerThreshold ) )
+			) )
 
-			val swapUsage = server.getSwapUsage()
-			Log.d( Shared.logTag, "Swap Usage: '${ swapUsage }'" )
-
-			resourcesSwapTextView.setTextColor( getColor( R.color.black ) )
-			resourcesSwapTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.black ) )
-			resourcesSwapTextView.text = Html.fromHtml(
-				String.format( getString( R.string.serverTextViewResourcesDataSwap ),
-					swapName,
-					String.format( getString( R.string.serverTextViewResourcesDataSwapValue ),
-						createColorText( roundValueOrDefault( swapUsed.amount, swapUsed.suffix ), colorForValue( applicationContext, swapUsedBytes, Server.swapUsedWarningThreshold( swapTotalBytes ), Server.swapUsedDangerThreshold( swapTotalBytes ) ) ),
-						createColorText( roundValueOrDefault( swapTotal.amount, swapTotal.suffix ), colorAsNeutral( applicationContext, swapTotalBytes ) ),
-						createColorText( roundValueOrDefault( swapUsage, Shared.percentSymbol ), colorForValue( applicationContext, swapUsage, Server.swapUsageWarningThreshold, Server.swapUsageDangerThreshold ) )
-					)
-				), Html.FROM_HTML_MODE_LEGACY )
-		} else {
-			resourcesSwapTextView.setTextColor( getColor( R.color.statusDead ) )
-			resourcesSwapTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
-			resourcesSwapTextView.text = String.format( getString( R.string.serverTextViewResourcesDataSwap ), swapName, createColorText( "Unknown", getColor( R.color.statusDead ) ) )
-		}
-
-		// Set the network resource data (this is a total of all interfaces)
-		if ( server.isOnline() ) {
-			val networkTransmitRateBytes = server.networkInterfaces?.fold( 0L ) { total, networkInterface -> total + networkInterface.rateBytesSent } ?: -1L
-			val networkReceiveRateBytes = server.networkInterfaces?.fold( 0L ) { total, networkInterface -> total + networkInterface.rateBytesReceived } ?: -1L
-			Log.d( Shared.logTag, "Network Transmit Rate: '${ networkTransmitRateBytes }' bytes, Network Receive Rate: '${ networkReceiveRateBytes }' bytes" )
-
+			// Resources -> Network I/O
+			val networkTransmitRateBytes = server.getNetworkTotalTransmitRate()
+			val networkReceiveRateBytes = server.getNetworkTotalReceiveRate()
 			val networkTransmitRate = Size( networkTransmitRateBytes )
 			val networkReceiveRate = Size( networkReceiveRateBytes )
-			Log.d( Shared.logTag, "Network Transmit Rate: '${ networkTransmitRate.amount }' '${ networkTransmitRate.suffix }', Network Receive Rate: '${ networkReceiveRate.amount }' '${ networkReceiveRate.suffix }'" )
+			resourcesNetworkTextView.setTextIconColor( getColor( R.color.black ) )
+			resourcesNetworkTextView.setTextFromHTML( getString( R.string.serverTextViewResourcesNetwork ).format(
+				applicationContext.createHTMLColoredText( networkTransmitRate.amount.atLeastRoundToString( 0.0, 1 ).suffixWith( networkTransmitRate.suffix.concat( "/s" ) ), networkTransmitRateBytes.getAppropriateColor( NetworkInterface.transmitRateWarningThreshold, NetworkInterface.transmitRateDangerThreshold ) ),
+				applicationContext.createHTMLColoredText( networkReceiveRate.amount.atLeastRoundToString( 0.0, 1 ).suffixWith( networkReceiveRate.suffix.concat( "/s" ) ), networkReceiveRateBytes.getAppropriateColor( NetworkInterface.receiveRateWarningThreshold, NetworkInterface.receiveRateDangerThreshold ) )
+			) )
 
-			resourcesNetworkTextView.setTextColor( getColor( R.color.black ) )
-			resourcesNetworkTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.black ) )
-			resourcesNetworkTextView.text = Html.fromHtml( String.format( getString( R.string.serverTextViewResourcesDataNetwork ), String.format( getString( R.string.serverTextViewResourcesDataNetworkValue ),
-				createColorText( roundValueOrDefault( networkTransmitRate.amount, networkTransmitRate.suffix + "/s" ), colorForValue( applicationContext, networkTransmitRateBytes, Server.networkTransmitRateWarningThreshold, Server.networkTransmitRateDangerThreshold ) ),
-				createColorText( roundValueOrDefault( networkReceiveRate.amount, networkReceiveRate.suffix + "/s" ), colorForValue( applicationContext, networkReceiveRateBytes, Server.networkReceiveRateWarningThreshold, Server.networkReceiveRateDangerThreshold ) )
-			) ), Html.FROM_HTML_MODE_LEGACY )
-		} else {
-			resourcesNetworkTextView.setTextColor( getColor( R.color.statusDead ) )
-			resourcesNetworkTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
-			resourcesNetworkTextView.text = String.format( getString( R.string.serverTextViewResourcesDataNetwork ), createColorText( "Unknown", getColor( R.color.statusDead ) ) )
-		}
-
-		// Set the drive resource data (this is a total of all drives)
-		if ( server.isOnline() ) {
-			val driveReadRateBytes = server.drives?.fold( 0L ) { total, drive -> total + drive.rateBytesRead } ?: -1L
-			val driveWriteRateBytes = server.drives?.fold( 0L ) { total, drive -> total + drive.rateBytesWritten } ?: -1L
-			Log.d( Shared.logTag, "Drive Read Rate: '${ driveReadRateBytes }' bytes, Drive Write Rate: '${ driveWriteRateBytes }' bytes" )
-
+			// Resources -> Drive I/O
+			val driveReadRateBytes = server.getDriveTotalReadRate()
+			val driveWriteRateBytes = server.getDriveTotalWriteRate()
 			val driveReadRate = Size( driveReadRateBytes )
 			val driveWriteRate = Size( driveWriteRateBytes )
-			Log.d( Shared.logTag, "Drive Read Rate: '${ driveReadRate.amount }' '${ driveReadRate.suffix }', Drive Write Rate: '${ driveWriteRate.amount }' '${ driveWriteRate.suffix }'" )
+			resourcesDriveTextView.setTextIconColor( getColor( R.color.black ) )
+			resourcesDriveTextView.setTextFromHTML( getString( R.string.serverTextViewResourcesDrive ).format(
+				applicationContext.createHTMLColoredText( driveReadRate.amount.atLeastRoundToString( 0.0, 1 ).suffixWith( driveReadRate.suffix.concat( "/s" ) ), driveReadRateBytes.getAppropriateColor( Drive.readRateWarningThreshold, Drive.readRateDangerThreshold ) ),
+				applicationContext.createHTMLColoredText( driveWriteRate.amount.atLeastRoundToString( 0.0, 1 ).suffixWith( driveWriteRate.suffix.concat( "/s" ) ), driveWriteRateBytes.getAppropriateColor( Drive.writeRateWarningThreshold, Drive.writeRateDangerThreshold ) )
+			) )
 
-			resourcesDriveTextView.setTextColor( getColor( R.color.black ) )
-			resourcesDriveTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.black ) )
-			resourcesDriveTextView.text = Html.fromHtml( String.format( getString( R.string.serverTextViewResourcesDataDrive ), String.format( getString( R.string.serverTextViewResourcesDataDriveValue ),
-				createColorText( roundValueOrDefault( driveReadRate.amount, driveReadRate.suffix + "/s" ), colorForValue( applicationContext, driveReadRateBytes, Server.driveReadRateWarningThreshold, Server.driveReadRateDangerThreshold ) ),
-				createColorText( roundValueOrDefault( driveWriteRate.amount, driveWriteRate.suffix + "/s" ), colorForValue( applicationContext, driveWriteRateBytes, Server.driveWriteRateWarningThreshold, Server.driveWriteRateDangerThreshold ) )
-			) ), Html.FROM_HTML_MODE_LEGACY )
-		} else {
-			resourcesDriveTextView.setTextColor( getColor( R.color.statusDead ) )
-			resourcesDriveTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
-			resourcesDriveTextView.text = String.format( getString( R.string.serverTextViewResourcesDataDrive ), createColorText( "Unknown", getColor( R.color.statusDead ) ) )
-		}
+			// TODO: Power & fans
 
-		// TODO: Power resource data
-
-		// TODO: Fans resource data
-
-		// Network interfaces
-		if ( server.isOnline() ) {
-			val networkInterfaces = server.networkInterfaces?.reversedArray()
-			if ( networkInterfaces != null && networkInterfaces.isNotEmpty() ) {
+			// Network Interfaces
+			val networkInterfaces = server.getNetworkInterfaces()
+			if ( networkInterfaces.isNotEmpty() ) {
 				networkStatusTextView.visibility = View.GONE
-				networkRecyclerView.visibility = View.VISIBLE
 
-				val networkInterfacesAdapter = NetworkInterfaceAdapter( networkInterfaces, applicationContext )
-				networkRecyclerView.adapter = networkInterfacesAdapter
-				networkInterfacesAdapter.notifyItemRangeChanged( 0, networkInterfaces.size )
+				networkRecyclerView.adapter = NetworkInterfaceAdapter( networkInterfaces, applicationContext )
+				networkRecyclerView.adapter?.notifyItemRangeChanged( 0, networkInterfaces.size )
+				networkRecyclerView.visibility = View.VISIBLE
 			} else {
 				networkRecyclerView.visibility = View.GONE
 
-				networkStatusTextView.visibility = View.VISIBLE
-				networkStatusTextView.setTextColor( getColor( R.color.statusDead ) )
-				networkStatusTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
+				networkStatusTextView.setTextIconColor( getColor( R.color.statusDead ) )
 				networkStatusTextView.text = getString( R.string.serverTextViewNetworkEmpty )
+				networkStatusTextView.visibility = View.VISIBLE
 			}
-		} else {
-			networkRecyclerView.visibility = View.GONE
 
-			networkStatusTextView.visibility = View.VISIBLE
-			networkStatusTextView.setTextColor( getColor( R.color.statusDead ) )
-			networkStatusTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
-			networkStatusTextView.text = getString( R.string.serverTextViewNetworkUnknown )
-		}
-
-		// Drives
-		if ( server.isOnline() ) {
-			val drives = server.drives
-			if ( drives != null && drives.isNotEmpty() ) {
+			// Drives
+			val drives = server.getDrives()
+			if ( drives.isNotEmpty() ) {
 				drivesStatusTextView.visibility = View.GONE
-				drivesRecyclerView.visibility = View.VISIBLE
 
-				val drivesAdapter = DriveAdapter( drives, applicationContext )
-				drivesRecyclerView.adapter = drivesAdapter
-				drivesAdapter.notifyItemRangeChanged( 0, drives.size )
+				drivesRecyclerView.adapter = DriveAdapter( drives, applicationContext )
+				drivesRecyclerView.adapter?.notifyItemRangeChanged( 0, drives.size )
+				drivesRecyclerView.visibility = View.VISIBLE
 			} else {
 				drivesRecyclerView.visibility = View.GONE
 
-				drivesStatusTextView.visibility = View.VISIBLE
-				drivesStatusTextView.setTextColor( getColor( R.color.statusDead ) )
-				drivesStatusTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
+				drivesStatusTextView.setTextIconColor( getColor( R.color.statusDead ) )
 				drivesStatusTextView.text = getString( R.string.serverTextViewDrivesEmpty )
+				drivesStatusTextView.visibility = View.VISIBLE
 			}
-		} else {
-			drivesRecyclerView.visibility = View.GONE
 
-			drivesStatusTextView.visibility = View.VISIBLE
-			drivesStatusTextView.setTextColor( getColor( R.color.statusDead ) )
-			drivesStatusTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
-			drivesStatusTextView.text = getString( R.string.serverTextViewDrivesUnknown )
-		}
-
-		// Services
-		if ( server.isOnline() ) {
-			val services = server.services?.let { sortServices( it ) }
-
-			if ( services != null && services.isNotEmpty() ) {
+			// Services
+			val services = server.getSortedServices()
+			if ( services.isNotEmpty() ) {
 				servicesStatusTextView.visibility = View.GONE
-				servicesRecyclerView.visibility = View.VISIBLE
 
-				val servicesAdapter = ServiceAdapter( services, applicationContext ) { service -> onServiceManagePressed( service ) }
-				servicesRecyclerView.adapter = servicesAdapter
-				servicesAdapter.notifyItemRangeChanged( 0, services.size )
+				servicesRecyclerView.adapter = ServiceAdapter( services, applicationContext ) { service -> onServiceManagePressed( service ) }
+				servicesRecyclerView.adapter?.notifyItemRangeChanged( 0, services.size )
+				servicesRecyclerView.visibility = View.VISIBLE
 			} else {
 				servicesRecyclerView.visibility = View.GONE
 
-				servicesStatusTextView.visibility = View.VISIBLE
-				servicesStatusTextView.setTextColor( getColor( R.color.statusDead ) )
-				servicesStatusTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
+				servicesStatusTextView.setTextIconColor( getColor( R.color.statusDead ) )
 				servicesStatusTextView.text = getString( R.string.serverTextViewServicesEmpty )
+				servicesStatusTextView.visibility = View.VISIBLE
 			}
-		} else {
-			servicesRecyclerView.visibility = View.GONE
 
-			servicesStatusTextView.visibility = View.VISIBLE
-			servicesStatusTextView.setTextColor( getColor( R.color.statusDead ) )
-			servicesStatusTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
-			servicesStatusTextView.text = getString( R.string.serverTextViewServicesUnknown )
-		}
-
-		// Docker containers
-		if ( server.isOnline() ) {
-			val dockerContainers = server.dockerContainers
-
-			if ( dockerContainers != null && dockerContainers.isNotEmpty() ) {
+			// Docker Containers
+			val dockerContainers = server.getDockerContainers()
+			if ( dockerContainers.isNotEmpty() ) {
 				dockerStatusTextView.visibility = View.GONE
-				dockerRecyclerView.visibility = View.VISIBLE
 
-				val dockerContainersAdapter = DockerContainerAdapter( dockerContainers, applicationContext )
-				dockerRecyclerView.adapter = dockerContainersAdapter
-				dockerContainersAdapter.notifyItemRangeChanged( 0, dockerContainers.size )
+				dockerRecyclerView.adapter = DockerContainerAdapter( dockerContainers, applicationContext )
+				dockerRecyclerView.adapter?.notifyItemRangeChanged( 0, dockerContainers.size )
+				dockerRecyclerView.visibility = View.VISIBLE
 			} else {
 				dockerRecyclerView.visibility = View.GONE
 
-				dockerStatusTextView.visibility = View.VISIBLE
-				dockerStatusTextView.setTextColor( getColor( R.color.statusDead ) )
-				dockerStatusTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
+				dockerStatusTextView.setTextIconColor( getColor( R.color.statusDead ) )
 				dockerStatusTextView.text = getString( R.string.serverTextViewDockerEmpty )
+				dockerStatusTextView.visibility = View.VISIBLE
 			}
-		} else {
-			dockerRecyclerView.visibility = View.GONE
 
-			dockerStatusTextView.visibility = View.VISIBLE
-			dockerStatusTextView.setTextColor( getColor( R.color.statusDead ) )
-			dockerStatusTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
-			dockerStatusTextView.text = getString( R.string.serverTextViewDockerUnknown )
-		}
+			// SNMP Community
+			val snmpCommunityName = server.snmpCommunity
+			if ( snmpCommunityName != null ) {
+				snmpTitleTextView.setTextFromHTML( getString( R.string.serverTextViewSNMPTitleCommunity ).format( snmpCommunityName.asHTMLItalic() ) )
+			} else {
+				snmpTitleTextView.text = getString( R.string.serverTextViewSNMPTitle )
+			}
 
-		// SNMP
-		if ( server.isOnline() ) {
-			snmpTitleTextView.text = Html.fromHtml( String.format( getString( R.string.serverTextViewSNMPTitleCommunity ), "<em>${ server.snmpCommunity }</em>" ), Html.FROM_HTML_MODE_LEGACY )
-
-			val snmpAgents = server.snmpAgents
-
-			if ( snmpAgents != null && snmpAgents.isNotEmpty() ) {
+			// SNMP Agents
+			val snmpAgents = server.getSNMPAgents()
+			if ( snmpAgents.isNotEmpty() ) {
 				snmpStatusTextView.visibility = View.GONE
 				snmpRecyclerView.visibility = View.VISIBLE
 
@@ -990,15 +886,73 @@ class ServerActivity : AppCompatActivity() {
 				snmpStatusTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
 				snmpStatusTextView.text = getString( R.string.serverTextViewSNMPEmpty )
 			}
+
+		// The server is not running...
 		} else {
+
+			// Overall status
+			statusTextView.setTextColor( getColor( R.color.statusDead ) )
+			statusTextView.setTextFromHTML( getString( R.string.serverTextViewStatus ).format(
+				applicationContext.createHTMLColoredText( getString( R.string.serverTextViewStatusOffline ), getColor( R.color.statusDead ) ).asHTMLBold(),
+				getString( R.string.serverTextViewStatusOfflineUptime )
+			) )
+
+			// Resources -> Processor
+			resourcesProcessorTextView.setTextIconColor( getColor( R.color.statusDead ) )
+			resourcesProcessorTextView.text = getString( R.string.serverTextViewResourcesProcessorUnknown )
+
+			// Resources -> Memory
+			resourcesMemoryTextView.setTextIconColor( getColor( R.color.statusDead ) )
+			resourcesMemoryTextView.text = getString( R.string.serverTextViewResourcesMemoryUnknown )
+
+			// Resources -> Swap
+			resourcesSwapTextView.setTextIconColor( getColor( R.color.statusDead ) )
+			resourcesSwapTextView.text = getString( R.string.serverTextViewResourcesSwapUnknown )
+
+			// Resources -> Network I/O
+			resourcesNetworkTextView.setTextIconColor( getColor( R.color.statusDead ) )
+			resourcesNetworkTextView.text = getString( R.string.serverTextViewResourcesNetworkUnknown )
+
+			// Resources -> Drive I/O
+			resourcesDriveTextView.setTextColor( getColor( R.color.statusDead ) )
+			resourcesDriveTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
+			resourcesDriveTextView.text = getString( R.string.serverTextViewResourcesDriveUnknown )
+
+			// TODO: Power & fans
+
+			// Network Interfaces
+			networkRecyclerView.visibility = View.GONE
+			networkStatusTextView.setTextIconColor( getColor( R.color.statusDead ) )
+			networkStatusTextView.text = getString( R.string.serverTextViewNetworkUnknown )
+			networkStatusTextView.visibility = View.VISIBLE
+
+			// Drives
+			drivesRecyclerView.visibility = View.GONE
+			drivesStatusTextView.setTextIconColor( getColor( R.color.statusDead ) )
+			drivesStatusTextView.text = getString( R.string.serverTextViewDrivesUnknown )
+			drivesStatusTextView.visibility = View.VISIBLE
+
+			// Services
+			servicesRecyclerView.visibility = View.GONE
+			servicesStatusTextView.setTextIconColor( getColor( R.color.statusDead ) )
+			servicesStatusTextView.text = getString( R.string.serverTextViewServicesUnknown )
+			servicesStatusTextView.visibility = View.VISIBLE
+
+			// Docker Containers
+			dockerRecyclerView.visibility = View.GONE
+			dockerStatusTextView.setTextIconColor( getColor( R.color.statusDead ) )
+			dockerStatusTextView.text = getString( R.string.serverTextViewDockerUnknown )
+			dockerStatusTextView.visibility = View.VISIBLE
+
+			// SNMP Community
 			snmpTitleTextView.text = getString( R.string.serverTextViewSNMPTitle )
 
+			// SNMP Agents
 			snmpRecyclerView.visibility = View.GONE
-
-			snmpStatusTextView.visibility = View.VISIBLE
-			snmpStatusTextView.setTextColor( getColor( R.color.statusDead ) )
-			snmpStatusTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
+			snmpStatusTextView.setTextIconColor( getColor( R.color.statusDead ) )
 			snmpStatusTextView.text = getString( R.string.serverTextViewSNMPUnknown )
+			snmpStatusTextView.visibility = View.VISIBLE
+
 		}
 
 	}
@@ -1015,55 +969,6 @@ class ServerActivity : AppCompatActivity() {
 		overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
 	}
 
-	// Sorts the services before showing them - https://stackoverflow.com/a/59402330
-	private fun sortServices( services: Array<Service> ): Array<Service> {
-
-		// Convert fixed array to list
-		val servicesCopy = arrayListOf<Service>().apply { addAll( services ) }
-
-		// Sort by name in alphabetical order - https://stackoverflow.com/a/53354117
-		servicesCopy.sortBy { it.displayName }
-
-		// Sort by status code - groups up services with the same status (running, stopped, etc.)
-		servicesCopy.sortWith( Comparator { service1: Service, service2: Service ->
-			return@Comparator service1.statusCode - service2.statusCode
-		} )
-
-		// Sort by familiar services - groups up commonly used/recognised services
-		servicesCopy.sortWith( compareBy { it.serviceName in arrayOf(
-
-			// Windows
-			"Schedule", "EventLog",
-			"pla", // Performance Logs & Alerts
-			"VBoxService", // VirtualBox Guest Additions
-			"wuauserv", // Windows Update
-			"W32Time", // Windows Time
-			"mpssvc", // Windows Defender Firewall
-			"TermService", // Remote Desktop Services
-			"Cloudflared",
-			"Dhcp", "DHCPServer",
-			"Dnscache", "DNS",
-			"SNMP", "SNMPTRAP",
-
-			// Linux
-			"apparmor",
-			"thermald",
-			"snapd", "unattended-upgrades",
-			"lvm2-monitor", "lvm",
-			"cloudflared",
-			"ssh", "sshd", "ssh-agent",
-			"docker", "dockerd", "containerd",
-
-		) } )
-
-		// Reverse the order - moves familiar & running services to the top
-		servicesCopy.reverse()
-
-		// Convert back to fixed array before returning
-		return servicesCopy.toTypedArray()
-
-	}
-
 	// Executes an action on the server
 	private fun executeServerAction( activity: Activity, actionName: String ) {
 		CoroutineScope( Dispatchers.Main ).launch {
@@ -1072,8 +977,7 @@ class ServerActivity : AppCompatActivity() {
 			val progressDialog = createProgressDialog( activity, R.string.serverDialogProgressActionExecuteTitle, R.string.serverDialogProgressActionExecuteMessage ) {
 				API.cancelQueue()
 				showBriefMessage( activity, R.string.serverDialogProgressActionExecuteCancel )
-			}
-			progressDialog.show()
+			}.apply { show() }
 
 			withContext( Dispatchers.IO ) {
 

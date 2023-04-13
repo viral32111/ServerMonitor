@@ -144,12 +144,15 @@ fun Long?.getAppropriateColor( warningThreshold: Long? = null, dangerThreshold: 
 	else if ( this >= warningThreshold ) R.color.statusWarning
 	else R.color.statusGood
 
+// Same as above but in reverse and only for integers - used for drive S.M.A.R.T health
+fun Int?.getAppropriateColorReverse( warningThreshold: Int? = null, dangerThreshold: Int? = null ): Int =
+	if ( this == null || this < 0 ) R.color.statusDead
+	else if ( warningThreshold == null || dangerThreshold == null ) R.color.statusNeutral
+	else if ( this <= dangerThreshold ) R.color.statusBad
+	else if ( this <= warningThreshold ) R.color.statusWarning
+	else R.color.statusGood
+
 // Obsolete
-fun colorForValue( context: Context, value: Float?, warnThreshold: Float, dangerThreshold: Float ) =
-	if ( value == null || value < 0.0f ) context.getColor( R.color.statusDead )
-	else if ( value >= dangerThreshold ) context.getColor( R.color.statusBad )
-	else if ( value >= warnThreshold ) context.getColor( R.color.statusWarning )
-	else context.getColor( R.color.statusGood )
 fun colorForValue( context: Context, value: Long?, warnThreshold: Long, dangerThreshold: Long ) =
 	if ( value == null || value < 0L ) context.getColor( R.color.statusDead )
 	else if ( value >= dangerThreshold ) context.getColor( R.color.statusBad )
@@ -165,23 +168,12 @@ fun colorForValue( context: Context, value: Int?, warnThreshold: Int, dangerThre
 	else if ( value >= dangerThreshold ) context.getColor( R.color.statusBad )
 	else if ( value >= warnThreshold ) context.getColor( R.color.statusWarning )
 	else context.getColor( R.color.statusGood )
-fun colorForValueReverse( context: Context, value: Int?, warnThreshold: Int, dangerThreshold: Int ) =
-	if ( value == null || value < 0 ) context.getColor( R.color.statusDead )
-	else if ( value <= dangerThreshold ) context.getColor( R.color.statusBad )
-	else if ( value <= warnThreshold ) context.getColor( R.color.statusWarning )
-	else context.getColor( R.color.statusGood )
 
 // Returns neutral color for value, or fallback to offline/dead - Obsolete
-fun colorAsNeutral( context: Context, value: Float? ) =
-	if ( value == null || value < 0.0 ) context.getColor( R.color.statusDead ) else context.getColor( R.color.statusNeutral )
-fun colorAsNeutral( context: Context, value: Double? ) =
-	if ( value == null || value < 0.0 ) context.getColor( R.color.statusDead ) else context.getColor( R.color.statusNeutral )
 fun colorAsNeutral( context: Context, value: Long? ) =
 	if ( value == null || value < 0.0 ) context.getColor( R.color.statusDead ) else context.getColor( R.color.statusNeutral )
 
 // Rounds a given value if it is valid, fallback to default text - Suffix is not included in string format so that percentage symbols can be used
-fun roundValueOrDefault( value: Float?, suffix: String = "" ) =
-	( if ( value == null || value <= 0.0f ) "0" else String.format( "%.1f", value ) ) + suffix
 fun roundValueOrDefault( value: Double?, suffix: String = "" ) =
 	( if ( value == null || value <= 0.0 ) "0" else String.format( "%.1f", value ) ) + suffix
 
@@ -189,14 +181,12 @@ fun roundValueOrDefault( value: Double?, suffix: String = "" ) =
 fun createColorText( text: String, color: Int, bold: Boolean = false ) =
 	String.format( "%s<span style=\"color: #%s\">%s</span>%s", if ( bold ) "<strong>" else "", color.toString( 16 ), text, if ( bold ) "</strong>" else "" )
 
-// Creates a HTML spannable tag with color styling & optional boldness - https://stackoverflow.com/a/41655900
-fun Context.htmlColorText( text: String, color: Int, asBold: Boolean = false ) = String.format(
-	"%s<span style=\"color: #%s\">%s</span>%s",
-	if ( asBold ) "<strong>" else "",
-	this.getColor( color ).toString( 16 ),
-	text,
-	if ( asBold ) "</strong>" else ""
-)
+// Creates a HTML spannable tag with color styling - https://stackoverflow.com/a/41655900
+fun Context.createHTMLColoredText( text: String, color: Int ) = String.format( "<span style=\"color: #%s\">%s</span>", this.getColor( color ).toString( 16 ), text )
+
+// Wraps a string in bold/italic HTML tags
+fun String.asHTMLBold() = this.prefixWith( "<strong>" ).suffixWith( "</strong>" )
+fun String.asHTMLItalic() = this.prefixWith( "<em>" ).suffixWith( "</em>" )
 
 // Generates a random number in a range
 fun generateRandomInteger( min: Int, max: Int ): Int = ( ( Math.random() * ( max - min ) ) + min ).roundToInt()
@@ -211,7 +201,7 @@ fun TextView.setTextIconColor( color: Int ) {
 	this.compoundDrawables[ 0 ].setTint( color )
 }
 
-// Updates a text view's content using HTML
+// Updates a text view's content using HTML - https://stackoverflow.com/a/37899914
 fun TextView.setTextFromHTML( html: String ) {
 	this.text = Html.fromHtml( html, Html.FROM_HTML_MODE_LEGACY )
 }
@@ -228,3 +218,6 @@ fun Double.atLeastRoundToString( minimum: Double, decimals: Int ) = this.coerceA
 fun String.concat( string: String ) = this + string
 fun String.suffixWith( string: String ) = this.concat( string )
 fun String.prefixWith( string: String ) = string.concat( this )
+
+// Converts a fixed-length array to a list
+fun <T> Array<T>.toArrayList(): ArrayList<T> = arrayListOf<T>().also { it.addAll( this ) }

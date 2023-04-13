@@ -5,8 +5,11 @@
 	<string name="serverActionBarTitle">Server</string>
 
 	<!-- Status with uptime -->
-	<string name="serverTextViewStatusGood">%s for %s.</string>
-	<string name="serverTextViewStatusDead">Overall status &amp; uptime is unknown.</string>
+	<string name="serverTextViewStatus">%s for %s.</string>
+	<string name="serverTextViewStatusUnknown">Overall status &amp; uptime is unknown.</string>
+	<string name="serverTextViewStatusOnline">ONLINE</string>
+	<string name="serverTextViewStatusOffline">OFFLINE</string>
+	<string name="serverTextViewStatusOfflineUptime">an unknown duration</string>
 
 	<!-- Action buttons -->
 	<string name="serverButtonShutdownAction">Shutdown</string>
@@ -14,21 +17,6 @@
 
 	<!-- Resources section -->
 	<string name="serverTextViewResourcesTitle">Resources</string>
-	<string name="serverTextViewResourcesDataProcessor">Processor: %s.</string>
-	<string name="serverTextViewResourcesDataProcessorValue">%s at %s (%s)</string>
-	<string name="serverTextViewResourcesDataMemory">Memory: %s.</string>
-	<string name="serverTextViewResourcesDataMemoryValue">%s of %s (%s)</string>
-	<string name="serverTextViewResourcesDataSwap">%s: %s.</string>
-	<string name="serverTextViewResourcesDataSwapValue">%s of %s (%s)</string>
-	<string name="serverTextViewResourcesDataNetwork">Network: %s.</string>
-	<string name="serverTextViewResourcesDataNetworkValue">%s tx, %s rx</string>
-	<string name="serverTextViewResourcesDataDrive">Drive: %s.</string>
-	<string name="serverTextViewResourcesDataDriveValue">%s write, %s read</string>
-	<string name="serverTextViewResourcesDataPower">Power: %s.</string>
-	<string name="serverTextViewResourcesDataPowerValue">%s of %s</string>
-	<string name="serverTextViewResourcesDataFans">Fans: %s.</string>
-	<string name="serverTextViewResourcesDataFansValue">%s</string>
-
 	<string name="serverTextViewResourcesProcessorUnknown">Processor: Unknown.</string>
 	<string name="serverTextViewResourcesProcessor">Processor: %s at %s (%s).</string>
 	<string name="serverTextViewResourcesMemoryUnknown">Memory: Unknown.</string>

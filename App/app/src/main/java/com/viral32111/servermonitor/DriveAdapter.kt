@@ -1,7 +1,6 @@
 package com.viral32111.servermonitor
 
 import android.content.Context
-import android.text.Html
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -11,9 +10,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
 class DriveAdapter(
-		private val drives: Array<Drive>,
-		private val context: Context
-	): RecyclerView.Adapter<DriveAdapter.ViewHolder>() {
+	private val drives: Array<Drive>,
+	private val context: Context
+): RecyclerView.Adapter<DriveAdapter.ViewHolder>() {
 
 	// Holds all the UI
 	class ViewHolder( view: View ) : RecyclerView.ViewHolder( view ) {
@@ -44,16 +43,15 @@ class DriveAdapter(
 		Log.d( Shared.logTag, "Replacing view for drive '${ drive.name }'..." )
 
 		// Drive name & S.M.A.R.T health
-		viewHolder.textView.text = Html.fromHtml( String.format( context.getString( R.string.serverTextViewDrivesDrive ),
+		viewHolder.textView.setTextFromHTML( context.getString( R.string.serverTextViewDrivesDrive ).format(
 			drive.name,
-			createColorText( String.format( "%d%s", drive.health.coerceAtLeast( 0 ), Shared.percentSymbol ), colorForValueReverse( context, drive.health, 99, 90 ) )
-		), Html.FROM_HTML_MODE_LEGACY )
+			context.createHTMLColoredText( drive.health.coerceAtLeast( 0 ).toString().suffixWith( Shared.percentSymbol ), drive.health.getAppropriateColorReverse( Drive.healthWarningThreshold, Drive.healthDangerThreshold ) )
+		) )
 
-		// Partitions - we assume there will always be partitions
-		val partitions = drive.partitions.reversedArray()
-		val partitionsAdapter = DrivePartitionAdapter( partitions, context )
-		viewHolder.partitionsRecyclerView.adapter = partitionsAdapter
-		partitionsAdapter.notifyItemRangeChanged( 0, partitions.size )
+		// Partitions - we assume there will always be some as a drive is pointless without one
+		val partitions = drive.getPartitions()
+		viewHolder.partitionsRecyclerView.adapter = DrivePartitionAdapter( partitions, context )
+		viewHolder.partitionsRecyclerView.adapter?.notifyItemRangeChanged( 0, partitions.size )
 
 	}
 

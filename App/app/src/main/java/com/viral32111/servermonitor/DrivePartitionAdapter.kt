@@ -1,14 +1,12 @@
 package com.viral32111.servermonitor
 
 import android.content.Context
-import android.text.Html
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import kotlin.math.roundToLong
 
 class DrivePartitionAdapter(
 	private val partitions: Array<Partition>,
@@ -52,13 +50,13 @@ class DrivePartitionAdapter(
 		Log.d( Shared.logTag, "Drive Partition Usage: '${ usage }'" )
 
 		// Update the text
-		viewHolder.textView.text = Html.fromHtml( String.format( context.getString( R.string.serverTextViewDrivesPartition ),
+		viewHolder.textView.setTextFromHTML( context.getString( R.string.serverTextViewDrivesPartition ).format(
 			partition.name,
-			createColorText( roundValueOrDefault( used.amount, used.suffix ), colorForValue( context, usedBytes, ( partition.totalBytes / 2.0f ).roundToLong(), ( partition.totalBytes / 1.25f ).roundToLong() ) ),
-			createColorText( roundValueOrDefault( total.amount, total.suffix ), colorAsNeutral( context, partition.totalBytes ) ),
-			createColorText( roundValueOrDefault( usage, Shared.percentSymbol ), colorForValue( context, usage, 75.0, 90.0 ) ),
+			createColorText( used.amount.atLeastRoundToString( 0.0, 1 ).suffixWith( used.suffix ), usedBytes.getAppropriateColor( Partition.usedBytesWarningThreshold( partition.totalBytes ), Partition.usedBytesDangerThreshold( partition.totalBytes ) ) ),
+			createColorText( total.amount.atLeastRoundToString( 0.0, 1 ).suffixWith( total.suffix ), partition.totalBytes.getAppropriateColor() ),
+			createColorText( usage.roundToString( 1 ).suffixWith( Shared.percentSymbol ), usage.getAppropriateColor( Partition.usageWarningThreshold, Partition.usageDangerThreshold ) ),
 			partition.mountpoint
-		), Html.FROM_HTML_MODE_LEGACY )
+		) )
 
 	}
 

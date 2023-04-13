@@ -12,39 +12,22 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 	companion object {
 
 		// Processor
-		const val processorUsageWarningThreshold = 50.0f;
-		const val processorUsageDangerThreshold = 80.0f;
-		const val processorTemperatureWarningThreshold = 60.0f;
-		const val processorTemperatureDangerThreshold = 90.0f;
+		const val processorUsageWarningThreshold = 50.0f
+		const val processorUsageDangerThreshold = 80.0f
+		const val processorTemperatureWarningThreshold = 60.0f
+		const val processorTemperatureDangerThreshold = 90.0f
 
 		// Memory
 		fun memoryUsedWarningThreshold( totalBytes: Long ): Long = ( totalBytes / 2.0 ).roundToLong() // 50%
 		fun memoryUsedDangerThreshold( totalBytes: Long ): Long = ( totalBytes / 1.25 ).roundToLong() // 80%
-		const val memoryUsageWarningThreshold = 50.0f;
-		const val memoryUsageDangerThreshold = 80.0f;
+		const val memoryUsageWarningThreshold = 50.0f
+		const val memoryUsageDangerThreshold = 80.0f
 
 		// Swap
 		fun swapUsedWarningThreshold( totalBytes: Long ): Long = ( totalBytes / 1.4 ).roundToLong() // 70%
 		fun swapUsedDangerThreshold( totalBytes: Long ): Long = ( totalBytes / 1.1 ).roundToLong() // 90%
-		const val swapUsageWarningThreshold = 70.0f;
-		const val swapUsageDangerThreshold = 90.0f;
-
-		// Network - no idea what the thresholds should be, so guesstimate
-		const val networkTransmitRateWarningThreshold = 1024L * 1024L // 1 MiB
-		const val networkTransmitRateDangerThreshold = 1024L * 1024L * 10L // 10 MiB
-		const val networkReceiveRateWarningThreshold = 1024L * 1024L // 1 MiB
-		const val networkReceiveRateDangerThreshold = 1024L * 1024L * 10L // 10 MiB
-		const val networkTotalRateWarningThreshold = networkTransmitRateWarningThreshold + networkReceiveRateWarningThreshold
-		const val networkTotalRateDangerThreshold = networkTransmitRateDangerThreshold + networkReceiveRateDangerThreshold
-
-		// Drive - no idea what the thresholds should be, so guesstimate
-		const val driveWriteRateWarningThreshold = 1024L * 1024L // 1 MiB
-		const val driveWriteRateDangerThreshold = 1024L * 1024L * 10L // 10 MiB
-		const val driveReadRateWarningThreshold = 1024L * 1024L // 1 MiB
-		const val driveReadRateDangerThreshold = 1024L * 1024L * 10L // 10 MiB
-		const val driveTotalRateWarningThreshold = driveReadRateWarningThreshold + driveWriteRateWarningThreshold
-		const val driveTotalRateDangerThreshold = driveReadRateDangerThreshold + driveWriteRateDangerThreshold
-
+		const val swapUsageWarningThreshold = 70.0f
+		const val swapUsageDangerThreshold = 90.0f
 	}
 
 	var identifier: String
@@ -69,14 +52,14 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 	var swapTotalBytes: Long? = null
 	var swapFreeBytes: Long? = null
 
-	var drives: Array<Drive>? = null
-	var networkInterfaces: Array<NetworkInterface>? = null
+	private var drives: Array<Drive>? = null
+	private var networkInterfaces: Array<NetworkInterface>? = null
 
-	var services: Array<Service>? = null
-	var dockerContainers: Array<DockerContainer>? = null
+	private var services: Array<Service>? = null
+	private var dockerContainers: Array<DockerContainer>? = null
 
 	var snmpCommunity: String? = null
-	var snmpAgents: Array<SNMPAgent>? = null
+	private var snmpAgents: Array<SNMPAgent>? = null
 
 	// Deserialize the JSON object
 	init {
@@ -96,6 +79,9 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 	// Checks if the server is online or offline
 	fun isOnline(): Boolean = uptimeSeconds >= 0
 
+	// Checks if this server is running Windows
+	fun isOperatingSystemWindows() = this.operatingSystem.lowercase().contains( "microsoft windows" )
+
 	/******************************************************/
 
 	// Gets the processor usage/frequency/temperature
@@ -103,15 +89,14 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 	fun getProcessorFrequency() = this.processorFrequency?.times( 1000.0f * 1000.0f )?.atLeastInt( 0 ) ?: -1 // Convert to Hz from MHz returned by API
 	fun getProcessorTemperature() = this.processorTemperature ?: -1.0f
 
-
 	/******************************************************/
 
-	// Gets the total/free/used memory in bytes
+	// Gets the total/free memory in bytes
 	fun getMemoryTotal() = this.memoryTotalBytes ?: -1L
 	fun getMemoryFree() = this.memoryFreeBytes ?: -1L
-	fun getMemoryUsed( freeBytes: Long? = this.getMemoryFree(), totalBytes: Long? = this.getMemoryTotal() ): Long = getBytesUsed( freeBytes, totalBytes )
 
-	// Gets the used memory as a percentage
+	// Gets the used memory in bytes and as a percentage - these accept free/long bytes as the properties may have changed since the last call
+	fun getMemoryUsed( freeBytes: Long? = this.getMemoryFree(), totalBytes: Long? = this.getMemoryTotal() ): Long = getBytesUsed( freeBytes, totalBytes )
 	fun getMemoryUsage( freeBytes: Long? = this.getMemoryFree(), totalBytes: Long? = this.getMemoryTotal() ): Float = getBytesUsage( freeBytes, totalBytes )
 
 	/******************************************************/
@@ -119,17 +104,15 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 	// Gets the total/free swap in bytes
 	fun getSwapTotal() = this.swapTotalBytes ?: -1L
 	fun getSwapFree() = this.swapFreeBytes ?: -1L
-	fun getSwapUsed( freeBytes: Long? = this.getSwapFree(), totalBytes: Long? = this.getSwapTotal() ): Long = getBytesUsed( freeBytes, totalBytes )
 
-	// Gets the used swap as a percentage
+	// Gets the used swap in bytes and as a percentage - these accept free/long bytes as the properties may have changed since the last call
+	fun getSwapUsed( freeBytes: Long? = this.getSwapFree(), totalBytes: Long? = this.getSwapTotal() ): Long = getBytesUsed( freeBytes, totalBytes )
 	fun getSwapUsage( freeBytes: Long? = this.getSwapFree(), totalBytes: Long? = this.getSwapTotal() ): Float = getBytesUsage( freeBytes, totalBytes )
 
 	/******************************************************/
 
-	// Gets a list of only the services that are running
-	fun getRunningServices(): Array<Service> = this.services?.filter { it.isRunning() }?.toTypedArray() ?: emptyArray()
-
-	/******************************************************/
+	// Gets all the network interfaces
+	fun getNetworkInterfaces(): Array<NetworkInterface> = this.networkInterfaces?.reversedArray() ?: emptyArray()
 
 	// Gets the total network transmit/receive rate in bytes
 	fun getNetworkTotalTransmitRate() = this.networkInterfaces?.fold( 0L ) { total, networkInterface -> total + networkInterface.rateBytesSent } ?: -1L
@@ -137,6 +120,9 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 	fun getNetworkTotalRate() = this.networkInterfaces?.fold( 0L ) { total, networkInterface -> total + networkInterface.rateBytesSent + networkInterface.rateBytesReceived } ?: -1L
 
 	/******************************************************/
+
+	// Gets all the drives
+	fun getDrives(): Array<Drive> = this.drives?.reversedArray() ?: emptyArray()
 
 	// Gets the total drive read/write rate in bytes
 	fun getDriveTotalReadRate() = this.drives?.fold( 0L ) { total, drive -> total + drive.rateBytesRead } ?: -1L
@@ -163,6 +149,73 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 
 		return usagePercentage.toFloat().coerceIn( 0.0f, 100.0f ) // Clamp to be safe
 	}
+
+	/******************************************************/
+
+	// Gets all the services
+	fun getServices(): Array<Service> = this.services ?: emptyArray()
+
+	// Gets a list of only the services that are running
+	fun getRunningServices(): Array<Service> = this.getServices().filter { it.isRunning() }.toTypedArray()
+
+	// Gets all the services but in a better order - https://stackoverflow.com/a/59402330
+	fun getSortedServices(): Array<Service> {
+
+		// Convert fixed array to list
+		val services = this.getServices().toArrayList()
+
+		// Sort by name in alphabetical order - https://stackoverflow.com/a/53354117
+		services.sortBy { it.displayName }
+
+		// Sort by status code - groups up services with the same status (running, stopped, etc.)
+		services.sortWith( Comparator { service1: Service, service2: Service ->
+			return@Comparator service1.statusCode - service2.statusCode
+		} )
+
+		// Sort by familiar services - groups up commonly used/recognised services
+		services.sortWith( compareBy { it.serviceName in arrayOf(
+
+			// Windows
+			"Schedule", "EventLog",
+			"pla", // Performance Logs & Alerts
+			"VBoxService", // VirtualBox Guest Additions
+			"wuauserv", // Windows Update
+			"W32Time", // Windows Time
+			"mpssvc", // Windows Defender Firewall
+			"TermService", // Remote Desktop Services
+			"Cloudflared",
+			"Dhcp", "DHCPServer",
+			"Dnscache", "DNS",
+			"SNMP", "SNMPTRAP",
+
+			// Linux
+			"apparmor",
+			"thermald",
+			"snapd", "unattended-upgrades",
+			"lvm2-monitor", "lvm",
+			"cloudflared",
+			"ssh", "sshd", "ssh-agent",
+			"docker", "dockerd", "containerd"
+
+		) } )
+
+		// Reverse the order - moves familiar & running services to the top
+		services.reverse()
+
+		// Convert back to fixed array before returning
+		return services.toTypedArray()
+
+	}
+
+	/******************************************************/
+
+	// Gets all the Docker containers
+	fun getDockerContainers() = this.dockerContainers?.reversedArray() ?: emptyArray()
+
+	/******************************************************/
+
+	// Gets all the SNMP agents
+	fun getSNMPAgents() = this.snmpAgents?.reversedArray() ?: emptyArray()
 
 	/******************************************************/
 
