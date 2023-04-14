@@ -7,7 +7,7 @@ import kotlin.math.roundToLong
  * Represents a drive of a drive.
  * @param data The JSON object on the drive representing the partition.
  */
-class Partition( data: JsonObject ) {
+class DrivePartition( data: JsonObject ) {
 	companion object {
 		fun usedBytesWarningThreshold( totalBytes: Long ) = ( totalBytes / 1.33 ).roundToLong() // 75%
 		fun usedBytesDangerThreshold( totalBytes: Long ) = ( totalBytes / 1.1 ).roundToLong() // 90%
@@ -27,4 +27,7 @@ class Partition( data: JsonObject ) {
 		totalBytes = data.get( "totalBytes" ).asLong
 		freeBytes = data.get( "freeBytes" ).asLong
 	}
+
+	// TODO: getIssues() to return all the current issues (e.g., usage too high, etc.)
+
 }

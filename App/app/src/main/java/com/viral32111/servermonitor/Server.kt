@@ -30,20 +30,19 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 		const val swapUsageDangerThreshold = 90.0f
 	}
 
-	// TODO: Private these - toString() override for the common log string for hostname + identifier + job name + instance address
 	var identifier: String
 	var jobName: String
 	var instanceAddress: String
-	var lastScrape: Long
+	private var lastScrape: Long
 	var hostName: String
-	var operatingSystem: String
-	var architecture: String
+	private var operatingSystem: String
+	private var architecture: String
 	var version: String
 	var uptimeSeconds: Long
 
 	// TODO: Make these into methods
-	var isShutdownActionSupported: Boolean? = null
-	var isRebootActionSupported: Boolean? = null
+	private var actionShutdownSupported: Boolean? = null
+	private var actionRebootSupported: Boolean? = null
 
 	private var processorUsage: Float? = null
 	private var processorFrequency: Float? = null
@@ -154,8 +153,17 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 
 	/******************************************************/
 
+	// Checks if actions are supported
+	fun isShutdownActionSupported() = this.actionShutdownSupported == true
+	fun isRebootActionSupported() = this.actionRebootSupported == true
+
+	/******************************************************/
+
 	// Gets all the services
-	fun getServices(): Array<Service> = this.services ?: emptyArray()
+	private fun getServices(): Array<Service> = this.services ?: emptyArray()
+
+	// Attempts to find a given service
+	fun findService( name: String ): Service? = this.getServices().find { service -> service.serviceName == name }
 
 	// Gets a list of only the services that are running
 	fun getRunningServices(): Array<Service> = this.getServices().filter { it.isRunning() }.toTypedArray()
@@ -221,7 +229,7 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 
 	/******************************************************/
 
-	// TODO: getIssues() to return all the current issues (e.g., temperature or usage too high, any essential services not running, any services exited/failed, unhealthy Docker containers, SNMP agents with traps received, etc.)
+	// TODO: getIssues() to return all the current issues (e.g., temperature or usage too high, any essential services not running, any services exited/failed, unhealthy Docker containers, SNMP agents with traps received, etc.) - recursively call getIssues() for sub data classes
 
 	/******************************************************/
 
@@ -246,8 +254,8 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 		uptimeSeconds = round( data.get( "uptimeSeconds" ).asDouble ).toLong()
 
 		val supportedActions = data.get( "supportedActions" ).asJsonObject
-		isShutdownActionSupported = supportedActions.get( "shutdown" ).asBoolean
-		isRebootActionSupported = supportedActions.get( "reboot" ).asBoolean
+		actionShutdownSupported = supportedActions.get( "shutdown" ).asBoolean
+		actionRebootSupported = supportedActions.get( "reboot" ).asBoolean
 
 		val resources = data.get( "resources" ).asJsonObject
 

@@ -9,7 +9,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
 class DrivePartitionAdapter(
-	private val partitions: Array<Partition>,
+	private val partitions: Array<DrivePartition>,
 	private val context: Context
 ): RecyclerView.Adapter<DrivePartitionAdapter.ViewHolder>() {
 
@@ -52,9 +52,9 @@ class DrivePartitionAdapter(
 		// Update the text
 		viewHolder.textView.setTextFromHTML( context.getString( R.string.serverTextViewDrivesPartition ).format(
 			partition.name,
-			context.createHTMLColoredText( used.amount.atLeastRoundAsString( 0.0, 1 ).suffixWith( used.suffix ), usedBytes.getAppropriateColor( Partition.usedBytesWarningThreshold( partition.totalBytes ), Partition.usedBytesDangerThreshold( partition.totalBytes ) ) ),
+			context.createHTMLColoredText( used.amount.atLeastRoundAsString( 0.0, 1 ).suffixWith( used.suffix ), usedBytes.getAppropriateColor( DrivePartition.usedBytesWarningThreshold( partition.totalBytes ), DrivePartition.usedBytesDangerThreshold( partition.totalBytes ) ) ),
 			context.createHTMLColoredText( total.amount.atLeastRoundAsString( 0.0, 1 ).suffixWith( total.suffix ), partition.totalBytes.getAppropriateColor() ),
-			context.createHTMLColoredText( usage.roundAsString( 1 ).suffixWith( Shared.percentSymbol ), usage.getAppropriateColor( Partition.usageWarningThreshold, Partition.usageDangerThreshold ) ),
+			context.createHTMLColoredText( usage.roundAsString( 1 ).suffixWith( Shared.percentSymbol ), usage.getAppropriateColor( DrivePartition.usageWarningThreshold, DrivePartition.usageDangerThreshold ) ),
 			partition.mountpoint
 		) )
 

@@ -15,10 +15,9 @@ class Service( data: JsonObject ) {
 	private val exitCode: Int // Unused
 	val uptimeSeconds: Double
 
-	// TODO: Make these into functions
-	var isStartActionSupported: Boolean? = null
-	var isStopActionSupported: Boolean? = null
-	var isRestartActionSupported: Boolean? = null
+	private var actionStartSupported: Boolean? = null
+	private var actionStopSupported: Boolean? = null
+	private var actionRestartSupported: Boolean? = null
 
 	// TODO: logs
 
@@ -32,9 +31,9 @@ class Service( data: JsonObject ) {
 		uptimeSeconds = data.get( "uptimeSeconds" ).asDouble
 
 		val supportedActions = data.get( "supportedActions" ).asJsonObject
-		isStartActionSupported = supportedActions.get( "start" ).asBoolean
-		isStopActionSupported = supportedActions.get( "stop" ).asBoolean
-		isRestartActionSupported = supportedActions.get( "restart" ).asBoolean
+		actionStartSupported = supportedActions.get( "start" ).asBoolean
+		actionStopSupported = supportedActions.get( "stop" ).asBoolean
+		actionRestartSupported = supportedActions.get( "restart" ).asBoolean
 
 		// TODO: logs
 	}
@@ -80,5 +79,12 @@ class Service( data: JsonObject ) {
 		"Paused" -> R.color.statusWarning
 		else -> R.color.statusDead
 	}
+
+	// Checks if actions are supported
+	fun isStartActionSupported() = this.actionStartSupported == true
+	fun isStopActionSupported() = this.actionStopSupported == true
+	fun isRestartActionSupported() = this.actionRestartSupported == true
+
+	// TODO: getIssues() to return all the current issues (e.g., service exited/failed, exit code is not zero, etc.)
 
 }

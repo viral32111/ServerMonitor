@@ -717,8 +717,8 @@ class ServerActivity : AppCompatActivity() {
 		Log.d( Shared.logTag, "Set Material Toolbar title to '${ server.hostName.uppercase() }'" )
 
 		// Enable/disable action buttons
-		actionShutdownButton.isEnabled = server.isShutdownActionSupported == true
-		actionRebootButton.isEnabled = server.isRebootActionSupported == true
+		actionShutdownButton.isEnabled = server.isShutdownActionSupported()
+		actionRebootButton.isEnabled = server.isRebootActionSupported()
 
 		// Swap should be called page file if this server is running Windows
 		val swapName = if ( server.isOperatingSystemWindows() ) "Page File" else "Swap"
@@ -997,8 +997,8 @@ class ServerActivity : AppCompatActivity() {
 					withContext( Dispatchers.Main ) {
 						progressDialog.dismiss()
 
-						if ( exitCode == 0 ) showInformationDialog( activity, R.string.serverDialogActionExecuteTitle, String.format( getString( R.string.serverDialogActionExecuteMessageSuccess, outputText, errorText ) ) )
-						else showInformationDialog( activity, R.string.serverDialogActionExecuteTitle, String.format( getString( R.string.serverDialogActionExecuteMessageFailure, exitCode, errorText, outputText ) ) )
+						if ( exitCode == 0 ) showInformationDialog( activity, R.string.serverDialogActionExecuteTitle, getString( R.string.serverDialogActionExecuteMessageSuccess ).format( outputText, errorText ) )
+						else showInformationDialog( activity, R.string.serverDialogActionExecuteTitle, getString( R.string.serverDialogActionExecuteMessageFailure ).format( exitCode, errorText, outputText ) )
 					}
 
 				} catch ( exception: APIException ) {

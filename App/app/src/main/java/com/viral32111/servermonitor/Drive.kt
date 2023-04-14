@@ -1,7 +1,6 @@
 package com.viral32111.servermonitor
 
 import com.google.gson.JsonObject
-import kotlin.math.roundToLong
 
 /**
  * Represents a drive on a server.
@@ -28,7 +27,7 @@ class Drive( data: JsonObject ) {
 	val rateBytesRead: Long
 	private val totalBytesWritten: Long // Unused
 	val rateBytesWritten: Long
-	private val partitions: Array<Partition>
+	private val partitions: Array<DrivePartition>
 
 	init {
 		name = data.get( "name" ).asString
@@ -42,12 +41,14 @@ class Drive( data: JsonObject ) {
 		totalBytesWritten = bytesWritten.get( "total" ).asLong
 		rateBytesWritten = bytesWritten.get( "rate" ).asDouble.toLong()
 
-		val partitionsList = ArrayList<Partition>()
-		for ( partition in data.get( "partitions" ).asJsonArray ) partitionsList.add( Partition( ( partition.asJsonObject ) ) )
+		val partitionsList = ArrayList<DrivePartition>()
+		for ( partition in data.get( "partitions" ).asJsonArray ) partitionsList.add( DrivePartition( ( partition.asJsonObject ) ) )
 		partitions = partitionsList.toTypedArray()
 	}
 
 	// Gets the partitions
 	fun getPartitions() = this.partitions.reversedArray()
+
+	// TODO: getIssues() to return all the current issues (e.g., S.M.A.R.T health is bad, read/write rate is too high, etc.)
 
 }

@@ -212,7 +212,7 @@ class ServiceActivity : AppCompatActivity() {
 								if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
 
 								// Get this service
-								val service = server.getServices().find { service -> service.serviceName == serviceName }
+								val service = server.findService( serviceName )
 								if ( service != null ) {
 
 									// Update the UI
@@ -331,7 +331,7 @@ class ServiceActivity : AppCompatActivity() {
 								if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
 
 								// Get this service
-								val service = server.getServices().find { service -> service.serviceName == serviceName }
+								val service = server.findService( serviceName )
 								if ( service != null ) {
 
 									// Update the UI
@@ -589,7 +589,7 @@ class ServiceActivity : AppCompatActivity() {
 						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
 
 						// Get this service
-						val service = server.getServices().find { service -> service.serviceName == serviceName }
+						val service = server.findService( serviceName )
 						if ( service != null ) {
 							Log.d( Shared.logTag, "Got service '${ service.serviceName }' ('${ service.displayName }', '${ service.description }')" )
 
@@ -690,13 +690,13 @@ class ServiceActivity : AppCompatActivity() {
 		if ( service.isRunning() ) {
 			actionStartStopButton.text = getString( R.string.serviceButtonStopAction )
 			actionStartStopButton.setBackgroundColor( getColor( R.color.stopActionButton ) )
-			actionRestartButton.isEnabled = service.isRestartActionSupported == true
+			actionRestartButton.isEnabled = service.isRestartActionSupported()
 		} else {
 			actionStartStopButton.text = getString( R.string.serviceButtonStartAction )
 			actionStartStopButton.setBackgroundColor( getColor( R.color.startActionButton ) )
-			actionRestartButton.isEnabled = service.isRestartActionSupported == true
+			actionRestartButton.isEnabled = service.isRestartActionSupported()
 		}
-		actionStartStopButton.isEnabled = service.isStartActionSupported == true || service.isStopActionSupported == true
+		actionStartStopButton.isEnabled = service.isStartActionSupported() || service.isStopActionSupported()
 
 		// Get the status
 		val statusText = service.getStatusText()
@@ -755,8 +755,8 @@ class ServiceActivity : AppCompatActivity() {
 					withContext( Dispatchers.Main ) {
 						progressDialog.dismiss()
 
-						if ( exitCode == 0 ) showInformationDialog( activity, R.string.serviceDialogActionExecuteTitle, String.format( getString( R.string.serviceDialogActionExecuteMessageSuccess, outputText, errorText ) ) )
-						else showInformationDialog( activity, R.string.serviceDialogActionExecuteTitle, String.format( getString( R.string.serviceDialogActionExecuteMessageFailure, exitCode, errorText, outputText ) ) )
+						if ( exitCode == 0 ) showInformationDialog( activity, R.string.serviceDialogActionExecuteTitle, getString( R.string.serviceDialogActionExecuteMessageSuccess ).format( outputText, errorText ) )
+						else showInformationDialog( activity, R.string.serviceDialogActionExecuteTitle, getString( R.string.serviceDialogActionExecuteMessageFailure ).format( exitCode, errorText, outputText ) )
 					}
 
 				} catch ( exception: APIException ) {

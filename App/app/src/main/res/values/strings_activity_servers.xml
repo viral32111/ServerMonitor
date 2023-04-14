@@ -30,8 +30,8 @@
 	<string name="serversTextViewStatusTitleGood">ALL GOOD</string>
 	<string name="serversTextViewStatusTitleBad">ONGOING ISSUES</string>
 	<string name="serversTextViewStatusTitleDead">UNKNOWN</string>
-	<string name="serversTextViewStatusDescriptionGood">There have been no issue(s) today.</string>
-	<string name="serversTextViewStatusDescriptionBad">There have been %d issue(s) today.</string>
+	<string name="serversTextViewStatusDescriptionGood">There have been no issues today.</string>
+	<string name="serversTextViewStatusDescriptionBad">There have been %d issues today.</string>
 	<string name="serversTextViewStatusDescriptionDead">Server information unavailable.</string>
 
 	<!-- Server in the servers list -->

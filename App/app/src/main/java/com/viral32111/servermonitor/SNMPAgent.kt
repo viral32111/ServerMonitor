@@ -40,4 +40,7 @@ class SNMPAgent( data: JsonObject ) {
 		// TODO: supportedActions
 		// TODO: logs
 	}
+
+	// TODO: getIssues() to return all the current issues (e.g., has received traps, etc.)
+
 }

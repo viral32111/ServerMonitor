@@ -81,4 +81,6 @@ class DockerContainer( data: JsonObject ) {
 		else -> R.color.statusDead
 	}
 
+	// TODO: getIssues() to return all the current issues (e.g., exited, unhealthy, exit code is not zero, etc.)
+
 }
