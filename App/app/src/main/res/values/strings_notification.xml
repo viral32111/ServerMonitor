@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+	<!-- Test -->
+	<string name="notificationTestTitle">Test</string>
+	<string name="notificationTestText">This is a test notification.</string>
+
+	<!-- Always ongoing -->
+	<string name="notificationOngoingTitle">Overall Status</string>
+	<string name="notificationOngoingTextGood">All servers are good. Last updated %d:%d:%d.</string>
+	<string name="notificationOngoingTextBad">One or more servers are experiencing issues. Last updated %d:%d:%d.</string>
+	<string name="notificationOngoingTextUnknown">Currently unknown. Last updated %d:%d:%d.</string>
+
+	<!-- When an issue arises -->
+	<string name="notificationIssueTitle">Issue Arisen</string>
+	<string name="notificationIssueText">There are ongoing issues with %s (%s)!</string>
+
+</resources>

@@ -55,6 +55,9 @@ class SetupActivity : AppCompatActivity() {
 		// Initialise our RESTful API class
 		API.initializeQueue( applicationContext )
 
+		// Initialise notifications
+		Notify.initialise( this, applicationContext )
+
 		// When an item on the action bar menu is pressed...
 		materialToolbar?.setOnMenuItemClickListener { menuItem ->
 
@@ -207,7 +210,6 @@ class SetupActivity : AppCompatActivity() {
 			Log.d( Shared.logTag, "We're not setup yet! ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
 		}
 
-		/*
 		// Event handlers to show input validation errors on the inputs
 		instanceUrlEditText.setOnFocusChangeListener { _, hasFocus ->
 			if ( !hasFocus ) instanceUrlEditText.error = if ( !validateInstanceUrl( instanceUrlEditText.text.toString() ) ) getString( R.string.setupToastInstanceUrlInvalid ) else null
@@ -218,17 +220,6 @@ class SetupActivity : AppCompatActivity() {
 		credentialsPasswordEditText.setOnFocusChangeListener { _, hasFocus ->
 			if ( !hasFocus ) credentialsPasswordEditText.error = if ( !validateCredentialsPassword( credentialsPasswordEditText.text.toString() ) ) getString( R.string.setupToastCredentialsPasswordInvalid ) else null
 		}
-		*/
-
-		Notify.initialise( this, applicationContext )
-
-		Notify.sendNotification( this, Notify.createTextNotification( this, Intent( this, SetupActivity::class.java ).apply {
-			flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-		}, Notify.Channel.TEST, R.string.notificationTestTitle, R.string.notificationTestText ) )
-
-		Notify.sendNotification( this, Notify.createProgressNotification( this, Intent( this, ServersActivity::class.java ).apply {
-			flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-		}, Notify.Channel.TEST, R.string.notificationOngoingTitle, R.string.notificationOngoingText ) )
 
 	}
 

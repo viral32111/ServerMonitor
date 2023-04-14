@@ -36,10 +36,4 @@
 	<string name="dialogInformationAboutTitle">About</string>
 	<string name="dialogInformationAboutMessage">This is an app for monitoring server metrics and status information in real-time.\n\nCreated by viral32111.\nhttps://github.com/viral32111/ServerMonitor</string>
 
-	<string name="notificationTestTitle">Test</string>
-	<string name="notificationTestText">This is a test notification.</string>
-
-	<string name="notificationOngoingTitle">Overall Status</string>
-	<string name="notificationOngoingText">All servers are good. Last updated 15 seconds ago.</string>
-
 </resources>

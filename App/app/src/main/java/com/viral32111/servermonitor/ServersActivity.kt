@@ -365,6 +365,8 @@ class ServersActivity : AppCompatActivity() {
 
 		// Cancel all pending HTTP requests
 		//API.cancelQueue()
+
+		// TODO: Remove always ongoing notification?
 	}
 
 	// Stop the automatic refresh countdown progress bar when the activity is changed/app is minimised
@@ -400,6 +402,23 @@ class ServersActivity : AppCompatActivity() {
 
 		// Show refreshing spinner
 		swipeRefreshLayout.isRefreshing = true
+
+		// TODO: Notification when issue arises...
+		/*
+		Notify.sendNotification( this, Notify.createTextNotification( this, Intent( this, SetupActivity::class.java ).apply {
+			flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+		}, Notify.Channel.TEST, R.string.notificationTestTitle, R.string.notificationTestText ) )
+		*/
+
+		// Create the always ongoing notification
+		if ( settings.notificationAlwaysOngoing ) {
+			val progressNotification = Notify.createProgressNotification( this, Intent( this, ServersActivity::class.java ).apply {
+				flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+			}, Notify.Channel.TEST, R.string.notificationOngoingTitle, R.string.notificationOngoingTextUnknown )
+
+			val notificationIdentifier = Notify.sendNotification( this, progressNotification )
+			Log.d( Shared.logTag, "Created always ongoing notification (${ notificationIdentifier })" )
+		}
 
 		val activity = this
 		CoroutineScope( Dispatchers.Main ).launch {

@@ -15,7 +15,8 @@ class Notify {
 	// Our notification channels - each feature should have its own so the user can adjust preferences in system settings
 	enum class Channel( val identifier: String ) {
 		TEST( "TEST" ),
-		ONGOING( "ONGOING" )
+		ONGOING( "ONGOING" ),
+		ISSUE( "ISSUE" )
 	}
 
 	companion object {
@@ -36,6 +37,9 @@ class Notify {
 			} )
 			notificationManager.createNotificationChannel( NotificationChannel( Channel.ONGOING.identifier, "Always Ongoing", NotificationManager.IMPORTANCE_LOW ).apply {
 				description = "Persistent notification to report overall status."
+			} )
+			notificationManager.createNotificationChannel( NotificationChannel( Channel.ISSUE.identifier, "When Issue Arises", NotificationManager.IMPORTANCE_HIGH ).apply {
+				description = "Notification when an issue arises."
 			} )
 
 			// Request notification permission if this is Android 13
@@ -85,10 +89,17 @@ class Notify {
 
 		// Generates a random notification identifier & shows the given notification
 		private fun showNotification( notification: Notification ): Int {
-			val notificationId = generateRandomInteger( 1, 100 )
-			notificationManager.notify( notificationId, notification )
-			return notificationId
+			val notificationIdentifier = getNotificationIdentifierForChannel( notification.channelId )
+			notificationManager.notify( notificationIdentifier, notification )
+			return notificationIdentifier
 		}
+
+		// There should only be one ongoing notification
+		private fun getNotificationIdentifierForChannel( channelIdentifier: String ) = when ( channelIdentifier ) {
+			"ONGOING" -> 123 // Can be anything, so long as it is not in the range below
+			else -> generateRandomInteger( 1, 100 )
+		}
+
 	}
 
 }
