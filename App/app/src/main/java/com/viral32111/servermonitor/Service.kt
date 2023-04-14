@@ -12,7 +12,7 @@ class Service( data: JsonObject ) {
 	val displayName: String
 	val description: String
 	val statusCode: Int
-	private val exitCode: Int // Unused
+	private val exitCode: Int
 	val uptimeSeconds: Double
 
 	private var actionStartSupported: Boolean? = null
@@ -85,6 +85,10 @@ class Service( data: JsonObject ) {
 	fun isStopActionSupported() = this.actionStopSupported == true
 	fun isRestartActionSupported() = this.actionRestartSupported == true
 
-	// TODO: getIssues() to return all the current issues (e.g., service exited/failed, exit code is not zero, etc.)
+	// Checks if there are any issues - exited/failed, error exit code
+	fun areThereIssues(): Boolean {
+		if ( this.statusCode != 0 && this.statusCode != 1 ) return this.exitCode != 0
+		return this.statusCode == 4 || this.statusCode == 5
+	}
 
 }

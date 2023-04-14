@@ -28,6 +28,10 @@ class DrivePartition( data: JsonObject ) {
 		freeBytes = data.get( "freeBytes" ).asLong
 	}
 
-	// TODO: getIssues() to return all the current issues (e.g., usage too high, etc.)
+	// Checks if there are any issues - usage too high
+	fun areThereIssues(): Boolean {
+		val usedBytes = ( totalBytes - freeBytes )
+		return usedBytes >= usageDangerThreshold
+	}
 
 }

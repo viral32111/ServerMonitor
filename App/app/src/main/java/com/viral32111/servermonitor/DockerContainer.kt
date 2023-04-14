@@ -11,12 +11,11 @@ class DockerContainer( data: JsonObject ) {
 	val name: String
 	val image: String
 	private val statusCode: Int
-	private val exitCode: Int // Unused
+	private val exitCode: Int
 	private val healthStatusCode: Int
 	val uptimeSeconds: Long
 
-	// TODO: supportedActions
-	// TODO: logs
+	// TODO: supportedActions & logs
 
 	init {
 		id = data.get( "id" ).asString
@@ -27,8 +26,7 @@ class DockerContainer( data: JsonObject ) {
 		healthStatusCode = data.get( "healthStatusCode" ).asInt
 		uptimeSeconds = data.get( "uptimeSeconds" ).asLong
 
-		// TODO: supportedActions
-		// TODO: logs
+		// TODO: supportedActions & logs
 	}
 
 	/**
@@ -81,6 +79,11 @@ class DockerContainer( data: JsonObject ) {
 		else -> R.color.statusDead
 	}
 
-	// TODO: getIssues() to return all the current issues (e.g., exited, unhealthy, exit code is not zero, etc.)
+	// Checks if there are any issues - restarting/dead/exited, unhealthy, error exit code
+	fun areThereIssues(): Boolean {
+		if ( this.statusCode != 0 && this.statusCode != 1 ) return this.exitCode != 0
+		if ( this.healthStatusCode != -1 ) return this.healthStatusCode == 0
+		return this.statusCode == 2 || this.statusCode == 3 || this.statusCode == 4
+	}
 
 }

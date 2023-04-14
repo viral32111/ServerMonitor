@@ -622,7 +622,7 @@ class ServersActivity : AppCompatActivity() {
 		// Convert the JSON array to a list of servers - https://www.geeksforgeeks.org/kotlin-list-arraylist/
 		val serverList = ArrayList<Server>()
 		for ( arrayItem in servers ) {
-			val server = Server( arrayItem.asJsonObject ) // TODO: Ensure this is a JSON object
+			val server = Server( arrayItem.asJsonObject )
 
 			if ( server.isOnline() ) {
 				Log.d( Shared.logTag, "Server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') is online, fetching metrics..." )

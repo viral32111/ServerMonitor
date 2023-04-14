@@ -10,12 +10,15 @@ class Drive( data: JsonObject ) {
 	companion object { // No idea what the thresholds should be, so guesstimate
 		const val writeRateWarningThreshold = 1024L * 1024L // 1 MiB
 		const val writeRateDangerThreshold = 1024L * 1024L * 10L // 10 MiB
-
 		const val readRateWarningThreshold = 1024L * 1024L // 1 MiB
 		const val readRateDangerThreshold = 1024L * 1024L * 10L // 10 MiB
-
 		const val totalRateWarningThreshold = readRateWarningThreshold + writeRateWarningThreshold
 		const val totalRateDangerThreshold = readRateDangerThreshold + writeRateDangerThreshold
+
+		private const val writeWarningThreshold = 1024L * 1024L * 1024L // 1 GiB
+		const val writeDangerThreshold = writeWarningThreshold * 10L // 10 GiB
+		private const val readWarningThreshold = 1024L * 1024L * 1024L // 1 GiB
+		const val readDangerThreshold = readWarningThreshold * 10L // 10 GiB
 
 		const val healthWarningThreshold = 99
 		const val healthDangerThreshold = 90
@@ -49,6 +52,10 @@ class Drive( data: JsonObject ) {
 	// Gets the partitions
 	fun getPartitions() = this.partitions.reversedArray()
 
-	// TODO: getIssues() to return all the current issues (e.g., S.M.A.R.T health is bad, read/write rate is too high, etc.)
+	// Checks if there are any issues - bad S.M.A.R.T health, read/write rate is too high
+	fun areThereIssues(): Boolean {
+		if ( health != -1 ) return health <= healthDangerThreshold
+		return rateBytesRead >= readRateDangerThreshold || rateBytesWritten >= writeRateDangerThreshold || totalBytesRead >= readDangerThreshold || totalBytesWritten >= writeDangerThreshold
+	}
 
 }

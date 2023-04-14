@@ -37,10 +37,10 @@ class SNMPAgent( data: JsonObject ) {
 		val receivedTraps = data.get( "receivedTraps" ).asJsonObject
 		receivedTrapsCount = receivedTraps.get( "count" ).asInt
 
-		// TODO: supportedActions
-		// TODO: logs
+		// TODO: supportedActions & logs
 	}
 
-	// TODO: getIssues() to return all the current issues (e.g., has received traps, etc.)
+	// Checks if there are any issues - has received traps
+	fun areThereIssues() = receivedTrapsCount >= receivedTrapsCountDangerThreshold
 
 }

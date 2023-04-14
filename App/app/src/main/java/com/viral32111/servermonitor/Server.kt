@@ -40,7 +40,6 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 	var version: String
 	var uptimeSeconds: Long
 
-	// TODO: Make these into methods
 	private var actionShutdownSupported: Boolean? = null
 	private var actionRebootSupported: Boolean? = null
 
@@ -229,7 +228,28 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 
 	/******************************************************/
 
-	// TODO: getIssues() to return all the current issues (e.g., temperature or usage too high, any essential services not running, any services exited/failed, unhealthy Docker containers, SNMP agents with traps received, etc.) - recursively call getIssues() for sub data classes
+	// Checks if there are any issues - processor usage/temp too high, memory/swap usage too high - and all data sub-classes
+	fun areThereIssues(): Boolean {
+		val memoryTotalBytes = this.getMemoryTotal()
+		val memoryFreeBytes = this.getMemoryFree()
+
+		val swapTotalBytes = this.getSwapTotal()
+		val swapFreeBytes = this.getSwapFree()
+
+		return this.getProcessorUsage() >= processorUsageDangerThreshold || this.getProcessorTemperature() >= processorTemperatureDangerThreshold ||
+
+				this.getMemoryUsed( memoryFreeBytes, memoryTotalBytes ) >= memoryUsedDangerThreshold( memoryTotalBytes ) ||
+				this.getMemoryUsage( memoryFreeBytes, memoryTotalBytes ) >= memoryUsageDangerThreshold ||
+
+				this.getSwapUsed( swapFreeBytes, swapTotalBytes ) >= swapUsedDangerThreshold( swapTotalBytes ) ||
+				this.getSwapUsage( swapFreeBytes, swapTotalBytes ) >= swapUsageDangerThreshold ||
+
+				this.getNetworkInterfaces().any { networkInterface -> networkInterface.areThereIssues() } ||
+				this.getDrives().any { drive -> drive.areThereIssues() } ||
+				this.getServices().any { service -> service.areThereIssues() } ||
+				this.getDockerContainers().any { dockerContainer -> dockerContainer.areThereIssues() } ||
+				this.getSNMPAgents().any { snmpAgent -> snmpAgent.areThereIssues() }
+	}
 
 	/******************************************************/
 
