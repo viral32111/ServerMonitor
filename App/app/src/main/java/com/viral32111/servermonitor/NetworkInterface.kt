@@ -43,4 +43,5 @@ class NetworkInterface( data: JsonObject ) {
 
 	// Checks if there are any issues - transmit/receive too high
 	fun areThereIssues() = rateBytesSent >= transmitRateDangerThreshold || rateBytesReceived >= receiveRateDangerThreshold || totalBytesSent >= transmitDangerThreshold || totalBytesReceived >= receiveDangerThreshold
+
 }

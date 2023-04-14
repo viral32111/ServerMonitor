@@ -55,7 +55,9 @@ class Drive( data: JsonObject ) {
 	// Checks if there are any issues - bad S.M.A.R.T health, read/write rate is too high
 	fun areThereIssues(): Boolean {
 		if ( health != -1 ) return health <= healthDangerThreshold
-		return rateBytesRead >= readRateDangerThreshold || rateBytesWritten >= writeRateDangerThreshold || totalBytesRead >= readDangerThreshold || totalBytesWritten >= writeDangerThreshold
+		return rateBytesRead >= readRateDangerThreshold || rateBytesWritten >= writeRateDangerThreshold ||
+				totalBytesRead >= readDangerThreshold || totalBytesWritten >= writeDangerThreshold ||
+				this.getPartitions().any { partition -> partition.areThereIssues() }
 	}
 
 }
