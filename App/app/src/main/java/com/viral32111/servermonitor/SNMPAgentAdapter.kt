@@ -1,7 +1,6 @@
 package com.viral32111.servermonitor
 
 import android.content.Context
-import android.text.Html
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -50,28 +49,28 @@ class SNMPAgentAdapter(
 		Log.d( Shared.logTag, "Replacing view for SNMP agent '${ agent.name }' ('${ agent.address }', '${ agent.port }')..." )
 
 		// Update the name & description
-		viewHolder.nameTextView.text = String.format( context.getString( R.string.serverTextViewSNMPAgentName ), agent.name, agent.address, agent.port )
+		viewHolder.nameTextView.text = context.getString( R.string.serverTextViewSNMPAgentName ).format( agent.name, agent.address, agent.port )
 		viewHolder.descriptionTextView.text = agent.description
 
 		// Update the status text
 		val uptimeText = TimeSpan( agent.uptimeSeconds ).toString( false )
-		viewHolder.statusTextView.text = Html.fromHtml( String.format( context.getString( R.string.serverTextViewSNMPAgentStatus ),
-			createColorText( "Online", context.getColor( R.color.statusGood ) ),
-			createColorText(
-				uptimeText.ifBlank { "an unknown duration" },
-				context.getColor( if ( uptimeText.isNotBlank() ) R.color.black else R.color.statusDead )
+		viewHolder.statusTextView.setTextFromHTML( context.getString( R.string.serverTextViewSNMPAgentStatus ).format(
+			context.createHTMLColoredText( context.getString( R.string.serverTextViewSNMPAgentStatusOnline ), context.getColor( R.color.statusGood ) ),
+			context.createHTMLColoredText(
+				uptimeText.ifBlank { context.getString( R.string.serverTextViewSNMPAgentStatusUptimeUnknown ) },
+				if ( uptimeText.isNotBlank() ) R.color.black else R.color.statusDead
 			)
-		), Html.FROM_HTML_MODE_LEGACY )
+		) )
 
 		// Update the location & contact
-		viewHolder.locationTextView.text = String.format( context.getString( R.string.serverTextViewSNMPAgentLocation ), agent.location )
-		viewHolder.contactTextView.text = String.format( context.getString( R.string.serverTextViewSNMPAgentContact ), agent.contact )
+		viewHolder.locationTextView.text = context.getString( R.string.serverTextViewSNMPAgentLocation ).format( agent.location )
+		viewHolder.contactTextView.text = context.getString( R.string.serverTextViewSNMPAgentContact ).format( agent.contact )
 
 		// Update the running services count & received traps count
-		viewHolder.servicesTextView.text = String.format( context.getString( R.string.serverTextViewSNMPAgentServices ), agent.serviceCount )
-		viewHolder.trapsTextView.text = Html.fromHtml( String.format( context.getString( R.string.serverTextViewSNMPAgentTraps ),
-			createColorText( agent.receivedTrapsCount.toString(), colorForValue( context, agent.receivedTrapsCount, 1, 10 ) )
-		), Html.FROM_HTML_MODE_LEGACY )
+		viewHolder.servicesTextView.text = context.getString( R.string.serverTextViewSNMPAgentServices ).format( agent.serviceCount )
+		viewHolder.trapsTextView.setTextFromHTML( context.getString( R.string.serverTextViewSNMPAgentTraps ).format(
+			context.createHTMLColoredText( agent.receivedTrapsCount.coerceAtLeast( 0 ).toString(), agent.receivedTrapsCount.getAppropriateColor( SNMPAgent.receivedTrapsCountWarningThreshold, SNMPAgent.receivedTrapsCountDangerThreshold ) )
+		) )
 
 	}
 

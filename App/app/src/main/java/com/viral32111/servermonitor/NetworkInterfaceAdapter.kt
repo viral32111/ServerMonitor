@@ -67,8 +67,8 @@ class NetworkInterfaceAdapter(
 		// Update the interface text
 		viewHolder.textView.setTextFromHTML( context.getString( R.string.serverTextViewNetworkInterface ).format(
 			networkInterface.name,
-			context.createHTMLColoredText( totalRate.amount.atLeastRoundToString( 0.0, 1 ).suffixWith( totalRate.suffix.concat( "/s" ) ), totalRateBytes.getAppropriateColor( NetworkInterface.totalRateWarningThreshold, NetworkInterface.totalRateDangerThreshold ) ),
-			context.createHTMLColoredText( total.amount.atLeastRoundToString( 0.0, 1 ).suffixWith( total.suffix ), totalBytes.getAppropriateColor( NetworkInterface.totalWarningThreshold, NetworkInterface.totalDangerThreshold ) )
+			context.createHTMLColoredText( totalRate.amount.atLeastRoundAsString( 0.0, 1 ).suffixWith( totalRate.suffix.concat( "/s" ) ), totalRateBytes.getAppropriateColor( NetworkInterface.totalRateWarningThreshold, NetworkInterface.totalRateDangerThreshold ) ),
+			context.createHTMLColoredText( total.amount.atLeastRoundAsString( 0.0, 1 ).suffixWith( total.suffix ), totalBytes.getAppropriateColor( NetworkInterface.totalWarningThreshold, NetworkInterface.totalDangerThreshold ) )
 		) )
 
 		// Get the current rate & total transmitted bytes for this interface
@@ -79,8 +79,8 @@ class NetworkInterfaceAdapter(
 
 		// Update the transmit text
 		viewHolder.transmitTextView.setTextFromHTML( context.getString( R.string.serverTextViewNetworkInterfaceTransmit ).format(
-			context.createHTMLColoredText( transmitRate.amount.atLeastRoundToString( 0.0, 1 ).suffixWith( transmitRate.suffix.concat( "/s" ) ), transmitRateBytes.getAppropriateColor( NetworkInterface.transmitRateWarningThreshold, NetworkInterface.transmitRateDangerThreshold ) ),
-			context.createHTMLColoredText( transmit.amount.atLeastRoundToString( 0.0, 1 ).suffixWith( transmit.suffix ), transmitBytes.getAppropriateColor( NetworkInterface.transmitWarningThreshold, NetworkInterface.transmitDangerThreshold ) )
+			context.createHTMLColoredText( transmitRate.amount.atLeastRoundAsString( 0.0, 1 ).suffixWith( transmitRate.suffix.concat( "/s" ) ), transmitRateBytes.getAppropriateColor( NetworkInterface.transmitRateWarningThreshold, NetworkInterface.transmitRateDangerThreshold ) ),
+			context.createHTMLColoredText( transmit.amount.atLeastRoundAsString( 0.0, 1 ).suffixWith( transmit.suffix ), transmitBytes.getAppropriateColor( NetworkInterface.transmitWarningThreshold, NetworkInterface.transmitDangerThreshold ) )
 		) )
 
 		// Get the current rate & total received bytes for this interface
@@ -91,8 +91,8 @@ class NetworkInterfaceAdapter(
 
 		// Update the receive text
 		viewHolder.receiveTextView.setTextFromHTML( context.getString( R.string.serverTextViewNetworkInterfaceReceive ).format(
-			context.createHTMLColoredText( receiveRate.amount.atLeastRoundToString( 0.0, 1 ).suffixWith( receiveRate.suffix.concat( "/s" ) ), receiveRateBytes.getAppropriateColor( NetworkInterface.receiveRateWarningThreshold, NetworkInterface.receiveRateDangerThreshold ) ),
-			context.createHTMLColoredText( receive.amount.atLeastRoundToString( 0.0, 1 ).suffixWith( receive.suffix ), receiveBytes.getAppropriateColor( NetworkInterface.receiveWarningThreshold, NetworkInterface.receiveDangerThreshold ) )
+			context.createHTMLColoredText( receiveRate.amount.atLeastRoundAsString( 0.0, 1 ).suffixWith( receiveRate.suffix.concat( "/s" ) ), receiveRateBytes.getAppropriateColor( NetworkInterface.receiveRateWarningThreshold, NetworkInterface.receiveRateDangerThreshold ) ),
+			context.createHTMLColoredText( receive.amount.atLeastRoundAsString( 0.0, 1 ).suffixWith( receive.suffix ), receiveBytes.getAppropriateColor( NetworkInterface.receiveWarningThreshold, NetworkInterface.receiveDangerThreshold ) )
 		) )
 
 	}

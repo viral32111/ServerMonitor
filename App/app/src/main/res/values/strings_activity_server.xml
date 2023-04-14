@@ -52,6 +52,7 @@
 	<string name="serverTextViewServicesUnknown">The status of services is unknown.</string>
 	<string name="serverTextViewServicesEmpty">There are no services.</string>
 	<string name="serverTextViewServicesServiceStatus">%s for %s.</string>
+	<string name="serverTextViewServicesServiceStatusUptimeUnknown">an unknown duration</string>
 	<string name="serverButtonServicesManage">Manage</string>
 
 	<!-- Docker containers section -->
@@ -60,14 +61,18 @@
 	<string name="serverTextViewDockerEmpty">There are no containers.</string>
 	<string name="serverTextViewDockerContainerName">%s (%s)</string>
 	<string name="serverTextViewDockerContainerStatus">%s (%s) for %s.</string>
+	<string name="serverTextViewDockerContainerStatusUptimeUnknown">an unknown duration</string>
 
-	<!-- SNMP section -->
+	<!-- SNMP agents section -->
 	<string name="serverTextViewSNMPTitle">SNMP Agents</string>
 	<string name="serverTextViewSNMPTitleCommunity">SNMP Agents in %s</string>
 	<string name="serverTextViewSNMPUnknown">The status of agents is unknown.</string>
 	<string name="serverTextViewSNMPEmpty">There are no agents.</string>
 	<string name="serverTextViewSNMPAgentName">%s (%s:%d)</string>
 	<string name="serverTextViewSNMPAgentStatus">%s for %s.</string>
+	<string name="serverTextViewSNMPAgentStatusOnline">Online</string>
+	<string name="serverTextViewSNMPAgentStatusOffline">Offline</string>
+	<string name="serverTextViewSNMPAgentStatusUptimeUnknown">an unknown duration</string>
 	<string name="serverTextViewSNMPAgentLocation">Location: %s.</string>
 	<string name="serverTextViewSNMPAgentContact">Contact: %s.</string>
 	<string name="serverTextViewSNMPAgentServices">Running Services: %s.</string>

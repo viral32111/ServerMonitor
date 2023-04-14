@@ -30,6 +30,7 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 		const val swapUsageDangerThreshold = 90.0f
 	}
 
+	// TODO: Private these - toString() override for the common log string for hostname + identifier + job name + instance address
 	var identifier: String
 	var jobName: String
 	var instanceAddress: String
@@ -40,17 +41,18 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 	var version: String
 	var uptimeSeconds: Long
 
+	// TODO: Make these into methods
 	var isShutdownActionSupported: Boolean? = null
 	var isRebootActionSupported: Boolean? = null
 
-	var processorUsage: Float? = null
-	var processorFrequency: Float? = null
-	var processorTemperature: Float? = null
+	private var processorUsage: Float? = null
+	private var processorFrequency: Float? = null
+	private var processorTemperature: Float? = null
 
-	var memoryTotalBytes: Long? = null
-	var memoryFreeBytes: Long? = null
-	var swapTotalBytes: Long? = null
-	var swapFreeBytes: Long? = null
+	private var memoryTotalBytes: Long? = null
+	private var memoryFreeBytes: Long? = null
+	private var swapTotalBytes: Long? = null
+	private var swapFreeBytes: Long? = null
 
 	private var drives: Array<Drive>? = null
 	private var networkInterfaces: Array<NetworkInterface>? = null
@@ -86,7 +88,7 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 
 	// Gets the processor usage/frequency/temperature
 	fun getProcessorUsage() = this.processorUsage ?: -1.0f
-	fun getProcessorFrequency() = this.processorFrequency?.times( 1000.0f * 1000.0f )?.atLeastInt( 0 ) ?: -1 // Convert to Hz from MHz returned by API
+	fun getProcessorFrequency() = this.processorFrequency?.times( 1000.0f * 1000.0f )?.atLeastRoundInt( 0 ) ?: -1 // Convert to Hz from MHz returned by API
 	fun getProcessorTemperature() = this.processorTemperature ?: -1.0f
 
 	/******************************************************/

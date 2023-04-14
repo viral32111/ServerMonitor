@@ -24,9 +24,9 @@ class Drive( data: JsonObject ) {
 
 	val name: String
 	val health: Int
-	private val totalBytesRead: Long
+	private val totalBytesRead: Long // Unused
 	val rateBytesRead: Long
-	private val totalBytesWritten: Long
+	private val totalBytesWritten: Long // Unused
 	val rateBytesWritten: Long
 	private val partitions: Array<Partition>
 

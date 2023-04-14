@@ -581,10 +581,7 @@ class ServersActivity : AppCompatActivity() {
 		// Update the recycler view, stop loading & restart automatic refresh countdown progress bar animation
 		serverAdapter.notifyItemRangeChanged( 0, servers.size ) // IDE doesn't like .notifyDataSetChanged()
 		swipeRefreshLayout.isRefreshing = false
-		if ( settings.automaticRefresh ) {
-			//progressBarAnimation.reset()
-			refreshProgressBar.startAnimation( progressBarAnimation )
-		}
+		if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
 
 	}
 

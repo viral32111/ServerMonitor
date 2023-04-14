@@ -729,19 +729,20 @@ class ServerActivity : AppCompatActivity() {
 			// Overall status
 			statusTextView.setTextColor( getColor( R.color.black ) )
 			statusTextView.setTextFromHTML( getString( R.string.serverTextViewStatus ).format(
-				createColorText( getString( R.string.serverTextViewStatusOnline ), getColor( R.color.statusGood ), true ),
+				createHTMLColoredText( getString( R.string.serverTextViewStatusOnline ), R.color.statusGood ).asHTMLBold(),
 				TimeSpan( server.uptimeSeconds ).toString( true )
 			) )
 
 			// Resources -> Processor
 			val processorUsage = server.getProcessorUsage()
-			val processorFrequency = Frequency( server.getProcessorFrequency() )
+			val processorFrequencyHz = server.getProcessorFrequency()
 			val processorTemperature = server.getProcessorTemperature()
+			val processorFrequency = Frequency( processorFrequencyHz )
 			resourcesProcessorTextView.setTextIconColor( getColor( R.color.black ) )
 			resourcesProcessorTextView.setTextFromHTML( getString( R.string.serverTextViewResourcesProcessor ).format(
-				applicationContext.createHTMLColoredText( processorUsage.atLeastRoundToString( 0.0f, 1 ).suffixWith( Shared.percentSymbol ), processorUsage.getAppropriateColor( Server.processorUsageWarningThreshold, Server.processorUsageDangerThreshold ) ),
-				applicationContext.createHTMLColoredText( processorFrequency.amount.atLeastRoundToString( 0.0f, 1 ).suffixWith( processorFrequency.suffix ), server.processorFrequency.getAppropriateColor() ),
-				applicationContext.createHTMLColoredText( processorTemperature.atLeastRoundToString( 0.0f, 1 ).suffixWith( Shared.degreesCelsiusSymbol ), processorTemperature.getAppropriateColor( Server.processorTemperatureWarningThreshold, Server.processorTemperatureDangerThreshold ) )
+				applicationContext.createHTMLColoredText( processorUsage.atLeastRoundAsString( 0.0f, 1 ).suffixWith( Shared.percentSymbol ), processorUsage.getAppropriateColor( Server.processorUsageWarningThreshold, Server.processorUsageDangerThreshold ) ),
+				applicationContext.createHTMLColoredText( processorFrequency.amount.atLeastRoundAsString( 0.0f, 1 ).suffixWith( processorFrequency.suffix ), processorFrequencyHz.getAppropriateColor() ),
+				applicationContext.createHTMLColoredText( processorTemperature.atLeastRoundAsString( 0.0f, 1 ).suffixWith( Shared.degreesCelsiusSymbol ), processorTemperature.getAppropriateColor( Server.processorTemperatureWarningThreshold, Server.processorTemperatureDangerThreshold ) )
 			) )
 
 			// Resources -> Memory
@@ -753,9 +754,9 @@ class ServerActivity : AppCompatActivity() {
 			val memoryUsage = server.getMemoryUsage( memoryFreeBytes, memoryTotalBytes )
 			resourcesMemoryTextView.setTextIconColor( getColor( R.color.black ) )
 			resourcesMemoryTextView.setTextFromHTML( getString( R.string.serverTextViewResourcesMemory ).format(
-				applicationContext.createHTMLColoredText( memoryUsed.amount.atLeastRoundToString( 0.0, 1 ).suffixWith( memoryUsed.suffix ), memoryUsedBytes.getAppropriateColor( Server.memoryUsedWarningThreshold( memoryTotalBytes ), Server.memoryUsedDangerThreshold( memoryTotalBytes ) ) ),
-				applicationContext.createHTMLColoredText( memoryTotal.amount.atLeastRoundToString( 0.0, 1 ).suffixWith( memoryTotal.suffix ), memoryTotalBytes.getAppropriateColor() ),
-				applicationContext.createHTMLColoredText( memoryUsage.roundToString( 1 ).suffixWith( Shared.percentSymbol ), memoryUsage.getAppropriateColor( Server.memoryUsageWarningThreshold, Server.memoryUsageDangerThreshold ) )
+				applicationContext.createHTMLColoredText( memoryUsed.amount.atLeastRoundAsString( 0.0, 1 ).suffixWith( memoryUsed.suffix ), memoryUsedBytes.getAppropriateColor( Server.memoryUsedWarningThreshold( memoryTotalBytes ), Server.memoryUsedDangerThreshold( memoryTotalBytes ) ) ),
+				applicationContext.createHTMLColoredText( memoryTotal.amount.atLeastRoundAsString( 0.0, 1 ).suffixWith( memoryTotal.suffix ), memoryTotalBytes.getAppropriateColor() ),
+				applicationContext.createHTMLColoredText( memoryUsage.roundAsString( 1 ).suffixWith( Shared.percentSymbol ), memoryUsage.getAppropriateColor( Server.memoryUsageWarningThreshold, Server.memoryUsageDangerThreshold ) )
 			) )
 
 			// Resources -> Swap
@@ -768,9 +769,9 @@ class ServerActivity : AppCompatActivity() {
 			resourcesSwapTextView.setTextIconColor( getColor( R.color.black ) )
 			resourcesSwapTextView.setTextFromHTML( getString( R.string.serverTextViewResourcesSwap ).format(
 				swapName,
-				applicationContext.createHTMLColoredText( swapUsed.amount.atLeastRoundToString( 0.0, 1 ).suffixWith( swapUsed.suffix ), swapUsedBytes.getAppropriateColor( Server.swapUsedWarningThreshold( swapTotalBytes ), Server.swapUsedDangerThreshold( swapTotalBytes ) ) ),
-				applicationContext.createHTMLColoredText( swapTotal.amount.atLeastRoundToString( 0.0, 1 ).suffixWith( swapTotal.suffix ), swapTotalBytes.getAppropriateColor() ),
-				applicationContext.createHTMLColoredText( swapUsage.roundToString( 1 ).suffixWith( Shared.percentSymbol ), swapUsage.getAppropriateColor( Server.swapUsageWarningThreshold, Server.swapUsageDangerThreshold ) )
+				applicationContext.createHTMLColoredText( swapUsed.amount.atLeastRoundAsString( 0.0, 1 ).suffixWith( swapUsed.suffix ), swapUsedBytes.getAppropriateColor( Server.swapUsedWarningThreshold( swapTotalBytes ), Server.swapUsedDangerThreshold( swapTotalBytes ) ) ),
+				applicationContext.createHTMLColoredText( swapTotal.amount.atLeastRoundAsString( 0.0, 1 ).suffixWith( swapTotal.suffix ), swapTotalBytes.getAppropriateColor() ),
+				applicationContext.createHTMLColoredText( swapUsage.roundAsString( 1 ).suffixWith( Shared.percentSymbol ), swapUsage.getAppropriateColor( Server.swapUsageWarningThreshold, Server.swapUsageDangerThreshold ) )
 			) )
 
 			// Resources -> Network I/O
@@ -780,8 +781,8 @@ class ServerActivity : AppCompatActivity() {
 			val networkReceiveRate = Size( networkReceiveRateBytes )
 			resourcesNetworkTextView.setTextIconColor( getColor( R.color.black ) )
 			resourcesNetworkTextView.setTextFromHTML( getString( R.string.serverTextViewResourcesNetwork ).format(
-				applicationContext.createHTMLColoredText( networkTransmitRate.amount.atLeastRoundToString( 0.0, 1 ).suffixWith( networkTransmitRate.suffix.concat( "/s" ) ), networkTransmitRateBytes.getAppropriateColor( NetworkInterface.transmitRateWarningThreshold, NetworkInterface.transmitRateDangerThreshold ) ),
-				applicationContext.createHTMLColoredText( networkReceiveRate.amount.atLeastRoundToString( 0.0, 1 ).suffixWith( networkReceiveRate.suffix.concat( "/s" ) ), networkReceiveRateBytes.getAppropriateColor( NetworkInterface.receiveRateWarningThreshold, NetworkInterface.receiveRateDangerThreshold ) )
+				applicationContext.createHTMLColoredText( networkTransmitRate.amount.atLeastRoundAsString( 0.0, 1 ).suffixWith( networkTransmitRate.suffix.concat( "/s" ) ), networkTransmitRateBytes.getAppropriateColor( NetworkInterface.transmitRateWarningThreshold, NetworkInterface.transmitRateDangerThreshold ) ),
+				applicationContext.createHTMLColoredText( networkReceiveRate.amount.atLeastRoundAsString( 0.0, 1 ).suffixWith( networkReceiveRate.suffix.concat( "/s" ) ), networkReceiveRateBytes.getAppropriateColor( NetworkInterface.receiveRateWarningThreshold, NetworkInterface.receiveRateDangerThreshold ) )
 			) )
 
 			// Resources -> Drive I/O
@@ -791,8 +792,8 @@ class ServerActivity : AppCompatActivity() {
 			val driveWriteRate = Size( driveWriteRateBytes )
 			resourcesDriveTextView.setTextIconColor( getColor( R.color.black ) )
 			resourcesDriveTextView.setTextFromHTML( getString( R.string.serverTextViewResourcesDrive ).format(
-				applicationContext.createHTMLColoredText( driveReadRate.amount.atLeastRoundToString( 0.0, 1 ).suffixWith( driveReadRate.suffix.concat( "/s" ) ), driveReadRateBytes.getAppropriateColor( Drive.readRateWarningThreshold, Drive.readRateDangerThreshold ) ),
-				applicationContext.createHTMLColoredText( driveWriteRate.amount.atLeastRoundToString( 0.0, 1 ).suffixWith( driveWriteRate.suffix.concat( "/s" ) ), driveWriteRateBytes.getAppropriateColor( Drive.writeRateWarningThreshold, Drive.writeRateDangerThreshold ) )
+				applicationContext.createHTMLColoredText( driveReadRate.amount.atLeastRoundAsString( 0.0, 1 ).suffixWith( driveReadRate.suffix.concat( "/s" ) ), driveReadRateBytes.getAppropriateColor( Drive.readRateWarningThreshold, Drive.readRateDangerThreshold ) ),
+				applicationContext.createHTMLColoredText( driveWriteRate.amount.atLeastRoundAsString( 0.0, 1 ).suffixWith( driveWriteRate.suffix.concat( "/s" ) ), driveWriteRateBytes.getAppropriateColor( Drive.writeRateWarningThreshold, Drive.writeRateDangerThreshold ) )
 			) )
 
 			// TODO: Power & fans

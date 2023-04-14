@@ -1,6 +1,5 @@
 package com.viral32111.servermonitor
 
-import android.content.Context
 import com.google.gson.JsonObject
 
 /**
@@ -13,9 +12,10 @@ class Service( data: JsonObject ) {
 	val displayName: String
 	val description: String
 	val statusCode: Int
-	val exitCode: Int
+	private val exitCode: Int // Unused
 	val uptimeSeconds: Double
 
+	// TODO: Make these into functions
 	var isStartActionSupported: Boolean? = null
 	var isStopActionSupported: Boolean? = null
 	var isRestartActionSupported: Boolean? = null
@@ -65,10 +65,9 @@ class Service( data: JsonObject ) {
 
 	/**
 	* Gets the appropriate color for the status of this service.
-	* @param context The application context, for fetching a color resource.
 	* @return The appropriate color for the status.
 	*/
-	fun getStatusColor( context: Context): Int = context.getColor( when ( getStatusText() ) {
+	fun getStatusColor( statusText: String = this.getStatusText() ) = when ( statusText ) {
 		"Stopped" -> R.color.statusNeutral
 		"Running" -> R.color.statusGood
 		"Starting" -> R.color.statusWarning
@@ -80,5 +79,6 @@ class Service( data: JsonObject ) {
 		"Pausing" -> R.color.statusWarning
 		"Paused" -> R.color.statusWarning
 		else -> R.color.statusDead
-	} )
+	}
+
 }

@@ -120,25 +120,25 @@ fun showInformationDialog(
 
 // Gets the color appropriate for a given value - neutral if thresholds not provided, or dead if invalid value
 fun Float?.getAppropriateColor( warningThreshold: Float? = null, dangerThreshold: Float? = null ): Int =
-	if ( this == null || this < 0.0f ) R.color.statusDead
+	if ( this == null || this.compareTo( 0.0 ) < 0 ) R.color.statusDead
 	else if ( warningThreshold == null || dangerThreshold == null ) R.color.statusNeutral
 	else if ( this >= dangerThreshold ) R.color.statusBad
 	else if ( this >= warningThreshold ) R.color.statusWarning
 	else R.color.statusGood
 fun Double?.getAppropriateColor( warningThreshold: Double? = null, dangerThreshold: Double? = null ): Int =
-	if ( this == null || this < 0.0 ) R.color.statusDead
+	if ( this == null || this.compareTo( 0.0 ) < 0 ) R.color.statusDead
 	else if ( warningThreshold == null || dangerThreshold == null ) R.color.statusNeutral
 	else if ( this >= dangerThreshold ) R.color.statusBad
 	else if ( this >= warningThreshold ) R.color.statusWarning
 	else R.color.statusGood
 fun Int?.getAppropriateColor( warningThreshold: Int? = null, dangerThreshold: Int? = null ): Int =
-	if ( this == null || this < 0 ) R.color.statusDead
+	if ( this == null || this.compareTo( 0.0 ) < 0 ) R.color.statusDead
 	else if ( warningThreshold == null || dangerThreshold == null ) R.color.statusNeutral
 	else if ( this >= dangerThreshold ) R.color.statusBad
 	else if ( this >= warningThreshold ) R.color.statusWarning
 	else R.color.statusGood
 fun Long?.getAppropriateColor( warningThreshold: Long? = null, dangerThreshold: Long? = null ): Int =
-	if ( this == null || this < 0L ) R.color.statusDead
+	if ( this == null || this.compareTo( 0.0 ) < 0 ) R.color.statusDead
 	else if ( warningThreshold == null || dangerThreshold == null ) R.color.statusNeutral
 	else if ( this >= dangerThreshold ) R.color.statusBad
 	else if ( this >= warningThreshold ) R.color.statusWarning
@@ -146,40 +146,11 @@ fun Long?.getAppropriateColor( warningThreshold: Long? = null, dangerThreshold: 
 
 // Same as above but in reverse and only for integers - used for drive S.M.A.R.T health
 fun Int?.getAppropriateColorReverse( warningThreshold: Int? = null, dangerThreshold: Int? = null ): Int =
-	if ( this == null || this < 0 ) R.color.statusDead
+	if ( this == null || this.compareTo( 0.0 ) < 0 ) R.color.statusDead
 	else if ( warningThreshold == null || dangerThreshold == null ) R.color.statusNeutral
 	else if ( this <= dangerThreshold ) R.color.statusBad
 	else if ( this <= warningThreshold ) R.color.statusWarning
 	else R.color.statusGood
-
-// Obsolete
-fun colorForValue( context: Context, value: Long?, warnThreshold: Long, dangerThreshold: Long ) =
-	if ( value == null || value < 0L ) context.getColor( R.color.statusDead )
-	else if ( value >= dangerThreshold ) context.getColor( R.color.statusBad )
-	else if ( value >= warnThreshold ) context.getColor( R.color.statusWarning )
-	else context.getColor( R.color.statusGood )
-fun colorForValue( context: Context, value: Double?, warnThreshold: Double, dangerThreshold: Double ) =
-	if ( value == null || value < 0.0 ) context.getColor( R.color.statusDead )
-	else if ( value >= dangerThreshold ) context.getColor( R.color.statusBad )
-	else if ( value >= warnThreshold ) context.getColor( R.color.statusWarning )
-	else context.getColor( R.color.statusGood )
-fun colorForValue( context: Context, value: Int?, warnThreshold: Int, dangerThreshold: Int ) =
-	if ( value == null || value < 0 ) context.getColor( R.color.statusDead )
-	else if ( value >= dangerThreshold ) context.getColor( R.color.statusBad )
-	else if ( value >= warnThreshold ) context.getColor( R.color.statusWarning )
-	else context.getColor( R.color.statusGood )
-
-// Returns neutral color for value, or fallback to offline/dead - Obsolete
-fun colorAsNeutral( context: Context, value: Long? ) =
-	if ( value == null || value < 0.0 ) context.getColor( R.color.statusDead ) else context.getColor( R.color.statusNeutral )
-
-// Rounds a given value if it is valid, fallback to default text - Suffix is not included in string format so that percentage symbols can be used
-fun roundValueOrDefault( value: Double?, suffix: String = "" ) =
-	( if ( value == null || value <= 0.0 ) "0" else String.format( "%.1f", value ) ) + suffix
-
-// Creates a HTML spannable tag with color styling - https://stackoverflow.com/a/41655900 - Obsolete
-fun createColorText( text: String, color: Int, bold: Boolean = false ) =
-	String.format( "%s<span style=\"color: #%s\">%s</span>%s", if ( bold ) "<strong>" else "", color.toString( 16 ), text, if ( bold ) "</strong>" else "" )
 
 // Creates a HTML spannable tag with color styling - https://stackoverflow.com/a/41655900
 fun Context.createHTMLColoredText( text: String, color: Int ) = String.format( "<span style=\"color: #%s\">%s</span>", this.getColor( color ).toString( 16 ), text )
@@ -187,13 +158,6 @@ fun Context.createHTMLColoredText( text: String, color: Int ) = String.format( "
 // Wraps a string in bold/italic HTML tags
 fun String.asHTMLBold() = this.prefixWith( "<strong>" ).suffixWith( "</strong>" )
 fun String.asHTMLItalic() = this.prefixWith( "<em>" ).suffixWith( "</em>" )
-
-// Generates a random number in a range
-fun generateRandomInteger( min: Int, max: Int ): Int = ( ( Math.random() * ( max - min ) ) + min ).roundToInt()
-
-// Rounds & clamps a float/double to an int/long respectively
-fun Float.atLeastInt( minimum: Int ) = this.roundToInt().coerceAtLeast( minimum )
-fun Double.atLeastLong( minimum: Long ) = this.roundToLong().coerceAtLeast( minimum )
 
 // Sets the color of a text view's content & drawable
 fun TextView.setTextIconColor( color: Int ) {
@@ -206,13 +170,20 @@ fun TextView.setTextFromHTML( html: String ) {
 	this.text = Html.fromHtml( html, Html.FROM_HTML_MODE_LEGACY )
 }
 
+// Generates a random number in a range
+fun generateRandomInteger( min: Int, max: Int ): Int = ( ( Math.random() * ( max - min ) ) + min ).roundToInt()
+
+// Rounds & clamps a float/double to an int/long respectively
+fun Float.atLeastRoundInt( minimum: Int ) = this.roundToInt().coerceAtLeast( minimum )
+fun Double.atLeastRoundLong( minimum: Long ) = this.roundToLong().coerceAtLeast( minimum )
+
 // Rounds a float/double to a given decimal place and returns as a string
-fun Float.roundToString( decimals: Int ) = String.format( "%.${ decimals }f", this )
-fun Double.roundToString( decimals: Int ) = String.format( "%.${ decimals }f", this )
+fun Float.roundAsString( decimals: Int ) = String.format( "%.${ decimals }f", this )
+fun Double.roundAsString( decimals: Int ) = String.format( "%.${ decimals }f", this )
 
 // Clamps a float/double at a minimum and rounds it using the function above
-fun Float.atLeastRoundToString( minimum: Float, decimals: Int ) = this.coerceAtLeast( minimum ).roundToString( decimals )
-fun Double.atLeastRoundToString( minimum: Double, decimals: Int ) = this.coerceAtLeast( minimum ).roundToString( decimals )
+fun Float.atLeastRoundAsString( minimum: Float, decimals: Int ) = this.coerceAtLeast( minimum ).roundAsString( decimals )
+fun Double.atLeastRoundAsString( minimum: Double, decimals: Int ) = this.coerceAtLeast( minimum ).roundAsString( decimals )
 
 // Concatenate strings
 fun String.concat( string: String ) = this + string

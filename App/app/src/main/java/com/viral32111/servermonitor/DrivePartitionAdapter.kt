@@ -52,9 +52,9 @@ class DrivePartitionAdapter(
 		// Update the text
 		viewHolder.textView.setTextFromHTML( context.getString( R.string.serverTextViewDrivesPartition ).format(
 			partition.name,
-			createColorText( used.amount.atLeastRoundToString( 0.0, 1 ).suffixWith( used.suffix ), usedBytes.getAppropriateColor( Partition.usedBytesWarningThreshold( partition.totalBytes ), Partition.usedBytesDangerThreshold( partition.totalBytes ) ) ),
-			createColorText( total.amount.atLeastRoundToString( 0.0, 1 ).suffixWith( total.suffix ), partition.totalBytes.getAppropriateColor() ),
-			createColorText( usage.roundToString( 1 ).suffixWith( Shared.percentSymbol ), usage.getAppropriateColor( Partition.usageWarningThreshold, Partition.usageDangerThreshold ) ),
+			context.createHTMLColoredText( used.amount.atLeastRoundAsString( 0.0, 1 ).suffixWith( used.suffix ), usedBytes.getAppropriateColor( Partition.usedBytesWarningThreshold( partition.totalBytes ), Partition.usedBytesDangerThreshold( partition.totalBytes ) ) ),
+			context.createHTMLColoredText( total.amount.atLeastRoundAsString( 0.0, 1 ).suffixWith( total.suffix ), partition.totalBytes.getAppropriateColor() ),
+			context.createHTMLColoredText( usage.roundAsString( 1 ).suffixWith( Shared.percentSymbol ), usage.getAppropriateColor( Partition.usageWarningThreshold, Partition.usageDangerThreshold ) ),
 			partition.mountpoint
 		) )
 

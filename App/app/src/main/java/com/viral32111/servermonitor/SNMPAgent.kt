@@ -7,6 +7,11 @@ import com.google.gson.JsonObject
  * @param data The JSON object from the API representing the SNMP agent.
  */
 class SNMPAgent( data: JsonObject ) {
+	companion object {
+		const val receivedTrapsCountWarningThreshold = 1
+		const val receivedTrapsCountDangerThreshold = 10
+	}
+
 	val address: String
 	val port: Int
 	val name: String

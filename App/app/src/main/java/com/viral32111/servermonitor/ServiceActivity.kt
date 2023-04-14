@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.text.Html
 import android.util.Log
 import android.view.View
 import android.view.animation.Animation
@@ -699,26 +698,30 @@ class ServiceActivity : AppCompatActivity() {
 		}
 		actionStartStopButton.isEnabled = service.isStartActionSupported == true || service.isStopActionSupported == true
 
+		// Get the status
+		val statusText = service.getStatusText()
+		val statusColor = service.getStatusColor( statusText )
+
 		// Update the status
 		val uptimeText = TimeSpan( service.uptimeSeconds.toLong() ).toString( true )
 		statusTextView.setTextColor( getColor( R.color.black ) )
-		statusTextView.text = Html.fromHtml( String.format( getString( R.string.serviceTextViewStatusGood ),
-			createColorText( service.getStatusText(), service.getStatusColor( applicationContext ) ),
-			createColorText(
-				uptimeText.ifBlank { "an unknown duration" },
-				applicationContext.getColor( if ( uptimeText.isNotBlank() ) R.color.black else R.color.statusDead )
+		statusTextView.setTextFromHTML( getString( R.string.serviceTextViewStatusGood ).format(
+			createHTMLColoredText( statusText, statusColor ),
+			createHTMLColoredText(
+				uptimeText.ifBlank { getString( R.string.serverTextViewServicesServiceStatusUptimeUnknown ) },
+				if ( uptimeText.isNotBlank() ) R.color.black else R.color.statusDead
 			)
-		), Html.FROM_HTML_MODE_LEGACY )
+		) )
 
 		// Update the name, description & run level
 		informationServiceNameTextView.setTextColor( getColor( R.color.black ) )
-		informationServiceNameTextView.text = String.format( getString( R.string.serviceTextViewInformationServiceName ), service.serviceName )
+		informationServiceNameTextView.text = getString( R.string.serviceTextViewInformationServiceName ).format( service.serviceName )
 		informationDisplayNameTextView.setTextColor( getColor( R.color.black ) )
-		informationDisplayNameTextView.text = String.format( getString( R.string.serviceTextViewInformationDisplayName ), service.displayName )
+		informationDisplayNameTextView.text = getString( R.string.serviceTextViewInformationDisplayName ).format( service.displayName )
 		informationDescriptionTextView.setTextColor( getColor( R.color.black ) )
-		informationDescriptionTextView.text = String.format( getString( R.string.serviceTextViewInformationDescription ), service.description )
+		informationDescriptionTextView.text = getString( R.string.serviceTextViewInformationDescription ).format( service.description )
 		informationRunLevelTextView.setTextColor( getColor( R.color.black ) )
-		informationRunLevelTextView.text = String.format( getString( R.string.serviceTextViewInformationRunLevel ), service.runLevel )
+		informationRunLevelTextView.text = getString( R.string.serviceTextViewInformationRunLevel ).format( service.runLevel )
 
 		// TODO: Update the logs
 

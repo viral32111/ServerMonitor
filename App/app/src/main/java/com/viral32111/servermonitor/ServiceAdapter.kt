@@ -1,7 +1,6 @@
 package com.viral32111.servermonitor
 
 import android.content.Context
-import android.text.Html
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -11,10 +10,10 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
 class ServiceAdapter(
-		private val services: Array<Service>,
-		private val context: Context,
-		private val onClickListener: ( service: Service ) -> Unit
-	): RecyclerView.Adapter<ServiceAdapter.ViewHolder>() {
+	private val services: Array<Service>,
+	private val context: Context,
+	private val onClickListener: ( service: Service ) -> Unit
+): RecyclerView.Adapter<ServiceAdapter.ViewHolder>() {
 
 	// Holds all the UI
 	class ViewHolder( view: View ) : RecyclerView.ViewHolder( view ) {
@@ -49,18 +48,22 @@ class ServiceAdapter(
 			onClickListener.invoke( service )
 		}
 
+		// Get the status
+		val statusText = service.getStatusText()
+		val statusColor = service.getStatusColor( statusText )
+
 		// Update the name text
 		viewHolder.nameTextView.text = service.displayName
 
 		// Update the status text
 		val uptimeText = TimeSpan( service.uptimeSeconds.toLong() ).toString( false )
-		viewHolder.statusTextView.text = Html.fromHtml( String.format( context.getString( R.string.serverTextViewServicesServiceStatus ),
-			createColorText( service.getStatusText(), service.getStatusColor( context ) ),
-			createColorText(
-				uptimeText.ifBlank { "an unknown duration" },
-				context.getColor( if ( uptimeText.isNotBlank() ) R.color.black else R.color.statusDead )
+		viewHolder.statusTextView.setTextFromHTML( context.getString( R.string.serverTextViewServicesServiceStatus ).format(
+			context.createHTMLColoredText( statusText, statusColor ),
+			context.createHTMLColoredText(
+				uptimeText.ifBlank { context.getString( R.string.serverTextViewServicesServiceStatusUptimeUnknown ) },
+				if ( uptimeText.isNotBlank() ) R.color.black else R.color.statusDead
 			)
-		), Html.FROM_HTML_MODE_LEGACY )
+		) )
 	}
 
 	// Returns the number of views - called by the layout manager

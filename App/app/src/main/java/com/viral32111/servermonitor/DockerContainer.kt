@@ -10,9 +10,9 @@ class DockerContainer( data: JsonObject ) {
 	val id: String
 	val name: String
 	val image: String
-	val statusCode: Int
-	val exitCode: Int
-	val healthStatusCode: Int
+	private val statusCode: Int
+	private val exitCode: Int // Unused
+	private val healthStatusCode: Int
 	val uptimeSeconds: Long
 
 	// TODO: supportedActions
@@ -35,5 +35,50 @@ class DockerContainer( data: JsonObject ) {
 	 * Checks if this Docker container is running.
 	 * @return True if this Docker container is running, false otherwise.
 	 */
-	fun isRunning(): Boolean = statusCode == 1 && uptimeSeconds >= 0.0
+	//fun isRunning(): Boolean = statusCode == 1 && uptimeSeconds >= 0.0
+
+	// Gets the short identifier
+	fun getShortIdentifier() = this.id.substring( 0, 12 )
+
+	// Checks if this container is using an old (deleted) image
+	fun isImageOld() = this.image.startsWith( "sha256:" )
+
+	// Gets the text representation of the status
+	fun getStatusText() = when ( this.statusCode ) {
+		0 -> "Created"
+		1 -> "Running"
+		2 -> "Restarting"
+		3 -> "Dead"
+		4 -> "Exited"
+		5 -> "Paused"
+		6 -> "Removing"
+		else -> "Unknown"
+	}
+
+	// Gets the appropriate color for the status
+	fun getStatusColor( statusText: String = this.getStatusText() ) = when ( statusText ) {
+		"Created" -> R.color.statusNeutral
+		"Running" -> R.color.statusGood
+		"Restarting" -> R.color.statusWarning
+		"Dead" -> R.color.statusBad
+		"Exited" -> R.color.statusBad
+		"Paused" -> R.color.statusNeutral
+		"Removing" -> R.color.statusWarning
+		else -> R.color.statusDead
+	}
+
+	// Gets the text representation of the health
+	fun getHealthText() = when ( this.statusCode ) {
+		0 -> "Unhealthy"
+		1 -> "Healthy"
+		else -> "Unknown"
+	}
+
+	// Gets the appropriate color for the health status
+	fun getHealthColor( healthText: String = this.getHealthText() ) = when ( healthText ) {
+		"Unhealthy" -> R.color.statusBad
+		"Healthy" -> R.color.statusGood
+		else -> R.color.statusDead
+	}
+
 }
