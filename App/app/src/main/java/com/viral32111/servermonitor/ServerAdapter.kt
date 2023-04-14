@@ -76,20 +76,20 @@ class ServerAdapter(
 			// Processor Usage
 			val processorUsage = server.getProcessorUsage()
 			viewHolder.processorTextView.text = context.getString( R.string.serversTextViewServerProcessorUsage ).format( processorUsage.atLeastRoundInt( 0 ) )
-			viewHolder.processorTextView.setTextColor( processorUsage.getAppropriateColor( Server.processorUsageWarningThreshold, Server.processorUsageDangerThreshold ) )
+			viewHolder.processorTextView.setTextColor( context.getColor( processorUsage.getAppropriateColor( Server.processorUsageWarningThreshold, Server.processorUsageDangerThreshold ) ) )
 
 			// Memory Used
 			val memoryTotalBytes = server.getMemoryTotal()
 			val memoryFreeBytes = server.getMemoryFree()
-			val memoryUsedBytes = server.getMemoryUsed( memoryTotalBytes, memoryFreeBytes )
+			val memoryUsedBytes = server.getMemoryUsed( memoryFreeBytes, memoryTotalBytes )
 			val memoryUsed = Size( memoryUsedBytes )
 			viewHolder.memoryTextView.text = context.getString( R.string.serversTextViewServerMemoryUsage ).format( memoryUsed.amount.atLeastRoundLong( 0 ), memoryUsed.suffix.first() )
-			viewHolder.memoryTextView.setTextColor( memoryUsedBytes.getAppropriateColor( Server.memoryUsedWarningThreshold( memoryTotalBytes ), Server.memoryUsedDangerThreshold( memoryTotalBytes ) ) )
+			viewHolder.memoryTextView.setTextColor( context.getColor( memoryUsedBytes.getAppropriateColor( Server.memoryUsedWarningThreshold( memoryTotalBytes ), Server.memoryUsedDangerThreshold( memoryTotalBytes ) ) ) )
 
 			// Processor Temperature
 			val processorTemperature = server.getProcessorTemperature()
 			viewHolder.temperatureTextView.text = context.getString( R.string.serversTextViewServerTemperatureValue ).format( processorTemperature.atLeastRoundInt( 0 ) )
-			viewHolder.temperatureTextView.setTextColor( processorTemperature.getAppropriateColor( Server.processorTemperatureWarningThreshold, Server.processorTemperatureDangerThreshold ) )
+			viewHolder.temperatureTextView.setTextColor( context.getColor( processorTemperature.getAppropriateColor( Server.processorTemperatureWarningThreshold, Server.processorTemperatureDangerThreshold ) ) )
 
 			// Running Services Count
 			val runningServices = server.getRunningServices()
@@ -100,13 +100,13 @@ class ServerAdapter(
 			val networkTotalRateBytes = server.getNetworkTotalRate()
 			val networkTotalRate = Size( networkTotalRateBytes )
 			viewHolder.networkTextView.text = context.getString( R.string.serversTextViewServerNetworkUsage ).format( networkTotalRate.amount.atLeastRoundLong( 0 ), networkTotalRate.suffix.first() )
-			viewHolder.networkTextView.setTextColor( networkTotalRateBytes.getAppropriateColor( NetworkInterface.totalRateWarningThreshold, NetworkInterface.totalRateDangerThreshold ) )
+			viewHolder.networkTextView.setTextColor( context.getColor( networkTotalRateBytes.getAppropriateColor( NetworkInterface.totalRateWarningThreshold, NetworkInterface.totalRateDangerThreshold ) ) )
 
 			// Drive I/O
 			val driveTotalRateBytes = server.getDriveTotalRate()
 			val driveTotalRate = Size( driveTotalRateBytes )
 			viewHolder.diskTextView.text = context.getString( R.string.serversTextViewServerNetworkUsage ).format( driveTotalRate.amount.atLeastRoundLong( 0 ), driveTotalRate.suffix.first() )
-			viewHolder.diskTextView.setTextColor( driveTotalRateBytes.getAppropriateColor( Drive.totalRateWarningThreshold, Drive.totalRateDangerThreshold ) )
+			viewHolder.diskTextView.setTextColor( context.getColor( driveTotalRateBytes.getAppropriateColor( Drive.totalRateWarningThreshold, Drive.totalRateDangerThreshold ) ) )
 
 			// Uptime as days, hours & minutes
 			viewHolder.uptimeTextView.text = context.getString( R.string.serversTextViewServerUptime ).format( TimeSpan( server.uptimeSeconds ).toString( false ) )
