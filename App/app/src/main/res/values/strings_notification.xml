@@ -2,16 +2,22 @@
 <resources>
 
 	<!-- Test -->
+	<string name="notificationTestName">Test</string>
+	<string name="notificationTestDescription">Test notifications.</string>
 	<string name="notificationTestTitle">Test</string>
 	<string name="notificationTestText">This is a test notification.</string>
 
 	<!-- Always ongoing -->
+	<string name="notificationOngoingName">Always Ongoing</string>
+	<string name="notificationOngoingDescription">Persistent notification to report overall status.</string>
 	<string name="notificationOngoingTitle">Overall Status</string>
-	<string name="notificationOngoingTextGood">All servers are good. Last updated %d:%d:%d.</string>
-	<string name="notificationOngoingTextBad">One or more servers are experiencing issues. Last updated %d:%d:%d.</string>
-	<string name="notificationOngoingTextUnknown">Currently unknown. Last updated %d:%d:%d.</string>
+	<string name="notificationOngoingTextGood">All servers are good.</string>
+	<string name="notificationOngoingTextBad">One or more servers are experiencing issues.</string>
+	<string name="notificationOngoingTextUnknown">Currently unknown. Fetching data…</string>
 
 	<!-- When an issue arises -->
+	<string name="notificationIssueName">When Issue Arises</string>
+	<string name="notificationIssueDescription">Notification when an issue arises.</string>
 	<string name="notificationIssueTitle">Issue Arisen</string>
 	<string name="notificationIssueText">There are ongoing issues with %s (%s)!</string>
 

@@ -32,28 +32,28 @@ class SetupActivity : AppCompatActivity() {
 
 		// Switch to the custom Material Toolbar
 		supportActionBar?.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
-		supportActionBar?.setCustomView(R.layout.action_bar)
-		Log.d(Shared.logTag, "Switched to Material Toolbar" )
+		supportActionBar?.setCustomView( R.layout.action_bar )
+		Log.d( Shared.logTag, "Switched to Material Toolbar" )
 
 		// Set the title on the toolbar
 		val materialToolbar = supportActionBar?.customView?.findViewById<MaterialToolbar>(R.id.actionBarMaterialToolbar)
-		materialToolbar?.title = getString(R.string.setupActionBarTitle)
+		materialToolbar?.title = getString( R.string.setupActionBarTitle )
 		materialToolbar?.isTitleCentered = true
-		Log.d(Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered })" )
+		Log.d( Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered })" )
 
 		// Hide the logout button as it is pointless during setup - https://www.tutorialspoint.com/how-do-i-hide-and-show-a-menu-item-in-the-android-actionbar
-		materialToolbar?.menu?.findItem(R.id.actionBarLogout)?.isVisible = false
+		materialToolbar?.menu?.findItem( R.id.actionBarLogout )?.isVisible = false
 
 		// Get all the UI
-		instanceUrlEditText = findViewById(R.id.setupInstanceUrlTextInputEditText)
-		credentialsUsernameEditText = findViewById(R.id.setupCredentialsUsernameTextInputEditText)
-		credentialsPasswordEditText = findViewById(R.id.setupCredentialsPasswordTextInputEditText)
-		continueButton = findViewById(R.id.settingsSaveButton)
-		Log.d(Shared.logTag, "Got UI controls" )
+		instanceUrlEditText = findViewById( R.id.setupInstanceUrlTextInputEditText )
+		credentialsUsernameEditText = findViewById( R.id.setupCredentialsUsernameTextInputEditText )
+		credentialsPasswordEditText = findViewById( R.id.setupCredentialsPasswordTextInputEditText )
+		continueButton = findViewById( R.id.settingsSaveButton)
+		Log.d( Shared.logTag, "Got UI controls" )
 
 		// Get the settings - https://developer.android.com/training/data-storage/shared-preferences
 		val settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, MODE_PRIVATE ) )
-		Log.d(Shared.logTag, "Got settings ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
+		Log.d( Shared.logTag, "Got settings ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
 
 		// Initialise our RESTful API class
 		API.initializeQueue( applicationContext )
@@ -210,7 +210,7 @@ class SetupActivity : AppCompatActivity() {
 			progressDialog.show()
 
 		} else {
-			Log.d(Shared.logTag, "We're not setup yet! ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
+			Log.d( Shared.logTag, "We're not setup yet! ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
 		}
 
 		// Event handlers to show input validation errors on the inputs
@@ -235,7 +235,7 @@ class SetupActivity : AppCompatActivity() {
 	// When the activity is closed...
 	override fun onStop() {
 		super.onStop()
-		Log.d(Shared.logTag, "Stopped setup activity" )
+		Log.d( Shared.logTag, "Stopped setup activity" )
 
 		// Cancel all pending HTTP requests
 		//API.cancelQueue()
