@@ -1,9 +1,13 @@
-package com.viral32111.servermonitor
+package com.viral32111.servermonitor.data
 
 import android.util.Log
 import com.google.gson.JsonObject
 import com.google.gson.JsonParseException
 import com.google.gson.JsonSyntaxException
+import com.viral32111.servermonitor.API
+import com.viral32111.servermonitor.Shared
+import com.viral32111.servermonitor.atLeastRoundInt
+import com.viral32111.servermonitor.toArrayList
 import kotlin.math.round
 import kotlin.math.roundToLong
 
@@ -337,8 +341,13 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 	suspend fun updateFromAPI( instanceUrl: String, credentialsUsername: String, credentialsPassword: String ) {
 
 		// Fetch the server, will throw a null pointer exception if null
-		val data = API.getServer( instanceUrl, credentialsUsername, credentialsPassword, identifier )!!
-		Log.d( Shared.logTag, "Fetched server '${ hostName }' ('${ identifier }', '${ jobName }', '${ instanceAddress }') from API" )
+		val data = API.getServer(
+			instanceUrl,
+			credentialsUsername,
+			credentialsPassword,
+			identifier
+		)!!
+		Log.d(Shared.logTag, "Fetched server '${ hostName }' ('${ identifier }', '${ jobName }', '${ instanceAddress }') from API" )
 
 		// Set the properties
 		updateUsingAPIData( data )

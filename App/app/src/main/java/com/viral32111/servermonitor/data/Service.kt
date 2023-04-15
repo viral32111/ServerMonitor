@@ -1,6 +1,7 @@
-package com.viral32111.servermonitor
+package com.viral32111.servermonitor.data
 
 import com.google.gson.JsonObject
+import com.viral32111.servermonitor.R
 
 /**
  * Represents a service on a server.

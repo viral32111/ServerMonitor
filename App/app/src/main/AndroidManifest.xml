@@ -17,23 +17,23 @@
 		android:enableOnBackInvokedCallback="true"
 		tools:targetApi="33">
 		<activity
-			android:name=".ServiceActivity"
+			android:name=".activity.ServiceActivity"
 			android:exported="false" />
 		<activity
-			android:name=".ServerActivity"
+			android:name=".activity.ServerActivity"
 			android:exported="false" />
 		<activity
-			android:name=".ServersActivity"
+			android:name=".activity.ServersActivity"
 			android:exported="false" />
 		<activity
-			android:name=".SettingsActivity"
+			android:name=".activity.SettingsActivity"
 			android:exported="false">
 			<meta-data
 				android:name="android.app.lib_name"
 				android:value="" />
 		</activity>
 		<activity
-			android:name=".SetupActivity"
+			android:name=".activity.SetupActivity"
 			android:exported="true">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />

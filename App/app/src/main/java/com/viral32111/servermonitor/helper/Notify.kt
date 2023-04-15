@@ -1,4 +1,4 @@
-package com.viral32111.servermonitor
+package com.viral32111.servermonitor.helper
 
 import android.app.*
 import android.content.Context
@@ -9,6 +9,9 @@ import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import com.viral32111.servermonitor.R
+import com.viral32111.servermonitor.Shared
+import com.viral32111.servermonitor.generateRandomInteger
 
 class Notify {
 
@@ -45,23 +48,23 @@ class Notify {
 			// Request notification permission if this is Android 13
 			if ( Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission( context, android.Manifest.permission.POST_NOTIFICATIONS ) != PackageManager.PERMISSION_GRANTED ) {
 				activity.registerForActivityResult( ActivityResultContracts.RequestPermission() ) { isGranted ->
-					Log.d( Shared.logTag, "Result of requesting post notifications permission: $isGranted" )
+					Log.d(Shared.logTag, "Result of requesting post notifications permission: $isGranted" )
 				}.launch( android.Manifest.permission.POST_NOTIFICATIONS )
 			}
 
 		}
 
 		// Creates a simple notification using the builder that opens an activity when pressed
-		fun createTextNotification( context: Context, intent: Intent, channel: Channel, titleId: Int, textId: Int ) = Notification.Builder( context, channel.identifier )
-			.setSmallIcon( R.drawable.bolt )
+		fun createTextNotification(context: Context, intent: Intent, channel: Channel, titleId: Int, textId: Int ) = Notification.Builder( context, channel.identifier )
+			.setSmallIcon(R.drawable.bolt)
 			.setContentTitle( context.getString( titleId ) )
 			.setContentText( context.getString( textId ) )
 			.setContentIntent( PendingIntent.getActivity( context, 0, intent, PendingIntent.FLAG_IMMUTABLE ) )
 			.setAutoCancel( true )
 			.build()
 
-		fun createProgressNotification( context: Context, intent: Intent, channel: Channel, titleId: Int, textId: Int ) = Notification.Builder( context, channel.identifier )
-			.setSmallIcon( R.drawable.bolt )
+		fun createProgressNotification(context: Context, intent: Intent, channel: Channel, titleId: Int, textId: Int ) = Notification.Builder( context, channel.identifier )
+			.setSmallIcon(R.drawable.bolt)
 			.setContentTitle( context.getString( titleId ) )
 			.setContentText( context.getString( textId ) )
 			.setContentIntent( PendingIntent.getActivity( context, 0, intent, PendingIntent.FLAG_IMMUTABLE ) )

@@ -1,7 +1,8 @@
-package com.viral32111.servermonitor
+package com.viral32111.servermonitor.helper
 
 import android.content.SharedPreferences
 import android.util.Log
+import com.viral32111.servermonitor.Shared
 
 // Manages custom settings - https://developer.android.com/training/data-storage/shared-preferences
 class Settings( private val sharedPreferences: SharedPreferences ) {
@@ -42,7 +43,7 @@ class Settings( private val sharedPreferences: SharedPreferences ) {
 			apply()
 		}
 
-		Log.d( Shared.logTag, "Saved settings to shared preferences (URL: '${ instanceUrl }', Username: '${ credentialsUsername }', Password: '${ credentialsPassword }')" )
+		Log.d(Shared.logTag, "Saved settings to shared preferences (URL: '${ instanceUrl }', Username: '${ credentialsUsername }', Password: '${ credentialsPassword }')" )
 	}
 
 	// Read the values from shared preferences, fallback to defaults - https://developer.android.com/training/data-storage/shared-preferences#ReadSharedPreference

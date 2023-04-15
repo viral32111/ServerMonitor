@@ -1,7 +1,6 @@
-package com.viral32111.servermonitor
+package com.viral32111.servermonitor.activity
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -21,6 +20,13 @@ import com.android.volley.*
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.gson.JsonParseException
 import com.google.gson.JsonSyntaxException
+import com.viral32111.servermonitor.*
+import com.viral32111.servermonitor.R
+import com.viral32111.servermonitor.adapter.ServerAdapter
+import com.viral32111.servermonitor.data.Server
+import com.viral32111.servermonitor.helper.Notify
+import com.viral32111.servermonitor.helper.ProgressBarAnimation
+import com.viral32111.servermonitor.helper.Settings
 import kotlinx.coroutines.*
 
 class ServersActivity : AppCompatActivity() {
@@ -46,44 +52,44 @@ class ServersActivity : AppCompatActivity() {
 
 		// Run default action & display the relevant layout file
 		super.onCreate( savedInstanceState )
-		setContentView( R.layout.activity_servers )
-		Log.d( Shared.logTag, "Creating activity..." )
+		setContentView(R.layout.activity_servers)
+		Log.d(Shared.logTag, "Creating activity..." )
 
 		// Switch to the custom Material Toolbar
 		supportActionBar?.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
-		supportActionBar?.setCustomView( R.layout.action_bar )
-		Log.d( Shared.logTag, "Switched to Material Toolbar" )
+		supportActionBar?.setCustomView(R.layout.action_bar)
+		Log.d(Shared.logTag, "Switched to Material Toolbar" )
 
 		// Set the title on the toolbar
-		val materialToolbar = supportActionBar?.customView?.findViewById<MaterialToolbar>( R.id.actionBarMaterialToolbar )
-		materialToolbar?.title = getString( R.string.serversActionBarTitle )
+		val materialToolbar = supportActionBar?.customView?.findViewById<MaterialToolbar>(R.id.actionBarMaterialToolbar)
+		materialToolbar?.title = getString(R.string.serversActionBarTitle)
 		materialToolbar?.isTitleCentered = true
-		Log.d( Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered })" )
+		Log.d(Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered })" )
 
 		// Get all the UI
-		swipeRefreshLayout = findViewById( R.id.serversSwipeRefreshLayout )
-		refreshProgressBar = findViewById( R.id.serversRefreshProgressBar )
-		recyclerView = findViewById( R.id.serversRecyclerView )
-		statusTitleTextView = findViewById( R.id.serversStatusTitleTextView )
-		statusDescriptionTextView = findViewById( R.id.serversStatusDescriptionTextView )
+		swipeRefreshLayout = findViewById(R.id.serversSwipeRefreshLayout)
+		refreshProgressBar = findViewById(R.id.serversRefreshProgressBar)
+		recyclerView = findViewById(R.id.serversRecyclerView)
+		statusTitleTextView = findViewById(R.id.serversStatusTitleTextView)
+		statusDescriptionTextView = findViewById(R.id.serversStatusDescriptionTextView)
 
 		// Get the settings
-		settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE ) )
-		Log.d( Shared.logTag, "Got settings ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
+		settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, MODE_PRIVATE ) )
+		Log.d(Shared.logTag, "Got settings ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
 
 		// When an item on the action bar menu is pressed...
 		materialToolbar?.setOnMenuItemClickListener { menuItem ->
 
 			// Settings
-			if ( menuItem.title?.equals( getString( R.string.actionBarMenuSettings ) ) == true ) {
-				Log.d( Shared.logTag, "Opening Settings activity..." )
+			if ( menuItem.title?.equals( getString(R.string.actionBarMenuSettings) ) == true ) {
+				Log.d(Shared.logTag, "Opening Settings activity..." )
 
 				startActivity( Intent( this, SettingsActivity::class.java ) )
-				overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
+				overridePendingTransition(R.anim.slide_in_from_right, R.anim.slide_out_to_left)
 
 			// Logout
-			} else if ( menuItem.title?.equals( getString( R.string.actionBarMenuLogout ) ) == true ) {
-				Log.d( Shared.logTag, "Logout menu item pressed, showing confirmation..." )
+			} else if ( menuItem.title?.equals( getString(R.string.actionBarMenuLogout) ) == true ) {
+				Log.d(Shared.logTag, "Logout menu item pressed, showing confirmation..." )
 
 				showConfirmDialog( this, R.string.dialogConfirmLogoutMessage, {
 					Log.d( Shared.logTag, "Logout confirmed" )
@@ -105,8 +111,8 @@ class ServersActivity : AppCompatActivity() {
 				} )
 
 			// About
-			} else if ( menuItem.title?.equals( getString( R.string.actionBarMenuAbout ) ) == true ) {
-				Log.d( Shared.logTag, "Showing information about app dialog..." )
+			} else if ( menuItem.title?.equals( getString(R.string.actionBarMenuAbout) ) == true ) {
+				Log.d(Shared.logTag, "Showing information about app dialog..." )
 
 				// Get the contact information, if it exists
 				val contactInformation = if ( !contactName.isNullOrBlank() && contactMethods != null ) "Contact for ${ contactName }:\n${ contactMethods!!.joinToString( "\n" ) }" else  ""
@@ -124,9 +130,9 @@ class ServersActivity : AppCompatActivity() {
 
 		// Return to the setup activity if we aren't setup yet
 		if ( !settings.isSetup() ) {
-			Log.d( Shared.logTag, "Not setup yet, returning to Setup activity..." )
+			Log.d(Shared.logTag, "Not setup yet, returning to Setup activity..." )
 			startActivity( Intent( this, SetupActivity::class.java ) )
-			overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
+			overridePendingTransition(R.anim.slide_in_from_left, R.anim.slide_out_to_right)
 			return
 		}
 
@@ -136,7 +142,9 @@ class ServersActivity : AppCompatActivity() {
 
 		// Set the divider between servers in the recycler view - https://stackoverflow.com/q/40528012
 		val dividerItemDecoration = DividerItemDecoration( this, linearLayoutManager.orientation )
-		dividerItemDecoration.setDrawable( ContextCompat.getDrawable( this, R.drawable.shape_server_divider )!! )
+		dividerItemDecoration.setDrawable( ContextCompat.getDrawable( this,
+			R.drawable.shape_server_divider
+		)!! )
 		recyclerView.addItemDecoration( dividerItemDecoration )
 
 		// Create the animation for the automatic refresh countdown progress bar - https://stackoverflow.com/a/18015071
@@ -151,12 +159,12 @@ class ServersActivity : AppCompatActivity() {
 
 			// When the animation starts...
 			override fun onAnimationStart( animation: Animation? ) {
-				Log.d( Shared.logTag, "Automatic refresh countdown progress bar animation started" )
+				Log.d(Shared.logTag, "Automatic refresh countdown progress bar animation started" )
 			}
 
 			// When the animation finishes or is manually cleared...
 			override fun onAnimationEnd( animation: Animation? ) {
-				Log.d( Shared.logTag, "Automatic refresh countdown progress bar animation ended (${ animation?.hasEnded() }, ${ animation?.hasStarted() }, ${ refreshProgressBar.progress }, ${ refreshProgressBar.isAnimating })" )
+				Log.d(Shared.logTag, "Automatic refresh countdown progress bar animation ended (${ animation?.hasEnded() }, ${ animation?.hasStarted() }, ${ refreshProgressBar.progress }, ${ refreshProgressBar.isAnimating })" )
 
 				// Don't refresh if we've been manually cleared
 				if ( refreshProgressBar.progress == 0 ) return
@@ -178,8 +186,8 @@ class ServersActivity : AppCompatActivity() {
 								updateUI( servers )
 							}
 
-						} catch ( exception: APIException ) {
-							Log.e( Shared.logTag, "Failed to fetch servers from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
+						} catch ( exception: APIException) {
+							Log.e(Shared.logTag, "Failed to fetch servers from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
 
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
@@ -222,7 +230,7 @@ class ServersActivity : AppCompatActivity() {
 								}
 							}
 						} catch ( exception: JsonParseException ) {
-							Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
+							Log.e(Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
 
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
@@ -230,7 +238,7 @@ class ServersActivity : AppCompatActivity() {
 								showBriefMessage( activity, R.string.serversToastServersParseFailure )
 							}
 						} catch ( exception: JsonSyntaxException ) {
-							Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
+							Log.e(Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
 
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
@@ -238,7 +246,7 @@ class ServersActivity : AppCompatActivity() {
 								showBriefMessage( activity, R.string.serversToastServersParseFailure )
 							}
 						} catch ( exception: NullPointerException ) {
-							Log.e( Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
+							Log.e(Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
 
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
@@ -253,14 +261,14 @@ class ServersActivity : AppCompatActivity() {
 
 			// When the animation repeats...
 			override fun onAnimationRepeat( animation: Animation? ) {
-				Log.d( Shared.logTag, "Automatic refresh countdown progress bar animation repeated" )
+				Log.d(Shared.logTag, "Automatic refresh countdown progress bar animation repeated" )
 			}
 
 		} )
 
 		// When we're swiped down to refresh...
 		swipeRefreshLayout.setOnRefreshListener {
-			Log.d( Shared.logTag, "Swipe refreshed!" )
+			Log.d(Shared.logTag, "Swipe refreshed!" )
 
 			// Stop the automatic refresh countdown progress bar, thus calling the animation callback
 			if ( settings.automaticRefresh ) {
@@ -282,8 +290,8 @@ class ServersActivity : AppCompatActivity() {
 								updateUI( servers )
 							}
 
-						} catch ( exception: APIException ) {
-							Log.e( Shared.logTag, "Failed to fetch servers from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
+						} catch ( exception: APIException) {
+							Log.e(Shared.logTag, "Failed to fetch servers from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
 
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
@@ -326,7 +334,7 @@ class ServersActivity : AppCompatActivity() {
 								}
 							}
 						} catch ( exception: JsonParseException ) {
-							Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
+							Log.e(Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
 
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
@@ -334,7 +342,7 @@ class ServersActivity : AppCompatActivity() {
 								showBriefMessage( activity, R.string.serversToastServersParseFailure )
 							}
 						} catch ( exception: JsonSyntaxException ) {
-							Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
+							Log.e(Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
 
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
@@ -342,7 +350,7 @@ class ServersActivity : AppCompatActivity() {
 								showBriefMessage( activity, R.string.serversToastServersParseFailure )
 							}
 						} catch ( exception: NullPointerException ) {
-							Log.e( Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
+							Log.e(Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
 
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
@@ -361,7 +369,7 @@ class ServersActivity : AppCompatActivity() {
 	// When the activity is closed...
 	override fun onStop() {
 		super.onStop()
-		Log.d( Shared.logTag, "Stopped servers activity" )
+		Log.d(Shared.logTag, "Stopped servers activity" )
 
 		// Cancel all pending HTTP requests
 		//API.cancelQueue()
@@ -372,7 +380,7 @@ class ServersActivity : AppCompatActivity() {
 	// Stop the automatic refresh countdown progress bar when the activity is changed/app is minimised
 	override fun onPause() {
 		super.onPause()
-		Log.d( Shared.logTag, "Paused servers activity" )
+		Log.d(Shared.logTag, "Paused servers activity" )
 
 		// Stop any current refreshing
 		swipeRefreshLayout.isRefreshing = false
@@ -387,11 +395,11 @@ class ServersActivity : AppCompatActivity() {
 	// When the activity is opened/app is brought to foreground...
 	override fun onResume() {
 		super.onResume()
-		Log.d( Shared.logTag, "Resumed servers activity" )
+		Log.d(Shared.logTag, "Resumed servers activity" )
 
 		// Reload settings in case they have changed
 		settings.read()
-		Log.d( Shared.logTag, "Reloaded settings (Automatic Refresh: '${ settings.automaticRefresh }', Automatic Refresh Interval: '${ settings.automaticRefreshInterval }')" )
+		Log.d(Shared.logTag, "Reloaded settings (Automatic Refresh: '${ settings.automaticRefresh }', Automatic Refresh Interval: '${ settings.automaticRefreshInterval }')" )
 
 		// Set the progress bar animation duration to the automatic refresh interval
 		progressBarAnimation.duration = settings.automaticRefreshInterval * 1000L // Convert seconds to milliseconds
@@ -412,12 +420,18 @@ class ServersActivity : AppCompatActivity() {
 
 		// Create the always ongoing notification
 		if ( settings.notificationAlwaysOngoing ) {
-			val progressNotification = Notify.createProgressNotification( this, Intent( this, ServersActivity::class.java ).apply {
-				flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-			}, Notify.Channel.TEST, R.string.notificationOngoingTitle, R.string.notificationOngoingTextUnknown )
+			val progressNotification = Notify.createProgressNotification(
+				this,
+				Intent(this, ServersActivity::class.java).apply {
+					flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+				},
+				Notify.Channel.TEST,
+				R.string.notificationOngoingTitle,
+				R.string.notificationOngoingTextUnknown
+			)
 
-			val notificationIdentifier = Notify.sendNotification( this, progressNotification )
-			Log.d( Shared.logTag, "Created always ongoing notification (${ notificationIdentifier })" )
+			val notificationIdentifier = Notify.sendNotification(this, progressNotification)
+			Log.d(Shared.logTag, "Created always ongoing notification (${ notificationIdentifier })" )
 		}
 
 		val activity = this
@@ -426,7 +440,11 @@ class ServersActivity : AppCompatActivity() {
 
 				// Fetch the contact information
 				try {
-					val hello = API.getHello( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!! )!!
+					val hello = API.getHello(
+						settings.instanceUrl!!,
+						settings.credentialsUsername!!,
+						settings.credentialsPassword!!
+					)!!
 
 					val contact = hello.get( "contact" ).asJsonObject!!
 					contactName = contact.get( "name" ).asString!!
@@ -435,10 +453,10 @@ class ServersActivity : AppCompatActivity() {
 					for ( contactMethod in contact.get( "methods" ).asJsonArray!! ) contactMethodsList.add( contactMethod.asString!! )
 					contactMethods = contactMethodsList.toTypedArray()
 
-					Log.d( Shared.logTag, "Fetched contact information from API (Name: '${ contactName }', Methods: '${ contactMethods!!.joinToString( ", " ) }')" )
+					Log.d(Shared.logTag, "Fetched contact information from API (Name: '${ contactName }', Methods: '${ contactMethods!!.joinToString( ", " ) }')" )
 
-				} catch ( exception: APIException ) {
-					Log.e( Shared.logTag, "Failed to fetch contact information from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
+				} catch ( exception: APIException) {
+					Log.e(Shared.logTag, "Failed to fetch contact information from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
 
 					withContext( Dispatchers.Main ) {
 						when ( exception.volleyError ) {
@@ -478,19 +496,19 @@ class ServersActivity : AppCompatActivity() {
 						}
 					}
 				} catch ( exception: JsonParseException ) {
-					Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
+					Log.e(Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
 
 					withContext( Dispatchers.Main ) {
 						showBriefMessage( activity, R.string.serversToastServersParseFailure )
 					}
 				} catch ( exception: JsonSyntaxException ) {
-					Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
+					Log.e(Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
 
 					withContext( Dispatchers.Main ) {
 						showBriefMessage( activity, R.string.serversToastServersParseFailure )
 					}
 				} catch ( exception: NullPointerException ) {
-					Log.e( Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
+					Log.e(Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
 
 					withContext( Dispatchers.Main ) {
 						showBriefMessage( activity, R.string.serversToastServersNull )
@@ -511,8 +529,8 @@ class ServersActivity : AppCompatActivity() {
 						updateUI( servers )
 					}
 
-				} catch ( exception: APIException ) {
-					Log.e( Shared.logTag, "Failed to fetch servers from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
+				} catch ( exception: APIException) {
+					Log.e(Shared.logTag, "Failed to fetch servers from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
@@ -555,7 +573,7 @@ class ServersActivity : AppCompatActivity() {
 						}
 					}
 				} catch ( exception: JsonParseException ) {
-					Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
+					Log.e(Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
@@ -563,7 +581,7 @@ class ServersActivity : AppCompatActivity() {
 						showBriefMessage( activity, R.string.serversToastServersParseFailure )
 					}
 				} catch ( exception: JsonSyntaxException ) {
-					Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
+					Log.e(Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
@@ -571,7 +589,7 @@ class ServersActivity : AppCompatActivity() {
 						showBriefMessage( activity, R.string.serversToastServersParseFailure )
 					}
 				} catch ( exception: NullPointerException ) {
-					Log.e( Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
+					Log.e(Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
@@ -589,9 +607,9 @@ class ServersActivity : AppCompatActivity() {
 	private fun updateUI( servers: Array<Server> ) {
 
 		// Set the overall status
-		statusTitleTextView.text = getString( R.string.serversTextViewStatusTitleGood )
-		statusTitleTextView.setTextColor( getColor( R.color.statusGood ) )
-		statusDescriptionTextView.text = getString( R.string.serversTextViewStatusDescriptionGood )
+		statusTitleTextView.text = getString(R.string.serversTextViewStatusTitleGood)
+		statusTitleTextView.setTextColor( getColor(R.color.statusGood) )
+		statusDescriptionTextView.text = getString(R.string.serversTextViewStatusDescriptionGood)
 
 		// Create the adapter for the recycler view - https://www.geeksforgeeks.org/android-pull-to-refresh-with-recyclerview-in-kotlin/
 		val serverAdapter = ServerAdapter( servers, applicationContext ) { server -> onServerPressed( server ) }
@@ -605,18 +623,18 @@ class ServersActivity : AppCompatActivity() {
 	}
 
 	// Switch to the server activity when an online server is pressed...
-	private fun onServerPressed( server: Server ) {
+	private fun onServerPressed( server: Server) {
 		if ( server.isOnline() ) {
-			Log.d( Shared.logTag, "Server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') is online, switching to server activity..." )
+			Log.d(Shared.logTag, "Server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') is online, switching to server activity..." )
 
 			val intent = Intent( this, ServerActivity::class.java )
 			intent.putExtra( "serverIdentifier", server.identifier )
 			intent.putExtra( "fromServersActivity", true )
 
 			startActivity( intent )
-			overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
+			overridePendingTransition(R.anim.slide_in_from_right, R.anim.slide_out_to_left)
 		} else {
-			Log.w( Shared.logTag, "Server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') is offline, not switching to server activity" )
+			Log.w(Shared.logTag, "Server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') is offline, not switching to server activity" )
 			showBriefMessage( this, R.string.serversToastOfflineServerPress )
 		}
 	}
@@ -635,8 +653,8 @@ class ServersActivity : AppCompatActivity() {
 	private suspend fun fetchServers( instanceUrl: String, credentialsUsername: String, credentialsPassword: String ): Array<Server> {
 
 		// Fetch the servers, will throw a null pointer exception if null
-		val servers = API.getServers( instanceUrl, credentialsUsername, credentialsPassword )!!
-		Log.d( Shared.logTag, "Fetched '${ servers.size() }' servers from API ('${ servers }')" )
+		val servers = API.getServers(instanceUrl, credentialsUsername, credentialsPassword)!!
+		Log.d(Shared.logTag, "Fetched '${ servers.size() }' servers from API ('${ servers }')" )
 
 		// Convert the JSON array to a list of servers - https://www.geeksforgeeks.org/kotlin-list-arraylist/
 		val serverList = ArrayList<Server>()
@@ -644,14 +662,14 @@ class ServersActivity : AppCompatActivity() {
 			val server = Server( arrayItem.asJsonObject )
 
 			if ( server.isOnline() ) {
-				Log.d( Shared.logTag, "Server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') is online, fetching metrics..." )
+				Log.d(Shared.logTag, "Server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') is online, fetching metrics..." )
 
 				server.updateFromAPI( instanceUrl, credentialsUsername, credentialsPassword )
-				Log.d( Shared.logTag, "Metrics fetched for server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }')" )
+				Log.d(Shared.logTag, "Metrics fetched for server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }')" )
 
 				serverList.add( server )
 			} else {
-				Log.d( Shared.logTag, "Server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') is offline, not fetching metrics..." )
+				Log.d(Shared.logTag, "Server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') is offline, not fetching metrics..." )
 				serverList.add( server )
 			}
 		}

@@ -1,4 +1,4 @@
-package com.viral32111.servermonitor
+package com.viral32111.servermonitor.adapter
 
 import android.content.Context
 import android.util.Log
@@ -8,6 +8,8 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.viral32111.servermonitor.*
+import com.viral32111.servermonitor.data.Drive
 
 class DriveAdapter(
 	private val drives: Array<Drive>,
@@ -20,11 +22,11 @@ class DriveAdapter(
 		val partitionsRecyclerView: RecyclerView
 
 		init {
-			Log.d( Shared.logTag, "Initialising new drive view holder..." )
+			Log.d(Shared.logTag, "Initialising new drive view holder..." )
 
 			// Get relevant UI
-			textView = view.findViewById( R.id.driveTextView )
-			partitionsRecyclerView = view.findViewById( R.id.drivePartitionsRecyclerView )
+			textView = view.findViewById(R.id.driveTextView)
+			partitionsRecyclerView = view.findViewById(R.id.drivePartitionsRecyclerView)
 
 			// Create a linear layout manager for the recycler view
 			partitionsRecyclerView.layoutManager = LinearLayoutManager( view.context, LinearLayoutManager.VERTICAL, false )
@@ -33,19 +35,21 @@ class DriveAdapter(
 
 	// Creates new views - called by the layout manager
 	override fun onCreateViewHolder( viewGroup: ViewGroup, viewType: Int ): ViewHolder {
-		Log.d( Shared.logTag, "Creating new drive view..." )
+		Log.d(Shared.logTag, "Creating new drive view..." )
 		return ViewHolder( LayoutInflater.from( viewGroup.context ).inflate( R.layout.fragment_drive, viewGroup, false ) )
 	}
 
 	// Replaces the contents of a view - called by the layout manager
-	override fun onBindViewHolder( viewHolder: ViewHolder, index: Int ) {
+	override fun onBindViewHolder(viewHolder: ViewHolder, index: Int ) {
 		val drive = drives[ index ]
-		Log.d( Shared.logTag, "Replacing view for drive '${ drive.name }'..." )
+		Log.d(Shared.logTag, "Replacing view for drive '${ drive.name }'..." )
 
 		// Drive name & S.M.A.R.T health
-		viewHolder.textView.setTextFromHTML( context.getString( R.string.serverTextViewDrivesDrive ).format(
+		viewHolder.textView.setTextFromHTML( context.getString(R.string.serverTextViewDrivesDrive).format(
 			drive.name,
-			context.createHTMLColoredText( drive.health.coerceAtLeast( 0 ).toString().suffixWith( Shared.percentSymbol ), drive.health.getAppropriateColorReverse( Drive.healthWarningThreshold, Drive.healthDangerThreshold ) )
+			context.createHTMLColoredText( drive.health.coerceAtLeast( 0 ).toString().suffixWith(
+				Shared.percentSymbol
+			), drive.health.getAppropriateColorReverse( Drive.healthWarningThreshold, Drive.healthDangerThreshold ) )
 		) )
 
 		// Partitions - we assume there will always be some as a drive is pointless without one

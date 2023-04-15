@@ -1,4 +1,4 @@
-package com.viral32111.servermonitor
+package com.viral32111.servermonitor.helper
 
 /**
  * Converts bytes to an appropriate size (KiB, MiB, GiB, etc.).

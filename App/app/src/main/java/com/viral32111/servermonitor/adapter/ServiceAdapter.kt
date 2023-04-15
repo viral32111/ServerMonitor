@@ -1,4 +1,4 @@
-package com.viral32111.servermonitor
+package com.viral32111.servermonitor.adapter
 
 import android.content.Context
 import android.util.Log
@@ -8,11 +8,14 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.viral32111.servermonitor.*
+import com.viral32111.servermonitor.data.Service
+import com.viral32111.servermonitor.helper.TimeSpan
 
 class ServiceAdapter(
 	private val services: Array<Service>,
 	private val context: Context,
-	private val onClickListener: ( service: Service ) -> Unit
+	private val onClickListener: ( service: Service) -> Unit
 ): RecyclerView.Adapter<ServiceAdapter.ViewHolder>() {
 
 	// Holds all the UI
@@ -22,29 +25,29 @@ class ServiceAdapter(
 		val manageButton: Button
 
 		init {
-			Log.d( Shared.logTag, "Initialising new service view holder..." )
+			Log.d(Shared.logTag, "Initialising new service view holder..." )
 
 			// Get relevant UI
-			nameTextView = view.findViewById( R.id.serviceNameTextView )
-			statusTextView = view.findViewById( R.id.serviceStatusTextView )
-			manageButton = view.findViewById( R.id.serviceManageButton )
+			nameTextView = view.findViewById(R.id.serviceNameTextView)
+			statusTextView = view.findViewById(R.id.serviceStatusTextView)
+			manageButton = view.findViewById(R.id.serviceManageButton)
 		}
 	}
 
 	// Creates new views - called by the layout manager
 	override fun onCreateViewHolder( viewGroup: ViewGroup, viewType: Int ): ViewHolder {
-		Log.d( Shared.logTag, "Creating new service view..." )
+		Log.d(Shared.logTag, "Creating new service view..." )
 		return ViewHolder( LayoutInflater.from( viewGroup.context ).inflate( R.layout.fragment_service, viewGroup, false ) )
 	}
 
 	// Replaces the contents of a view - called by the layout manager
-	override fun onBindViewHolder( viewHolder: ViewHolder, index: Int ) {
+	override fun onBindViewHolder(viewHolder: ViewHolder, index: Int ) {
 		val service = services[ index ]
-		Log.d( Shared.logTag, "Replacing view for service '${ service.serviceName }' ('${ service.displayName }', '${ service.description }')..." )
+		Log.d(Shared.logTag, "Replacing view for service '${ service.serviceName }' ('${ service.displayName }', '${ service.description }')..." )
 
 		// Forward button click events
 		viewHolder.manageButton.setOnClickListener {
-			Log.d( Shared.logTag, "Service '${ service.serviceName }' ('${ service.displayName }', '${ service.description }') pressed" )
+			Log.d(Shared.logTag, "Service '${ service.serviceName }' ('${ service.displayName }', '${ service.description }') pressed" )
 			onClickListener.invoke( service )
 		}
 
@@ -57,10 +60,10 @@ class ServiceAdapter(
 
 		// Update the status text
 		val uptimeText = TimeSpan( service.uptimeSeconds.toLong() ).toString( false )
-		viewHolder.statusTextView.setTextFromHTML( context.getString( R.string.serverTextViewServicesServiceStatus ).format(
+		viewHolder.statusTextView.setTextFromHTML( context.getString(R.string.serverTextViewServicesServiceStatus).format(
 			context.createHTMLColoredText( statusText, statusColor ),
 			context.createHTMLColoredText(
-				uptimeText.ifBlank { context.getString( R.string.serverTextViewServicesServiceStatusUptimeUnknown ) },
+				uptimeText.ifBlank { context.getString(R.string.serverTextViewServicesServiceStatusUptimeUnknown) },
 				if ( uptimeText.isNotBlank() ) R.color.black else R.color.statusDead
 			)
 		) )

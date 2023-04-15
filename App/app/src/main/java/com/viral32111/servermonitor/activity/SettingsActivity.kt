@@ -1,6 +1,5 @@
-package com.viral32111.servermonitor
+package com.viral32111.servermonitor.activity
 
-import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.widget.AutoCompleteTextView
@@ -15,6 +14,9 @@ import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import com.viral32111.servermonitor.*
+import com.viral32111.servermonitor.R
+import com.viral32111.servermonitor.helper.Settings
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -39,51 +41,51 @@ class SettingsActivity : AppCompatActivity() {
 
 		// Run default action & display the relevant layout file
 		super.onCreate( savedInstanceState )
-		setContentView( R.layout.activity_settings )
-		Log.d( Shared.logTag, "Creating activity..." )
+		setContentView(R.layout.activity_settings)
+		Log.d(Shared.logTag, "Creating activity..." )
 
 		// Switch to the custom Material Toolbar
 		supportActionBar?.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
-		supportActionBar?.setCustomView( R.layout.action_bar )
-		Log.d( Shared.logTag, "Switched to Material Toolbar" )
+		supportActionBar?.setCustomView(R.layout.action_bar)
+		Log.d(Shared.logTag, "Switched to Material Toolbar" )
 
 		// Set the title on the toolbar
-		val materialToolbar = supportActionBar?.customView?.findViewById<MaterialToolbar>( R.id.actionBarMaterialToolbar )
-		materialToolbar?.title = getString( R.string.settingsActionBarTitle )
+		val materialToolbar = supportActionBar?.customView?.findViewById<MaterialToolbar>(R.id.actionBarMaterialToolbar)
+		materialToolbar?.title = getString(R.string.settingsActionBarTitle)
 		materialToolbar?.isTitleCentered = true
-		Log.d( Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered })" )
+		Log.d(Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered })" )
 
 		// Disable the menu on the toolbar
 		materialToolbar?.menu?.clear()
-		Log.d( Shared.logTag, "Disabled menu items on Material Toolbar" )
+		Log.d(Shared.logTag, "Disabled menu items on Material Toolbar" )
 
 		// Get all the UI
-		instanceUrlTextInputLayout = findViewById( R.id.settingsInstanceUrlTextInputLayout )
-		instanceUrlEditText = findViewById( R.id.settingsInstanceUrlTextInputEditText )
-		credentialsUsernameInputTextLayout = findViewById( R.id.settingsCredentialsUsernameTextInputLayout )
-		credentialsUsernameEditText = findViewById( R.id.settingsCredentialsUsernameTextInputEditText )
-		credentialsPasswordInputTextLayout = findViewById( R.id.settingsCredentialsPasswordTextInputLayout )
-		credentialsPasswordEditText = findViewById( R.id.settingsCredentialsPasswordTextInputEditText )
-		automaticRefreshSwitch = findViewById( R.id.settingsAutomaticRefreshSwitch )
-		automaticRefreshIntervalTextInputLayout = findViewById( R.id.settingsAutomaticRefreshIntervalTextInputLayout )
-		automaticRefreshIntervalEditText = findViewById( R.id.settingsAutomaticRefreshIntervalTextInputEditText )
-		themeTextInputLayout = findViewById( R.id.settingsThemeTextInputLayout )
-		themeAutoCompleteTextView = findViewById( R.id.settingsThemeAutoCompleteTextView )
-		notificationsAlwaysOngoingSwitch = findViewById( R.id.settingsNotificationAlwaysOngoingSwitch )
-		notificationsWhenIssueArisesSwitch = findViewById( R.id.settingsNotificationWhenIssueArisesSwitch )
-		saveButton = findViewById( R.id.settingsSaveButton )
-		Log.d( Shared.logTag, "Got UI controls" )
+		instanceUrlTextInputLayout = findViewById(R.id.settingsInstanceUrlTextInputLayout)
+		instanceUrlEditText = findViewById(R.id.settingsInstanceUrlTextInputEditText)
+		credentialsUsernameInputTextLayout = findViewById(R.id.settingsCredentialsUsernameTextInputLayout)
+		credentialsUsernameEditText = findViewById(R.id.settingsCredentialsUsernameTextInputEditText)
+		credentialsPasswordInputTextLayout = findViewById(R.id.settingsCredentialsPasswordTextInputLayout)
+		credentialsPasswordEditText = findViewById(R.id.settingsCredentialsPasswordTextInputEditText)
+		automaticRefreshSwitch = findViewById(R.id.settingsAutomaticRefreshSwitch)
+		automaticRefreshIntervalTextInputLayout = findViewById(R.id.settingsAutomaticRefreshIntervalTextInputLayout)
+		automaticRefreshIntervalEditText = findViewById(R.id.settingsAutomaticRefreshIntervalTextInputEditText)
+		themeTextInputLayout = findViewById(R.id.settingsThemeTextInputLayout)
+		themeAutoCompleteTextView = findViewById(R.id.settingsThemeAutoCompleteTextView)
+		notificationsAlwaysOngoingSwitch = findViewById(R.id.settingsNotificationAlwaysOngoingSwitch)
+		notificationsWhenIssueArisesSwitch = findViewById(R.id.settingsNotificationWhenIssueArisesSwitch)
+		saveButton = findViewById(R.id.settingsSaveButton)
+		Log.d(Shared.logTag, "Got UI controls" )
 
 		// Force theme selection by disabling interaction
 		// TODO: Remove this once dark theme is implemented
 		//themeAutoCompleteTextView.setText( "Light", false )
 		themeTextInputLayout.isEnabled = false
 		themeAutoCompleteTextView.isEnabled = false
-		Log.d( Shared.logTag, "Forced theme selection" )
+		Log.d(Shared.logTag, "Forced theme selection" )
 
 		// Get settings
-		val settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE ) )
-		Log.d( Shared.logTag, "Got settings ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
+		val settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, MODE_PRIVATE ) )
+		Log.d(Shared.logTag, "Got settings ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
 
 		// Update UI with values from settings
 		updateUIWithSettings( settings )
@@ -92,7 +94,7 @@ class SettingsActivity : AppCompatActivity() {
 		saveButton.setOnClickListener {
 			saveSettings( settings ) {
 				finish()
-				overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
+				overridePendingTransition(R.anim.slide_in_from_left, R.anim.slide_out_to_right)
 			}
 		}
 
@@ -103,9 +105,11 @@ class SettingsActivity : AppCompatActivity() {
 		}
 
 		// Enable the back button on the toolbar
-		materialToolbar?.navigationIcon = AppCompatResources.getDrawable( this, R.drawable.ic_baseline_arrow_back_24 )
+		materialToolbar?.navigationIcon = AppCompatResources.getDrawable( this,
+			R.drawable.ic_baseline_arrow_back_24
+		)
 		materialToolbar?.setNavigationOnClickListener {
-			Log.d( Shared.logTag, "Navigation back button pressed" )
+			Log.d(Shared.logTag, "Navigation back button pressed" )
 			confirmBack( settings )
 		}
 
@@ -116,9 +120,9 @@ class SettingsActivity : AppCompatActivity() {
 		automaticRefreshIntervalEditText.doOnTextChanged { text, _, _, _ ->
 			val value = text.toString().toIntOrNull()
 			if ( value == null ) {
-				automaticRefreshIntervalEditText.error = getString( R.string.settingsToastIntervalEmpty )
+				automaticRefreshIntervalEditText.error = getString(R.string.settingsToastIntervalEmpty)
 			} else if ( value < 1 ) {
-				automaticRefreshIntervalEditText.error = getString( R.string.settingsToastIntervalInvalid )
+				automaticRefreshIntervalEditText.error = getString(R.string.settingsToastIntervalInvalid)
 			} else {
 				automaticRefreshIntervalEditText.error = null
 			}
@@ -129,27 +133,27 @@ class SettingsActivity : AppCompatActivity() {
 	// When the activity is closed...
 	override fun onStop() {
 		super.onStop()
-		Log.d( Shared.logTag, "Stopped settings activity" )
+		Log.d(Shared.logTag, "Stopped settings activity" )
 
 		// Cancel all pending HTTP requests
 		//API.cancelQueue()
 
 		// Enable input
-		enableInputs( true, Settings( getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE ) ).isSetup() )
+		enableInputs( true, Settings( getSharedPreferences( Shared.sharedPreferencesName, MODE_PRIVATE ) ).isSetup() )
 
 	}
 
 	// Show a confirmation when the back button is pressed - https://medium.com/tech-takeaways/how-to-migrate-the-deprecated-onbackpressed-function-e66bb29fa2fd
 	private val onBackPressed: OnBackPressedCallback = object : OnBackPressedCallback( true ) {
 		override fun handleOnBackPressed() {
-			Log.d( Shared.logTag, "System back button pressed" )
-			confirmBack( Settings( getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE ) ) )
+			Log.d(Shared.logTag, "System back button pressed" )
+			confirmBack( Settings( getSharedPreferences( Shared.sharedPreferencesName, MODE_PRIVATE ) ) )
 		}
 	}
 
 	// Updates the UI with the settings from the persistent settings
-	private fun updateUIWithSettings( settings: Settings ) {
-		Log.d( Shared.logTag, "Populating UI with settings from shared preferences..." )
+	private fun updateUIWithSettings( settings: Settings) {
+		Log.d(Shared.logTag, "Populating UI with settings from shared preferences..." )
 
 		// Update the values
 		automaticRefreshSwitch.isChecked = settings.automaticRefresh
@@ -161,19 +165,19 @@ class SettingsActivity : AppCompatActivity() {
 		// Enable instance URL & credentials if setup is finished
 		if ( !settings.instanceUrl.isNullOrBlank() ) {
 			instanceUrlEditText.setText( settings.instanceUrl )
-			instanceUrlTextInputLayout.hint = getString( R.string.settingsTextInputLayoutInstanceUrlHint )
+			instanceUrlTextInputLayout.hint = getString(R.string.settingsTextInputLayoutInstanceUrlHint)
 			instanceUrlEditText.isEnabled = true
 			instanceUrlTextInputLayout.isEnabled = true
 		}
 		if ( !settings.credentialsUsername.isNullOrBlank() ) {
 			credentialsUsernameEditText.setText( settings.credentialsUsername )
-			credentialsUsernameInputTextLayout.hint = getString( R.string.settingsTextInputLayoutCredentialsUsernameHint )
+			credentialsUsernameInputTextLayout.hint = getString(R.string.settingsTextInputLayoutCredentialsUsernameHint)
 			credentialsUsernameEditText.isEnabled = true
 			credentialsUsernameInputTextLayout.isEnabled = true
 		}
 		if ( !settings.credentialsPassword.isNullOrBlank() ) {
 			credentialsPasswordEditText.setText( settings.credentialsPassword )
-			credentialsPasswordInputTextLayout.hint = getString( R.string.settingsTextInputLayoutCredentialsPasswordHint )
+			credentialsPasswordInputTextLayout.hint = getString(R.string.settingsTextInputLayoutCredentialsPasswordHint)
 			credentialsPasswordEditText.isEnabled = true
 			credentialsPasswordInputTextLayout.isEnabled = true
 		}
@@ -185,8 +189,8 @@ class SettingsActivity : AppCompatActivity() {
 	}
 
 	// Saves the values to the persistent settings
-	private fun saveSettings( settings: Settings, successCallback: () -> Unit ) {
-		Log.d( Shared.logTag, "Saving settings to shared preferences..." )
+	private fun saveSettings(settings: Settings, successCallback: () -> Unit ) {
+		Log.d(Shared.logTag, "Saving settings to shared preferences..." )
 
 		// Disable input
 		enableInputs( false, settings.isSetup() )
@@ -205,7 +209,7 @@ class SettingsActivity : AppCompatActivity() {
 		if ( automaticRefreshInterval == null ) {
 			enableInputs( true, settings.isSetup() )
 			showBriefMessage( this, R.string.settingsToastIntervalEmpty )
-			Log.w( Shared.logTag, "Refresh interval is empty" )
+			Log.w(Shared.logTag, "Refresh interval is empty" )
 			return
 		}
 
@@ -213,7 +217,7 @@ class SettingsActivity : AppCompatActivity() {
 		if ( automaticRefreshInterval < 1 ) {
 			enableInputs( true, settings.isSetup() )
 			showBriefMessage( this, R.string.settingsToastIntervalInvalid )
-			Log.w( Shared.logTag, "Refresh interval '${ automaticRefreshInterval }' is too low" )
+			Log.w(Shared.logTag, "Refresh interval '${ automaticRefreshInterval }' is too low" )
 			return
 		}
 
@@ -224,7 +228,7 @@ class SettingsActivity : AppCompatActivity() {
 			if ( instanceUrl.isBlank() ) {
 				enableInputs( true, settings.isSetup() )
 				showBriefMessage( this, R.string.settingsToastInstanceUrlEmpty )
-				Log.w( Shared.logTag, "Instance URL is empty" )
+				Log.w(Shared.logTag, "Instance URL is empty" )
 				return
 			}
 
@@ -232,7 +236,7 @@ class SettingsActivity : AppCompatActivity() {
 			if ( !validateInstanceUrl( instanceUrl ) ) {
 				enableInputs( true, settings.isSetup() )
 				showBriefMessage( this, R.string.settingsToastInstanceUrlInvalid )
-				Log.w( Shared.logTag, "Instance URL '${ instanceUrl }' is invalid" )
+				Log.w(Shared.logTag, "Instance URL '${ instanceUrl }' is invalid" )
 				return
 			}
 
@@ -240,7 +244,7 @@ class SettingsActivity : AppCompatActivity() {
 			if ( credentialsUsername.isBlank() ) {
 				enableInputs( true, settings.isSetup() )
 				showBriefMessage( this, R.string.settingsToastCredentialsUsernameEmpty )
-				Log.w( Shared.logTag, "Username is empty" )
+				Log.w(Shared.logTag, "Username is empty" )
 				return
 			}
 
@@ -248,7 +252,7 @@ class SettingsActivity : AppCompatActivity() {
 			if ( !validateCredentialsUsername( credentialsUsername ) ) {
 				enableInputs( true, settings.isSetup() )
 				showBriefMessage( this, R.string.settingsToastCredentialsUsernameInvalid )
-				Log.w( Shared.logTag, "Username '${ credentialsUsername }' is invalid" )
+				Log.w(Shared.logTag, "Username '${ credentialsUsername }' is invalid" )
 				return
 			}
 
@@ -256,7 +260,7 @@ class SettingsActivity : AppCompatActivity() {
 			if ( credentialsPassword.isBlank() ) {
 				enableInputs( true, settings.isSetup() )
 				showBriefMessage( this, R.string.settingsToastCredentialsPasswordEmpty )
-				Log.w( Shared.logTag, "Password is empty" )
+				Log.w(Shared.logTag, "Password is empty" )
 				return
 			}
 
@@ -264,7 +268,7 @@ class SettingsActivity : AppCompatActivity() {
 			if ( !validateCredentialsPassword( credentialsPassword ) ) {
 				enableInputs( true, settings.isSetup() )
 				showBriefMessage( this, R.string.settingsToastCredentialsPasswordInvalid )
-				Log.w( Shared.logTag, "Password '${ credentialsPassword }' is invalid" )
+				Log.w(Shared.logTag, "Password '${ credentialsPassword }' is invalid" )
 				return
 			}
 
@@ -276,12 +280,15 @@ class SettingsActivity : AppCompatActivity() {
 			}
 
 			// Test if a connector instance is running on this URL
-			API.getHello( instanceUrl, credentialsUsername, credentialsPassword, { helloData ->
-				Log.d( Shared.logTag, "Instance '${ instanceUrl }' is running! (Message: '${ helloData?.get( "message" )?.asString }')" )
+			API.getHello(instanceUrl, credentialsUsername, credentialsPassword, { helloData ->
+				Log.d(
+					Shared.logTag,
+					"Instance '${instanceUrl}' is running! (Message: '${helloData?.get("message")?.asString}')"
+				)
 
 				// Hide progress dialog & enable input
 				progressDialog.dismiss()
-				enableInputs( true, settings.isSetup() )
+				enableInputs(true, settings.isSetup())
 
 				// Update settings with these values
 				settings.instanceUrl = instanceUrl
@@ -298,51 +305,72 @@ class SettingsActivity : AppCompatActivity() {
 				successCallback.invoke()
 
 			}, { error, statusCode, errorCode ->
-				Log.e( Shared.logTag, "Instance '${ instanceUrl }' is NOT running! (Error: '${ error }', Status Code: '${ statusCode }', Error Code: '${ errorCode }')" )
+				Log.e(
+					Shared.logTag,
+					"Instance '${instanceUrl}' is NOT running! (Error: '${error}', Status Code: '${statusCode}', Error Code: '${errorCode}')"
+				)
 
 				// Hide progress dialog & enable input
 				progressDialog.dismiss()
-				enableInputs( true, settings.isSetup() )
+				enableInputs(true, settings.isSetup())
 
-				when ( error ) {
+				when (error) {
 
 					// Bad authentication
-					is AuthFailureError -> when ( errorCode ) {
-						ErrorCode.UnknownUser.code -> showBriefMessage( this, R.string.toastInstanceTestAuthenticationUnknownUser )
-						ErrorCode.IncorrectPassword.code -> showBriefMessage( this, R.string.toastInstanceTestAuthenticationIncorrectPassword )
-						else -> showBriefMessage( this, R.string.toastInstanceTestAuthenticationFailure )
+					is AuthFailureError -> when (errorCode) {
+						ErrorCode.UnknownUser.code -> showBriefMessage(
+							this,
+							R.string.toastInstanceTestAuthenticationUnknownUser
+						)
+						ErrorCode.IncorrectPassword.code -> showBriefMessage(
+							this,
+							R.string.toastInstanceTestAuthenticationIncorrectPassword
+						)
+						else -> showBriefMessage(
+							this,
+							R.string.toastInstanceTestAuthenticationFailure
+						)
 					}
 
 					// HTTP 4xx
-					is ClientError -> when ( statusCode ) {
-						404 -> showBriefMessage( this, R.string.toastInstanceTestNotFound )
-						else -> showBriefMessage( this, R.string.toastInstanceTestClientFailure )
+					is ClientError -> when (statusCode) {
+						404 -> showBriefMessage(this, R.string.toastInstanceTestNotFound)
+						else -> showBriefMessage(this, R.string.toastInstanceTestClientFailure)
 					}
 
 					// HTTP 5xx
-					is ServerError -> when ( statusCode ) {
-						502 -> showBriefMessage( this, R.string.toastInstanceTestUnavailable )
-						503 -> showBriefMessage( this, R.string.toastInstanceTestUnavailable )
-						504 -> showBriefMessage( this, R.string.toastInstanceTestUnavailable )
-						530 -> showBriefMessage( this, R.string.toastInstanceTestUnavailable ) // Cloudflare
-						else -> showBriefMessage( this, R.string.toastInstanceTestServerFailure )
+					is ServerError -> when (statusCode) {
+						502 -> showBriefMessage(this, R.string.toastInstanceTestUnavailable)
+						503 -> showBriefMessage(this, R.string.toastInstanceTestUnavailable)
+						504 -> showBriefMessage(this, R.string.toastInstanceTestUnavailable)
+						530 -> showBriefMessage(
+							this,
+							R.string.toastInstanceTestUnavailable
+						) // Cloudflare
+						else -> showBriefMessage(this, R.string.toastInstanceTestServerFailure)
 					}
 
 					// No Internet connection, malformed domain
-					is NoConnectionError -> showBriefMessage( this, R.string.toastInstanceTestNoConnection )
-					is NetworkError -> showBriefMessage( this, R.string.toastInstanceTestNoConnection )
+					is NoConnectionError -> showBriefMessage(
+						this,
+						R.string.toastInstanceTestNoConnection
+					)
+					is NetworkError -> showBriefMessage(
+						this,
+						R.string.toastInstanceTestNoConnection
+					)
 
 					// Connection timed out
-					is TimeoutError -> showBriefMessage( this, R.string.toastInstanceTestTimeout )
+					is TimeoutError -> showBriefMessage(this, R.string.toastInstanceTestTimeout)
 
 					// Couldn't parse as JSON
-					is ParseError -> showBriefMessage( this, R.string.toastInstanceTestParseFailure )
+					is ParseError -> showBriefMessage(this, R.string.toastInstanceTestParseFailure)
 
 					// ¯\_(ツ)_/¯
-					else -> showBriefMessage( this, R.string.toastInstanceTestFailure )
+					else -> showBriefMessage(this, R.string.toastInstanceTestFailure)
 
 				}
-			} )
+			})
 
 			// Show the progress dialog
 			progressDialog.show()
@@ -395,9 +423,9 @@ class SettingsActivity : AppCompatActivity() {
 	}
 
 	// Shows a confirmation dialog for leaving settings without saving changes, but only if the settings have been changed
-	private fun confirmBack( settings: Settings ) {
+	private fun confirmBack( settings: Settings) {
 		if ( hasValuesChanged( settings ) ) {
-			Log.d( Shared.logTag, "Settings have changed, showing confirmation dialog..." )
+			Log.d(Shared.logTag, "Settings have changed, showing confirmation dialog..." )
 
 			showConfirmDialog( this, R.string.settingsDialogConfirmBackMessage, {
 				Log.d( Shared.logTag, "Back confirmed, returning to previous activity..." )
@@ -409,15 +437,15 @@ class SettingsActivity : AppCompatActivity() {
 			} )
 
 		} else {
-			Log.d( Shared.logTag, "Settings have not changed, not showing confirmation dialog" )
+			Log.d(Shared.logTag, "Settings have not changed, not showing confirmation dialog" )
 
 			finish()
-			overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
+			overridePendingTransition(R.anim.slide_in_from_left, R.anim.slide_out_to_right)
 		}
 	}
 
 	// Checks if the settings have changed
-	private fun hasValuesChanged( settings: Settings ): Boolean {
+	private fun hasValuesChanged( settings: Settings): Boolean {
 
 		// Get the values from all the inputs
 		val instanceUrl = instanceUrlEditText.text.toString()

@@ -1,4 +1,4 @@
-package com.viral32111.servermonitor
+package com.viral32111.servermonitor.helper
 
 /**
  * Converts hertz to an appropriate notation (kHz, MHz, GHz, etc.), similar to the Size class.

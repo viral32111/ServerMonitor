@@ -1,4 +1,4 @@
-package com.viral32111.servermonitor
+package com.viral32111.servermonitor.helper
 
 // Converts seconds into days, hours, minutes & seconds.
 class TimeSpan( totalSeconds: Long ) {

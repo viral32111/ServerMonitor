@@ -1,7 +1,6 @@
-package com.viral32111.servermonitor
+package com.viral32111.servermonitor.activity
 
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -21,6 +20,13 @@ import com.android.volley.*
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.gson.JsonParseException
 import com.google.gson.JsonSyntaxException
+import com.viral32111.servermonitor.*
+import com.viral32111.servermonitor.R
+import com.viral32111.servermonitor.data.Server
+import com.viral32111.servermonitor.data.Service
+import com.viral32111.servermonitor.helper.ProgressBarAnimation
+import com.viral32111.servermonitor.helper.Settings
+import com.viral32111.servermonitor.helper.TimeSpan
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -59,41 +65,43 @@ class ServiceActivity : AppCompatActivity() {
 
 		// Run default action & display the relevant layout file
 		super.onCreate( savedInstanceState )
-		setContentView( R.layout.activity_service )
-		Log.d( Shared.logTag, "Creating activity..." )
+		setContentView(R.layout.activity_service)
+		Log.d(Shared.logTag, "Creating activity..." )
 
 		// Switch to the custom Material Toolbar
 		supportActionBar?.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
-		supportActionBar?.setCustomView( R.layout.action_bar )
-		Log.d( Shared.logTag, "Switched to Material Toolbar" )
+		supportActionBar?.setCustomView(R.layout.action_bar)
+		Log.d(Shared.logTag, "Switched to Material Toolbar" )
 
 		// Set the title on the toolbar
-		materialToolbar = supportActionBar?.customView?.findViewById( R.id.actionBarMaterialToolbar )
-		materialToolbar?.title = getString( R.string.serviceActionBarTitle )
+		materialToolbar = supportActionBar?.customView?.findViewById(R.id.actionBarMaterialToolbar)
+		materialToolbar?.title = getString(R.string.serviceActionBarTitle)
 		materialToolbar?.isTitleCentered = true
-		Log.d( Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered })" )
+		Log.d(Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered })" )
 
 		// Enable the back button on the toolbar
-		materialToolbar?.navigationIcon = AppCompatResources.getDrawable( this, R.drawable.ic_baseline_arrow_back_24 )
+		materialToolbar?.navigationIcon = AppCompatResources.getDrawable( this,
+			R.drawable.ic_baseline_arrow_back_24
+		)
 		materialToolbar?.setNavigationOnClickListener {
-			Log.d( Shared.logTag, "Navigation back button pressed. Returning to previous activity..." )
+			Log.d(Shared.logTag, "Navigation back button pressed. Returning to previous activity..." )
 			finish()
-			overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
+			overridePendingTransition(R.anim.slide_in_from_left, R.anim.slide_out_to_right)
 		}
 
 		// When an item on the action bar menu is pressed...
 		materialToolbar?.setOnMenuItemClickListener { menuItem ->
 
 			// Settings
-			if ( menuItem.title?.equals( getString( R.string.actionBarMenuSettings ) ) == true ) {
-				Log.d( Shared.logTag, "Opening Settings activity..." )
+			if ( menuItem.title?.equals( getString(R.string.actionBarMenuSettings) ) == true ) {
+				Log.d(Shared.logTag, "Opening Settings activity..." )
 
 				startActivity( Intent( this, SettingsActivity::class.java ) )
-				overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
+				overridePendingTransition(R.anim.slide_in_from_right, R.anim.slide_out_to_left)
 
 			// Logout
-			} else if ( menuItem.title?.equals( getString( R.string.actionBarMenuLogout ) ) == true ) {
-				Log.d( Shared.logTag, "Logout menu item pressed, showing confirmation..." )
+			} else if ( menuItem.title?.equals( getString(R.string.actionBarMenuLogout) ) == true ) {
+				Log.d(Shared.logTag, "Logout menu item pressed, showing confirmation..." )
 
 				showConfirmDialog( this, R.string.dialogConfirmLogoutMessage, {
 					Log.d( Shared.logTag, "Logout confirmed" )
@@ -115,8 +123,8 @@ class ServiceActivity : AppCompatActivity() {
 				} )
 
 			// About
-			} else if ( menuItem.title?.equals( getString( R.string.actionBarMenuAbout ) ) == true ) {
-				Log.d( Shared.logTag, "Showing information about app dialog..." )
+			} else if ( menuItem.title?.equals( getString(R.string.actionBarMenuAbout) ) == true ) {
+				Log.d(Shared.logTag, "Showing information about app dialog..." )
 
 				// Get the contact information, if it exists
 				val contactInformation = if ( !contactName.isNullOrBlank() && contactMethods != null ) "Contact for ${ contactName }:\n${ contactMethods!!.joinToString( "\n" ) }" else  ""
@@ -133,38 +141,38 @@ class ServiceActivity : AppCompatActivity() {
 		}
 
 		// Get all the UI
-		swipeRefreshLayout = findViewById( R.id.serviceSwipeRefreshLayout )
-		refreshProgressBar = findViewById( R.id.serviceRefreshProgressBar )
-		statusTextView = findViewById( R.id.serviceStatusTextView )
-		actionStartStopButton = findViewById( R.id.serviceActionStartStopButton )
-		actionRestartButton = findViewById( R.id.serviceActionRestartButton )
-		informationServiceNameTextView = findViewById( R.id.serviceInformationServiceNameTextView )
-		informationDisplayNameTextView = findViewById( R.id.serviceInformationDisplayNameTextView )
-		informationDescriptionTextView = findViewById( R.id.serviceInformationDescriptionTextView )
-		informationRunLevelTextView = findViewById( R.id.serviceInformationRunLevelTextView )
-		logsStatusTextView = findViewById( R.id.serviceLogsStatusTextView )
-		logsRecyclerView = findViewById( R.id.serviceLogsRecyclerView )
+		swipeRefreshLayout = findViewById(R.id.serviceSwipeRefreshLayout)
+		refreshProgressBar = findViewById(R.id.serviceRefreshProgressBar)
+		statusTextView = findViewById(R.id.serviceStatusTextView)
+		actionStartStopButton = findViewById(R.id.serviceActionStartStopButton)
+		actionRestartButton = findViewById(R.id.serviceActionRestartButton)
+		informationServiceNameTextView = findViewById(R.id.serviceInformationServiceNameTextView)
+		informationDisplayNameTextView = findViewById(R.id.serviceInformationDisplayNameTextView)
+		informationDescriptionTextView = findViewById(R.id.serviceInformationDescriptionTextView)
+		informationRunLevelTextView = findViewById(R.id.serviceInformationRunLevelTextView)
+		logsStatusTextView = findViewById(R.id.serviceLogsStatusTextView)
+		logsRecyclerView = findViewById(R.id.serviceLogsRecyclerView)
 
 		// Get the settings
-		settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE ) )
-		Log.d( Shared.logTag, "Got settings ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
+		settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, MODE_PRIVATE ) )
+		Log.d(Shared.logTag, "Got settings ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
 
 		// Return to the setup activity if we aren't setup yet
 		if ( !settings.isSetup() ) {
-			Log.d( Shared.logTag, "Not setup yet, returning to Setup activity..." )
+			Log.d(Shared.logTag, "Not setup yet, returning to Setup activity..." )
 			startActivity( Intent( this, SetupActivity::class.java ) )
-			overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
+			overridePendingTransition(R.anim.slide_in_from_left, R.anim.slide_out_to_right)
 			return
 		}
 
 		// Return to the previous activity if we were not given all the required data
 		val serverIdentifier = intent.extras?.getString( "serverIdentifier" )
 		val serviceName = intent.extras?.getString( "serviceName" )
-		Log.d( Shared.logTag, "Server Identifier: '${ serverIdentifier }', Service Name: '${ serviceName }'" )
+		Log.d(Shared.logTag, "Server Identifier: '${ serverIdentifier }', Service Name: '${ serviceName }'" )
 		if ( serverIdentifier.isNullOrBlank() || serviceName.isNullOrBlank() ) {
-			Log.w( Shared.logTag, "No server identifier and/or service name passed to activity?! Returning to previous activity..." )
+			Log.w(Shared.logTag, "No server identifier and/or service name passed to activity?! Returning to previous activity..." )
 			finish()
-			overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
+			overridePendingTransition(R.anim.slide_in_from_left, R.anim.slide_out_to_right)
 			return
 		}
 		this.serverIdentifier = serverIdentifier
@@ -172,7 +180,7 @@ class ServiceActivity : AppCompatActivity() {
 
 		// Set the title on the toolbar (will be overridden later when we have the display name for the service)
 		materialToolbar?.title = serviceName.uppercase()
-		Log.d( Shared.logTag, "Set Material Toolbar title to '${ serviceName.uppercase() }'" )
+		Log.d(Shared.logTag, "Set Material Toolbar title to '${ serviceName.uppercase() }'" )
 
 		// Create the animation for the automatic refresh countdown progress bar - https://stackoverflow.com/a/18015071
 		progressBarAnimation = ProgressBarAnimation( refreshProgressBar, refreshProgressBar.progress.toFloat(), refreshProgressBar.max.toFloat() )
@@ -186,12 +194,12 @@ class ServiceActivity : AppCompatActivity() {
 
 			// When the animation starts...
 			override fun onAnimationStart( animation: Animation? ) {
-				Log.d( Shared.logTag, "Automatic refresh countdown progress bar animation started" )
+				Log.d(Shared.logTag, "Automatic refresh countdown progress bar animation started" )
 			}
 
 			// When the animation finishes or is manually cleared...
 			override fun onAnimationEnd( animation: Animation? ) {
-				Log.d( Shared.logTag, "Automatic refresh countdown progress bar animation ended (${ animation?.hasEnded() }, ${ animation?.hasStarted() }, ${ refreshProgressBar.progress }, ${ refreshProgressBar.isAnimating })" )
+				Log.d(Shared.logTag, "Automatic refresh countdown progress bar animation ended (${ animation?.hasEnded() }, ${ animation?.hasStarted() }, ${ refreshProgressBar.progress }, ${ refreshProgressBar.isAnimating })" )
 
 				// Don't refresh if we've been manually cleared
 				if ( refreshProgressBar.progress == 0 ) return
@@ -204,8 +212,13 @@ class ServiceActivity : AppCompatActivity() {
 
 						// Fetch the server
 						try {
-							val server = Server( API.getServer( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, serverIdentifier )!!, true )
-							Log.d( Shared.logTag, "Fetched server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') from API" )
+							val server = Server( API.getServer(
+								settings.instanceUrl!!,
+								settings.credentialsUsername!!,
+								settings.credentialsPassword!!,
+								serverIdentifier
+							)!!, true )
+							Log.d(Shared.logTag, "Fetched server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') from API" )
 
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
@@ -222,14 +235,17 @@ class ServiceActivity : AppCompatActivity() {
 									if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
 
 								} else {
-									Log.e( Shared.logTag, "Service '${ serviceName }' does not exist? Returning to previous activity..." )
+									Log.e(Shared.logTag, "Service '${ serviceName }' does not exist? Returning to previous activity..." )
 									finish()
-									overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
+									overridePendingTransition(
+										R.anim.slide_in_from_left,
+										R.anim.slide_out_to_right
+									)
 								}
 							}
 
-						} catch ( exception: APIException ) {
-							Log.e( Shared.logTag, "Failed to fetch server '${ serverIdentifier }' from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
+						} catch ( exception: APIException) {
+							Log.e(Shared.logTag, "Failed to fetch server '${ serverIdentifier }' from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
 
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
@@ -272,7 +288,7 @@ class ServiceActivity : AppCompatActivity() {
 								}
 							}
 						} catch ( exception: JsonParseException) {
-							Log.e( Shared.logTag, "Failed to parse fetch server API response as JSON due to '${ exception.message }'" )
+							Log.e(Shared.logTag, "Failed to parse fetch server API response as JSON due to '${ exception.message }'" )
 
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
@@ -280,7 +296,7 @@ class ServiceActivity : AppCompatActivity() {
 								showBriefMessage( activity, R.string.serviceToastServerParseFailure )
 							}
 						} catch ( exception: JsonSyntaxException) {
-							Log.e( Shared.logTag, "Failed to parse fetch server API response as JSON due to '${ exception.message }'" )
+							Log.e(Shared.logTag, "Failed to parse fetch server API response as JSON due to '${ exception.message }'" )
 
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
@@ -288,7 +304,7 @@ class ServiceActivity : AppCompatActivity() {
 								showBriefMessage( activity, R.string.serviceToastServerParseFailure )
 							}
 						} catch ( exception: NullPointerException ) {
-							Log.e( Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
+							Log.e(Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
 
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
@@ -303,14 +319,14 @@ class ServiceActivity : AppCompatActivity() {
 
 			// When the animation repeats...
 			override fun onAnimationRepeat( animation: Animation? ) {
-				Log.d( Shared.logTag, "Automatic refresh countdown progress bar animation repeated" )
+				Log.d(Shared.logTag, "Automatic refresh countdown progress bar animation repeated" )
 			}
 
 		} )
 
 		// When we're swiped down to refresh...
 		swipeRefreshLayout.setOnRefreshListener {
-			Log.d( Shared.logTag, "Swipe refreshed!" )
+			Log.d(Shared.logTag, "Swipe refreshed!" )
 
 			// Stop the automatic refresh countdown progress bar, thus calling the animation callback
 			if ( settings.automaticRefresh ) {
@@ -323,8 +339,13 @@ class ServiceActivity : AppCompatActivity() {
 
 						// Fetch the server
 						try {
-							val server = Server( API.getServer( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, serverIdentifier )!!, true )
-							Log.d( Shared.logTag, "Fetched server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') from API" )
+							val server = Server( API.getServer(
+								settings.instanceUrl!!,
+								settings.credentialsUsername!!,
+								settings.credentialsPassword!!,
+								serverIdentifier
+							)!!, true )
+							Log.d(Shared.logTag, "Fetched server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') from API" )
 
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
@@ -341,14 +362,17 @@ class ServiceActivity : AppCompatActivity() {
 									if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
 
 								} else {
-									Log.e( Shared.logTag, "Service '${ serviceName }' does not exist? Returning to previous activity..." )
+									Log.e(Shared.logTag, "Service '${ serviceName }' does not exist? Returning to previous activity..." )
 									finish()
-									overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
+									overridePendingTransition(
+										R.anim.slide_in_from_left,
+										R.anim.slide_out_to_right
+									)
 								}
 							}
 
-						} catch ( exception: APIException ) {
-							Log.e( Shared.logTag, "Failed to fetch server '${ serverIdentifier }' from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
+						} catch ( exception: APIException) {
+							Log.e(Shared.logTag, "Failed to fetch server '${ serverIdentifier }' from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
 
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
@@ -391,7 +415,7 @@ class ServiceActivity : AppCompatActivity() {
 								}
 							}
 						} catch ( exception: JsonParseException) {
-							Log.e( Shared.logTag, "Failed to parse fetch server API response as JSON due to '${ exception.message }'" )
+							Log.e(Shared.logTag, "Failed to parse fetch server API response as JSON due to '${ exception.message }'" )
 
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
@@ -399,7 +423,7 @@ class ServiceActivity : AppCompatActivity() {
 								showBriefMessage( activity, R.string.serviceToastServerParseFailure )
 							}
 						} catch ( exception: JsonSyntaxException) {
-							Log.e( Shared.logTag, "Failed to parse fetch server API response as JSON due to '${ exception.message }'" )
+							Log.e(Shared.logTag, "Failed to parse fetch server API response as JSON due to '${ exception.message }'" )
 
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
@@ -407,7 +431,7 @@ class ServiceActivity : AppCompatActivity() {
 								showBriefMessage( activity, R.string.serviceToastServerParseFailure )
 							}
 						} catch ( exception: NullPointerException ) {
-							Log.e( Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
+							Log.e(Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
 
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
@@ -423,18 +447,18 @@ class ServiceActivity : AppCompatActivity() {
 
 		// When the start/stop action button is pressed...
 		actionStartStopButton.setOnClickListener {
-			if ( actionStartStopButton.text == getString( R.string.serviceButtonStartAction ) ) {
-				Log.d( Shared.logTag, "Start service button pressed!" )
+			if ( actionStartStopButton.text == getString(R.string.serviceButtonStartAction) ) {
+				Log.d(Shared.logTag, "Start service button pressed!" )
 				executeServiceAction( activity, "start" )
-			} else if ( actionStartStopButton.text == getString( R.string.serviceButtonStopAction ) ) {
-				Log.d( Shared.logTag, "Stop service button pressed!" )
+			} else if ( actionStartStopButton.text == getString(R.string.serviceButtonStopAction) ) {
+				Log.d(Shared.logTag, "Stop service button pressed!" )
 				executeServiceAction( activity, "stop" )
 			}
 		}
 
 		// When the restart action button is pressed...
 		actionRestartButton.setOnClickListener {
-			Log.d( Shared.logTag, "Restart service button pressed!" )
+			Log.d(Shared.logTag, "Restart service button pressed!" )
 			executeServiceAction( activity, "restart" )
 		}
 
@@ -446,16 +470,16 @@ class ServiceActivity : AppCompatActivity() {
 	// Use custom animation when the back button is pressed - https://medium.com/tech-takeaways/how-to-migrate-the-deprecated-onbackpressed-function-e66bb29fa2fd
 	private val onBackPressed: OnBackPressedCallback = object : OnBackPressedCallback( true ) {
 		override fun handleOnBackPressed() {
-			Log.d( Shared.logTag, "System back button pressed. Returning to previous activity..." )
+			Log.d(Shared.logTag, "System back button pressed. Returning to previous activity..." )
 			finish()
-			overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
+			overridePendingTransition(R.anim.slide_in_from_left, R.anim.slide_out_to_right)
 		}
 	}
 
 	// When the activity is closed...
 	override fun onStop() {
 		super.onStop()
-		Log.d( Shared.logTag, "Stopped service activity" )
+		Log.d(Shared.logTag, "Stopped service activity" )
 
 		// Cancel all pending HTTP requests
 		//API.cancelQueue()
@@ -463,7 +487,7 @@ class ServiceActivity : AppCompatActivity() {
 
 	override fun onPause() {
 		super.onPause()
-		Log.d( Shared.logTag, "Paused service activity" )
+		Log.d(Shared.logTag, "Paused service activity" )
 
 		// Stop any current refreshing
 		swipeRefreshLayout.isRefreshing = false
@@ -477,11 +501,11 @@ class ServiceActivity : AppCompatActivity() {
 
 	override fun onResume() {
 		super.onResume()
-		Log.d( Shared.logTag, "Resumed service activity" )
+		Log.d(Shared.logTag, "Resumed service activity" )
 
 		// Reload settings in case they have changed
 		settings.read()
-		Log.d( Shared.logTag, "Reloaded settings (Automatic Refresh: '${ settings.automaticRefresh }', Automatic Refresh Interval: '${ settings.automaticRefreshInterval }')" )
+		Log.d(Shared.logTag, "Reloaded settings (Automatic Refresh: '${ settings.automaticRefresh }', Automatic Refresh Interval: '${ settings.automaticRefreshInterval }')" )
 
 		// Set the progress bar animation duration to the automatic refresh interval
 		progressBarAnimation.duration = settings.automaticRefreshInterval * 1000L // Convert seconds to milliseconds
@@ -499,7 +523,11 @@ class ServiceActivity : AppCompatActivity() {
 
 				// Fetch the contact information
 				try {
-					val hello = API.getHello( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!! )!!
+					val hello = API.getHello(
+						settings.instanceUrl!!,
+						settings.credentialsUsername!!,
+						settings.credentialsPassword!!
+					)!!
 
 					val contact = hello.get( "contact" ).asJsonObject!!
 					contactName = contact.get( "name" ).asString!!
@@ -508,12 +536,12 @@ class ServiceActivity : AppCompatActivity() {
 					for ( contactMethod in contact.get( "methods" ).asJsonArray!! ) contactMethodsList.add( contactMethod.asString!! )
 					contactMethods = contactMethodsList.toTypedArray()
 
-					Log.d( Shared.logTag, "Fetched contact information from API (Name: '${ contactName }', Methods: '${ contactMethods!!.joinToString( ", " ) }')" )
+					Log.d(Shared.logTag, "Fetched contact information from API (Name: '${ contactName }', Methods: '${ contactMethods!!.joinToString( ", " ) }')" )
 
 					// We don't enable user input & stop refreshing spinner here, as there's still another request to come
 
-				} catch ( exception: APIException ) {
-					Log.e( Shared.logTag, "Failed to fetch contact information from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
+				} catch ( exception: APIException) {
+					Log.e(Shared.logTag, "Failed to fetch contact information from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
@@ -555,21 +583,21 @@ class ServiceActivity : AppCompatActivity() {
 						}
 					}
 				} catch ( exception: JsonParseException ) {
-					Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
+					Log.e(Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
 						showBriefMessage( activity, R.string.serviceToastServerParseFailure )
 					}
 				} catch ( exception: JsonSyntaxException ) {
-					Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
+					Log.e(Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
 						showBriefMessage( activity, R.string.serviceToastServerParseFailure )
 					}
 				} catch ( exception: NullPointerException ) {
-					Log.e( Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
+					Log.e(Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
@@ -581,8 +609,13 @@ class ServiceActivity : AppCompatActivity() {
 
 				// Fetch the server
 				try {
-					val server = Server( API.getServer( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, serverIdentifier )!!, true )
-					Log.d( Shared.logTag, "Fetched server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') from API" )
+					val server = Server( API.getServer(
+						settings.instanceUrl!!,
+						settings.credentialsUsername!!,
+						settings.credentialsPassword!!,
+						serverIdentifier
+					)!!, true )
+					Log.d(Shared.logTag, "Fetched server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') from API" )
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
@@ -591,7 +624,7 @@ class ServiceActivity : AppCompatActivity() {
 						// Get this service
 						val service = server.findService( serviceName )
 						if ( service != null ) {
-							Log.d( Shared.logTag, "Got service '${ service.serviceName }' ('${ service.displayName }', '${ service.description }')" )
+							Log.d(Shared.logTag, "Got service '${ service.serviceName }' ('${ service.displayName }', '${ service.description }')" )
 
 							// Update the UI
 							updateUI( service )
@@ -600,14 +633,17 @@ class ServiceActivity : AppCompatActivity() {
 							if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
 
 						} else {
-							Log.e( Shared.logTag, "Service '${ serviceName }' does not exist? Returning to previous activity..." )
+							Log.e(Shared.logTag, "Service '${ serviceName }' does not exist? Returning to previous activity..." )
 							finish()
-							overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
+							overridePendingTransition(
+								R.anim.slide_in_from_left,
+								R.anim.slide_out_to_right
+							)
 						}
 					}
 
-				} catch ( exception: APIException ) {
-					Log.e( Shared.logTag, "Failed to fetch server '${ serverIdentifier }' from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
+				} catch ( exception: APIException) {
+					Log.e(Shared.logTag, "Failed to fetch server '${ serverIdentifier }' from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
@@ -650,7 +686,7 @@ class ServiceActivity : AppCompatActivity() {
 						}
 					}
 				} catch ( exception: JsonParseException) {
-					Log.e( Shared.logTag, "Failed to parse fetch server API response as JSON due to '${ exception.message }'" )
+					Log.e(Shared.logTag, "Failed to parse fetch server API response as JSON due to '${ exception.message }'" )
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
@@ -658,7 +694,7 @@ class ServiceActivity : AppCompatActivity() {
 						showBriefMessage( activity, R.string.serviceToastServerParseFailure )
 					}
 				} catch ( exception: JsonSyntaxException) {
-					Log.e( Shared.logTag, "Failed to parse fetch server API response as JSON due to '${ exception.message }'" )
+					Log.e(Shared.logTag, "Failed to parse fetch server API response as JSON due to '${ exception.message }'" )
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
@@ -666,7 +702,7 @@ class ServiceActivity : AppCompatActivity() {
 						showBriefMessage( activity, R.string.serviceToastServerParseFailure )
 					}
 				} catch ( exception: NullPointerException ) {
-					Log.e( Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
+					Log.e(Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
@@ -680,20 +716,20 @@ class ServiceActivity : AppCompatActivity() {
 	}
 
 	// Updates the UI with the given service
-	private fun updateUI( service: Service ) {
+	private fun updateUI( service: Service) {
 
 		// Set the title on the toolbar
 		materialToolbar?.title = service.displayName.uppercase()
-		Log.d( Shared.logTag, "Set Material Toolbar title to '${ service.displayName.uppercase() }'" )
+		Log.d(Shared.logTag, "Set Material Toolbar title to '${ service.displayName.uppercase() }'" )
 
 		// Update the action buttons
 		if ( service.isRunning() ) {
-			actionStartStopButton.text = getString( R.string.serviceButtonStopAction )
-			actionStartStopButton.setBackgroundColor( getColor( R.color.stopActionButton ) )
+			actionStartStopButton.text = getString(R.string.serviceButtonStopAction)
+			actionStartStopButton.setBackgroundColor( getColor(R.color.stopActionButton) )
 			actionRestartButton.isEnabled = service.isRestartActionSupported()
 		} else {
-			actionStartStopButton.text = getString( R.string.serviceButtonStartAction )
-			actionStartStopButton.setBackgroundColor( getColor( R.color.startActionButton ) )
+			actionStartStopButton.text = getString(R.string.serviceButtonStartAction)
+			actionStartStopButton.setBackgroundColor( getColor(R.color.startActionButton) )
 			actionRestartButton.isEnabled = service.isRestartActionSupported()
 		}
 		actionStartStopButton.isEnabled = service.isStartActionSupported() || service.isStopActionSupported()
@@ -704,24 +740,24 @@ class ServiceActivity : AppCompatActivity() {
 
 		// Update the status
 		val uptimeText = TimeSpan( service.uptimeSeconds.toLong() ).toString( true )
-		statusTextView.setTextColor( getColor( R.color.black ) )
-		statusTextView.setTextFromHTML( getString( R.string.serviceTextViewStatusGood ).format(
+		statusTextView.setTextColor( getColor(R.color.black) )
+		statusTextView.setTextFromHTML( getString(R.string.serviceTextViewStatusGood).format(
 			createHTMLColoredText( statusText, statusColor ),
 			createHTMLColoredText(
-				uptimeText.ifBlank { getString( R.string.serverTextViewServicesServiceStatusUptimeUnknown ) },
+				uptimeText.ifBlank { getString(R.string.serverTextViewServicesServiceStatusUptimeUnknown) },
 				if ( uptimeText.isNotBlank() ) R.color.black else R.color.statusDead
 			)
 		) )
 
 		// Update the name, description & run level
-		informationServiceNameTextView.setTextColor( getColor( R.color.black ) )
-		informationServiceNameTextView.text = getString( R.string.serviceTextViewInformationServiceName ).format( service.serviceName )
-		informationDisplayNameTextView.setTextColor( getColor( R.color.black ) )
-		informationDisplayNameTextView.text = getString( R.string.serviceTextViewInformationDisplayName ).format( service.displayName )
-		informationDescriptionTextView.setTextColor( getColor( R.color.black ) )
-		informationDescriptionTextView.text = getString( R.string.serviceTextViewInformationDescription ).format( service.description )
-		informationRunLevelTextView.setTextColor( getColor( R.color.black ) )
-		informationRunLevelTextView.text = getString( R.string.serviceTextViewInformationRunLevel ).format( service.runLevel )
+		informationServiceNameTextView.setTextColor( getColor(R.color.black) )
+		informationServiceNameTextView.text = getString(R.string.serviceTextViewInformationServiceName).format( service.serviceName )
+		informationDisplayNameTextView.setTextColor( getColor(R.color.black) )
+		informationDisplayNameTextView.text = getString(R.string.serviceTextViewInformationDisplayName).format( service.displayName )
+		informationDescriptionTextView.setTextColor( getColor(R.color.black) )
+		informationDescriptionTextView.text = getString(R.string.serviceTextViewInformationDescription).format( service.description )
+		informationRunLevelTextView.setTextColor( getColor(R.color.black) )
+		informationRunLevelTextView.text = getString(R.string.serviceTextViewInformationRunLevel).format( service.runLevel )
 
 		// TODO: Update the logs
 
@@ -742,7 +778,14 @@ class ServiceActivity : AppCompatActivity() {
 
 				// Try to execute the action
 				try {
-					val action = API.postService( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, serverIdentifier, serviceName, actionName )
+					val action = API.postService(
+						settings.instanceUrl!!,
+						settings.credentialsUsername!!,
+						settings.credentialsPassword!!,
+						serverIdentifier,
+						serviceName,
+						actionName
+					)
 					val exitCode = action?.get( "exitCode" )?.asInt
 					var outputText = action?.get( "outputText" )?.asString?.trim()
 					var errorText = action?.get( "errorText" )?.asString?.trim()
@@ -750,7 +793,7 @@ class ServiceActivity : AppCompatActivity() {
 					if ( outputText.isNullOrBlank() ) outputText = "N/A"
 					if ( errorText.isNullOrBlank() ) errorText = "N/A"
 
-					Log.d( Shared.logTag, "Executed action '${ actionName }' for service '${ serviceName }' on server '${ serverIdentifier }': '${ outputText }', '${ errorText }' (Exit Code: '${ exitCode }')" )
+					Log.d(Shared.logTag, "Executed action '${ actionName }' for service '${ serviceName }' on server '${ serverIdentifier }': '${ outputText }', '${ errorText }' (Exit Code: '${ exitCode }')" )
 
 					withContext( Dispatchers.Main ) {
 						progressDialog.dismiss()
@@ -759,8 +802,8 @@ class ServiceActivity : AppCompatActivity() {
 						else showInformationDialog( activity, R.string.serviceDialogActionExecuteTitle, getString( R.string.serviceDialogActionExecuteMessageFailure ).format( exitCode, errorText, outputText ) )
 					}
 
-				} catch ( exception: APIException ) {
-					Log.e( Shared.logTag, "Failed to execute action '${ actionName }' on API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
+				} catch ( exception: APIException) {
+					Log.e(Shared.logTag, "Failed to execute action '${ actionName }' on API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
 
 					withContext( Dispatchers.Main ) {
 						progressDialog.dismiss()
@@ -811,21 +854,21 @@ class ServiceActivity : AppCompatActivity() {
 						}
 					}
 				} catch ( exception: JsonParseException ) {
-					Log.e( Shared.logTag, "Failed to parse execute server action API response as JSON due to '${ exception.message }'" )
+					Log.e(Shared.logTag, "Failed to parse execute server action API response as JSON due to '${ exception.message }'" )
 
 					withContext( Dispatchers.Main ) {
 						progressDialog.dismiss()
 						showBriefMessage( activity, R.string.serviceToastActionParseFailure )
 					}
 				} catch ( exception: JsonSyntaxException ) {
-					Log.e( Shared.logTag, "Failed to parse execute server action API response as JSON due to '${ exception.message }'" )
+					Log.e(Shared.logTag, "Failed to parse execute server action API response as JSON due to '${ exception.message }'" )
 
 					withContext( Dispatchers.Main ) {
 						progressDialog.dismiss()
 						showBriefMessage( activity, R.string.serviceToastActionParseFailure )
 					}
 				} catch ( exception: NullPointerException ) {
-					Log.e( Shared.logTag, "Encountered null property value in execute server action API response ('${ exception.message }')" )
+					Log.e(Shared.logTag, "Encountered null property value in execute server action API response ('${ exception.message }')" )
 
 					withContext( Dispatchers.Main ) {
 						progressDialog.dismiss()

@@ -1,7 +1,6 @@
-package com.viral32111.servermonitor
+package com.viral32111.servermonitor.activity
 
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -24,6 +23,14 @@ import com.android.volley.*
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.gson.JsonParseException
 import com.google.gson.JsonSyntaxException
+import com.viral32111.servermonitor.*
+import com.viral32111.servermonitor.R
+import com.viral32111.servermonitor.adapter.*
+import com.viral32111.servermonitor.data.Drive
+import com.viral32111.servermonitor.data.NetworkInterface
+import com.viral32111.servermonitor.data.Server
+import com.viral32111.servermonitor.data.Service
+import com.viral32111.servermonitor.helper.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -73,33 +80,33 @@ class ServerActivity : AppCompatActivity() {
 
 		// Run default action & display the relevant layout file
 		super.onCreate( savedInstanceState )
-		setContentView( R.layout.activity_server )
-		Log.d( Shared.logTag, "Creating activity..." )
+		setContentView(R.layout.activity_server)
+		Log.d(Shared.logTag, "Creating activity..." )
 
 		// Switch to the custom Material Toolbar
 		supportActionBar?.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
-		supportActionBar?.setCustomView( R.layout.action_bar )
-		Log.d( Shared.logTag, "Switched to Material Toolbar" )
+		supportActionBar?.setCustomView(R.layout.action_bar)
+		Log.d(Shared.logTag, "Switched to Material Toolbar" )
 
 		// Set the title on the toolbar
-		materialToolbar = supportActionBar?.customView?.findViewById( R.id.actionBarMaterialToolbar )
-		materialToolbar?.title = getString( R.string.serverActionBarTitle )
+		materialToolbar = supportActionBar?.customView?.findViewById(R.id.actionBarMaterialToolbar)
+		materialToolbar?.title = getString(R.string.serverActionBarTitle)
 		materialToolbar?.isTitleCentered = true
-		Log.d( Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered })" )
+		Log.d(Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered })" )
 
 		// When an item on the action bar menu is pressed...
 		materialToolbar?.setOnMenuItemClickListener { menuItem ->
 
 			// Settings
-			if ( menuItem.title?.equals( getString( R.string.actionBarMenuSettings ) ) == true ) {
-				Log.d( Shared.logTag, "Opening Settings activity..." )
+			if ( menuItem.title?.equals( getString(R.string.actionBarMenuSettings) ) == true ) {
+				Log.d(Shared.logTag, "Opening Settings activity..." )
 
 				startActivity( Intent( this, SettingsActivity::class.java ) )
-				overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
+				overridePendingTransition(R.anim.slide_in_from_right, R.anim.slide_out_to_left)
 
 			// Logout
-			} else if ( menuItem.title?.equals( getString( R.string.actionBarMenuLogout ) ) == true ) {
-				Log.d( Shared.logTag, "Logout menu item pressed, showing confirmation..." )
+			} else if ( menuItem.title?.equals( getString(R.string.actionBarMenuLogout) ) == true ) {
+				Log.d(Shared.logTag, "Logout menu item pressed, showing confirmation..." )
 
 				showConfirmDialog( this, R.string.dialogConfirmLogoutMessage, {
 					Log.d( Shared.logTag, "Logout confirmed" )
@@ -121,8 +128,8 @@ class ServerActivity : AppCompatActivity() {
 				} )
 
 			// About
-			} else if ( menuItem.title?.equals( getString( R.string.actionBarMenuAbout ) ) == true ) {
-				Log.d( Shared.logTag, "Showing information about app dialog..." )
+			} else if ( menuItem.title?.equals( getString(R.string.actionBarMenuAbout) ) == true ) {
+				Log.d(Shared.logTag, "Showing information about app dialog..." )
 
 				// Get the contact information, if it exists
 				val contactInformation = if ( !contactName.isNullOrBlank() && contactMethods != null ) "Contact for ${ contactName }:\n${ contactMethods!!.joinToString( "\n" ) }" else  ""
@@ -139,69 +146,71 @@ class ServerActivity : AppCompatActivity() {
 		}
 
 		// Get all the UI
-		swipeRefreshLayout = findViewById( R.id.serverSwipeRefreshLayout )
-		refreshProgressBar = findViewById( R.id.serverRefreshProgressBar )
-		statusTextView = findViewById( R.id.serverStatusTextView )
-		actionShutdownButton = findViewById( R.id.serverActionShutdownButton )
-		actionRebootButton = findViewById( R.id.serverActionRebootButton )
-		resourcesProcessorTextView = findViewById( R.id.serverResourcesDataProcessorTextView )
-		resourcesMemoryTextView = findViewById( R.id.serverResourcesDataMemoryTextView )
-		resourcesSwapTextView = findViewById( R.id.serverResourcesDataSwapTextView )
-		resourcesNetworkTextView = findViewById( R.id.serverResourcesDataNetworkTextView )
-		resourcesDriveTextView = findViewById( R.id.serverResourcesDataDriveTextView )
-		resourcesPowerTextView = findViewById( R.id.serverResourcesDataPowerTextView )
-		resourcesFansTextView = findViewById( R.id.serverResourcesDataFansTextView )
-		drivesStatusTextView = findViewById( R.id.serverDrivesStatusTextView )
-		drivesRecyclerView = findViewById( R.id.serverDrivesRecyclerView )
-		networkStatusTextView = findViewById( R.id.serverNetworkStatusTextView )
-		networkRecyclerView = findViewById( R.id.serverNetworkRecyclerView )
-		servicesStatusTextView = findViewById( R.id.serverServicesStatusTextView )
-		servicesRecyclerView = findViewById( R.id.serverServicesRecyclerView )
-		dockerStatusTextView = findViewById( R.id.serverDockerStatusTextView )
-		dockerRecyclerView = findViewById( R.id.serverDockerRecyclerView )
-		snmpTitleTextView = findViewById( R.id.serverSNMPTitleTextView )
-		snmpStatusTextView = findViewById( R.id.serverSNMPStatusTextView )
-		snmpRecyclerView = findViewById( R.id.serverSNMPRecyclerView )
+		swipeRefreshLayout = findViewById(R.id.serverSwipeRefreshLayout)
+		refreshProgressBar = findViewById(R.id.serverRefreshProgressBar)
+		statusTextView = findViewById(R.id.serverStatusTextView)
+		actionShutdownButton = findViewById(R.id.serverActionShutdownButton)
+		actionRebootButton = findViewById(R.id.serverActionRebootButton)
+		resourcesProcessorTextView = findViewById(R.id.serverResourcesDataProcessorTextView)
+		resourcesMemoryTextView = findViewById(R.id.serverResourcesDataMemoryTextView)
+		resourcesSwapTextView = findViewById(R.id.serverResourcesDataSwapTextView)
+		resourcesNetworkTextView = findViewById(R.id.serverResourcesDataNetworkTextView)
+		resourcesDriveTextView = findViewById(R.id.serverResourcesDataDriveTextView)
+		resourcesPowerTextView = findViewById(R.id.serverResourcesDataPowerTextView)
+		resourcesFansTextView = findViewById(R.id.serverResourcesDataFansTextView)
+		drivesStatusTextView = findViewById(R.id.serverDrivesStatusTextView)
+		drivesRecyclerView = findViewById(R.id.serverDrivesRecyclerView)
+		networkStatusTextView = findViewById(R.id.serverNetworkStatusTextView)
+		networkRecyclerView = findViewById(R.id.serverNetworkRecyclerView)
+		servicesStatusTextView = findViewById(R.id.serverServicesStatusTextView)
+		servicesRecyclerView = findViewById(R.id.serverServicesRecyclerView)
+		dockerStatusTextView = findViewById(R.id.serverDockerStatusTextView)
+		dockerRecyclerView = findViewById(R.id.serverDockerRecyclerView)
+		snmpTitleTextView = findViewById(R.id.serverSNMPTitleTextView)
+		snmpStatusTextView = findViewById(R.id.serverSNMPStatusTextView)
+		snmpRecyclerView = findViewById(R.id.serverSNMPRecyclerView)
 
 		// Default to unknown for all resources - the text is already grey as defined in layout, so no need color it here
-		resourcesProcessorTextView.text = getString( R.string.serverTextViewResourcesProcessor ).format( "0%", "0Hz", "0℃" )
-		resourcesMemoryTextView.text = getString( R.string.serverTextViewResourcesMemory ).format( "0B", "0B", "0%" )
-		resourcesSwapTextView.text = getString( R.string.serverTextViewResourcesSwap ).format( "Swap", "0B", "0B", "0%" ) // Assume name is swap, probably fine as most servers are Linux
-		resourcesNetworkTextView.text = getString( R.string.serverTextViewResourcesNetwork ).format( "0B/s", "0B/s" )
-		resourcesDriveTextView.text = getString( R.string.serverTextViewResourcesDrive ).format( "0B/s", "0B/s" )
-		resourcesPowerTextView.text = getString( R.string.serverTextViewResourcesPower ).format( "0W", "0W" )
-		resourcesFansTextView.text = getString( R.string.serverTextViewResourcesFans ).format( "0RPM" )
+		resourcesProcessorTextView.text = getString(R.string.serverTextViewResourcesProcessor).format( "0%", "0Hz", "0℃" )
+		resourcesMemoryTextView.text = getString(R.string.serverTextViewResourcesMemory).format( "0B", "0B", "0%" )
+		resourcesSwapTextView.text = getString(R.string.serverTextViewResourcesSwap).format( "Swap", "0B", "0B", "0%" ) // Assume name is swap, probably fine as most servers are Linux
+		resourcesNetworkTextView.text = getString(R.string.serverTextViewResourcesNetwork).format( "0B/s", "0B/s" )
+		resourcesDriveTextView.text = getString(R.string.serverTextViewResourcesDrive).format( "0B/s", "0B/s" )
+		resourcesPowerTextView.text = getString(R.string.serverTextViewResourcesPower).format( "0W", "0W" )
+		resourcesFansTextView.text = getString(R.string.serverTextViewResourcesFans).format( "0RPM" )
 
 		// Get the settings
-		settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, Context.MODE_PRIVATE ) )
-		Log.d( Shared.logTag, "Got settings ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
+		settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, MODE_PRIVATE ) )
+		Log.d(Shared.logTag, "Got settings ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
 
 		// Switch to the servers activity if we aren't servers yet
 		if ( !settings.isSetup() ) {
-			Log.d( Shared.logTag, "Not setup yet, switching to servers activity..." )
+			Log.d(Shared.logTag, "Not setup yet, switching to servers activity..." )
 			startActivity( Intent( this, SetupActivity::class.java ) )
-			overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
+			overridePendingTransition(R.anim.slide_in_from_left, R.anim.slide_out_to_right)
 			return
 		}
 
 		// Return to the previous activity if we were not given a server identifier
 		val serverIdentifier = intent.extras?.getString( "serverIdentifier" )
-		Log.d( Shared.logTag, "Server identifier: '${ serverIdentifier }'" )
+		Log.d(Shared.logTag, "Server identifier: '${ serverIdentifier }'" )
 		if ( serverIdentifier.isNullOrBlank() ) {
-			Log.w( Shared.logTag, "No server identifier passed to activity?! Returning to previous activity..." )
+			Log.w(Shared.logTag, "No server identifier passed to activity?! Returning to previous activity..." )
 			finish()
-			overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
+			overridePendingTransition(R.anim.slide_in_from_left, R.anim.slide_out_to_right)
 			return
 		}
 		this.serverIdentifier = serverIdentifier
 
 		// Enable the back button on the toolbar if we came from the servers activity
 		if ( intent.extras?.getBoolean( "fromServersActivity" ) == true ) {
-			materialToolbar?.navigationIcon = AppCompatResources.getDrawable( this, R.drawable.ic_baseline_arrow_back_24 )
+			materialToolbar?.navigationIcon = AppCompatResources.getDrawable( this,
+				R.drawable.ic_baseline_arrow_back_24
+			)
 			materialToolbar?.setNavigationOnClickListener {
-				Log.d( Shared.logTag, "Navigation back button pressed. Returning to previous activity..." )
+				Log.d(Shared.logTag, "Navigation back button pressed. Returning to previous activity..." )
 				finish()
-				overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
+				overridePendingTransition(R.anim.slide_in_from_left, R.anim.slide_out_to_right)
 			}
 		}
 
@@ -209,35 +218,45 @@ class ServerActivity : AppCompatActivity() {
 		val drivesLinearLayoutManager = LinearLayoutManager( this, LinearLayoutManager.VERTICAL, false )
 		drivesRecyclerView.layoutManager = drivesLinearLayoutManager
 		val drivesDividerItemDecoration = DividerItemDecoration( this, drivesLinearLayoutManager.orientation )
-		drivesDividerItemDecoration.setDrawable( ContextCompat.getDrawable( this, R.drawable.shape_section_divider )!! )
+		drivesDividerItemDecoration.setDrawable( ContextCompat.getDrawable( this,
+			R.drawable.shape_section_divider
+		)!! )
 		drivesRecyclerView.addItemDecoration( drivesDividerItemDecoration )
 
 		// Setup the network interfaces recycler view
 		val networkLinearLayoutManager = LinearLayoutManager( this, LinearLayoutManager.VERTICAL, false )
 		networkRecyclerView.layoutManager = networkLinearLayoutManager
 		val networkDividerItemDecoration = DividerItemDecoration( this, networkLinearLayoutManager.orientation )
-		networkDividerItemDecoration.setDrawable( ContextCompat.getDrawable( this, R.drawable.shape_section_divider )!! )
+		networkDividerItemDecoration.setDrawable( ContextCompat.getDrawable( this,
+			R.drawable.shape_section_divider
+		)!! )
 		networkRecyclerView.addItemDecoration( networkDividerItemDecoration )
 
 		// Setup the services recycler view
 		val servicesLinearLayoutManager = LinearLayoutManager( this, LinearLayoutManager.VERTICAL, false )
 		servicesRecyclerView.layoutManager = servicesLinearLayoutManager
 		val servicesDividerItemDecoration = DividerItemDecoration( this, servicesLinearLayoutManager.orientation )
-		servicesDividerItemDecoration.setDrawable( ContextCompat.getDrawable( this, R.drawable.shape_section_divider )!! )
+		servicesDividerItemDecoration.setDrawable( ContextCompat.getDrawable( this,
+			R.drawable.shape_section_divider
+		)!! )
 		servicesRecyclerView.addItemDecoration( servicesDividerItemDecoration )
 
 		// Setup the Docker containers recycler view
 		val dockerLinearLayoutManager = LinearLayoutManager( this, LinearLayoutManager.VERTICAL, false )
 		dockerRecyclerView.layoutManager = dockerLinearLayoutManager
 		val dockerDividerItemDecoration = DividerItemDecoration( this, dockerLinearLayoutManager.orientation )
-		dockerDividerItemDecoration.setDrawable( ContextCompat.getDrawable( this, R.drawable.shape_section_divider )!! )
+		dockerDividerItemDecoration.setDrawable( ContextCompat.getDrawable( this,
+			R.drawable.shape_section_divider
+		)!! )
 		dockerRecyclerView.addItemDecoration( dockerDividerItemDecoration )
 
 		// Setup the SNMP agents recycler view
 		val snmpLinearLayoutManager = LinearLayoutManager( this, LinearLayoutManager.VERTICAL, false )
 		snmpRecyclerView.layoutManager = snmpLinearLayoutManager
 		val snmpDividerItemDecoration = DividerItemDecoration( this, dockerLinearLayoutManager.orientation )
-		snmpDividerItemDecoration.setDrawable( ContextCompat.getDrawable( this, R.drawable.shape_section_divider )!! )
+		snmpDividerItemDecoration.setDrawable( ContextCompat.getDrawable( this,
+			R.drawable.shape_section_divider
+		)!! )
 		snmpRecyclerView.addItemDecoration( dockerDividerItemDecoration )
 
 		// Create the animation for the automatic refresh countdown progress bar - https://stackoverflow.com/a/18015071
@@ -252,12 +271,12 @@ class ServerActivity : AppCompatActivity() {
 
 			// When the animation starts...
 			override fun onAnimationStart( animation: Animation? ) {
-				Log.d( Shared.logTag, "Automatic refresh countdown progress bar animation started" )
+				Log.d(Shared.logTag, "Automatic refresh countdown progress bar animation started" )
 			}
 
 			// When the animation finishes or is manually cleared...
 			override fun onAnimationEnd( animation: Animation? ) {
-				Log.d( Shared.logTag, "Automatic refresh countdown progress bar animation ended (${ animation?.hasEnded() }, ${ animation?.hasStarted() }, ${ refreshProgressBar.progress }, ${ refreshProgressBar.isAnimating })" )
+				Log.d(Shared.logTag, "Automatic refresh countdown progress bar animation ended (${ animation?.hasEnded() }, ${ animation?.hasStarted() }, ${ refreshProgressBar.progress }, ${ refreshProgressBar.isAnimating })" )
 
 				// Don't refresh if we've been manually cleared
 				if ( refreshProgressBar.progress == 0 ) return
@@ -270,8 +289,13 @@ class ServerActivity : AppCompatActivity() {
 
 						// Fetch the server
 						try {
-							val server = Server( API.getServer( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, serverIdentifier )!!, true )
-							Log.d( Shared.logTag, "Fetched server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') from API" )
+							val server = Server( API.getServer(
+								settings.instanceUrl!!,
+								settings.credentialsUsername!!,
+								settings.credentialsPassword!!,
+								serverIdentifier
+							)!!, true )
+							Log.d(Shared.logTag, "Fetched server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') from API" )
 
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
@@ -284,8 +308,8 @@ class ServerActivity : AppCompatActivity() {
 								if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
 							}
 
-						} catch ( exception: APIException ) {
-							Log.e( Shared.logTag, "Failed to fetch servers from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
+						} catch ( exception: APIException) {
+							Log.e(Shared.logTag, "Failed to fetch servers from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
 
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
@@ -328,7 +352,7 @@ class ServerActivity : AppCompatActivity() {
 								}
 							}
 						} catch ( exception: JsonParseException ) {
-							Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
+							Log.e(Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
 
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
@@ -336,7 +360,7 @@ class ServerActivity : AppCompatActivity() {
 								showBriefMessage( activity, R.string.serverToastServerParseFailure )
 							}
 						} catch ( exception: JsonSyntaxException ) {
-							Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
+							Log.e(Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
 
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
@@ -344,7 +368,7 @@ class ServerActivity : AppCompatActivity() {
 								showBriefMessage( activity, R.string.serverToastServerParseFailure )
 							}
 						} catch ( exception: NullPointerException ) {
-							Log.e( Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
+							Log.e(Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
 
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
@@ -359,14 +383,14 @@ class ServerActivity : AppCompatActivity() {
 
 			// When the animation repeats...
 			override fun onAnimationRepeat( animation: Animation? ) {
-				Log.d( Shared.logTag, "Automatic refresh countdown progress bar animation repeated" )
+				Log.d(Shared.logTag, "Automatic refresh countdown progress bar animation repeated" )
 			}
 
 		} )
 
 		// When we're swiped down to refresh...
 		swipeRefreshLayout.setOnRefreshListener {
-			Log.d( Shared.logTag, "Swipe refreshed!" )
+			Log.d(Shared.logTag, "Swipe refreshed!" )
 
 			// Stop the automatic refresh countdown progress bar, thus calling the animation callback
 			if ( settings.automaticRefresh ) {
@@ -379,8 +403,13 @@ class ServerActivity : AppCompatActivity() {
 
 						// Fetch the server
 						try {
-							val server = Server( API.getServer( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, serverIdentifier )!!, true )
-							Log.d( Shared.logTag, "Fetched server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') from API" )
+							val server = Server( API.getServer(
+								settings.instanceUrl!!,
+								settings.credentialsUsername!!,
+								settings.credentialsPassword!!,
+								serverIdentifier
+							)!!, true )
+							Log.d(Shared.logTag, "Fetched server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') from API" )
 
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
@@ -393,8 +422,8 @@ class ServerActivity : AppCompatActivity() {
 								if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
 							}
 
-						} catch ( exception: APIException ) {
-							Log.e( Shared.logTag, "Failed to fetch servers from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
+						} catch ( exception: APIException) {
+							Log.e(Shared.logTag, "Failed to fetch servers from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
 
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
@@ -437,7 +466,7 @@ class ServerActivity : AppCompatActivity() {
 								}
 							}
 						} catch ( exception: JsonParseException ) {
-							Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
+							Log.e(Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
 
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
@@ -445,7 +474,7 @@ class ServerActivity : AppCompatActivity() {
 								showBriefMessage( activity, R.string.serverToastServerParseFailure )
 							}
 						} catch ( exception: JsonSyntaxException ) {
-							Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
+							Log.e(Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
 
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
@@ -453,7 +482,7 @@ class ServerActivity : AppCompatActivity() {
 								showBriefMessage( activity, R.string.serverToastServerParseFailure )
 							}
 						} catch ( exception: NullPointerException ) {
-							Log.e( Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
+							Log.e(Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
 
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
@@ -469,13 +498,13 @@ class ServerActivity : AppCompatActivity() {
 
 		// When the shutdown action button is pressed...
 		actionShutdownButton.setOnClickListener {
-			Log.d( Shared.logTag, "Shutdown server button pressed, sending API request..." )
+			Log.d(Shared.logTag, "Shutdown server button pressed, sending API request..." )
 			executeServerAction( activity, "shutdown" )
 		}
 
 		// When the reboot action button is pressed...
 		actionRebootButton.setOnClickListener {
-			Log.d( Shared.logTag, "Reboot server button pressed, sending API request..." )
+			Log.d(Shared.logTag, "Reboot server button pressed, sending API request..." )
 			executeServerAction( activity, "reboot" )
 		}
 
@@ -487,16 +516,16 @@ class ServerActivity : AppCompatActivity() {
 	// Use custom animation when the back button is pressed - https://medium.com/tech-takeaways/how-to-migrate-the-deprecated-onbackpressed-function-e66bb29fa2fd
 	private val onBackPressed: OnBackPressedCallback = object : OnBackPressedCallback( true ) {
 		override fun handleOnBackPressed() {
-			Log.d( Shared.logTag, "System back button pressed. Returning to previous activity..." )
+			Log.d(Shared.logTag, "System back button pressed. Returning to previous activity..." )
 			finish()
-			overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
+			overridePendingTransition(R.anim.slide_in_from_left, R.anim.slide_out_to_right)
 		}
 	}
 
 	// When the activity is closed...
 	override fun onStop() {
 		super.onStop()
-		Log.d( Shared.logTag, "Stopped server activity" )
+		Log.d(Shared.logTag, "Stopped server activity" )
 
 		// Cancel all pending HTTP requests
 		//API.cancelQueue()
@@ -504,7 +533,7 @@ class ServerActivity : AppCompatActivity() {
 
 	override fun onPause() {
 		super.onPause()
-		Log.d( Shared.logTag, "Paused server activity" )
+		Log.d(Shared.logTag, "Paused server activity" )
 
 		// Stop any current refreshing
 		swipeRefreshLayout.isRefreshing = false
@@ -518,11 +547,11 @@ class ServerActivity : AppCompatActivity() {
 
 	override fun onResume() {
 		super.onResume()
-		Log.d( Shared.logTag, "Resumed server activity" )
+		Log.d(Shared.logTag, "Resumed server activity" )
 
 		// Reload settings in case they have changed
 		settings.read()
-		Log.d( Shared.logTag, "Reloaded settings (Automatic Refresh: '${ settings.automaticRefresh }', Automatic Refresh Interval: '${ settings.automaticRefreshInterval }')" )
+		Log.d(Shared.logTag, "Reloaded settings (Automatic Refresh: '${ settings.automaticRefresh }', Automatic Refresh Interval: '${ settings.automaticRefreshInterval }')" )
 
 		// Set the progress bar animation duration to the automatic refresh interval
 		progressBarAnimation.duration = settings.automaticRefreshInterval * 1000L // Convert seconds to milliseconds
@@ -542,7 +571,11 @@ class ServerActivity : AppCompatActivity() {
 
 				// Fetch the contact information
 				try {
-					val hello = API.getHello( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!! )!!
+					val hello = API.getHello(
+						settings.instanceUrl!!,
+						settings.credentialsUsername!!,
+						settings.credentialsPassword!!
+					)!!
 
 					val contact = hello.get( "contact" ).asJsonObject!!
 					contactName = contact.get( "name" ).asString!!
@@ -551,12 +584,12 @@ class ServerActivity : AppCompatActivity() {
 					for ( contactMethod in contact.get( "methods" ).asJsonArray!! ) contactMethodsList.add( contactMethod.asString!! )
 					contactMethods = contactMethodsList.toTypedArray()
 
-					Log.d( Shared.logTag, "Fetched contact information from API (Name: '${ contactName }', Methods: '${ contactMethods!!.joinToString( ", " ) }')" )
+					Log.d(Shared.logTag, "Fetched contact information from API (Name: '${ contactName }', Methods: '${ contactMethods!!.joinToString( ", " ) }')" )
 
 					// We don't enable user input & stop refreshing spinner here, as there's still another request to come
 
-				} catch ( exception: APIException ) {
-					Log.e( Shared.logTag, "Failed to fetch contact information from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
+				} catch ( exception: APIException) {
+					Log.e(Shared.logTag, "Failed to fetch contact information from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
@@ -598,21 +631,21 @@ class ServerActivity : AppCompatActivity() {
 						}
 					}
 				} catch ( exception: JsonParseException ) {
-					Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
+					Log.e(Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
 						showBriefMessage( activity, R.string.serverToastServerParseFailure )
 					}
 				} catch ( exception: JsonSyntaxException ) {
-					Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
+					Log.e(Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
 						showBriefMessage( activity, R.string.serverToastServerParseFailure )
 					}
 				} catch ( exception: NullPointerException ) {
-					Log.e( Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
+					Log.e(Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
@@ -624,8 +657,13 @@ class ServerActivity : AppCompatActivity() {
 
 				// Fetch the server
 				try {
-					val server = Server( API.getServer( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, serverIdentifier )!!, true )
-					Log.d( Shared.logTag, "Fetched server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') from API" )
+					val server = Server( API.getServer(
+						settings.instanceUrl!!,
+						settings.credentialsUsername!!,
+						settings.credentialsPassword!!,
+						serverIdentifier
+					)!!, true )
+					Log.d(Shared.logTag, "Fetched server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') from API" )
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
@@ -638,8 +676,8 @@ class ServerActivity : AppCompatActivity() {
 						if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
 					}
 
-				} catch ( exception: APIException ) {
-					Log.e( Shared.logTag, "Failed to fetch server '${ serverIdentifier }' from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
+				} catch ( exception: APIException) {
+					Log.e(Shared.logTag, "Failed to fetch server '${ serverIdentifier }' from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
@@ -682,7 +720,7 @@ class ServerActivity : AppCompatActivity() {
 						}
 					}
 				} catch ( exception: JsonParseException) {
-					Log.e( Shared.logTag, "Failed to parse fetch server API response as JSON due to '${ exception.message }'" )
+					Log.e(Shared.logTag, "Failed to parse fetch server API response as JSON due to '${ exception.message }'" )
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
@@ -690,7 +728,7 @@ class ServerActivity : AppCompatActivity() {
 						showBriefMessage( activity, R.string.serverToastServerParseFailure )
 					}
 				} catch ( exception: JsonSyntaxException) {
-					Log.e( Shared.logTag, "Failed to parse fetch server API response as JSON due to '${ exception.message }'" )
+					Log.e(Shared.logTag, "Failed to parse fetch server API response as JSON due to '${ exception.message }'" )
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
@@ -698,7 +736,7 @@ class ServerActivity : AppCompatActivity() {
 						showBriefMessage( activity, R.string.serverToastServerParseFailure )
 					}
 				} catch ( exception: NullPointerException ) {
-					Log.e( Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
+					Log.e(Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
@@ -712,11 +750,11 @@ class ServerActivity : AppCompatActivity() {
 	}
 
 	// Update the UI with the given server
-	private fun updateUI( server: Server ) {
+	private fun updateUI( server: Server) {
 
 		// Set the title on the toolbar
 		materialToolbar?.title = server.hostName.uppercase()
-		Log.d( Shared.logTag, "Set Material Toolbar title to '${ server.hostName.uppercase() }'" )
+		Log.d(Shared.logTag, "Set Material Toolbar title to '${ server.hostName.uppercase() }'" )
 
 		// Enable/disable action buttons
 		actionShutdownButton.isEnabled = server.isShutdownActionSupported()
@@ -729,9 +767,11 @@ class ServerActivity : AppCompatActivity() {
 		if ( server.isOnline() ) {
 
 			// Overall status
-			statusTextView.setTextColor( getColor( R.color.black ) )
-			statusTextView.setTextFromHTML( getString( R.string.serverTextViewStatus ).format(
-				createHTMLColoredText( getString( R.string.serverTextViewStatusOnline ), R.color.statusGood ).asHTMLBold(),
+			statusTextView.setTextColor( getColor(R.color.black) )
+			statusTextView.setTextFromHTML( getString(R.string.serverTextViewStatus).format(
+				createHTMLColoredText( getString(R.string.serverTextViewStatusOnline),
+					R.color.statusGood
+				).asHTMLBold(),
 				TimeSpan( server.uptimeSeconds ).toString( true )
 			) )
 
@@ -740,11 +780,15 @@ class ServerActivity : AppCompatActivity() {
 			val processorFrequencyHz = server.getProcessorFrequency()
 			val processorTemperature = server.getProcessorTemperature()
 			val processorFrequency = Frequency( processorFrequencyHz )
-			resourcesProcessorTextView.setTextIconColor( getColor( R.color.black ) )
-			resourcesProcessorTextView.setTextFromHTML( getString( R.string.serverTextViewResourcesProcessor ).format(
-				applicationContext.createHTMLColoredText( processorUsage.atLeastRoundAsString( 0.0f, 1 ).suffixWith( Shared.percentSymbol ), processorUsage.getAppropriateColor( Server.processorUsageWarningThreshold, Server.processorUsageDangerThreshold ) ),
+			resourcesProcessorTextView.setTextIconColor( getColor(R.color.black) )
+			resourcesProcessorTextView.setTextFromHTML( getString(R.string.serverTextViewResourcesProcessor).format(
+				applicationContext.createHTMLColoredText( processorUsage.atLeastRoundAsString( 0.0f, 1 ).suffixWith(
+					Shared.percentSymbol
+				), processorUsage.getAppropriateColor( Server.processorUsageWarningThreshold, Server.processorUsageDangerThreshold ) ),
 				applicationContext.createHTMLColoredText( processorFrequency.amount.atLeastRoundAsString( 0.0f, 1 ).suffixWith( processorFrequency.suffix ), processorFrequencyHz.getAppropriateColor() ),
-				applicationContext.createHTMLColoredText( processorTemperature.atLeastRoundAsString( 0.0f, 1 ).suffixWith( Shared.degreesCelsiusSymbol ), processorTemperature.getAppropriateColor( Server.processorTemperatureWarningThreshold, Server.processorTemperatureDangerThreshold ) )
+				applicationContext.createHTMLColoredText( processorTemperature.atLeastRoundAsString( 0.0f, 1 ).suffixWith(
+					Shared.degreesCelsiusSymbol
+				), processorTemperature.getAppropriateColor( Server.processorTemperatureWarningThreshold, Server.processorTemperatureDangerThreshold ) )
 			) )
 
 			// Resources -> Memory
@@ -754,11 +798,13 @@ class ServerActivity : AppCompatActivity() {
 			val memoryTotal = Size( memoryTotalBytes )
 			val memoryUsed = Size( memoryUsedBytes )
 			val memoryUsage = server.getMemoryUsage( memoryFreeBytes, memoryTotalBytes )
-			resourcesMemoryTextView.setTextIconColor( getColor( R.color.black ) )
-			resourcesMemoryTextView.setTextFromHTML( getString( R.string.serverTextViewResourcesMemory ).format(
+			resourcesMemoryTextView.setTextIconColor( getColor(R.color.black) )
+			resourcesMemoryTextView.setTextFromHTML( getString(R.string.serverTextViewResourcesMemory).format(
 				applicationContext.createHTMLColoredText( memoryUsed.amount.atLeastRoundAsString( 0.0, 1 ).suffixWith( memoryUsed.suffix ), memoryUsedBytes.getAppropriateColor( Server.memoryUsedWarningThreshold( memoryTotalBytes ), Server.memoryUsedDangerThreshold( memoryTotalBytes ) ) ),
 				applicationContext.createHTMLColoredText( memoryTotal.amount.atLeastRoundAsString( 0.0, 1 ).suffixWith( memoryTotal.suffix ), memoryTotalBytes.getAppropriateColor() ),
-				applicationContext.createHTMLColoredText( memoryUsage.roundAsString( 1 ).suffixWith( Shared.percentSymbol ), memoryUsage.getAppropriateColor( Server.memoryUsageWarningThreshold, Server.memoryUsageDangerThreshold ) )
+				applicationContext.createHTMLColoredText( memoryUsage.roundAsString( 1 ).suffixWith(
+					Shared.percentSymbol
+				), memoryUsage.getAppropriateColor( Server.memoryUsageWarningThreshold, Server.memoryUsageDangerThreshold ) )
 			) )
 
 			// Resources -> Swap
@@ -768,12 +814,14 @@ class ServerActivity : AppCompatActivity() {
 			val swapTotal = Size( swapTotalBytes )
 			val swapUsed = Size( swapUsedBytes )
 			val swapUsage = server.getSwapUsage( swapFreeBytes, swapTotalBytes )
-			resourcesSwapTextView.setTextIconColor( getColor( R.color.black ) )
-			resourcesSwapTextView.setTextFromHTML( getString( R.string.serverTextViewResourcesSwap ).format(
+			resourcesSwapTextView.setTextIconColor( getColor(R.color.black) )
+			resourcesSwapTextView.setTextFromHTML( getString(R.string.serverTextViewResourcesSwap).format(
 				swapName,
 				applicationContext.createHTMLColoredText( swapUsed.amount.atLeastRoundAsString( 0.0, 1 ).suffixWith( swapUsed.suffix ), swapUsedBytes.getAppropriateColor( Server.swapUsedWarningThreshold( swapTotalBytes ), Server.swapUsedDangerThreshold( swapTotalBytes ) ) ),
 				applicationContext.createHTMLColoredText( swapTotal.amount.atLeastRoundAsString( 0.0, 1 ).suffixWith( swapTotal.suffix ), swapTotalBytes.getAppropriateColor() ),
-				applicationContext.createHTMLColoredText( swapUsage.roundAsString( 1 ).suffixWith( Shared.percentSymbol ), swapUsage.getAppropriateColor( Server.swapUsageWarningThreshold, Server.swapUsageDangerThreshold ) )
+				applicationContext.createHTMLColoredText( swapUsage.roundAsString( 1 ).suffixWith(
+					Shared.percentSymbol
+				), swapUsage.getAppropriateColor( Server.swapUsageWarningThreshold, Server.swapUsageDangerThreshold ) )
 			) )
 
 			// Resources -> Network I/O
@@ -781,8 +829,8 @@ class ServerActivity : AppCompatActivity() {
 			val networkReceiveRateBytes = server.getNetworkTotalReceiveRate()
 			val networkTransmitRate = Size( networkTransmitRateBytes )
 			val networkReceiveRate = Size( networkReceiveRateBytes )
-			resourcesNetworkTextView.setTextIconColor( getColor( R.color.black ) )
-			resourcesNetworkTextView.setTextFromHTML( getString( R.string.serverTextViewResourcesNetwork ).format(
+			resourcesNetworkTextView.setTextIconColor( getColor(R.color.black) )
+			resourcesNetworkTextView.setTextFromHTML( getString(R.string.serverTextViewResourcesNetwork).format(
 				applicationContext.createHTMLColoredText( networkTransmitRate.amount.atLeastRoundAsString( 0.0, 1 ).suffixWith( networkTransmitRate.suffix.concat( "/s" ) ), networkTransmitRateBytes.getAppropriateColor( NetworkInterface.transmitRateWarningThreshold, NetworkInterface.transmitRateDangerThreshold ) ),
 				applicationContext.createHTMLColoredText( networkReceiveRate.amount.atLeastRoundAsString( 0.0, 1 ).suffixWith( networkReceiveRate.suffix.concat( "/s" ) ), networkReceiveRateBytes.getAppropriateColor( NetworkInterface.receiveRateWarningThreshold, NetworkInterface.receiveRateDangerThreshold ) )
 			) )
@@ -792,8 +840,8 @@ class ServerActivity : AppCompatActivity() {
 			val driveWriteRateBytes = server.getDriveTotalWriteRate()
 			val driveReadRate = Size( driveReadRateBytes )
 			val driveWriteRate = Size( driveWriteRateBytes )
-			resourcesDriveTextView.setTextIconColor( getColor( R.color.black ) )
-			resourcesDriveTextView.setTextFromHTML( getString( R.string.serverTextViewResourcesDrive ).format(
+			resourcesDriveTextView.setTextIconColor( getColor(R.color.black) )
+			resourcesDriveTextView.setTextFromHTML( getString(R.string.serverTextViewResourcesDrive).format(
 				applicationContext.createHTMLColoredText( driveReadRate.amount.atLeastRoundAsString( 0.0, 1 ).suffixWith( driveReadRate.suffix.concat( "/s" ) ), driveReadRateBytes.getAppropriateColor( Drive.readRateWarningThreshold, Drive.readRateDangerThreshold ) ),
 				applicationContext.createHTMLColoredText( driveWriteRate.amount.atLeastRoundAsString( 0.0, 1 ).suffixWith( driveWriteRate.suffix.concat( "/s" ) ), driveWriteRateBytes.getAppropriateColor( Drive.writeRateWarningThreshold, Drive.writeRateDangerThreshold ) )
 			) )
@@ -811,8 +859,8 @@ class ServerActivity : AppCompatActivity() {
 			} else {
 				networkRecyclerView.visibility = View.GONE
 
-				networkStatusTextView.setTextIconColor( getColor( R.color.statusDead ) )
-				networkStatusTextView.text = getString( R.string.serverTextViewNetworkEmpty )
+				networkStatusTextView.setTextIconColor( getColor(R.color.statusDead) )
+				networkStatusTextView.text = getString(R.string.serverTextViewNetworkEmpty)
 				networkStatusTextView.visibility = View.VISIBLE
 			}
 
@@ -827,8 +875,8 @@ class ServerActivity : AppCompatActivity() {
 			} else {
 				drivesRecyclerView.visibility = View.GONE
 
-				drivesStatusTextView.setTextIconColor( getColor( R.color.statusDead ) )
-				drivesStatusTextView.text = getString( R.string.serverTextViewDrivesEmpty )
+				drivesStatusTextView.setTextIconColor( getColor(R.color.statusDead) )
+				drivesStatusTextView.text = getString(R.string.serverTextViewDrivesEmpty)
 				drivesStatusTextView.visibility = View.VISIBLE
 			}
 
@@ -843,8 +891,8 @@ class ServerActivity : AppCompatActivity() {
 			} else {
 				servicesRecyclerView.visibility = View.GONE
 
-				servicesStatusTextView.setTextIconColor( getColor( R.color.statusDead ) )
-				servicesStatusTextView.text = getString( R.string.serverTextViewServicesEmpty )
+				servicesStatusTextView.setTextIconColor( getColor(R.color.statusDead) )
+				servicesStatusTextView.text = getString(R.string.serverTextViewServicesEmpty)
 				servicesStatusTextView.visibility = View.VISIBLE
 			}
 
@@ -859,17 +907,17 @@ class ServerActivity : AppCompatActivity() {
 			} else {
 				dockerRecyclerView.visibility = View.GONE
 
-				dockerStatusTextView.setTextIconColor( getColor( R.color.statusDead ) )
-				dockerStatusTextView.text = getString( R.string.serverTextViewDockerEmpty )
+				dockerStatusTextView.setTextIconColor( getColor(R.color.statusDead) )
+				dockerStatusTextView.text = getString(R.string.serverTextViewDockerEmpty)
 				dockerStatusTextView.visibility = View.VISIBLE
 			}
 
 			// SNMP Community
 			val snmpCommunityName = server.snmpCommunity
 			if ( snmpCommunityName != null ) {
-				snmpTitleTextView.setTextFromHTML( getString( R.string.serverTextViewSNMPTitleCommunity ).format( snmpCommunityName.asHTMLItalic() ) )
+				snmpTitleTextView.setTextFromHTML( getString(R.string.serverTextViewSNMPTitleCommunity).format( snmpCommunityName.asHTMLItalic() ) )
 			} else {
-				snmpTitleTextView.text = getString( R.string.serverTextViewSNMPTitle )
+				snmpTitleTextView.text = getString(R.string.serverTextViewSNMPTitle)
 			}
 
 			// SNMP Agents
@@ -885,75 +933,77 @@ class ServerActivity : AppCompatActivity() {
 				snmpRecyclerView.visibility = View.GONE
 
 				snmpStatusTextView.visibility = View.VISIBLE
-				snmpStatusTextView.setTextColor( getColor( R.color.statusDead ) )
-				snmpStatusTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
-				snmpStatusTextView.text = getString( R.string.serverTextViewSNMPEmpty )
+				snmpStatusTextView.setTextColor( getColor(R.color.statusDead) )
+				snmpStatusTextView.compoundDrawables[ 0 ].setTint( getColor(R.color.statusDead) )
+				snmpStatusTextView.text = getString(R.string.serverTextViewSNMPEmpty)
 			}
 
 		// The server is not running...
 		} else {
 
 			// Overall status
-			statusTextView.setTextColor( getColor( R.color.statusDead ) )
-			statusTextView.setTextFromHTML( getString( R.string.serverTextViewStatus ).format(
-				applicationContext.createHTMLColoredText( getString( R.string.serverTextViewStatusOffline ), getColor( R.color.statusDead ) ).asHTMLBold(),
-				getString( R.string.serverTextViewStatusOfflineUptime )
+			statusTextView.setTextColor( getColor(R.color.statusDead) )
+			statusTextView.setTextFromHTML( getString(R.string.serverTextViewStatus).format(
+				applicationContext.createHTMLColoredText( getString(R.string.serverTextViewStatusOffline), getColor(
+					R.color.statusDead
+				) ).asHTMLBold(),
+				getString(R.string.serverTextViewStatusOfflineUptime)
 			) )
 
 			// Resources -> Processor
-			resourcesProcessorTextView.setTextIconColor( getColor( R.color.statusDead ) )
-			resourcesProcessorTextView.text = getString( R.string.serverTextViewResourcesProcessorUnknown )
+			resourcesProcessorTextView.setTextIconColor( getColor(R.color.statusDead) )
+			resourcesProcessorTextView.text = getString(R.string.serverTextViewResourcesProcessorUnknown)
 
 			// Resources -> Memory
-			resourcesMemoryTextView.setTextIconColor( getColor( R.color.statusDead ) )
-			resourcesMemoryTextView.text = getString( R.string.serverTextViewResourcesMemoryUnknown )
+			resourcesMemoryTextView.setTextIconColor( getColor(R.color.statusDead) )
+			resourcesMemoryTextView.text = getString(R.string.serverTextViewResourcesMemoryUnknown)
 
 			// Resources -> Swap
-			resourcesSwapTextView.setTextIconColor( getColor( R.color.statusDead ) )
-			resourcesSwapTextView.text = getString( R.string.serverTextViewResourcesSwapUnknown )
+			resourcesSwapTextView.setTextIconColor( getColor(R.color.statusDead) )
+			resourcesSwapTextView.text = getString(R.string.serverTextViewResourcesSwapUnknown)
 
 			// Resources -> Network I/O
-			resourcesNetworkTextView.setTextIconColor( getColor( R.color.statusDead ) )
-			resourcesNetworkTextView.text = getString( R.string.serverTextViewResourcesNetworkUnknown )
+			resourcesNetworkTextView.setTextIconColor( getColor(R.color.statusDead) )
+			resourcesNetworkTextView.text = getString(R.string.serverTextViewResourcesNetworkUnknown)
 
 			// Resources -> Drive I/O
-			resourcesDriveTextView.setTextColor( getColor( R.color.statusDead ) )
-			resourcesDriveTextView.compoundDrawables[ 0 ].setTint( getColor( R.color.statusDead ) )
-			resourcesDriveTextView.text = getString( R.string.serverTextViewResourcesDriveUnknown )
+			resourcesDriveTextView.setTextColor( getColor(R.color.statusDead) )
+			resourcesDriveTextView.compoundDrawables[ 0 ].setTint( getColor(R.color.statusDead) )
+			resourcesDriveTextView.text = getString(R.string.serverTextViewResourcesDriveUnknown)
 
 			// TODO: Power & fans
 
 			// Network Interfaces
 			networkRecyclerView.visibility = View.GONE
-			networkStatusTextView.setTextIconColor( getColor( R.color.statusDead ) )
-			networkStatusTextView.text = getString( R.string.serverTextViewNetworkUnknown )
+			networkStatusTextView.setTextIconColor( getColor(R.color.statusDead) )
+			networkStatusTextView.text = getString(R.string.serverTextViewNetworkUnknown)
 			networkStatusTextView.visibility = View.VISIBLE
 
 			// Drives
 			drivesRecyclerView.visibility = View.GONE
-			drivesStatusTextView.setTextIconColor( getColor( R.color.statusDead ) )
-			drivesStatusTextView.text = getString( R.string.serverTextViewDrivesUnknown )
+			drivesStatusTextView.setTextIconColor( getColor(R.color.statusDead) )
+			drivesStatusTextView.text = getString(R.string.serverTextViewDrivesUnknown)
 			drivesStatusTextView.visibility = View.VISIBLE
 
 			// Services
 			servicesRecyclerView.visibility = View.GONE
-			servicesStatusTextView.setTextIconColor( getColor( R.color.statusDead ) )
-			servicesStatusTextView.text = getString( R.string.serverTextViewServicesUnknown )
+			servicesStatusTextView.setTextIconColor( getColor(R.color.statusDead) )
+			servicesStatusTextView.text = getString(R.string.serverTextViewServicesUnknown)
 			servicesStatusTextView.visibility = View.VISIBLE
 
 			// Docker Containers
 			dockerRecyclerView.visibility = View.GONE
-			dockerStatusTextView.setTextIconColor( getColor( R.color.statusDead ) )
-			dockerStatusTextView.text = getString( R.string.serverTextViewDockerUnknown )
+			dockerStatusTextView.setTextIconColor( getColor(R.color.statusDead) )
+			dockerStatusTextView.text = getString(R.string.serverTextViewDockerUnknown)
 			dockerStatusTextView.visibility = View.VISIBLE
 
 			// SNMP Community
-			snmpTitleTextView.text = getString( R.string.serverTextViewSNMPTitle )
+			snmpTitleTextView.text = getString(R.string.serverTextViewSNMPTitle)
 
 			// SNMP Agents
 			snmpRecyclerView.visibility = View.GONE
-			snmpStatusTextView.setTextIconColor( getColor( R.color.statusDead ) )
-			snmpStatusTextView.text = getString( R.string.serverTextViewSNMPUnknown )
+			snmpStatusTextView.setTextIconColor( getColor(R.color.statusDead) )
+			snmpStatusTextView.text = getString(R.string.serverTextViewSNMPUnknown)
 			snmpStatusTextView.visibility = View.VISIBLE
 
 		}
@@ -961,15 +1011,15 @@ class ServerActivity : AppCompatActivity() {
 	}
 
 	// Runs when a service's manage button is pressed...
-	private fun onServiceManagePressed( service: Service ) {
-		Log.d( Shared.logTag, "Switching to Service activity..." )
+	private fun onServiceManagePressed( service: Service) {
+		Log.d(Shared.logTag, "Switching to Service activity..." )
 
 		val intent = Intent( this, ServiceActivity::class.java )
 		intent.putExtra( "serverIdentifier", serverIdentifier )
 		intent.putExtra( "serviceName", service.serviceName )
 
 		startActivity( intent )
-		overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
+		overridePendingTransition(R.anim.slide_in_from_right, R.anim.slide_out_to_left)
 	}
 
 	// Executes an action on the server
@@ -986,7 +1036,13 @@ class ServerActivity : AppCompatActivity() {
 
 				// Try to execute the action
 				try {
-					val action = API.postServer( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, serverIdentifier, actionName )
+					val action = API.postServer(
+						settings.instanceUrl!!,
+						settings.credentialsUsername!!,
+						settings.credentialsPassword!!,
+						serverIdentifier,
+						actionName
+					)
 					val exitCode = action?.get( "exitCode" )?.asInt
 					var outputText = action?.get( "outputText" )?.asString?.trim()
 					var errorText = action?.get( "errorText" )?.asString?.trim()
@@ -994,7 +1050,7 @@ class ServerActivity : AppCompatActivity() {
 					if ( outputText.isNullOrBlank() ) outputText = "N/A"
 					if ( errorText.isNullOrBlank() ) errorText = "N/A"
 
-					Log.d( Shared.logTag, "Executed action '${ actionName }' on server '${ serverIdentifier }': '${ outputText }', '${ errorText }' (Exit Code: '${ exitCode }')" )
+					Log.d(Shared.logTag, "Executed action '${ actionName }' on server '${ serverIdentifier }': '${ outputText }', '${ errorText }' (Exit Code: '${ exitCode }')" )
 
 					withContext( Dispatchers.Main ) {
 						progressDialog.dismiss()
@@ -1003,8 +1059,8 @@ class ServerActivity : AppCompatActivity() {
 						else showInformationDialog( activity, R.string.serverDialogActionExecuteTitle, getString( R.string.serverDialogActionExecuteMessageFailure ).format( exitCode, errorText, outputText ) )
 					}
 
-				} catch ( exception: APIException ) {
-					Log.e( Shared.logTag, "Failed to execute action '${ actionName }' on API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
+				} catch ( exception: APIException) {
+					Log.e(Shared.logTag, "Failed to execute action '${ actionName }' on API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
 
 					withContext( Dispatchers.Main ) {
 						progressDialog.dismiss()
@@ -1055,21 +1111,21 @@ class ServerActivity : AppCompatActivity() {
 						}
 					}
 				} catch ( exception: JsonParseException ) {
-					Log.e( Shared.logTag, "Failed to parse execute server action API response as JSON due to '${ exception.message }'" )
+					Log.e(Shared.logTag, "Failed to parse execute server action API response as JSON due to '${ exception.message }'" )
 
 					withContext( Dispatchers.Main ) {
 						progressDialog.dismiss()
 						showBriefMessage( activity, R.string.serverToastActionParseFailure )
 					}
 				} catch ( exception: JsonSyntaxException ) {
-					Log.e( Shared.logTag, "Failed to parse execute server action API response as JSON due to '${ exception.message }'" )
+					Log.e(Shared.logTag, "Failed to parse execute server action API response as JSON due to '${ exception.message }'" )
 
 					withContext( Dispatchers.Main ) {
 						progressDialog.dismiss()
 						showBriefMessage( activity, R.string.serverToastActionParseFailure )
 					}
 				} catch ( exception: NullPointerException ) {
-					Log.e( Shared.logTag, "Encountered null property value in execute server action API response ('${ exception.message }')" )
+					Log.e(Shared.logTag, "Encountered null property value in execute server action API response ('${ exception.message }')" )
 
 					withContext( Dispatchers.Main ) {
 						progressDialog.dismiss()
