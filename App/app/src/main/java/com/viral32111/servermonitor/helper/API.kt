@@ -11,6 +11,7 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonParseException
 import com.google.gson.JsonParser
 import com.google.gson.JsonSyntaxException
+import com.viral32111.servermonitor.data.Server
 import java.nio.charset.Charset
 import java.util.*
 import kotlin.coroutines.resume
@@ -207,6 +208,11 @@ class API {
 		 * @throws JsonSyntaxException An error parsing the HTTP response body as JSON, when successful.
 		 */
 		suspend fun getServers( baseUrl: String, username: String, password: String ): JsonArray? = sendRequest( Request.Method.GET, "${ baseUrl }/servers", username, password )?.get( "servers" )?.asJsonArray
+		suspend fun getServersImproved( baseUrl: String, username: String, password: String ): Array<Server>? = sendRequest( Request.Method.GET, "${ baseUrl }/servers", username, password )
+			?.get( "servers" )?.asJsonArray
+			?.filter { jsonElement -> jsonElement.isJsonObject }
+			?.map { jsonElement -> Server( jsonElement.asJsonObject ) } // .apply { if ( isOnline() ) updateFromAPI( baseUrl, username, password ) }
+			?.toTypedArray()
 
 		/**
 		 * Fetches all data for a single server (`GET /server`)

@@ -12,10 +12,12 @@ import android.widget.TextView
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.LifecycleOwner
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import androidx.work.*
 import com.android.volley.*
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.gson.JsonParseException
@@ -371,6 +373,51 @@ class ServersActivity : AppCompatActivity() {
 			}
 		}
 
+		// TODO: Unique/periodic worker
+
+		// https://developer.android.com/guide/background/persistent/getting-started/define-work
+		// https://developer.android.com/guide/background/persistent/how-to/manage-work
+		val inputData = Data.Builder()
+			.putString( UpdateWorker.BASE_URL, settings.instanceUrl!! )
+			.putString( UpdateWorker.CREDENTIALS_USERNAME, settings.credentialsUsername!! )
+			.putString( UpdateWorker.CREDENTIALS_PASSWORD, settings.credentialsPassword!! )
+			.build()
+		val workRequest = OneTimeWorkRequestBuilder<UpdateWorker>()
+			.setInputData( inputData )
+			.build()
+
+		// https://developer.android.com/guide/background/persistent/how-to/observe
+		WorkManager.getInstance( applicationContext ).getWorkInfoByIdLiveData( workRequest.id ).observe( this ) { workInfo: WorkInfo? ->
+			if ( workInfo == null ) {
+				Log.wtf( Shared.logTag, "WorkInfo is null for worker update?!" )
+				return@observe
+			}
+
+			val progressValue = workInfo.progress.getInt( UpdateWorker.Progress, -1 )
+
+			if ( workInfo.state.isFinished ) {
+				when ( workInfo.state ) {
+					WorkInfo.State.SUCCEEDED -> {
+						val serverCount = workInfo.outputData.getInt( UpdateWorker.SUCCESS_SERVERS_COUNT, -1 )
+						Log.wtf( Shared.logTag, "Worker finished successfully (Progress: $progressValue, Server Count: $serverCount)" )
+					}
+
+					WorkInfo.State.FAILED -> {
+						val failureReason = workInfo.outputData.getInt( UpdateWorker.FAILURE_REASON, -1 )
+						Log.wtf( Shared.logTag, "Worker finished unsuccessfully (Progress: $progressValue, Failure Reason: $failureReason)" )
+					}
+
+					else -> {
+						Log.wtf( Shared.logTag, "Worker finished in state ${ workInfo.state } (Progress: $progressValue)" )
+					}
+				}
+			} else {
+				Log.wtf( Shared.logTag, "Worker changed state to ${ workInfo.state } (Progress: $progressValue)" )
+			}
+
+		}
+
+		WorkManager.getInstance( applicationContext ).enqueue( workRequest )
 	}
 
 	// When the activity is closed...
