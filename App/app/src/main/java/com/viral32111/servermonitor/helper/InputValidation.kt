@@ -1,4 +1,4 @@
-package com.viral32111.servermonitor
+package com.viral32111.servermonitor.helper
 
 import java.net.MalformedURLException
 import java.net.URL

@@ -1,4 +1,4 @@
-package com.viral32111.servermonitor
+package com.viral32111.servermonitor.helper
 
 import android.app.Activity
 import android.content.Context
@@ -10,6 +10,8 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import com.android.volley.Request
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
+import com.viral32111.servermonitor.R
+import com.viral32111.servermonitor.Shared
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 

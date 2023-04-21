@@ -8,9 +8,16 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.recyclerview.widget.RecyclerView
-import com.viral32111.servermonitor.*
+import com.viral32111.servermonitor.R
+import com.viral32111.servermonitor.Shared
 import com.viral32111.servermonitor.data.NetworkInterface
 import com.viral32111.servermonitor.helper.Size
+import com.viral32111.servermonitor.helper.atLeastRoundAsString
+import com.viral32111.servermonitor.helper.concat
+import com.viral32111.servermonitor.helper.createHTMLColoredText
+import com.viral32111.servermonitor.helper.getAppropriateColor
+import com.viral32111.servermonitor.helper.setTextFromHTML
+import com.viral32111.servermonitor.helper.suffixWith
 
 class NetworkInterfaceAdapter(
 	private val networkInterfaces: Array<NetworkInterface>,

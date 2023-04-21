@@ -9,14 +9,28 @@ import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.widget.doOnTextChanged
-import com.android.volley.*
+import com.android.volley.AuthFailureError
+import com.android.volley.ClientError
+import com.android.volley.NetworkError
+import com.android.volley.NoConnectionError
+import com.android.volley.ParseError
+import com.android.volley.ServerError
+import com.android.volley.TimeoutError
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
-import com.viral32111.servermonitor.*
+import com.viral32111.servermonitor.ErrorCode
 import com.viral32111.servermonitor.R
+import com.viral32111.servermonitor.Shared
+import com.viral32111.servermonitor.helper.API
 import com.viral32111.servermonitor.helper.Settings
+import com.viral32111.servermonitor.helper.createProgressDialog
+import com.viral32111.servermonitor.helper.showBriefMessage
+import com.viral32111.servermonitor.helper.showConfirmDialog
+import com.viral32111.servermonitor.helper.validateCredentialsPassword
+import com.viral32111.servermonitor.helper.validateCredentialsUsername
+import com.viral32111.servermonitor.helper.validateInstanceUrl
 
 class SettingsActivity : AppCompatActivity() {
 

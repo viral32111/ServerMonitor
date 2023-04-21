@@ -8,12 +8,16 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
-import com.viral32111.servermonitor.*
+import com.viral32111.servermonitor.R
+import com.viral32111.servermonitor.Shared
 import com.viral32111.servermonitor.data.Drive
 import com.viral32111.servermonitor.data.NetworkInterface
 import com.viral32111.servermonitor.data.Server
 import com.viral32111.servermonitor.helper.Size
 import com.viral32111.servermonitor.helper.TimeSpan
+import com.viral32111.servermonitor.helper.atLeastRoundInt
+import com.viral32111.servermonitor.helper.atLeastRoundLong
+import com.viral32111.servermonitor.helper.getAppropriateColor
 
 // Custom recycler view adapter for the server list - https://developer.android.com/develop/ui/views/layout/recyclerview, https://stackoverflow.com/a/54847887
 class ServerAdapter(

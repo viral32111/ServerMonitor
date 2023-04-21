@@ -8,8 +8,13 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.viral32111.servermonitor.*
+import com.viral32111.servermonitor.R
+import com.viral32111.servermonitor.Shared
 import com.viral32111.servermonitor.data.Drive
+import com.viral32111.servermonitor.helper.createHTMLColoredText
+import com.viral32111.servermonitor.helper.getAppropriateColorReverse
+import com.viral32111.servermonitor.helper.setTextFromHTML
+import com.viral32111.servermonitor.helper.suffixWith
 
 class DriveAdapter(
 	private val drives: Array<Drive>,

@@ -4,10 +4,11 @@ import android.util.Log
 import com.google.gson.JsonObject
 import com.google.gson.JsonParseException
 import com.google.gson.JsonSyntaxException
-import com.viral32111.servermonitor.API
 import com.viral32111.servermonitor.Shared
-import com.viral32111.servermonitor.atLeastRoundInt
-import com.viral32111.servermonitor.toArrayList
+import com.viral32111.servermonitor.helper.API
+import com.viral32111.servermonitor.helper.APIException
+import com.viral32111.servermonitor.helper.atLeastRoundInt
+import com.viral32111.servermonitor.helper.toArrayList
 import kotlin.math.round
 import kotlin.math.roundToLong
 

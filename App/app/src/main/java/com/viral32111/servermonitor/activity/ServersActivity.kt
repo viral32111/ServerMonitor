@@ -12,7 +12,6 @@ import android.widget.TextView
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.LifecycleOwner
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -28,9 +27,7 @@ import com.viral32111.servermonitor.adapter.ServerAdapter
 import com.viral32111.servermonitor.data.Server
 import com.viral32111.servermonitor.helper.*
 import kotlinx.coroutines.*
-import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.collections.ArrayList
 
 class ServersActivity : AppCompatActivity() {
 

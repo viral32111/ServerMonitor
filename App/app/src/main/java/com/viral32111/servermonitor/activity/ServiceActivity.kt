@@ -16,17 +16,31 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import com.android.volley.*
+import com.android.volley.AuthFailureError
+import com.android.volley.ClientError
+import com.android.volley.NetworkError
+import com.android.volley.NoConnectionError
+import com.android.volley.ServerError
+import com.android.volley.TimeoutError
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.gson.JsonParseException
 import com.google.gson.JsonSyntaxException
-import com.viral32111.servermonitor.*
+import com.viral32111.servermonitor.ErrorCode
 import com.viral32111.servermonitor.R
+import com.viral32111.servermonitor.Shared
 import com.viral32111.servermonitor.data.Server
 import com.viral32111.servermonitor.data.Service
+import com.viral32111.servermonitor.helper.API
+import com.viral32111.servermonitor.helper.APIException
 import com.viral32111.servermonitor.helper.ProgressBarAnimation
 import com.viral32111.servermonitor.helper.Settings
 import com.viral32111.servermonitor.helper.TimeSpan
+import com.viral32111.servermonitor.helper.createHTMLColoredText
+import com.viral32111.servermonitor.helper.createProgressDialog
+import com.viral32111.servermonitor.helper.setTextFromHTML
+import com.viral32111.servermonitor.helper.showBriefMessage
+import com.viral32111.servermonitor.helper.showConfirmDialog
+import com.viral32111.servermonitor.helper.showInformationDialog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -540,7 +554,7 @@ class ServiceActivity : AppCompatActivity() {
 
 					// We don't enable user input & stop refreshing spinner here, as there's still another request to come
 
-				} catch ( exception: APIException) {
+				} catch ( exception: APIException ) {
 					Log.e(Shared.logTag, "Failed to fetch contact information from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
 
 					withContext( Dispatchers.Main ) {

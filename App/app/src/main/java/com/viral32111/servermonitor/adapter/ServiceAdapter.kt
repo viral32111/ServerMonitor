@@ -8,9 +8,12 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.viral32111.servermonitor.*
+import com.viral32111.servermonitor.R
+import com.viral32111.servermonitor.Shared
 import com.viral32111.servermonitor.data.Service
 import com.viral32111.servermonitor.helper.TimeSpan
+import com.viral32111.servermonitor.helper.createHTMLColoredText
+import com.viral32111.servermonitor.helper.setTextFromHTML
 
 class ServiceAdapter(
 	private val services: Array<Service>,

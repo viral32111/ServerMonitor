@@ -1,8 +1,12 @@
-package com.viral32111.servermonitor
+package com.viral32111.servermonitor.helper
 
 import android.content.Context
 import android.util.Log
-import com.android.volley.*
+import com.android.volley.DefaultRetryPolicy
+import com.android.volley.ParseError
+import com.android.volley.Request
+import com.android.volley.RequestQueue
+import com.android.volley.VolleyError
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
@@ -11,9 +15,11 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonParseException
 import com.google.gson.JsonParser
 import com.google.gson.JsonSyntaxException
+import com.viral32111.servermonitor.ErrorCode
+import com.viral32111.servermonitor.Shared
 import com.viral32111.servermonitor.data.Server
 import java.nio.charset.Charset
-import java.util.*
+import java.util.Base64
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
