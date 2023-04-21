@@ -25,6 +25,15 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v3
 
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - name: Set Gradle permissions
+        run: chmod +x ./App/gradlew
+
       - name: Create key store
         id: keystore
         run: |
@@ -38,15 +47,17 @@ jobs:
           source-root: ./App/
           tools: latest
 
-      - name: Auto-build
+      - name: Build project
         env:
           ANDROID_KEY_STORE_PATH: ${{ steps.keystore.outputs.path }}
           ANDROID_KEY_STORE_PASSWORD: ${{ secrets.ANDROID_KEY_STORE_PASSWORD }}
           ANDROID_KEY_STORE_KEY_ALIAS: ${{ secrets.ANDROID_KEY_STORE_KEY_ALIAS }}
           ANDROID_KEY_STORE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_STORE_KEY_PASSWORD }}
-        uses: github/codeql-action/autobuild@v2
+        uses: gradle/gradle-build-action@v2
         with:
-          working-directory: ./App/
+          arguments: assembleDebug --scan
+          build-root-directory: ./App/
+          cache-disabled: true
 
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@v2
