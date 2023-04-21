@@ -28,6 +28,7 @@ import com.viral32111.servermonitor.data.Server
 import com.viral32111.servermonitor.helper.*
 import kotlinx.coroutines.*
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 class ServersActivity : AppCompatActivity() {
 
@@ -370,57 +371,77 @@ class ServersActivity : AppCompatActivity() {
 			}
 		}
 
-		// TODO: Unique/periodic worker
-
 		// https://developer.android.com/guide/background/persistent/getting-started/define-work
 		// https://developer.android.com/guide/background/persistent/how-to/manage-work
-		val inputData = Data.Builder()
+		// https://developer.android.com/guide/background/persistent/how-to/long-running
+
+		// Data to give to the worker - https://developer.android.com/guide/background/persistent/getting-started/define-work#input_output
+		val workerInputData = Data.Builder()
 			.putString( UpdateWorker.BASE_URL, settings.instanceUrl!! )
 			.putString( UpdateWorker.CREDENTIALS_USERNAME, settings.credentialsUsername!! )
 			.putString( UpdateWorker.CREDENTIALS_PASSWORD, settings.credentialsPassword!! )
 			.build()
-		val workRequest = OneTimeWorkRequestBuilder<UpdateWorker>()
-			.setInputData( inputData )
+
+		// Requirements for deferring the worker - https://developer.android.com/guide/background/persistent/getting-started/define-work#schedule_periodic_work
+		val workerConstraints = Constraints.Builder()
+			.setRequiredNetworkType( NetworkType.CONNECTED ) // Only run when connected to a network
+			.setRequiresBatteryNotLow( true ) // Do not run when battery is low
+			.setRequiresCharging( false ) // Doesn't matter if the device is charging
+			.setRequiresDeviceIdle( false ) // Doesn't matter if the device is idle
+			.setRequiresStorageNotLow( false ) // Doesn't matter if storage space is low
 			.build()
 
-		// https://developer.android.com/guide/background/persistent/how-to/observe
-		WorkManager.getInstance( applicationContext ).getWorkInfoByIdLiveData( workRequest.id ).observe( this ) { workInfo: WorkInfo? ->
+		// Create the worker request - https://developer.android.com/guide/background/persistent/getting-started/define-work#schedule_one-time_work
+		val workerRequest = OneTimeWorkRequestBuilder<UpdateWorker>()
+			.setConstraints( workerConstraints )
+			.setInputData( workerInputData )
+			.setInitialDelay( 5L, TimeUnit.SECONDS ) // Wait 5 seconds before starting
+			.build()
+
+		// Register observable for the worker - https://developer.android.com/guide/background/persistent/how-to/observe
+		WorkManager.getInstance( applicationContext ).getWorkInfoByIdLiveData( workerRequest.id ).observe( this ) { workInfo: WorkInfo? ->
+
+			// Do not continue if information is not passed
 			if ( workInfo == null ) {
-				Log.wtf( Shared.logTag, "WorkInfo is null for worker update?!" )
+				Log.wtf( Shared.logTag, "Update worker observed but WorkInfo is null?!" )
 				return@observe
 			}
 
+			// Attempt to get the value of the progress
 			val progressValue = workInfo.progress.getInt( UpdateWorker.Progress, -1 )
 
-			if ( workInfo.state.isFinished ) {
-				when ( workInfo.state ) {
-					WorkInfo.State.SUCCEEDED -> {
-						val serverCount = workInfo.outputData.getInt( UpdateWorker.SUCCESS_SERVERS_COUNT, -1 )
-						Log.wtf( Shared.logTag, "Worker finished successfully (Progress: $progressValue, Server Count: $serverCount)" )
-					}
+			when ( workInfo.state ) {
 
-					WorkInfo.State.FAILED -> {
-						val failureReason = workInfo.outputData.getInt( UpdateWorker.FAILURE_REASON, -1 )
-						Log.wtf( Shared.logTag, "Worker finished unsuccessfully (Progress: $progressValue, Failure Reason: $failureReason)" )
-					}
-
-					else -> {
-						Log.wtf( Shared.logTag, "Worker finished in state ${ workInfo.state } (Progress: $progressValue)" )
-					}
+				// When the worker finishes successfully...
+				WorkInfo.State.SUCCEEDED -> {
+					val serverCount = workInfo.outputData.getInt( UpdateWorker.SUCCESS_SERVERS_COUNT, -1 )
+					Log.d( Shared.logTag, "Update worker finished successfully (Progress: $progressValue, Server Count: $serverCount)" )
 				}
-			} else {
-				Log.wtf( Shared.logTag, "Worker changed state to ${ workInfo.state } (Progress: $progressValue)" )
+
+				// When the worker finishes erroneously...
+				WorkInfo.State.FAILED -> {
+					val failureReason = workInfo.outputData.getInt( UpdateWorker.FAILURE_REASON, -1 )
+					Log.e( Shared.logTag, "Update worker finished with failure '$failureReason' (Progress: $progressValue)" )
+				}
+
+				else -> {
+					Log.d( Shared.logTag, "Update worker changed to state ${ workInfo.state } (Progress: $progressValue)" )
+				}
+
 			}
 
 		}
 
-		WorkManager.getInstance( applicationContext ).enqueue( workRequest )
+		// Queue up the worker
+		WorkManager.getInstance( applicationContext ).enqueue( workerRequest )
+		Log.d( Shared.logTag, "Update worker enqueued" )
+
 	}
 
 	// When the activity is closed...
 	override fun onStop() {
 		super.onStop()
-		Log.d(Shared.logTag, "Stopped servers activity" )
+		Log.d( Shared.logTag, "Stopped servers activity" )
 
 		// Cancel all pending HTTP requests
 		//API.cancelQueue()
@@ -431,7 +452,7 @@ class ServersActivity : AppCompatActivity() {
 	// Stop the automatic refresh countdown progress bar when the activity is changed/app is minimised
 	override fun onPause() {
 		super.onPause()
-		Log.d(Shared.logTag, "Paused servers activity" )
+		Log.d( Shared.logTag, "Paused servers activity" )
 
 		// Stop any current refreshing
 		swipeRefreshLayout.isRefreshing = false
@@ -471,13 +492,7 @@ class ServersActivity : AppCompatActivity() {
 
 		// Create/update the always ongoing notification
 		if ( settings.notificationAlwaysOngoing ) {
-			Notify.showNotification( this, Notify.createProgressNotification(
-				this, notificationIntent, Notify.CHANNEL_ALWAYS_ONGOING,
-				R.string.notificationOngoingTitle,
-				R.string.notificationOngoingTextUnknown,
-				getColor( R.color.statusDead )
-			), Notify.IDENTIFIER_ALWAYS_ONGOING )
-			Log.d( Shared.logTag, "Created/updated always ongoing notification (${ Notify.IDENTIFIER_ALWAYS_ONGOING })" )
+
 		}
 
 		val activity = this
@@ -652,6 +667,7 @@ class ServersActivity : AppCompatActivity() {
 		//servers.any { server -> server.areThereIssues() }...
 
 		// Create/update the always ongoing notification
+		// TODO: Move to long-running foreground worker
 		if ( settings.notificationAlwaysOngoing ) {
 			Notify.showNotification( this, Notify.createProgressNotification(
 				this, notificationIntent, Notify.CHANNEL_ALWAYS_ONGOING,
