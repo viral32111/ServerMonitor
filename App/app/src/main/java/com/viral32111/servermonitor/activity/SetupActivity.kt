@@ -22,11 +22,14 @@ import com.android.volley.ParseError
 import com.android.volley.ServerError
 import com.android.volley.TimeoutError
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.gson.JsonParseException
+import com.google.gson.JsonSyntaxException
 import com.viral32111.servermonitor.ErrorCode
 import com.viral32111.servermonitor.R
 import com.viral32111.servermonitor.Shared
 import com.viral32111.servermonitor.UpdateWorker
 import com.viral32111.servermonitor.helper.API
+import com.viral32111.servermonitor.helper.APIException
 import com.viral32111.servermonitor.helper.Notify
 import com.viral32111.servermonitor.helper.Settings
 import com.viral32111.servermonitor.helper.createProgressDialog
@@ -35,6 +38,10 @@ import com.viral32111.servermonitor.helper.showInformationDialog
 import com.viral32111.servermonitor.helper.validateCredentialsPassword
 import com.viral32111.servermonitor.helper.validateCredentialsUsername
 import com.viral32111.servermonitor.helper.validateInstanceUrl
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class SetupActivity : AppCompatActivity() {
 
@@ -342,72 +349,120 @@ class SetupActivity : AppCompatActivity() {
 			showBriefMessage( this, R.string.setupToastServerCountCancel )
 		}
 
-		// Fetch the list of servers
-		API.getServers( instanceUrl, credentialsUsername, credentialsPassword, { serversData ->
+		// Run on the I/O thread...
+		val activity = this
+		CoroutineScope( Dispatchers.Main ).launch {
+			withContext( Dispatchers.IO ) {
 
-			// Hide the progress dialog & enable input
-			progressDialog.dismiss()
-			enableInputs( true )
+				// Attempt to fetch the list of servers
+				try {
+					val servers = API.getServersImproved( instanceUrl, credentialsUsername, credentialsPassword )
+					Log.d( Shared.logTag, "Fetched '${ servers?.count() }' servers from API (${ servers?.joinToString( ", " ) { server -> server.identifier } }). Switching to next activity..." )
 
-			// Get the array
-			val servers = serversData?.get( "servers" )?.asJsonArray
-			Log.d( Shared.logTag, "Got '${ servers?.size() }' servers from API ('${ servers.toString() }')" )
+					// Do not continue if we somehow got nothing from the API
+					if ( servers == null ) {
+						Log.wtf( Shared.logTag, "Got null instead of servers array from API?!" )
+						showBriefMessage( activity, R.string.setupToastServerCountFailure )
+						return@withContext
+					}
 
-			// Switch to the Servers activity if there's more than 1 server, otherwise switch to the Server activity
-			// NOTE: This will fallback to 2 servers, as that will show the Servers activity which is capable of displaying only 1 server
-			Log.d( Shared.logTag, "Switching to next activity...")
-			startActivity( Intent( this, if ( ( servers?.size() ?: 2 ) > 1 ) ServersActivity::class.java else ServerActivity::class.java ) )
-			overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
+					// Run on the UI thread...
+					withContext( Dispatchers.Main ) {
 
-			// Remove this activity from the back button history
-			finish()
+						// Hide the progress dialog & enable input
+						progressDialog.dismiss()
+						enableInputs( true )
 
-		}, { error, statusCode, errorCode ->
-			Log.e( Shared.logTag, "Failed to get servers from API due to '${ error }' (Status Code: '${ statusCode }', Error Code: '${ errorCode }')" )
+						// Switch to the Servers activity if there's more than 1 server, otherwise switch to the Server activity
+						if ( servers.count() > 1 ) {
+							startActivity( Intent( activity, ServersActivity::class.java ) )
+						} else {
+							val intent = Intent( activity, ServerActivity::class.java )
+							intent.putExtra( "serverIdentifier", servers.first().identifier )
+							startActivity( intent )
+						}
+						overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
 
-			// Hide the progress dialog & enable input
-			progressDialog.dismiss()
-			enableInputs( true )
+						// Remove this activity from the back navigation history
+						finish()
 
-			when ( error ) {
+					}
 
-				// Bad authentication
-				is AuthFailureError -> when ( errorCode ) {
-					ErrorCode.UnknownUser.code -> showBriefMessage( this, R.string.setupToastServerCountAuthenticationUnknownUser )
-					ErrorCode.IncorrectPassword.code -> showBriefMessage( this, R.string.setupToastServerCountAuthenticationIncorrectPassword )
-					else -> showBriefMessage( this, R.string.setupToastServerCountAuthenticationFailure )
+				} catch ( exception: APIException ) {
+					Log.e( Shared.logTag, "Failed to get servers from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
+
+					// Hide the progress dialog & enable input
+					withContext( Dispatchers.Main ) {
+						progressDialog.dismiss()
+						enableInputs( true )
+
+						when ( exception.volleyError ) {
+
+							// Bad authentication
+							is AuthFailureError -> when ( exception.apiErrorCode ) {
+								ErrorCode.UnknownUser.code -> showBriefMessage( activity, R.string.setupToastServerCountAuthenticationUnknownUser )
+								ErrorCode.IncorrectPassword.code -> showBriefMessage( activity, R.string.setupToastServerCountAuthenticationIncorrectPassword )
+								else -> showBriefMessage( activity, R.string.setupToastServerCountAuthenticationFailure )
+							}
+
+							// HTTP 4xx
+							is ClientError -> when ( exception.httpStatusCode ) {
+								404 -> showBriefMessage( activity, R.string.setupToastServerCountNotFound )
+								else -> showBriefMessage( activity, R.string.setupToastServerCountClientFailure )
+							}
+
+							// HTTP 5xx
+							is ServerError -> when ( exception.httpStatusCode ) {
+								502 -> showBriefMessage( activity, R.string.setupToastServerCountUnavailable )
+								503 -> showBriefMessage( activity, R.string.setupToastServerCountUnavailable )
+								504 -> showBriefMessage( activity, R.string.setupToastServerCountUnavailable )
+								530 -> showBriefMessage( activity, R.string.setupToastServerCountUnavailable ) // Cloudflare
+								else -> showBriefMessage( activity, R.string.setupToastServerCountServerFailure )
+							}
+
+							// No Internet connection, malformed domain
+							is NoConnectionError -> showBriefMessage( activity, R.string.setupToastServerCountNoConnection )
+							is NetworkError -> showBriefMessage( activity, R.string.setupToastServerCountNoConnection )
+
+							// Connection timed out
+							is TimeoutError -> showBriefMessage( activity, R.string.setupToastServerCountTimeout )
+
+							// ¯\_(ツ)_/¯
+							else -> showBriefMessage( activity, R.string.setupToastServerCountFailure )
+
+						}
+					}
+				} catch ( exception: JsonParseException ) {
+					Log.e( Shared.logTag, "Failed to parse execute server action API response as JSON due to '${ exception.message }'" )
+
+					withContext( Dispatchers.Main ) {
+						progressDialog.dismiss()
+						enableInputs( true )
+
+						showBriefMessage( activity, R.string.setupToastServerCountParseFailure )
+					}
+				} catch ( exception: JsonSyntaxException ) {
+					Log.e( Shared.logTag, "Failed to parse execute server action API response as JSON due to '${ exception.message }'" )
+
+					withContext( Dispatchers.Main ) {
+						progressDialog.dismiss()
+						enableInputs( true )
+
+						showBriefMessage( activity, R.string.setupToastServerCountParseFailure )
+					}
+				} catch ( exception: NullPointerException ) {
+					Log.e( Shared.logTag, "Encountered null property value in execute server action API response ('${ exception.message }')" )
+
+					withContext( Dispatchers.Main ) {
+						progressDialog.dismiss()
+						enableInputs( true )
+
+						showBriefMessage( activity, R.string.setupToastServerCountNull )
+					}
 				}
-
-				// HTTP 4xx
-				is ClientError -> when ( statusCode ) {
-					404 -> showBriefMessage( this, R.string.setupToastServerCountNotFound )
-					else -> showBriefMessage( this, R.string.setupToastServerCountClientFailure )
-				}
-
-				// HTTP 5xx
-				is ServerError -> when (statusCode) {
-					502 -> showBriefMessage( this, R.string.setupToastServerCountUnavailable )
-					503 -> showBriefMessage( this, R.string.setupToastServerCountUnavailable )
-					504 -> showBriefMessage( this, R.string.setupToastServerCountUnavailable )
-					530 -> showBriefMessage( this, R.string.setupToastServerCountUnavailable ) // Cloudflare
-					else -> showBriefMessage( this, R.string.setupToastServerCountServerFailure )
-				}
-
-				// No Internet connection, malformed domain
-				is NoConnectionError -> showBriefMessage( this, R.string.setupToastServerCountNoConnection )
-				is NetworkError -> showBriefMessage( this, R.string.setupToastServerCountNoConnection )
-
-				// Connection timed out
-				is TimeoutError -> showBriefMessage( this, R.string.setupToastServerCountTimeout )
-
-				// Couldn't parse as JSON
-				is ParseError -> showBriefMessage( this, R.string.setupToastServerCountParseFailure )
-
-				// ¯\_(ツ)_/¯
-				else -> showBriefMessage( this, R.string.setupToastServerCountFailure )
 
 			}
-		} )
+		}
 
 		// Show the progress dialog
 		progressDialog.show()

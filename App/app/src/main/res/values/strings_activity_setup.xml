@@ -41,6 +41,7 @@
 	<string name="setupToastServerCountParseFailure">Failed to parse API response as JSON. Is the URL correct?</string>
 	<string name="setupToastServerCountFailure">An unknown issue occurred while fetching the number of servers.</string>
 	<string name="setupToastServerCountCancel">The API request was cancelled.</string>
+	<string name="setupToastServerCountNull">Null property encountered in API response JSON.</string>
 
 	<!-- Progress dialog for fetch server count  -->
 	<string name="setupDialogProgressServerCountTitle">Server Count</string>
