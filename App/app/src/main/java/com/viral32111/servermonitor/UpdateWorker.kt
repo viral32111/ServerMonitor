@@ -96,9 +96,9 @@ class UpdateWorker(
 			// Queue up the worker - https://developer.android.com/guide/background/persistent/how-to/manage-work
 			if ( shouldEnqueue ) {
 				workerManager.enqueueUniqueWork( this.NAME, ExistingWorkPolicy.REPLACE, workerRequest )
-				Log.i( Shared.logTag, "Enqueued always on-going notification worker" )
+				Log.d( Shared.logTag, "Enqueued always on-going notification worker" )
 			} else {
-				Log.i( Shared.logTag, "Skipped enqueueing always on-going notification worker" )
+				Log.d( Shared.logTag, "Skipped enqueueing always on-going notification worker" )
 			}
 		}
 
@@ -118,7 +118,7 @@ class UpdateWorker(
 
 					// When the worker finishes successfully...
 					WorkInfo.State.SUCCEEDED -> {
-						Log.i( Shared.logTag, "Always on-going notification worker finished with success (Are there issues? ${ areThereIssues })" )
+						Log.d( Shared.logTag, "Always on-going notification worker finished with success (Are there issues? ${ areThereIssues })" )
 					}
 
 					// When the worker finishes erroneously...
@@ -128,7 +128,7 @@ class UpdateWorker(
 					}
 
 					// Some other state, or just a progress update
-					else -> Log.i( Shared.logTag, "Always on-going notification worker observed to be in state '${ workInfo.state }' (Are there issues? ${ areThereIssues })" )
+					else -> Log.d( Shared.logTag, "Always on-going notification worker observed to be in state '${ workInfo.state }' (Are there issues? ${ areThereIssues })" )
 
 				}
 

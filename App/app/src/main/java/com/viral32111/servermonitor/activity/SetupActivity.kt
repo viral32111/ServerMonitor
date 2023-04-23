@@ -538,7 +538,7 @@ class SetupActivity : AppCompatActivity() {
 
 				// When the worker finishes successfully...
 				WorkInfo.State.SUCCEEDED -> {
-					Log.i( Shared.logTag, "Always on-going notification worker finished with success (Issues: ${ areThereIssues })" )
+					Log.d( Shared.logTag, "Always on-going notification worker finished with success (Issues: ${ areThereIssues })" )
 				}
 
 				// When the worker finishes erroneously...
@@ -549,7 +549,7 @@ class SetupActivity : AppCompatActivity() {
 
 				// Some other state, or just a progress update
 				else -> {
-					Log.i( Shared.logTag, "Always on-going notification worker in state '${ workInfo.state }' (Issues: ${ areThereIssues })" )
+					Log.d( Shared.logTag, "Always on-going notification worker in state '${ workInfo.state }' (Issues: ${ areThereIssues })" )
 				}
 
 			}
@@ -567,9 +567,9 @@ class SetupActivity : AppCompatActivity() {
 		// Queue up the worker - https://developer.android.com/guide/background/persistent/how-to/manage-work
 		if ( shouldEnqueue ) {
 			workerManager.enqueueUniqueWork( UpdateWorker.NAME, ExistingWorkPolicy.REPLACE, workerRequest )
-			Log.i( Shared.logTag, "Enqueued always on-going notification worker" )
+			Log.d( Shared.logTag, "Enqueued always on-going notification worker" )
 		} else {
-			Log.i( Shared.logTag, "Skipped enqueueing always on-going notification worker" )
+			Log.d( Shared.logTag, "Skipped enqueueing always on-going notification worker" )
 		}
 		*/
 
