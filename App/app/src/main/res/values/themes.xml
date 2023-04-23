@@ -33,6 +33,12 @@
 		<item name="actionBarTheme">@style/ThemeOverlay.ServerMonitor.ActionBar</item>
 		<item name="actionBarPopupTheme">@style/ThemeOverlay.ServerMonitor.ActionBar.OverflowMenu</item>
 
+		<!-- Splash screen -->
+		<!--
+		<item name="android:windowSplashScreenBackground">@color/white</item>
+		<item name="android:windowSplashScreenBrandingImage">@mipmap/icon_round</item>
+		-->
+
 	</style>
 
 	<!-- Action bar -->
