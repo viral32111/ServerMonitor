@@ -235,7 +235,7 @@ class ServerActivity : AppCompatActivity() {
 		// Enable the back button on the toolbar if we came from the servers activity
 		if ( intent.extras?.getBoolean( "fromServersActivity" ) == true ) {
 			materialToolbar?.navigationIcon = AppCompatResources.getDrawable( this,
-				R.drawable.ic_baseline_arrow_back_24
+				R.drawable.arrow_back
 			)
 			materialToolbar?.setNavigationOnClickListener {
 				Log.d(Shared.logTag, "Navigation back button pressed. Returning to previous activity..." )

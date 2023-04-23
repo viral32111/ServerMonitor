@@ -95,7 +95,7 @@ class ServiceActivity : AppCompatActivity() {
 
 		// Enable the back button on the toolbar
 		materialToolbar?.navigationIcon = AppCompatResources.getDrawable( this,
-			R.drawable.ic_baseline_arrow_back_24
+			R.drawable.arrow_back
 		)
 		materialToolbar?.setNavigationOnClickListener {
 			Log.d(Shared.logTag, "Navigation back button pressed. Returning to previous activity..." )
