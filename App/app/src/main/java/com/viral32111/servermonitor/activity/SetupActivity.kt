@@ -7,13 +7,6 @@ import android.widget.Button
 import android.widget.EditText
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
-import androidx.work.BackoffPolicy
-import androidx.work.Constraints
-import androidx.work.Data
-import androidx.work.ExistingWorkPolicy
-import androidx.work.NetworkType
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.android.volley.AuthFailureError
 import com.android.volley.ClientError
@@ -43,7 +36,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.concurrent.TimeUnit
 
 class SetupActivity : AppCompatActivity() {
 
@@ -495,8 +487,12 @@ class SetupActivity : AppCompatActivity() {
 		// Check if we're setup - settings.isSetup() doesn't work because the settings properties are non-constant variables and thus could change after this check
 		if ( baseUrl.isNullOrBlank() || credentialsUsername.isNullOrBlank() || credentialsPassword.isNullOrBlank() ) {
 			Log.e( Shared.logTag, "Cannot setup always on-going notification worker when not setup yet! ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
+			return
 		}
 
+		UpdateWorker.setup( applicationContext, this, baseUrl, credentialsUsername, credentialsPassword, automaticRefreshInterval, shouldEnqueue = shouldEnqueue )
+
+		/*
 		// Data to give to the worker - https://developer.android.com/guide/background/persistent/getting-started/define-work#input_output
 		val workerInputData = Data.Builder()
 			.putString( UpdateWorker.BASE_URL, baseUrl )
@@ -575,6 +571,8 @@ class SetupActivity : AppCompatActivity() {
 		} else {
 			Log.i( Shared.logTag, "Skipped enqueueing always on-going notification worker" )
 		}
+		*/
+
 	}
 
 	// Enables/disables user input

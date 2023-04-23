@@ -5,8 +5,17 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.util.Log
+import androidx.lifecycle.LifecycleOwner
+import androidx.work.BackoffPolicy
+import androidx.work.Constraints
 import androidx.work.CoroutineWorker
+import androidx.work.Data
+import androidx.work.ExistingWorkPolicy
 import androidx.work.ForegroundInfo
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.viral32111.servermonitor.activity.ServersActivity
@@ -15,8 +24,9 @@ import com.viral32111.servermonitor.helper.Notify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import java.util.concurrent.TimeUnit
 
-// https://developer.android.com/guide/background/persistent/threading/coroutineworker
+// Coroutine worker for the always on-going notification - https://developer.android.com/guide/background/persistent/threading/coroutineworker
 
 class UpdateWorker(
 	applicationContext: Context,
@@ -45,6 +55,89 @@ class UpdateWorker(
 
 		// Keys for progress output data
 		const val PROGRESS_ARE_THERE_ISSUES = "PROGRESS_ARE_THERE_ISSUES"
+
+		// Creates this worker - https://developer.android.com/guide/background/persistent/getting-started/define-work
+		fun setup( applicationContext: Context, lifecycleOwner: LifecycleOwner, baseUrl: String, credentialsUsername: String, credentialsPassword: String, automaticRefreshInterval: Int, shouldEnqueue: Boolean = true ) {
+
+			// Data to give to the worker - https://developer.android.com/guide/background/persistent/getting-started/define-work#input_output
+			val workerInputData = Data.Builder()
+				.putString( this.BASE_URL, baseUrl )
+				.putString( this.CREDENTIALS_USERNAME, credentialsUsername )
+				.putString( this.CREDENTIALS_PASSWORD, credentialsPassword )
+				.putInt( this.AUTOMATIC_REFRESH_INTERVAL, automaticRefreshInterval )
+				.build()
+
+			// Requirements for deferring the worker - https://developer.android.com/guide/background/persistent/getting-started/define-work#schedule_periodic_work
+			val workerConstraints = Constraints.Builder()
+				.setRequiredNetworkType( NetworkType.CONNECTED ) // Only run when connected to a network
+				.setRequiresBatteryNotLow( true ) // Do not run when battery is low
+				.setRequiresCharging( false ) // Doesn't matter if the device is charging
+				.setRequiresDeviceIdle( false ) // Doesn't matter if the device is idle
+				.setRequiresStorageNotLow( false ) // Doesn't matter if storage space is low
+				.build()
+
+			// Create the worker request - https://developer.android.com/guide/background/persistent/getting-started/define-work#schedule_one-time_work
+			val workerRequest = OneTimeWorkRequestBuilder<UpdateWorker>()
+				.setConstraints( workerConstraints )
+				.setInputData( workerInputData )
+				//.setInitialDelay( 5L, TimeUnit.SECONDS ) // Wait 5 seconds before starting
+				.setBackoffCriteria( BackoffPolicy.LINEAR, 5L, TimeUnit.SECONDS ) // Retry on failure after 5 seconds
+				.build()
+
+			// Get our worker manager
+			val workerManager = WorkManager.getInstance( applicationContext )
+
+			// Observe any updates on the worker
+			this.observe( workerManager, lifecycleOwner )
+
+			// Cancel all existing workers - This is needed as a worker is automatically created on launch due to the service in the manifest
+			workerManager.cancelAllWork()
+
+			// Queue up the worker - https://developer.android.com/guide/background/persistent/how-to/manage-work
+			if ( shouldEnqueue ) {
+				workerManager.enqueueUniqueWork( this.NAME, ExistingWorkPolicy.REPLACE, workerRequest )
+				Log.i( Shared.logTag, "Enqueued always on-going notification worker" )
+			} else {
+				Log.i( Shared.logTag, "Skipped enqueueing always on-going notification worker" )
+			}
+		}
+
+		// Observe all the always on-going notification workers (ideally only 1) for the rest of time - https://developer.android.com/guide/background/persistent/how-to/observe
+		fun observe( workerManager: WorkManager, lifecycleOwner: LifecycleOwner ) = workerManager.getWorkInfosForUniqueWorkLiveData( this.NAME ).observe( lifecycleOwner ) { workInfos: List<WorkInfo> ->
+
+			// How could there possibly be more than one UNIQUE worker?
+			if ( workInfos.count() > 1 ) Log.wtf( Shared.logTag, "There are ${ workInfos.count() } always on-going notification workers?!" )
+
+			// Loop through each of the workers...
+			for ( workInfo in workInfos ) {
+
+				// Get the progress value
+				val areThereIssues = workInfo.progress.getBoolean( this.PROGRESS_ARE_THERE_ISSUES, false )
+
+				when ( workInfo.state ) {
+
+					// When the worker finishes successfully...
+					WorkInfo.State.SUCCEEDED -> {
+						Log.i( Shared.logTag, "Always on-going notification worker finished with success (Are there issues? ${ areThereIssues })" )
+					}
+
+					// When the worker finishes erroneously...
+					WorkInfo.State.FAILED -> {
+						val failureReason = workInfo.outputData.getInt( this.FAILURE_REASON, -1 )
+						Log.e( Shared.logTag, "Always on-going notification worker finished with failure '${ failureReason }' (Are there issues? ${ areThereIssues })" )
+					}
+
+					// Some other state, or just a progress update
+					else -> Log.i( Shared.logTag, "Always on-going notification worker observed to be in state '${ workInfo.state }' (Are there issues? ${ areThereIssues })" )
+
+				}
+
+			}
+
+		}
+
+		// Helper for calling the observation function with context instead of an existing work manager
+		fun observe( applicationContext: Context, lifecycleOwner: LifecycleOwner ) = this.observe( WorkManager.getInstance( applicationContext ), lifecycleOwner )
 
 	}
 

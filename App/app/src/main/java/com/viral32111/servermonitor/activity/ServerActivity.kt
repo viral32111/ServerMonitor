@@ -437,7 +437,7 @@ class ServerActivity : AppCompatActivity() {
 								if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
 							}
 
-						} catch ( exception: APIException) {
+						} catch ( exception: APIException ) {
 							Log.e( Shared.logTag, "Failed to fetch servers from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
 
 							withContext( Dispatchers.Main ) {
@@ -525,6 +525,10 @@ class ServerActivity : AppCompatActivity() {
 
 		// Register the back button pressed callback - https://medium.com/tech-takeaways/how-to-migrate-the-deprecated-onbackpressed-function-e66bb29fa2fd
 		onBackPressedDispatcher.addCallback( this, onBackPressed )
+
+		// Register the observer for the always on-going notification worker
+		UpdateWorker.observe( this, this )
+		Log.d( Shared.logTag, "Registered observer for always on-going notification worker" )
 
 	}
 

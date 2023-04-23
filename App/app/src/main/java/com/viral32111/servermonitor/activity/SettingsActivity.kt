@@ -144,6 +144,10 @@ class SettingsActivity : AppCompatActivity() {
 			}
 		}
 
+		// Register the observer for the always on-going notification worker
+		UpdateWorker.observe( this, this )
+		Log.d( Shared.logTag, "Registered observer for always on-going notification worker" )
+
 	}
 
 	// When the activity is closed...

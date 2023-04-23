@@ -481,6 +481,10 @@ class ServiceActivity : AppCompatActivity() {
 		// Register the back button pressed callback - https://medium.com/tech-takeaways/how-to-migrate-the-deprecated-onbackpressed-function-e66bb29fa2fd
 		onBackPressedDispatcher.addCallback( this, onBackPressed )
 
+		// Register the observer for the always on-going notification worker
+		UpdateWorker.observe( this, this )
+		Log.d( Shared.logTag, "Registered observer for always on-going notification worker" )
+
 	}
 
 	// Use custom animation when the back button is pressed - https://medium.com/tech-takeaways/how-to-migrate-the-deprecated-onbackpressed-function-e66bb29fa2fd
