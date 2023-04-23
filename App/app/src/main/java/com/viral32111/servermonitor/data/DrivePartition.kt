@@ -31,7 +31,7 @@ class DrivePartition( data: JsonObject ) {
 	// Checks if there are any issues - usage too high
 	fun areThereIssues(): Boolean {
 		val usedBytes = ( totalBytes - freeBytes )
-		return usedBytes >= usageDangerThreshold
+		return usedBytes >= usedBytesDangerThreshold( totalBytes )
 	}
 
 }

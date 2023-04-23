@@ -26,9 +26,9 @@ class Drive( data: JsonObject ) {
 
 	val name: String
 	val health: Int
-	private val totalBytesRead: Long // Unused
+	private val totalBytesRead: Long
 	val rateBytesRead: Long
-	private val totalBytesWritten: Long // Unused
+	private val totalBytesWritten: Long
 	val rateBytesWritten: Long
 	private val partitions: Array<DrivePartition>
 
@@ -54,7 +54,8 @@ class Drive( data: JsonObject ) {
 
 	// Checks if there are any issues - bad S.M.A.R.T health, read/write rate is too high
 	fun areThereIssues(): Boolean {
-		if ( health != -1 ) return health <= healthDangerThreshold
+		if ( health >= 0 ) return health <= healthDangerThreshold
+
 		return rateBytesRead >= readRateDangerThreshold || rateBytesWritten >= writeRateDangerThreshold ||
 				totalBytesRead >= readDangerThreshold || totalBytesWritten >= writeDangerThreshold ||
 				this.getPartitions().any { partition -> partition.areThereIssues() }

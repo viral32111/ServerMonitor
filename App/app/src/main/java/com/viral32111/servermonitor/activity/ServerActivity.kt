@@ -576,8 +576,6 @@ class ServerActivity : AppCompatActivity() {
 		// Show refreshing spinner
 		swipeRefreshLayout.isRefreshing = true
 
-		// TODO: Create the always ongoing notification
-
 		val activity = this
 		CoroutineScope( Dispatchers.Main ).launch {
 			withContext( Dispatchers.IO ) {

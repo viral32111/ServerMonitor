@@ -587,13 +587,16 @@ class ServersActivity : AppCompatActivity() {
 	// Update the UI with the given servers
 	private fun updateUI( servers: Array<Server> ) {
 
-		// TODO: Check if there have been any issues with the servers
-		//servers.any { server -> server.areThereIssues() }...
-
-		// Set the overall status
-		statusTitleTextView.text = getString( R.string.serversTextViewStatusTitleGood )
-		statusTitleTextView.setTextColor( getColor( R.color.statusGood ) )
-		statusDescriptionTextView.text = getString( R.string.serversTextViewStatusDescriptionGood )
+		// Set the overall status based on if there are there issues with any of the servers
+		if ( servers.any { server -> server.areThereIssues() } ) {
+			statusTitleTextView.text = getString( R.string.serversTextViewStatusTitleBad )
+			statusTitleTextView.setTextColor( getColor( R.color.statusBad ) )
+			statusDescriptionTextView.text = getString( R.string.serversTextViewStatusDescriptionBad ).format( 1 ) // TODO: Count of issues on this day
+		} else {
+			statusTitleTextView.text = getString( R.string.serversTextViewStatusTitleGood )
+			statusTitleTextView.setTextColor( getColor( R.color.statusGood ) )
+			statusDescriptionTextView.text = getString( R.string.serversTextViewStatusDescriptionGood )
+		}
 
 		// Create the adapter for the recycler view - https://www.geeksforgeeks.org/android-pull-to-refresh-with-recyclerview-in-kotlin/
 		val serverAdapter = ServerAdapter( servers, applicationContext ) { server -> onServerPressed( server ) }

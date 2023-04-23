@@ -7,6 +7,7 @@ import android.widget.Button
 import android.widget.EditText
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
+import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
@@ -42,6 +43,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.concurrent.TimeUnit
 
 class SetupActivity : AppCompatActivity() {
 
@@ -373,6 +375,11 @@ class SetupActivity : AppCompatActivity() {
 						progressDialog.dismiss()
 						enableInputs( true )
 
+						if ( servers.isEmpty() ) {
+							Log.w( Shared.logTag, "No servers available!" )
+							showBriefMessage( activity, R.string.setupToastServerCountEmpty )
+						}
+
 						// Switch to the Servers activity if there's more than 1 server, otherwise switch to the Server activity
 						if ( servers.count() > 1 ) {
 							startActivity( Intent( activity, ServersActivity::class.java ) )
@@ -468,12 +475,12 @@ class SetupActivity : AppCompatActivity() {
 		progressDialog.show()
 
 		// Setup the always on-going notification worker
-		if ( settings.notificationAlwaysOngoing ) setupAlwaysOngoingWorker()
+		setupAlwaysOngoingWorker( settings.notificationAlwaysOngoing )
 
 	}
 
 	// Sets up the coroutine worker for the always on-going notification - https://developer.android.com/guide/background/persistent/getting-started/define-work
-	private fun setupAlwaysOngoingWorker() {
+	private fun setupAlwaysOngoingWorker( shouldEnqueue: Boolean ) {
 
 		// Get values from settings
 		val baseUrl = settings.instanceUrl
@@ -508,6 +515,7 @@ class SetupActivity : AppCompatActivity() {
 			.setConstraints( workerConstraints )
 			.setInputData( workerInputData )
 			//.setInitialDelay( 5L, TimeUnit.SECONDS ) // Wait 5 seconds before starting
+			.setBackoffCriteria( BackoffPolicy.LINEAR, 5L, TimeUnit.SECONDS ) // Retry on failure after 5 seconds
 			.build()
 
 		// Get our worker manager
@@ -517,6 +525,7 @@ class SetupActivity : AppCompatActivity() {
 		//workerManager.getWorkInfosForUniqueWorkLiveData( UpdateWorker.NAME ).removeObservers( this )
 
 		// Observe updates on the worker for the rest of time - https://developer.android.com/guide/background/persistent/how-to/observe
+		// TODO: Only observe while application is open (i.e., register observation in onResume and remove in onPause)
 		workerManager.getWorkInfoByIdLiveData( workerRequest.id ).observeForever { workInfo: WorkInfo? ->
 
 			// Do not continue if update information is somehow not given
@@ -555,10 +564,16 @@ class SetupActivity : AppCompatActivity() {
 			for ( workInfo in workInfos ) Log.wtf( Shared.logTag, "Worker '${ workInfo.id }' observed to be in state '${ workInfo.state }'" )
 		}
 
-		// Queue up the worker - https://developer.android.com/guide/background/persistent/how-to/manage-work
-		workerManager.enqueueUniqueWork( UpdateWorker.NAME, ExistingWorkPolicy.REPLACE, workerRequest )
-		Log.i( Shared.logTag, "Enqueued always on-going notification worker" )
+		// Cancel all existing workers - This is needed as a worker is automatically created on launch due to the service in the manifest
+		workerManager.cancelAllWork()
 
+		// Queue up the worker - https://developer.android.com/guide/background/persistent/how-to/manage-work
+		if ( shouldEnqueue ) {
+			workerManager.enqueueUniqueWork( UpdateWorker.NAME, ExistingWorkPolicy.REPLACE, workerRequest )
+			Log.i( Shared.logTag, "Enqueued always on-going notification worker" )
+		} else {
+			Log.i( Shared.logTag, "Skipped enqueueing always on-going notification worker" )
+		}
 	}
 
 	// Enables/disables user input

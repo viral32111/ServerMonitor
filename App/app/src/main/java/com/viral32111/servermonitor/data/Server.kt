@@ -164,7 +164,7 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 	/******************************************************/
 
 	// Gets all the services
-	private fun getServices(): Array<Service> = this.services ?: emptyArray()
+	fun getServices(): Array<Service> = this.services ?: emptyArray()
 
 	// Attempts to find a given service
 	fun findService( name: String ): Service? = this.getServices().find { service -> service.serviceName == name }
@@ -233,29 +233,58 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 
 	/******************************************************/
 
-	// Checks if there are any issues - processor usage/temp too high, memory/swap usage too high - and all data sub-classes
+	// Checks if there are any issues for each component
+	private fun areThereIssuesWithProcessor(): Boolean = this.getProcessorUsage() >= processorUsageDangerThreshold || this.getProcessorTemperature() >= processorTemperatureDangerThreshold
+	private fun areThereIssuesWithMemory(): Boolean {
+		val totalBytes = this.getMemoryTotal()
+		val freeBytes = this.getMemoryFree()
+
+		if ( freeBytes < 0L || totalBytes < 0L ) return false // No metrics yet?
+
+		return this.getMemoryUsed( freeBytes, totalBytes ) >= memoryUsedDangerThreshold( totalBytes ) || this.getMemoryUsage( freeBytes, totalBytes ) >= memoryUsageDangerThreshold
+	}
+	private fun areThereIssuesWithSwap(): Boolean {
+		val totalBytes = this.getSwapTotal()
+		val freeBytes = this.getSwapFree()
+
+		if ( freeBytes < 0L || totalBytes < 0L ) return false // No metrics yet?
+
+		return this.getSwapUsed( freeBytes, totalBytes ) >= swapUsedDangerThreshold( totalBytes ) || this.getSwapUsage( freeBytes, totalBytes ) >= swapUsageDangerThreshold
+	}
+	fun areThereIssuesWithNetworkInterfaces(): Boolean = this.getNetworkInterfaces().any { networkInterface -> networkInterface.areThereIssues() }
+	fun areThereIssuesWithDrives(): Boolean = this.getDrives().any { drive -> drive.areThereIssues() }
+	fun areThereIssuesWithServices(): Boolean = this.getServices().any { service -> service.areThereIssues() }
+	private fun areThereIssuesWithDockerContainers(): Boolean = this.getDockerContainers().any { dockerContainer -> dockerContainer.areThereIssues() }
+	private fun areThereIssuesWithSNMPAgents(): Boolean = this.getSNMPAgents().any { snmpAgent -> snmpAgent.areThereIssues() }
+
+	// Checks if there are any issues with any components
 	fun areThereIssues(): Boolean {
-		if ( !this.isOnline() ) return false
+		if ( !this.isOnline() ) {
+			Log.w( Shared.logTag, "Skipping issue check as server '$hostName' is offline..." )
+			return false
+		}
 
-		val memoryTotalBytes = this.getMemoryTotal()
-		val memoryFreeBytes = this.getMemoryFree()
+		val areThereProcessorIssues = areThereIssuesWithProcessor()
+		val areThereMemoryIssues = areThereIssuesWithMemory()
+		val areThereSwapIssues = areThereIssuesWithSwap()
+		val areThereNetworkInterfaceIssues = areThereIssuesWithNetworkInterfaces()
+		val areThereDriveIssues = areThereIssuesWithDrives()
+		val areThereServiceIssues = areThereIssuesWithServices()
+		val areThereDockerContainerIssues = areThereIssuesWithDockerContainers()
+		val areThereSNMPAgentIssues = areThereIssuesWithSNMPAgents()
 
-		val swapTotalBytes = this.getSwapTotal()
-		val swapFreeBytes = this.getSwapFree()
+		/*
+		Log.wtf( Shared.logTag, "Processor issues? $areThereProcessorIssues" )
+		Log.wtf( Shared.logTag, "Memory issues? $areThereMemoryIssues" )
+		Log.wtf( Shared.logTag, "Swap issues? $areThereSwapIssues" )
+		Log.wtf( Shared.logTag, "Network interface issues? $areThereNetworkInterfaceIssues" )
+		Log.wtf( Shared.logTag, "Drive issues? $areThereDriveIssues" )
+		Log.wtf( Shared.logTag, "Service issues? $areThereServiceIssues" )
+		Log.wtf( Shared.logTag, "Docker container issues? $areThereDockerContainerIssues" )
+		Log.wtf( Shared.logTag, "SNMP agent issues? $areThereSNMPAgentIssues" )
+		*/
 
-		return this.getProcessorUsage() >= processorUsageDangerThreshold || this.getProcessorTemperature() >= processorTemperatureDangerThreshold ||
-
-				this.getMemoryUsed( memoryFreeBytes, memoryTotalBytes ) >= memoryUsedDangerThreshold( memoryTotalBytes ) ||
-				this.getMemoryUsage( memoryFreeBytes, memoryTotalBytes ) >= memoryUsageDangerThreshold ||
-
-				this.getSwapUsed( swapFreeBytes, swapTotalBytes ) >= swapUsedDangerThreshold( swapTotalBytes ) ||
-				this.getSwapUsage( swapFreeBytes, swapTotalBytes ) >= swapUsageDangerThreshold ||
-
-				this.getNetworkInterfaces().any { networkInterface -> networkInterface.areThereIssues() } ||
-				this.getDrives().any { drive -> drive.areThereIssues() } ||
-				this.getServices().any { service -> service.areThereIssues() } ||
-				this.getDockerContainers().any { dockerContainer -> dockerContainer.areThereIssues() } ||
-				this.getSNMPAgents().any { snmpAgent -> snmpAgent.areThereIssues() }
+		return areThereProcessorIssues || areThereMemoryIssues || areThereSwapIssues || areThereNetworkInterfaceIssues || areThereDriveIssues || areThereServiceIssues || areThereDockerContainerIssues || areThereSNMPAgentIssues
 	}
 
 	/******************************************************/
@@ -344,12 +373,7 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 	suspend fun updateFromAPI( instanceUrl: String, credentialsUsername: String, credentialsPassword: String ) {
 
 		// Fetch the server, will throw a null pointer exception if null
-		val data = API.getServer(
-			instanceUrl,
-			credentialsUsername,
-			credentialsPassword,
-			identifier
-		)!!
+		val data = API.getServer( instanceUrl, credentialsUsername, credentialsPassword, identifier )!!
 		Log.d(Shared.logTag, "Fetched server '${ hostName }' ('${ identifier }', '${ jobName }', '${ instanceAddress }') from API" )
 
 		// Set the properties
