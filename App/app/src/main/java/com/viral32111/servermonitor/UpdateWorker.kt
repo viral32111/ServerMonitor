@@ -103,32 +103,41 @@ class UpdateWorker(
 		}
 
 		// Observe all the always on-going notification workers (ideally only 1) for the rest of time - https://developer.android.com/guide/background/persistent/how-to/observe
-		fun observe( workerManager: WorkManager, lifecycleOwner: LifecycleOwner ) = workerManager.getWorkInfosForUniqueWorkLiveData( this.NAME ).observe( lifecycleOwner ) { workInfos: List<WorkInfo> ->
+		fun observe( workerManager: WorkManager, lifecycleOwner: LifecycleOwner ) {
 
-			// How could there possibly be more than one UNIQUE worker?
-			if ( workInfos.count() > 1 ) Log.wtf( Shared.logTag, "There are ${ workInfos.count() } always on-going notification workers?!" )
+			// Remove existing observers
+			workerManager.getWorkInfosForUniqueWorkLiveData( this.NAME ).removeObservers( lifecycleOwner )
+			Log.d( Shared.logTag, "Removed all observers for the always on-going notification worker in favour of new observer..." )
 
-			// Loop through each of the workers...
-			for ( workInfo in workInfos ) {
+			// Register new observer
+			workerManager.getWorkInfosForUniqueWorkLiveData( this.NAME ).observe( lifecycleOwner ) { workInfos: List<WorkInfo> ->
 
-				// Get the progress value
-				val areThereIssues = workInfo.progress.getBoolean( this.PROGRESS_ARE_THERE_ISSUES, false )
+				// How could there possibly be more than one UNIQUE worker?
+				if ( workInfos.count() > 1 ) Log.wtf( Shared.logTag, "There are ${ workInfos.count() } always on-going notification workers?!" )
 
-				when ( workInfo.state ) {
+				// Loop through each of the workers...
+				for ( workInfo in workInfos ) {
 
-					// When the worker finishes successfully...
-					WorkInfo.State.SUCCEEDED -> {
-						Log.d( Shared.logTag, "Always on-going notification worker finished with success (Are there issues? ${ areThereIssues })" )
+					// Get the progress value
+					val areThereIssues = workInfo.progress.getBoolean( this.PROGRESS_ARE_THERE_ISSUES, false )
+
+					when ( workInfo.state ) {
+
+						// When the worker finishes successfully...
+						WorkInfo.State.SUCCEEDED -> {
+							Log.d( Shared.logTag, "Always on-going notification worker '${ workInfo.id }' finished with success (Are there issues? ${ areThereIssues })" )
+						}
+
+						// When the worker finishes erroneously...
+						WorkInfo.State.FAILED -> {
+							val failureReason = workInfo.outputData.getInt( this.FAILURE_REASON, -1 )
+							Log.e( Shared.logTag, "Always on-going notification worker '${ workInfo.id }' finished with failure '${ failureReason }' (Are there issues? ${ areThereIssues })" )
+						}
+
+						// Some other state, or just a progress update
+						else -> Log.d( Shared.logTag, "Always on-going notification worker '${ workInfo.id }' observed to be in state '${ workInfo.state }' (Are there issues? ${ areThereIssues })" )
+
 					}
-
-					// When the worker finishes erroneously...
-					WorkInfo.State.FAILED -> {
-						val failureReason = workInfo.outputData.getInt( this.FAILURE_REASON, -1 )
-						Log.e( Shared.logTag, "Always on-going notification worker finished with failure '${ failureReason }' (Are there issues? ${ areThereIssues })" )
-					}
-
-					// Some other state, or just a progress update
-					else -> Log.d( Shared.logTag, "Always on-going notification worker observed to be in state '${ workInfo.state }' (Are there issues? ${ areThereIssues })" )
 
 				}
 

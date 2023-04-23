@@ -547,8 +547,8 @@ class ServerActivity : AppCompatActivity() {
 		Log.d( Shared.logTag, "Stopped server activity" )
 
 		// Remove all observers for the always on-going notification worker
-		WorkManager.getInstance( applicationContext ).getWorkInfosForUniqueWorkLiveData( UpdateWorker.NAME ).removeObservers( this )
-		Log.d( Shared.logTag, "Removed all observers for the always on-going notification worker" )
+		//WorkManager.getInstance( applicationContext ).getWorkInfosForUniqueWorkLiveData( UpdateWorker.NAME ).removeObservers( this )
+		//Log.d( Shared.logTag, "Removed all observers for the always on-going notification worker" )
 
 		// Cancel all pending HTTP requests
 		//API.cancelQueue()
@@ -575,6 +575,8 @@ class ServerActivity : AppCompatActivity() {
 		// Reload settings in case they have changed
 		settings.read()
 		Log.d( Shared.logTag, "Reloaded settings (Automatic Refresh: '${ settings.automaticRefresh }', Automatic Refresh Interval: '${ settings.automaticRefreshInterval }')" )
+
+		// TODO: Re-setup worker as automatic refresh interval may have changed
 
 		// Set the progress bar animation duration to the automatic refresh interval
 		progressBarAnimation.duration = settings.automaticRefreshInterval * 1000L // Convert seconds to milliseconds

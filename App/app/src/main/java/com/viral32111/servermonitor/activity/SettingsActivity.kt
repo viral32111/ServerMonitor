@@ -57,51 +57,51 @@ class SettingsActivity : AppCompatActivity() {
 
 		// Run default action & display the relevant layout file
 		super.onCreate( savedInstanceState )
-		setContentView(R.layout.activity_settings)
-		Log.d(Shared.logTag, "Creating activity..." )
+		setContentView( R.layout.activity_settings )
+		Log.d( Shared.logTag, "Creating activity..." )
 
 		// Switch to the custom Material Toolbar
 		supportActionBar?.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
 		supportActionBar?.setCustomView(R.layout.action_bar)
-		Log.d(Shared.logTag, "Switched to Material Toolbar" )
+		Log.d( Shared.logTag, "Switched to Material Toolbar" )
 
 		// Set the title on the toolbar
-		val materialToolbar = supportActionBar?.customView?.findViewById<MaterialToolbar>(R.id.actionBarMaterialToolbar)
-		materialToolbar?.title = getString(R.string.settingsActionBarTitle)
+		val materialToolbar = supportActionBar?.customView?.findViewById<MaterialToolbar>( R.id.actionBarMaterialToolbar )
+		materialToolbar?.title = getString( R.string.settingsActionBarTitle )
 		materialToolbar?.isTitleCentered = true
-		Log.d(Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered })" )
+		Log.d( Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered })" )
 
 		// Disable the menu on the toolbar
 		materialToolbar?.menu?.clear()
-		Log.d(Shared.logTag, "Disabled menu items on Material Toolbar" )
+		Log.d( Shared.logTag, "Disabled menu items on Material Toolbar" )
 
 		// Get all the UI
-		instanceUrlTextInputLayout = findViewById(R.id.settingsInstanceUrlTextInputLayout)
-		instanceUrlEditText = findViewById(R.id.settingsInstanceUrlTextInputEditText)
-		credentialsUsernameInputTextLayout = findViewById(R.id.settingsCredentialsUsernameTextInputLayout)
-		credentialsUsernameEditText = findViewById(R.id.settingsCredentialsUsernameTextInputEditText)
-		credentialsPasswordInputTextLayout = findViewById(R.id.settingsCredentialsPasswordTextInputLayout)
-		credentialsPasswordEditText = findViewById(R.id.settingsCredentialsPasswordTextInputEditText)
-		automaticRefreshSwitch = findViewById(R.id.settingsAutomaticRefreshSwitch)
-		automaticRefreshIntervalTextInputLayout = findViewById(R.id.settingsAutomaticRefreshIntervalTextInputLayout)
-		automaticRefreshIntervalEditText = findViewById(R.id.settingsAutomaticRefreshIntervalTextInputEditText)
-		themeTextInputLayout = findViewById(R.id.settingsThemeTextInputLayout)
-		themeAutoCompleteTextView = findViewById(R.id.settingsThemeAutoCompleteTextView)
-		notificationsAlwaysOngoingSwitch = findViewById(R.id.settingsNotificationAlwaysOngoingSwitch)
-		notificationsWhenIssueArisesSwitch = findViewById(R.id.settingsNotificationWhenIssueArisesSwitch)
-		saveButton = findViewById(R.id.settingsSaveButton)
-		Log.d(Shared.logTag, "Got UI controls" )
+		instanceUrlTextInputLayout = findViewById( R.id.settingsInstanceUrlTextInputLayout )
+		instanceUrlEditText = findViewById( R.id.settingsInstanceUrlTextInputEditText )
+		credentialsUsernameInputTextLayout = findViewById( R.id.settingsCredentialsUsernameTextInputLayout )
+		credentialsUsernameEditText = findViewById( R.id.settingsCredentialsUsernameTextInputEditText )
+		credentialsPasswordInputTextLayout = findViewById( R.id.settingsCredentialsPasswordTextInputLayout )
+		credentialsPasswordEditText = findViewById( R.id.settingsCredentialsPasswordTextInputEditText )
+		automaticRefreshSwitch = findViewById( R.id.settingsAutomaticRefreshSwitch )
+		automaticRefreshIntervalTextInputLayout = findViewById( R.id.settingsAutomaticRefreshIntervalTextInputLayout )
+		automaticRefreshIntervalEditText = findViewById( R.id.settingsAutomaticRefreshIntervalTextInputEditText )
+		themeTextInputLayout = findViewById( R.id.settingsThemeTextInputLayout )
+		themeAutoCompleteTextView = findViewById( R.id.settingsThemeAutoCompleteTextView )
+		notificationsAlwaysOngoingSwitch = findViewById( R.id.settingsNotificationAlwaysOngoingSwitch )
+		notificationsWhenIssueArisesSwitch = findViewById( R.id.settingsNotificationWhenIssueArisesSwitch )
+		saveButton = findViewById( R.id.settingsSaveButton )
+		Log.d( Shared.logTag, "Got UI controls" )
 
 		// Force theme selection by disabling interaction
 		// TODO: Remove this once dark theme is implemented
 		//themeAutoCompleteTextView.setText( "Light", false )
 		themeTextInputLayout.isEnabled = false
 		themeAutoCompleteTextView.isEnabled = false
-		Log.d(Shared.logTag, "Forced theme selection" )
+		Log.d( Shared.logTag, "Forced theme selection" )
 
 		// Get settings
 		val settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, MODE_PRIVATE ) )
-		Log.d(Shared.logTag, "Got settings ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
+		Log.d( Shared.logTag, "Got settings ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
 
 		// Update UI with values from settings
 		updateUIWithSettings( settings )
@@ -125,7 +125,7 @@ class SettingsActivity : AppCompatActivity() {
 			R.drawable.arrow_back
 		)
 		materialToolbar?.setNavigationOnClickListener {
-			Log.d(Shared.logTag, "Navigation back button pressed" )
+			Log.d( Shared.logTag, "Navigation back button pressed" )
 			confirmBack( settings )
 		}
 
@@ -153,14 +153,14 @@ class SettingsActivity : AppCompatActivity() {
 	// When the activity is closed...
 	override fun onStop() {
 		super.onStop()
-		Log.d(Shared.logTag, "Stopped settings activity" )
+		Log.d( Shared.logTag, "Stopped settings activity" )
 
 		// Cancel all pending HTTP requests
 		//API.cancelQueue()
 
 		// Remove all observers for the always on-going notification worker
-		WorkManager.getInstance( applicationContext ).getWorkInfosForUniqueWorkLiveData( UpdateWorker.NAME ).removeObservers( this )
-		Log.d( Shared.logTag, "Removed all observers for the always on-going notification worker" )
+		//WorkManager.getInstance( applicationContext ).getWorkInfosForUniqueWorkLiveData( UpdateWorker.NAME ).removeObservers( this )
+		//Log.d( Shared.logTag, "Removed all observers for the always on-going notification worker" )
 
 		// Enable input
 		enableInputs( true, Settings( getSharedPreferences( Shared.sharedPreferencesName, MODE_PRIVATE ) ).isSetup() )

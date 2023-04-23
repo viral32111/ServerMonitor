@@ -267,8 +267,8 @@ class SetupActivity : AppCompatActivity() {
 		//API.cancelQueue()
 
 		// Remove all observers for the always on-going notification worker
-		WorkManager.getInstance( applicationContext ).getWorkInfosForUniqueWorkLiveData( UpdateWorker.NAME ).removeObservers( this )
-		Log.d( Shared.logTag, "Removed all observers for the always on-going notification worker" )
+		//WorkManager.getInstance( applicationContext ).getWorkInfosForUniqueWorkLiveData( UpdateWorker.NAME ).removeObservers( this )
+		//Log.d( Shared.logTag, "Removed all observers for the always on-going notification worker" )
 
 		// Enable input
 		enableInputs( true )
