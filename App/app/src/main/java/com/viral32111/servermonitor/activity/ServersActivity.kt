@@ -375,6 +375,10 @@ class ServersActivity : AppCompatActivity() {
 		// Cancel all pending HTTP requests
 		//API.cancelQueue()
 
+		// Remove all observers for the always on-going notification worker
+		WorkManager.getInstance( applicationContext ).getWorkInfosForUniqueWorkLiveData( UpdateWorker.NAME ).removeObservers( this )
+		Log.d( Shared.logTag, "Removed all observers for the always on-going notification worker" )
+
 		// TODO: Remove always ongoing notification?
 	}
 

@@ -16,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import androidx.work.WorkManager
 import com.android.volley.AuthFailureError
 import com.android.volley.ClientError
 import com.android.volley.NetworkError
@@ -28,6 +29,7 @@ import com.google.gson.JsonSyntaxException
 import com.viral32111.servermonitor.ErrorCode
 import com.viral32111.servermonitor.R
 import com.viral32111.servermonitor.Shared
+import com.viral32111.servermonitor.UpdateWorker
 import com.viral32111.servermonitor.data.Server
 import com.viral32111.servermonitor.data.Service
 import com.viral32111.servermonitor.helper.API
@@ -484,7 +486,7 @@ class ServiceActivity : AppCompatActivity() {
 	// Use custom animation when the back button is pressed - https://medium.com/tech-takeaways/how-to-migrate-the-deprecated-onbackpressed-function-e66bb29fa2fd
 	private val onBackPressed: OnBackPressedCallback = object : OnBackPressedCallback( true ) {
 		override fun handleOnBackPressed() {
-			Log.d(Shared.logTag, "System back button pressed. Returning to previous activity..." )
+			Log.d( Shared.logTag, "System back button pressed. Returning to previous activity..." )
 			finish()
 			overridePendingTransition(R.anim.slide_in_from_left, R.anim.slide_out_to_right)
 		}
@@ -493,7 +495,11 @@ class ServiceActivity : AppCompatActivity() {
 	// When the activity is closed...
 	override fun onStop() {
 		super.onStop()
-		Log.d(Shared.logTag, "Stopped service activity" )
+		Log.d( Shared.logTag, "Stopped service activity" )
+
+		// Remove all observers for the always on-going notification worker
+		WorkManager.getInstance( applicationContext ).getWorkInfosForUniqueWorkLiveData( UpdateWorker.NAME ).removeObservers( this )
+		Log.d( Shared.logTag, "Removed all observers for the always on-going notification worker" )
 
 		// Cancel all pending HTTP requests
 		//API.cancelQueue()
@@ -501,7 +507,7 @@ class ServiceActivity : AppCompatActivity() {
 
 	override fun onPause() {
 		super.onPause()
-		Log.d(Shared.logTag, "Paused service activity" )
+		Log.d( Shared.logTag, "Paused service activity" )
 
 		// Stop any current refreshing
 		swipeRefreshLayout.isRefreshing = false
@@ -515,11 +521,11 @@ class ServiceActivity : AppCompatActivity() {
 
 	override fun onResume() {
 		super.onResume()
-		Log.d(Shared.logTag, "Resumed service activity" )
+		Log.d( Shared.logTag, "Resumed service activity" )
 
 		// Reload settings in case they have changed
 		settings.read()
-		Log.d(Shared.logTag, "Reloaded settings (Automatic Refresh: '${ settings.automaticRefresh }', Automatic Refresh Interval: '${ settings.automaticRefreshInterval }')" )
+		Log.d( Shared.logTag, "Reloaded settings (Automatic Refresh: '${ settings.automaticRefresh }', Automatic Refresh Interval: '${ settings.automaticRefreshInterval }')" )
 
 		// Set the progress bar animation duration to the automatic refresh interval
 		progressBarAnimation.duration = settings.automaticRefreshInterval * 1000L // Convert seconds to milliseconds
@@ -550,12 +556,12 @@ class ServiceActivity : AppCompatActivity() {
 					for ( contactMethod in contact.get( "methods" ).asJsonArray!! ) contactMethodsList.add( contactMethod.asString!! )
 					contactMethods = contactMethodsList.toTypedArray()
 
-					Log.d(Shared.logTag, "Fetched contact information from API (Name: '${ contactName }', Methods: '${ contactMethods!!.joinToString( ", " ) }')" )
+					Log.d( Shared.logTag, "Fetched contact information from API (Name: '${ contactName }', Methods: '${ contactMethods!!.joinToString( ", " ) }')" )
 
 					// We don't enable user input & stop refreshing spinner here, as there's still another request to come
 
 				} catch ( exception: APIException ) {
-					Log.e(Shared.logTag, "Failed to fetch contact information from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
+					Log.e( Shared.logTag, "Failed to fetch contact information from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
@@ -597,21 +603,21 @@ class ServiceActivity : AppCompatActivity() {
 						}
 					}
 				} catch ( exception: JsonParseException ) {
-					Log.e(Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
+					Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
 						showBriefMessage( activity, R.string.serviceToastServerParseFailure )
 					}
 				} catch ( exception: JsonSyntaxException ) {
-					Log.e(Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
+					Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
 						showBriefMessage( activity, R.string.serviceToastServerParseFailure )
 					}
 				} catch ( exception: NullPointerException ) {
-					Log.e(Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
+					Log.e( Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
@@ -623,13 +629,8 @@ class ServiceActivity : AppCompatActivity() {
 
 				// Fetch the server
 				try {
-					val server = Server( API.getServer(
-						settings.instanceUrl!!,
-						settings.credentialsUsername!!,
-						settings.credentialsPassword!!,
-						serverIdentifier
-					)!!, true )
-					Log.d(Shared.logTag, "Fetched server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') from API" )
+					val server = Server( API.getServer( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, serverIdentifier )!!, true )
+					Log.d( Shared.logTag, "Fetched server '${ server.hostName }' ('${ server.identifier }', '${ server.jobName }', '${ server.instanceAddress }') from API" )
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
@@ -638,7 +639,7 @@ class ServiceActivity : AppCompatActivity() {
 						// Get this service
 						val service = server.findService( serviceName )
 						if ( service != null ) {
-							Log.d(Shared.logTag, "Got service '${ service.serviceName }' ('${ service.displayName }', '${ service.description }')" )
+							Log.d( Shared.logTag, "Got service '${ service.serviceName }' ('${ service.displayName }', '${ service.description }')" )
 
 							// Update the UI
 							updateUI( service )
@@ -647,17 +648,14 @@ class ServiceActivity : AppCompatActivity() {
 							if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
 
 						} else {
-							Log.e(Shared.logTag, "Service '${ serviceName }' does not exist? Returning to previous activity..." )
+							Log.e( Shared.logTag, "Service '${ serviceName }' does not exist? Returning to previous activity..." )
 							finish()
-							overridePendingTransition(
-								R.anim.slide_in_from_left,
-								R.anim.slide_out_to_right
-							)
+							overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
 						}
 					}
 
 				} catch ( exception: APIException) {
-					Log.e(Shared.logTag, "Failed to fetch server '${ serverIdentifier }' from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
+					Log.e( Shared.logTag, "Failed to fetch server '${ serverIdentifier }' from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
@@ -700,27 +698,30 @@ class ServiceActivity : AppCompatActivity() {
 						}
 					}
 				} catch ( exception: JsonParseException) {
-					Log.e(Shared.logTag, "Failed to parse fetch server API response as JSON due to '${ exception.message }'" )
+					Log.e( Shared.logTag, "Failed to parse fetch server API response as JSON due to '${ exception.message }'" )
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
 						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
+
 						showBriefMessage( activity, R.string.serviceToastServerParseFailure )
 					}
 				} catch ( exception: JsonSyntaxException) {
-					Log.e(Shared.logTag, "Failed to parse fetch server API response as JSON due to '${ exception.message }'" )
+					Log.e( Shared.logTag, "Failed to parse fetch server API response as JSON due to '${ exception.message }'" )
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
 						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
+
 						showBriefMessage( activity, R.string.serviceToastServerParseFailure )
 					}
 				} catch ( exception: NullPointerException ) {
-					Log.e(Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
+					Log.e( Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
 
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
 						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
+
 						showBriefMessage( activity, R.string.serviceToastServerNull )
 					}
 				}
@@ -734,7 +735,7 @@ class ServiceActivity : AppCompatActivity() {
 
 		// Set the title on the toolbar
 		materialToolbar?.title = service.displayName.uppercase()
-		Log.d(Shared.logTag, "Set Material Toolbar title to '${ service.displayName.uppercase() }'" )
+		Log.d( Shared.logTag, "Set Material Toolbar title to '${ service.displayName.uppercase() }'" )
 
 		// Update the action buttons
 		if ( service.isRunning() ) {
@@ -754,8 +755,8 @@ class ServiceActivity : AppCompatActivity() {
 
 		// Update the status
 		val uptimeText = TimeSpan( service.uptimeSeconds.toLong() ).toString( true )
-		statusTextView.setTextColor( getColor(R.color.black) )
-		statusTextView.setTextFromHTML( getString(R.string.serviceTextViewStatusGood).format(
+		statusTextView.setTextColor( getColor( R.color.black ) )
+		statusTextView.setTextFromHTML( getString( R.string.serviceTextViewStatusGood ).format(
 			createHTMLColoredText( statusText, statusColor ),
 			createHTMLColoredText(
 				uptimeText.ifBlank { getString(R.string.serverTextViewServicesServiceStatusUptimeUnknown) },
@@ -764,14 +765,14 @@ class ServiceActivity : AppCompatActivity() {
 		) )
 
 		// Update the name, description & run level
-		informationServiceNameTextView.setTextColor( getColor(R.color.black) )
-		informationServiceNameTextView.text = getString(R.string.serviceTextViewInformationServiceName).format( service.serviceName )
-		informationDisplayNameTextView.setTextColor( getColor(R.color.black) )
-		informationDisplayNameTextView.text = getString(R.string.serviceTextViewInformationDisplayName).format( service.displayName )
-		informationDescriptionTextView.setTextColor( getColor(R.color.black) )
-		informationDescriptionTextView.text = getString(R.string.serviceTextViewInformationDescription).format( service.description )
-		informationRunLevelTextView.setTextColor( getColor(R.color.black) )
-		informationRunLevelTextView.text = getString(R.string.serviceTextViewInformationRunLevel).format( service.runLevel )
+		informationServiceNameTextView.setTextColor( getColor( R.color.black ) )
+		informationServiceNameTextView.text = getString( R.string.serviceTextViewInformationServiceName ).format( service.serviceName )
+		informationDisplayNameTextView.setTextColor( getColor( R.color.black ) )
+		informationDisplayNameTextView.text = getString( R.string.serviceTextViewInformationDisplayName ).format( service.displayName )
+		informationDescriptionTextView.setTextColor( getColor( R.color.black ) )
+		informationDescriptionTextView.text = getString( R.string.serviceTextViewInformationDescription ).format( service.description )
+		informationRunLevelTextView.setTextColor( getColor( R.color.black ) )
+		informationRunLevelTextView.text = getString( R.string.serviceTextViewInformationRunLevel ).format( service.runLevel )
 
 		// TODO: Update the logs
 
@@ -792,14 +793,7 @@ class ServiceActivity : AppCompatActivity() {
 
 				// Try to execute the action
 				try {
-					val action = API.postService(
-						settings.instanceUrl!!,
-						settings.credentialsUsername!!,
-						settings.credentialsPassword!!,
-						serverIdentifier,
-						serviceName,
-						actionName
-					)
+					val action = API.postService( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, serverIdentifier, serviceName, actionName )
 					val exitCode = action?.get( "exitCode" )?.asInt
 					var outputText = action?.get( "outputText" )?.asString?.trim()
 					var errorText = action?.get( "errorText" )?.asString?.trim()
@@ -816,7 +810,7 @@ class ServiceActivity : AppCompatActivity() {
 						else showInformationDialog( activity, R.string.serviceDialogActionExecuteTitle, getString( R.string.serviceDialogActionExecuteMessageFailure ).format( exitCode, errorText, outputText ) )
 					}
 
-				} catch ( exception: APIException) {
+				} catch ( exception: APIException ) {
 					Log.e(Shared.logTag, "Failed to execute action '${ actionName }' on API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
 
 					withContext( Dispatchers.Main ) {
@@ -868,21 +862,21 @@ class ServiceActivity : AppCompatActivity() {
 						}
 					}
 				} catch ( exception: JsonParseException ) {
-					Log.e(Shared.logTag, "Failed to parse execute server action API response as JSON due to '${ exception.message }'" )
+					Log.e( Shared.logTag, "Failed to parse execute server action API response as JSON due to '${ exception.message }'" )
 
 					withContext( Dispatchers.Main ) {
 						progressDialog.dismiss()
 						showBriefMessage( activity, R.string.serviceToastActionParseFailure )
 					}
 				} catch ( exception: JsonSyntaxException ) {
-					Log.e(Shared.logTag, "Failed to parse execute server action API response as JSON due to '${ exception.message }'" )
+					Log.e( Shared.logTag, "Failed to parse execute server action API response as JSON due to '${ exception.message }'" )
 
 					withContext( Dispatchers.Main ) {
 						progressDialog.dismiss()
 						showBriefMessage( activity, R.string.serviceToastActionParseFailure )
 					}
 				} catch ( exception: NullPointerException ) {
-					Log.e(Shared.logTag, "Encountered null property value in execute server action API response ('${ exception.message }')" )
+					Log.e( Shared.logTag, "Encountered null property value in execute server action API response ('${ exception.message }')" )
 
 					withContext( Dispatchers.Main ) {
 						progressDialog.dismiss()

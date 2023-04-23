@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import androidx.work.WorkManager
 import com.android.volley.AuthFailureError
 import com.android.volley.ClientError
 import com.android.volley.NetworkError
@@ -31,6 +32,7 @@ import com.google.gson.JsonSyntaxException
 import com.viral32111.servermonitor.ErrorCode
 import com.viral32111.servermonitor.R
 import com.viral32111.servermonitor.Shared
+import com.viral32111.servermonitor.UpdateWorker
 import com.viral32111.servermonitor.adapter.DockerContainerAdapter
 import com.viral32111.servermonitor.adapter.DriveAdapter
 import com.viral32111.servermonitor.adapter.NetworkInterfaceAdapter
@@ -538,7 +540,11 @@ class ServerActivity : AppCompatActivity() {
 	// When the activity is closed...
 	override fun onStop() {
 		super.onStop()
-		Log.d(Shared.logTag, "Stopped server activity" )
+		Log.d( Shared.logTag, "Stopped server activity" )
+
+		// Remove all observers for the always on-going notification worker
+		WorkManager.getInstance( applicationContext ).getWorkInfosForUniqueWorkLiveData( UpdateWorker.NAME ).removeObservers( this )
+		Log.d( Shared.logTag, "Removed all observers for the always on-going notification worker" )
 
 		// Cancel all pending HTTP requests
 		//API.cancelQueue()

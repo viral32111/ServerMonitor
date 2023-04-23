@@ -9,6 +9,7 @@ import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.widget.doOnTextChanged
+import androidx.work.WorkManager
 import com.android.volley.AuthFailureError
 import com.android.volley.ClientError
 import com.android.volley.NetworkError
@@ -23,6 +24,7 @@ import com.google.android.material.textfield.TextInputLayout
 import com.viral32111.servermonitor.ErrorCode
 import com.viral32111.servermonitor.R
 import com.viral32111.servermonitor.Shared
+import com.viral32111.servermonitor.UpdateWorker
 import com.viral32111.servermonitor.helper.API
 import com.viral32111.servermonitor.helper.Settings
 import com.viral32111.servermonitor.helper.createProgressDialog
@@ -152,6 +154,10 @@ class SettingsActivity : AppCompatActivity() {
 		// Cancel all pending HTTP requests
 		//API.cancelQueue()
 
+		// Remove all observers for the always on-going notification worker
+		WorkManager.getInstance( applicationContext ).getWorkInfosForUniqueWorkLiveData( UpdateWorker.NAME ).removeObservers( this )
+		Log.d( Shared.logTag, "Removed all observers for the always on-going notification worker" )
+
 		// Enable input
 		enableInputs( true, Settings( getSharedPreferences( Shared.sharedPreferencesName, MODE_PRIVATE ) ).isSetup() )
 
@@ -160,14 +166,14 @@ class SettingsActivity : AppCompatActivity() {
 	// Show a confirmation when the back button is pressed - https://medium.com/tech-takeaways/how-to-migrate-the-deprecated-onbackpressed-function-e66bb29fa2fd
 	private val onBackPressed: OnBackPressedCallback = object : OnBackPressedCallback( true ) {
 		override fun handleOnBackPressed() {
-			Log.d(Shared.logTag, "System back button pressed" )
+			Log.d( Shared.logTag, "System back button pressed" )
 			confirmBack( Settings( getSharedPreferences( Shared.sharedPreferencesName, MODE_PRIVATE ) ) )
 		}
 	}
 
 	// Updates the UI with the settings from the persistent settings
 	private fun updateUIWithSettings( settings: Settings) {
-		Log.d(Shared.logTag, "Populating UI with settings from shared preferences..." )
+		Log.d( Shared.logTag, "Populating UI with settings from shared preferences..." )
 
 		// Update the values
 		automaticRefreshSwitch.isChecked = settings.automaticRefresh
@@ -223,7 +229,7 @@ class SettingsActivity : AppCompatActivity() {
 		if ( automaticRefreshInterval == null ) {
 			enableInputs( true, settings.isSetup() )
 			showBriefMessage( this, R.string.settingsToastIntervalEmpty )
-			Log.w(Shared.logTag, "Refresh interval is empty" )
+			Log.w( Shared.logTag, "Refresh interval is empty" )
 			return
 		}
 
@@ -231,7 +237,7 @@ class SettingsActivity : AppCompatActivity() {
 		if ( automaticRefreshInterval < 1 ) {
 			enableInputs( true, settings.isSetup() )
 			showBriefMessage( this, R.string.settingsToastIntervalInvalid )
-			Log.w(Shared.logTag, "Refresh interval '${ automaticRefreshInterval }' is too low" )
+			Log.w( Shared.logTag, "Refresh interval '${ automaticRefreshInterval }' is too low" )
 			return
 		}
 
@@ -242,7 +248,7 @@ class SettingsActivity : AppCompatActivity() {
 			if ( instanceUrl.isBlank() ) {
 				enableInputs( true, settings.isSetup() )
 				showBriefMessage( this, R.string.settingsToastInstanceUrlEmpty )
-				Log.w(Shared.logTag, "Instance URL is empty" )
+				Log.w( Shared.logTag, "Instance URL is empty" )
 				return
 			}
 
@@ -250,7 +256,7 @@ class SettingsActivity : AppCompatActivity() {
 			if ( !validateInstanceUrl( instanceUrl ) ) {
 				enableInputs( true, settings.isSetup() )
 				showBriefMessage( this, R.string.settingsToastInstanceUrlInvalid )
-				Log.w(Shared.logTag, "Instance URL '${ instanceUrl }' is invalid" )
+				Log.w( Shared.logTag, "Instance URL '${ instanceUrl }' is invalid" )
 				return
 			}
 
@@ -258,7 +264,7 @@ class SettingsActivity : AppCompatActivity() {
 			if ( credentialsUsername.isBlank() ) {
 				enableInputs( true, settings.isSetup() )
 				showBriefMessage( this, R.string.settingsToastCredentialsUsernameEmpty )
-				Log.w(Shared.logTag, "Username is empty" )
+				Log.w( Shared.logTag, "Username is empty" )
 				return
 			}
 
@@ -266,7 +272,7 @@ class SettingsActivity : AppCompatActivity() {
 			if ( !validateCredentialsUsername( credentialsUsername ) ) {
 				enableInputs( true, settings.isSetup() )
 				showBriefMessage( this, R.string.settingsToastCredentialsUsernameInvalid )
-				Log.w(Shared.logTag, "Username '${ credentialsUsername }' is invalid" )
+				Log.w( Shared.logTag, "Username '${ credentialsUsername }' is invalid" )
 				return
 			}
 
@@ -274,7 +280,7 @@ class SettingsActivity : AppCompatActivity() {
 			if ( credentialsPassword.isBlank() ) {
 				enableInputs( true, settings.isSetup() )
 				showBriefMessage( this, R.string.settingsToastCredentialsPasswordEmpty )
-				Log.w(Shared.logTag, "Password is empty" )
+				Log.w( Shared.logTag, "Password is empty" )
 				return
 			}
 
@@ -282,7 +288,7 @@ class SettingsActivity : AppCompatActivity() {
 			if ( !validateCredentialsPassword( credentialsPassword ) ) {
 				enableInputs( true, settings.isSetup() )
 				showBriefMessage( this, R.string.settingsToastCredentialsPasswordInvalid )
-				Log.w(Shared.logTag, "Password '${ credentialsPassword }' is invalid" )
+				Log.w( Shared.logTag, "Password '${ credentialsPassword }' is invalid" )
 				return
 			}
 
@@ -295,10 +301,7 @@ class SettingsActivity : AppCompatActivity() {
 
 			// Test if a connector instance is running on this URL
 			API.getHello(instanceUrl, credentialsUsername, credentialsPassword, { helloData ->
-				Log.d(
-					Shared.logTag,
-					"Instance '${instanceUrl}' is running! (Message: '${helloData?.get("message")?.asString}')"
-				)
+				Log.d( Shared.logTag, "Instance '${ instanceUrl }' is running! (Message: '${ helloData?.get("message")?.asString }')" )
 
 				// Hide progress dialog & enable input
 				progressDialog.dismiss()
@@ -319,72 +322,51 @@ class SettingsActivity : AppCompatActivity() {
 				successCallback.invoke()
 
 			}, { error, statusCode, errorCode ->
-				Log.e(
-					Shared.logTag,
-					"Instance '${instanceUrl}' is NOT running! (Error: '${error}', Status Code: '${statusCode}', Error Code: '${errorCode}')"
-				)
+				Log.e( Shared.logTag, "Instance '${instanceUrl}' is NOT running! (Error: '${error}', Status Code: '${statusCode}', Error Code: '${errorCode}')" )
 
 				// Hide progress dialog & enable input
 				progressDialog.dismiss()
-				enableInputs(true, settings.isSetup())
+				enableInputs( true, settings.isSetup() )
 
-				when (error) {
+				when ( error ) {
 
 					// Bad authentication
-					is AuthFailureError -> when (errorCode) {
-						ErrorCode.UnknownUser.code -> showBriefMessage(
-							this,
-							R.string.toastInstanceTestAuthenticationUnknownUser
-						)
-						ErrorCode.IncorrectPassword.code -> showBriefMessage(
-							this,
-							R.string.toastInstanceTestAuthenticationIncorrectPassword
-						)
-						else -> showBriefMessage(
-							this,
-							R.string.toastInstanceTestAuthenticationFailure
-						)
+					is AuthFailureError -> when ( errorCode ) {
+						ErrorCode.UnknownUser.code -> showBriefMessage( this, R.string.toastInstanceTestAuthenticationUnknownUser )
+						ErrorCode.IncorrectPassword.code -> showBriefMessage( this, R.string.toastInstanceTestAuthenticationIncorrectPassword )
+						else -> showBriefMessage( this, R.string.toastInstanceTestAuthenticationFailure )
 					}
 
 					// HTTP 4xx
-					is ClientError -> when (statusCode) {
-						404 -> showBriefMessage(this, R.string.toastInstanceTestNotFound)
-						else -> showBriefMessage(this, R.string.toastInstanceTestClientFailure)
+					is ClientError -> when ( statusCode ) {
+						404 -> showBriefMessage( this, R.string.toastInstanceTestNotFound )
+						else -> showBriefMessage( this, R.string.toastInstanceTestClientFailure )
 					}
 
 					// HTTP 5xx
-					is ServerError -> when (statusCode) {
-						502 -> showBriefMessage(this, R.string.toastInstanceTestUnavailable)
-						503 -> showBriefMessage(this, R.string.toastInstanceTestUnavailable)
-						504 -> showBriefMessage(this, R.string.toastInstanceTestUnavailable)
-						530 -> showBriefMessage(
-							this,
-							R.string.toastInstanceTestUnavailable
-						) // Cloudflare
-						else -> showBriefMessage(this, R.string.toastInstanceTestServerFailure)
+					is ServerError -> when ( statusCode ) {
+						502 -> showBriefMessage( this, R.string.toastInstanceTestUnavailable )
+						503 -> showBriefMessage( this, R.string.toastInstanceTestUnavailable )
+						504 -> showBriefMessage( this, R.string.toastInstanceTestUnavailable )
+						530 -> showBriefMessage( this, R.string.toastInstanceTestUnavailable ) // Cloudflare
+						else -> showBriefMessage( this, R.string.toastInstanceTestServerFailure )
 					}
 
 					// No Internet connection, malformed domain
-					is NoConnectionError -> showBriefMessage(
-						this,
-						R.string.toastInstanceTestNoConnection
-					)
-					is NetworkError -> showBriefMessage(
-						this,
-						R.string.toastInstanceTestNoConnection
-					)
+					is NoConnectionError -> showBriefMessage( this, R.string.toastInstanceTestNoConnection )
+					is NetworkError -> showBriefMessage( this, R.string.toastInstanceTestNoConnection )
 
 					// Connection timed out
-					is TimeoutError -> showBriefMessage(this, R.string.toastInstanceTestTimeout)
+					is TimeoutError -> showBriefMessage( this, R.string.toastInstanceTestTimeout )
 
 					// Couldn't parse as JSON
-					is ParseError -> showBriefMessage(this, R.string.toastInstanceTestParseFailure)
+					is ParseError -> showBriefMessage( this, R.string.toastInstanceTestParseFailure )
 
 					// ¯\_(ツ)_/¯
-					else -> showBriefMessage(this, R.string.toastInstanceTestFailure)
+					else -> showBriefMessage( this, R.string.toastInstanceTestFailure )
 
 				}
-			})
+			} )
 
 			// Show the progress dialog
 			progressDialog.show()

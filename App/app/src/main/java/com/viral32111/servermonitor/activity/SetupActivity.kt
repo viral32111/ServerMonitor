@@ -274,6 +274,10 @@ class SetupActivity : AppCompatActivity() {
 		// Cancel all pending HTTP requests
 		//API.cancelQueue()
 
+		// Remove all observers for the always on-going notification worker
+		WorkManager.getInstance( applicationContext ).getWorkInfosForUniqueWorkLiveData( UpdateWorker.NAME ).removeObservers( this )
+		Log.d( Shared.logTag, "Removed all observers for the always on-going notification worker" )
+
 		// Enable input
 		enableInputs( true )
 
@@ -521,11 +525,8 @@ class SetupActivity : AppCompatActivity() {
 		// Get our worker manager
 		val workerManager = WorkManager.getInstance( applicationContext )
 
-		// Remove all existing observers
-		//workerManager.getWorkInfosForUniqueWorkLiveData( UpdateWorker.NAME ).removeObservers( this )
-
 		// Observe updates on the worker for the rest of time - https://developer.android.com/guide/background/persistent/how-to/observe
-		// TODO: Only observe while application is open (i.e., register observation in onResume and remove in onPause)
+		// TODO: Only observe while application is open (i.e., register observation in onCreate and remove in onStop)
 		workerManager.getWorkInfoByIdLiveData( workerRequest.id ).observeForever { workInfo: WorkInfo? ->
 
 			// Do not continue if update information is somehow not given
