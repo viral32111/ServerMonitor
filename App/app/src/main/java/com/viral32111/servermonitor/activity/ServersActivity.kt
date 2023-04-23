@@ -382,8 +382,6 @@ class ServersActivity : AppCompatActivity() {
 		// Remove all observers for the always on-going notification worker
 		//WorkManager.getInstance( applicationContext ).getWorkInfosForUniqueWorkLiveData( UpdateWorker.NAME ).removeObservers( this )
 		//Log.d( Shared.logTag, "Removed all observers for the always on-going notification worker" )
-
-		// TODO: Remove always ongoing notification?
 	}
 
 	// Stop the automatic refresh countdown progress bar when the activity is changed/app is minimised
@@ -421,13 +419,6 @@ class ServersActivity : AppCompatActivity() {
 
 		// Show refreshing spinner
 		swipeRefreshLayout.isRefreshing = true
-
-		// TODO: Notification when issue arises...
-		/*
-		Notify.sendNotification( this, Notify.createTextNotification( this, Intent( this, SetupActivity::class.java ).apply {
-			flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-		}, Notify.Channel.TEST, R.string.notificationTestTitle, R.string.notificationTestText ) )
-		*/
 
 		val activity = this
 		CoroutineScope( Dispatchers.Main ).launch {

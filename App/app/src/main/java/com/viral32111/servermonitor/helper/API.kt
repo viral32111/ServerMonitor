@@ -187,9 +187,8 @@ class API {
 
 		}
 
-		// TODO: Update anything calling these to use the suspendables instead
+		// TODO: Update anything calling this to use the suspendables instead
 		fun getHello( baseUrl: String, username: String, password: String, successCallback: ( data: JsonObject? ) -> Unit, errorCallback: ( error: VolleyError, statusCode: Int?, errorCode: Int? ) -> Unit ) = sendRequest( Request.Method.GET, "${ baseUrl }/hello", username, password, successCallback, errorCallback )
-		fun getServers( baseUrl: String, username: String, password: String, successCallback: ( data: JsonObject? ) -> Unit, errorCallback: ( error: VolleyError, statusCode: Int?, errorCode: Int? ) -> Unit ) = sendRequest( Request.Method.GET, "${ baseUrl }/servers", username, password, successCallback, errorCallback )
 
 		/**
 		 * Fetches information about an instance (`GET /hello`).

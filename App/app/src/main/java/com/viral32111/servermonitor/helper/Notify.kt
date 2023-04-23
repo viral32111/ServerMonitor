@@ -76,12 +76,12 @@ class Notify {
 
 		fun createProgressNotification( context: Context, intent: Intent, channel: String, titleId: Int, textId: Int, color: Int, timestamp: Long = System.currentTimeMillis(), isOngoing: Boolean = true ) = Notification.Builder( context, channel )
 			.setSmallIcon( R.drawable.monitor_heart )
-			.setTicker( context.getString( titleId ) )
+			.setTicker( context.getString( titleId ) ) // For accessibility
 			.setContentTitle( context.getString( titleId ) )
 			.setContentText( context.getString( textId ) )
 			.setContentIntent( PendingIntent.getActivity( context, 0, intent, PendingIntent.FLAG_IMMUTABLE ) )
 			.setAutoCancel( false ) // Do not remove when pressed
-			.setProgress( 100, 0, true ) // TODO: Dynamically update progress
+			.setProgress( 100, 0, true )
 			.setOngoing( isOngoing )
 			.setColor( color )
 			.setShowWhen( true )
@@ -114,7 +114,7 @@ class Notify {
 
 		// Finds an active notification
 		fun findActiveNotification( notificationIdentifier: Int ): StatusBarNotification? {
-			for ( notification in notificationManager.activeNotifications ) Log.d( Shared.logTag, "Notification: ${ notification.id }" ) // TODO: Debugging
+			for ( notification in notificationManager.activeNotifications ) Log.d( Shared.logTag, "Notification: ${ notification.id }" )
 
 			return notificationManager.activeNotifications.find { notification -> notification.id == notificationIdentifier }
 		}

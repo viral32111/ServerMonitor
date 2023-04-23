@@ -202,6 +202,13 @@ class UpdateWorker(
 						setForeground( createAlwaysOngoingNotification( R.string.notificationOngoingTextGood, R.color.statusGood, serversActivityIntent ) )
 					}
 
+					// TODO: Additional notification when an issue arises...
+					/*
+					Notify.sendNotification( this, Notify.createTextNotification( this, Intent( this, SetupActivity::class.java ).apply {
+						flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+					}, Notify.Channel.TEST, R.string.notificationTestTitle, R.string.notificationTestText ) )
+					*/
+
 					// Update the worker's progress
 					setProgress( workDataOf( PROGRESS_ARE_THERE_ISSUES to areThereIssues ) )
 
@@ -212,11 +219,10 @@ class UpdateWorker(
 				} catch ( exception: Exception ) {
 					Log.e( Shared.logTag, "Exception inside always on-going notification worker! ('${ exception.cause }', '${ exception.message }')" )
 
-					// TODO: Update the always on-going notification with an error message instead of failure, depending on why it failed (e.g., API error vs device has no Internet connection)
-					// If the error is unrecoverable, disable ongoing mode so the user can swipe the notification away
+					// Update the always on-going notification with an error message - ongoing mode is disabled so the user can dismiss it
 					setForeground( createAlwaysOngoingNotification( R.string.notificationOngoingTextError, R.color.statusDead, serversActivityIntent, false ) )
 
-					// TODO: Or use Result.retry() so that the retry policy will automatically retry the worker?
+					// We failed, try again...
 					return@withContext Result.retry()
 
 					//return@withContext Result.failure( workDataOf( FAILURE_REASON to FAILURE_API_REQUEST_EXCEPTION ) )
