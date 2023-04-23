@@ -7,6 +7,13 @@ import android.widget.Button
 import android.widget.EditText
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
+import androidx.work.Constraints
+import androidx.work.Data
+import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
 import com.android.volley.AuthFailureError
 import com.android.volley.ClientError
 import com.android.volley.NetworkError
@@ -18,6 +25,7 @@ import com.google.android.material.appbar.MaterialToolbar
 import com.viral32111.servermonitor.ErrorCode
 import com.viral32111.servermonitor.R
 import com.viral32111.servermonitor.Shared
+import com.viral32111.servermonitor.UpdateWorker
 import com.viral32111.servermonitor.helper.API
 import com.viral32111.servermonitor.helper.Notify
 import com.viral32111.servermonitor.helper.Settings
@@ -36,13 +44,16 @@ class SetupActivity : AppCompatActivity() {
 	private lateinit var credentialsPasswordEditText: EditText
 	private lateinit var continueButton: Button
 
+	// Misc
+	private lateinit var settings: Settings
+
 	// Runs when the activity is created...
 	override fun onCreate( savedInstanceState: Bundle? ) {
 
 		// Display the layout
 		super.onCreate( savedInstanceState )
-		setContentView(R.layout.activity_setup)
-		Log.d(Shared.logTag, "Creating activity..." )
+		setContentView( R.layout.activity_setup )
+		Log.d( Shared.logTag, "Creating activity..." )
 
 		// Switch to the custom Material Toolbar
 		supportActionBar?.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
@@ -66,7 +77,7 @@ class SetupActivity : AppCompatActivity() {
 		Log.d( Shared.logTag, "Got UI controls" )
 
 		// Get the settings - https://developer.android.com/training/data-storage/shared-preferences
-		val settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, MODE_PRIVATE ) )
+		settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, MODE_PRIVATE ) )
 		Log.d( Shared.logTag, "Got settings ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
 
 		// Initialise our RESTful API class
@@ -80,17 +91,17 @@ class SetupActivity : AppCompatActivity() {
 
 			// Settings
 			if ( menuItem.title?.equals( getString(R.string.actionBarMenuSettings) ) == true ) {
-				Log.d(Shared.logTag, "Opening Settings activity..." )
+				Log.d( Shared.logTag, "Opening Settings activity..." )
 				startActivity( Intent( this, SettingsActivity::class.java ) )
 				overridePendingTransition(R.anim.slide_in_from_right, R.anim.slide_out_to_left)
 
 			// Logout
 			} else if ( menuItem.title?.equals( getString(R.string.actionBarMenuLogout) ) == true ) {
-				Log.w(Shared.logTag, "Logout from the setup activity?!" )
+				Log.w( Shared.logTag, "Logout from the setup activity?!" )
 
 			// About
 			} else if ( menuItem.title?.equals( getString(R.string.actionBarMenuAbout) ) == true ) {
-				Log.d(Shared.logTag, "Showing information about app dialog..." )
+				Log.d( Shared.logTag, "Showing information about app dialog..." )
 				showInformationDialog( this, R.string.dialogInformationAboutTitle, R.string.dialogInformationAboutMessage )
 			}
 
@@ -107,13 +118,13 @@ class SetupActivity : AppCompatActivity() {
 			val instanceUrl = instanceUrlEditText.text.toString()
 			val credentialsUsername = credentialsUsernameEditText.text.toString()
 			val credentialsPassword = credentialsPasswordEditText.text.toString()
-			Log.d(Shared.logTag, "Continue button pressed ('${ instanceUrl }', '${ credentialsUsername }', '${ credentialsPassword }')" )
+			Log.d( Shared.logTag, "Continue button pressed ('${ instanceUrl }', '${ credentialsUsername }', '${ credentialsPassword }')" )
 
 			// Do not continue if an instance URL wasn't provided
 			if ( instanceUrl.isBlank() ) {
 				enableInputs( true )
 				showBriefMessage( this, R.string.setupToastInstanceUrlEmpty )
-				Log.w(Shared.logTag, "Instance URL is empty" )
+				Log.w( Shared.logTag, "Instance URL is empty" )
 				return@setOnClickListener
 			}
 
@@ -121,7 +132,7 @@ class SetupActivity : AppCompatActivity() {
 			if ( !validateInstanceUrl( instanceUrl ) ) {
 				enableInputs( true )
 				showBriefMessage( this, R.string.setupToastInstanceUrlInvalid )
-				Log.w(Shared.logTag, "Instance URL is invalid" )
+				Log.w( Shared.logTag, "Instance URL is invalid" )
 				return@setOnClickListener
 			}
 
@@ -129,7 +140,7 @@ class SetupActivity : AppCompatActivity() {
 			if ( credentialsUsername.isBlank() ) {
 				enableInputs( true )
 				showBriefMessage( this, R.string.setupToastCredentialsUsernameEmpty )
-				Log.w(Shared.logTag, "Username is empty" )
+				Log.w( Shared.logTag, "Username is empty" )
 				return@setOnClickListener
 			}
 
@@ -137,7 +148,7 @@ class SetupActivity : AppCompatActivity() {
 			if ( !validateCredentialsUsername( credentialsUsername ) ) {
 				enableInputs( true )
 				showBriefMessage( this, R.string.setupToastCredentialsUsernameInvalid )
-				Log.w(Shared.logTag, "Username is invalid" )
+				Log.w( Shared.logTag, "Username is invalid" )
 				return@setOnClickListener
 			}
 
@@ -145,7 +156,7 @@ class SetupActivity : AppCompatActivity() {
 			if ( credentialsPassword.isBlank() ) {
 				enableInputs( true )
 				showBriefMessage( this, R.string.setupToastCredentialsPasswordEmpty )
-				Log.w(Shared.logTag, "Password is empty" )
+				Log.w( Shared.logTag, "Password is empty" )
 				return@setOnClickListener
 			}
 
@@ -153,7 +164,7 @@ class SetupActivity : AppCompatActivity() {
 			if ( !validateCredentialsPassword( credentialsPassword ) ) {
 				enableInputs( true )
 				showBriefMessage( this, R.string.setupToastCredentialsPasswordInvalid )
-				Log.w(Shared.logTag, "Password is invalid" )
+				Log.w( Shared.logTag, "Password is invalid" )
 				return@setOnClickListener
 			}
 
@@ -192,7 +203,7 @@ class SetupActivity : AppCompatActivity() {
 
 		// Are we already setup?
 		if ( settings.isSetup() ) {
-			Log.d(Shared.logTag, "We're already setup! ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
+			Log.d( Shared.logTag, "We're already setup! ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
 
 			// Populate the UI so the user doesn't have to retype everything if the instance test fails
 			instanceUrlEditText.setText( settings.instanceUrl )
@@ -215,7 +226,7 @@ class SetupActivity : AppCompatActivity() {
 				enableInputs( true ) // Enable input
 				switchActivity( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!! ) // Change to the next appropriate activity
 			}, {
-				Log.e(Shared.logTag, "We may already be setup, but the instance is offline?" )
+				Log.e( Shared.logTag, "We may already be setup, but the instance is offline?" )
 				progressDialog.dismiss() // Hide the progress dialog
 				enableInputs( true ) // Enable input
 			} )
@@ -262,78 +273,60 @@ class SetupActivity : AppCompatActivity() {
 	// Tests if a connector instance is running on a given URL
 	private fun testInstance( instanceUrl: String, credentialsUsername: String, credentialsPassword: String, successCallback: () -> Unit, errorCallback: () -> Unit ) {
 		API.getHello(instanceUrl, credentialsUsername, credentialsPassword, { helloData ->
-			val message = helloData?.get("message")?.asString
-			val user = helloData?.get("user")?.asString
-			val version = helloData?.get("version")?.asString
+			val message = helloData?.get( "message" )?.asString
+			val user = helloData?.get( "user" )?.asString
+			val version = helloData?.get( "version" )?.asString
 
-			val contact = helloData?.get("contact")?.asJsonObject
-			val contactName = contact?.get("name")?.asString
-			val contactMethods = contact?.get("methods")?.asJsonArray
+			val contact = helloData?.get( "contact" )?.asJsonObject
+			val contactName = contact?.get( "name" )?.asString
+			val contactMethods = contact?.get( "methods" )?.asJsonArray
 
-			Log.d(
-				Shared.logTag,
-				"Instance '${instanceUrl}' is running! (Version: '${version}', User: '${user}', Message: '${message}', Contact: '${contactName}', '${contactMethods}')"
-			)
+			Log.d( Shared.logTag, "Instance '${instanceUrl}' is running! (Version: '${ version }', User: '${ user }', Message: '${ message }', Contact: '${ contactName }', '${ contactMethods }')" )
 			successCallback.invoke() // Run the custom callback
 
 		}, { error, statusCode, errorCode ->
-			Log.e(
-				Shared.logTag,
-				"Instance '${instanceUrl}' is NOT running! (Error: '${error}', Status Code: '${statusCode}', Error Code: '${errorCode}')"
-			)
+			Log.e( Shared.logTag, "Instance '${ instanceUrl }' is NOT running! (Error: '${ error }', Status Code: '${ statusCode }', Error Code: '${ errorCode }')" )
 			errorCallback.invoke() // Run the custom callback
 
-			when (error) {
+			when ( error ) {
 
 				// Bad authentication
 				is AuthFailureError -> when (errorCode) {
-					ErrorCode.UnknownUser.code -> showBriefMessage(
-						this,
-						R.string.toastInstanceTestAuthenticationUnknownUser
-					)
-					ErrorCode.IncorrectPassword.code -> showBriefMessage(
-						this,
-						R.string.toastInstanceTestAuthenticationIncorrectPassword
-					)
-					else -> showBriefMessage(this, R.string.toastInstanceTestAuthenticationFailure)
+					ErrorCode.UnknownUser.code -> showBriefMessage( this, R.string.toastInstanceTestAuthenticationUnknownUser )
+					ErrorCode.IncorrectPassword.code -> showBriefMessage( this, R.string.toastInstanceTestAuthenticationIncorrectPassword )
+					else -> showBriefMessage( this, R.string.toastInstanceTestAuthenticationFailure )
 				}
 
 				// HTTP 4xx
-				is ClientError -> when (statusCode) {
-					404 -> showBriefMessage(this, R.string.toastInstanceTestNotFound)
-					else -> showBriefMessage(this, R.string.toastInstanceTestClientFailure)
+				is ClientError -> when ( statusCode ) {
+					404 -> showBriefMessage( this, R.string.toastInstanceTestNotFound )
+					else -> showBriefMessage( this, R.string.toastInstanceTestClientFailure )
 				}
 
 				// HTTP 5xx
-				is ServerError -> when (statusCode) {
-					502 -> showBriefMessage(this, R.string.toastInstanceTestUnavailable)
-					503 -> showBriefMessage(this, R.string.toastInstanceTestUnavailable)
-					504 -> showBriefMessage(this, R.string.toastInstanceTestUnavailable)
-					530 -> showBriefMessage(
-						this,
-						R.string.toastInstanceTestUnavailable
-					) // Cloudflare
-					else -> showBriefMessage(this, R.string.toastInstanceTestServerFailure)
+				is ServerError -> when ( statusCode ) {
+					502 -> showBriefMessage( this, R.string.toastInstanceTestUnavailable )
+					503 -> showBriefMessage( this, R.string.toastInstanceTestUnavailable )
+					504 -> showBriefMessage( this, R.string.toastInstanceTestUnavailable )
+					530 -> showBriefMessage( this, R.string.toastInstanceTestUnavailable ) // Cloudflare
+					else -> showBriefMessage( this, R.string.toastInstanceTestServerFailure )
 				}
 
 				// No Internet connection, malformed domain
-				is NoConnectionError -> showBriefMessage(
-					this,
-					R.string.toastInstanceTestNoConnection
-				)
-				is NetworkError -> showBriefMessage(this, R.string.toastInstanceTestNoConnection)
+				is NoConnectionError -> showBriefMessage( this, R.string.toastInstanceTestNoConnection )
+				is NetworkError -> showBriefMessage( this, R.string.toastInstanceTestNoConnection )
 
 				// Connection timed out
-				is TimeoutError -> showBriefMessage(this, R.string.toastInstanceTestTimeout)
+				is TimeoutError -> showBriefMessage( this, R.string.toastInstanceTestTimeout )
 
 				// Couldn't parse as JSON
-				is ParseError -> showBriefMessage(this, R.string.toastInstanceTestParseFailure)
+				is ParseError -> showBriefMessage( this, R.string.toastInstanceTestParseFailure )
 
 				// ¯\_(ツ)_/¯
-				else -> showBriefMessage(this, R.string.toastInstanceTestFailure)
+				else -> showBriefMessage( this, R.string.toastInstanceTestFailure )
 
 			}
-		})
+		} )
 	}
 
 	// Switches to the next activity
@@ -350,105 +343,166 @@ class SetupActivity : AppCompatActivity() {
 		}
 
 		// Fetch the list of servers
-		API.getServers(instanceUrl, credentialsUsername, credentialsPassword, { serversData ->
+		API.getServers( instanceUrl, credentialsUsername, credentialsPassword, { serversData ->
 
 			// Hide the progress dialog & enable input
 			progressDialog.dismiss()
-			enableInputs(true)
+			enableInputs( true )
 
 			// Get the array
-			val servers = serversData?.get("servers")?.asJsonArray
-			Log.d(
-				Shared.logTag,
-				"Got '${servers?.size()}' servers from API ('${servers.toString()}')"
-			)
+			val servers = serversData?.get( "servers" )?.asJsonArray
+			Log.d( Shared.logTag, "Got '${ servers?.size() }' servers from API ('${ servers.toString() }')" )
 
 			// Switch to the Servers activity if there's more than 1 server, otherwise switch to the Server activity
 			// NOTE: This will fallback to 2 servers, as that will show the Servers activity which is capable of displaying only 1 server
-			Log.d(Shared.logTag, "Switching to next activity...")
-			startActivity(
-				Intent(
-					this,
-					if ((servers?.size()
-							?: 2) > 1
-					) ServersActivity::class.java else ServerActivity::class.java
-				)
-			)
-			overridePendingTransition(R.anim.slide_in_from_right, R.anim.slide_out_to_left)
+			Log.d( Shared.logTag, "Switching to next activity...")
+			startActivity( Intent( this, if ( ( servers?.size() ?: 2 ) > 1 ) ServersActivity::class.java else ServerActivity::class.java ) )
+			overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
 
 			// Remove this activity from the back button history
 			finish()
 
 		}, { error, statusCode, errorCode ->
-			Log.e(
-				Shared.logTag,
-				"Failed to get servers from API due to '${error}' (Status Code: '${statusCode}', Error Code: '${errorCode}')"
-			)
+			Log.e( Shared.logTag, "Failed to get servers from API due to '${ error }' (Status Code: '${ statusCode }', Error Code: '${ errorCode }')" )
 
 			// Hide the progress dialog & enable input
 			progressDialog.dismiss()
-			enableInputs(true)
+			enableInputs( true )
 
-			when (error) {
+			when ( error ) {
 
 				// Bad authentication
-				is AuthFailureError -> when (errorCode) {
-					ErrorCode.UnknownUser.code -> showBriefMessage(
-						this,
-						R.string.setupToastServerCountAuthenticationUnknownUser
-					)
-					ErrorCode.IncorrectPassword.code -> showBriefMessage(
-						this,
-						R.string.setupToastServerCountAuthenticationIncorrectPassword
-					)
-					else -> showBriefMessage(
-						this,
-						R.string.setupToastServerCountAuthenticationFailure
-					)
+				is AuthFailureError -> when ( errorCode ) {
+					ErrorCode.UnknownUser.code -> showBriefMessage( this, R.string.setupToastServerCountAuthenticationUnknownUser )
+					ErrorCode.IncorrectPassword.code -> showBriefMessage( this, R.string.setupToastServerCountAuthenticationIncorrectPassword )
+					else -> showBriefMessage( this, R.string.setupToastServerCountAuthenticationFailure )
 				}
 
 				// HTTP 4xx
-				is ClientError -> when (statusCode) {
-					404 -> showBriefMessage(this, R.string.setupToastServerCountNotFound)
-					else -> showBriefMessage(this, R.string.setupToastServerCountClientFailure)
+				is ClientError -> when ( statusCode ) {
+					404 -> showBriefMessage( this, R.string.setupToastServerCountNotFound )
+					else -> showBriefMessage( this, R.string.setupToastServerCountClientFailure )
 				}
 
 				// HTTP 5xx
 				is ServerError -> when (statusCode) {
-					502 -> showBriefMessage(this, R.string.setupToastServerCountUnavailable)
-					503 -> showBriefMessage(this, R.string.setupToastServerCountUnavailable)
-					504 -> showBriefMessage(this, R.string.setupToastServerCountUnavailable)
-					530 -> showBriefMessage(
-						this,
-						R.string.setupToastServerCountUnavailable
-					) // Cloudflare
-					else -> showBriefMessage(this, R.string.setupToastServerCountServerFailure)
+					502 -> showBriefMessage( this, R.string.setupToastServerCountUnavailable )
+					503 -> showBriefMessage( this, R.string.setupToastServerCountUnavailable )
+					504 -> showBriefMessage( this, R.string.setupToastServerCountUnavailable )
+					530 -> showBriefMessage( this, R.string.setupToastServerCountUnavailable ) // Cloudflare
+					else -> showBriefMessage( this, R.string.setupToastServerCountServerFailure )
 				}
 
 				// No Internet connection, malformed domain
-				is NoConnectionError -> showBriefMessage(
-					this,
-					R.string.setupToastServerCountNoConnection
-				)
-				is NetworkError -> showBriefMessage(
-					this,
-					R.string.setupToastServerCountNoConnection
-				)
+				is NoConnectionError -> showBriefMessage( this, R.string.setupToastServerCountNoConnection )
+				is NetworkError -> showBriefMessage( this, R.string.setupToastServerCountNoConnection )
 
 				// Connection timed out
-				is TimeoutError -> showBriefMessage(this, R.string.setupToastServerCountTimeout)
+				is TimeoutError -> showBriefMessage( this, R.string.setupToastServerCountTimeout )
 
 				// Couldn't parse as JSON
-				is ParseError -> showBriefMessage(this, R.string.setupToastServerCountParseFailure)
+				is ParseError -> showBriefMessage( this, R.string.setupToastServerCountParseFailure )
 
 				// ¯\_(ツ)_/¯
-				else -> showBriefMessage(this, R.string.setupToastServerCountFailure)
+				else -> showBriefMessage( this, R.string.setupToastServerCountFailure )
 
 			}
-		})
+		} )
 
 		// Show the progress dialog
 		progressDialog.show()
+
+		// Setup the always on-going notification worker
+		if ( settings.notificationAlwaysOngoing ) setupAlwaysOngoingWorker()
+
+	}
+
+	// Sets up the coroutine worker for the always on-going notification - https://developer.android.com/guide/background/persistent/getting-started/define-work
+	private fun setupAlwaysOngoingWorker() {
+
+		// Get values from settings
+		val baseUrl = settings.instanceUrl
+		val credentialsUsername = settings.credentialsUsername
+		val credentialsPassword = settings.credentialsPassword
+		val automaticRefreshInterval = settings.automaticRefreshInterval
+
+		// Check if we're setup - settings.isSetup() doesn't work because the settings properties are non-constant variables and thus could change after this check
+		if ( baseUrl.isNullOrBlank() || credentialsUsername.isNullOrBlank() || credentialsPassword.isNullOrBlank() ) {
+			Log.e( Shared.logTag, "Cannot setup always on-going notification worker when not setup yet! ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
+		}
+
+		// Data to give to the worker - https://developer.android.com/guide/background/persistent/getting-started/define-work#input_output
+		val workerInputData = Data.Builder()
+			.putString( UpdateWorker.BASE_URL, baseUrl )
+			.putString( UpdateWorker.CREDENTIALS_USERNAME, credentialsUsername )
+			.putString( UpdateWorker.CREDENTIALS_PASSWORD, credentialsPassword )
+			.putInt( UpdateWorker.AUTOMATIC_REFRESH_INTERVAL, automaticRefreshInterval )
+			.build()
+
+		// Requirements for deferring the worker - https://developer.android.com/guide/background/persistent/getting-started/define-work#schedule_periodic_work
+		val workerConstraints = Constraints.Builder()
+			.setRequiredNetworkType( NetworkType.CONNECTED ) // Only run when connected to a network
+			.setRequiresBatteryNotLow( true ) // Do not run when battery is low
+			.setRequiresCharging( false ) // Doesn't matter if the device is charging
+			.setRequiresDeviceIdle( false ) // Doesn't matter if the device is idle
+			.setRequiresStorageNotLow( false ) // Doesn't matter if storage space is low
+			.build()
+
+		// Create the worker request - https://developer.android.com/guide/background/persistent/getting-started/define-work#schedule_one-time_work
+		val workerRequest = OneTimeWorkRequestBuilder<UpdateWorker>()
+			.setConstraints( workerConstraints )
+			.setInputData( workerInputData )
+			//.setInitialDelay( 5L, TimeUnit.SECONDS ) // Wait 5 seconds before starting
+			.build()
+
+		// Get our worker manager
+		val workerManager = WorkManager.getInstance( applicationContext )
+
+		// Remove all existing observers
+		//workerManager.getWorkInfosForUniqueWorkLiveData( UpdateWorker.NAME ).removeObservers( this )
+
+		// Observe updates on the worker for the rest of time - https://developer.android.com/guide/background/persistent/how-to/observe
+		workerManager.getWorkInfoByIdLiveData( workerRequest.id ).observeForever { workInfo: WorkInfo? ->
+
+			// Do not continue if update information is somehow not given
+			if ( workInfo == null ) {
+				Log.wtf( Shared.logTag, "Always on-going notification worker observed but WorkInfo is null?!" )
+				return@observeForever
+			}
+
+			// Get the progress value
+			val areThereIssues = workInfo.progress.getBoolean( UpdateWorker.PROGRESS_ARE_THERE_ISSUES, false )
+
+			when ( workInfo.state ) {
+
+				// When the worker finishes successfully...
+				WorkInfo.State.SUCCEEDED -> {
+					Log.i( Shared.logTag, "Always on-going notification worker finished with success (Issues: ${ areThereIssues })" )
+				}
+
+				// When the worker finishes erroneously...
+				WorkInfo.State.FAILED -> {
+					val failureReason = workInfo.outputData.getInt( UpdateWorker.FAILURE_REASON, -1 )
+					Log.e( Shared.logTag, "Always on-going notification worker finished with failure '${ failureReason }' (Issues: ${ areThereIssues })" )
+				}
+
+				// Some other state, or just a progress update
+				else -> {
+					Log.i( Shared.logTag, "Always on-going notification worker in state '${ workInfo.state }' (Issues: ${ areThereIssues })" )
+				}
+
+			}
+
+		}
+
+		// Observe all the always on-going notification workers for the rest of time
+		workerManager.getWorkInfosForUniqueWorkLiveData( UpdateWorker.NAME ).observeForever { workInfos: List<WorkInfo> ->
+			for ( workInfo in workInfos ) Log.wtf( Shared.logTag, "Worker '${ workInfo.id }' observed to be in state '${ workInfo.state }'" )
+		}
+
+		// Queue up the worker - https://developer.android.com/guide/background/persistent/how-to/manage-work
+		workerManager.enqueueUniqueWork( UpdateWorker.NAME, ExistingWorkPolicy.REPLACE, workerRequest )
+		Log.i( Shared.logTag, "Enqueued always on-going notification worker" )
 
 	}
 

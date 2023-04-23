@@ -4,6 +4,7 @@
 
 	<uses-permission android:name="android.permission.INTERNET"/>
 	<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+	<uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 
 	<application
 		android:allowBackup="true"
@@ -45,6 +46,14 @@
 				android:name="android.app.lib_name"
 				android:value="" />
 		</activity>
+
+		<!-- directBootAware prevents launching the worker before the user unlocks device after cold boot -->
+		<service
+			android:name="androidx.work.impl.foreground.SystemForegroundService"
+			android:foregroundServiceType="dataSync"
+			android:directBootAware="false"
+			tools:node="merge" />
+
 	</application>
 
 </manifest>

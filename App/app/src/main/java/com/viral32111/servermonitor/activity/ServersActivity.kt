@@ -42,7 +42,6 @@ class ServersActivity : AppCompatActivity() {
 	// Misc
 	private lateinit var progressBarAnimation: ProgressBarAnimation
 	private lateinit var settings: Settings
-	private lateinit var notificationIntent: Intent
 
 	// Contact information
 	private var contactName: String? = null
@@ -66,7 +65,7 @@ class ServersActivity : AppCompatActivity() {
 		val materialToolbar = supportActionBar?.customView?.findViewById<MaterialToolbar>( R.id.actionBarMaterialToolbar )
 		materialToolbar?.title = getString( R.string.serversActionBarTitle )
 		materialToolbar?.isTitleCentered = true
-		Log.d(Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered })" )
+		Log.d( Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered })" )
 
 		// Get all the UI
 		swipeRefreshLayout = findViewById( R.id.serversSwipeRefreshLayout )
@@ -77,17 +76,17 @@ class ServersActivity : AppCompatActivity() {
 
 		// Get the settings
 		settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, MODE_PRIVATE ) )
-		Log.d(Shared.logTag, "Got settings ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
+		Log.d( Shared.logTag, "Got settings ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
 
 		// When an item on the action bar menu is pressed...
 		materialToolbar?.setOnMenuItemClickListener { menuItem ->
 
 			// Settings
 			if ( menuItem.title?.equals( getString(R.string.actionBarMenuSettings) ) == true ) {
-				Log.d(Shared.logTag, "Opening Settings activity..." )
+				Log.d( Shared.logTag, "Opening Settings activity..." )
 
 				startActivity( Intent( this, SettingsActivity::class.java ) )
-				overridePendingTransition(R.anim.slide_in_from_right, R.anim.slide_out_to_left)
+				overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
 
 			// Logout
 			} else if ( menuItem.title?.equals( getString(R.string.actionBarMenuLogout) ) == true ) {
@@ -114,7 +113,7 @@ class ServersActivity : AppCompatActivity() {
 
 			// About
 			} else if ( menuItem.title?.equals( getString(R.string.actionBarMenuAbout) ) == true ) {
-				Log.d(Shared.logTag, "Showing information about app dialog..." )
+				Log.d( Shared.logTag, "Showing information about app dialog..." )
 
 				// Get the contact information, if it exists
 				val contactInformation = if ( !contactName.isNullOrBlank() && contactMethods != null ) "Contact for ${ contactName }:\n${ contactMethods!!.joinToString( "\n" ) }" else  ""
@@ -132,9 +131,9 @@ class ServersActivity : AppCompatActivity() {
 
 		// Return to the setup activity if we aren't setup yet
 		if ( !settings.isSetup() ) {
-			Log.d(Shared.logTag, "Not setup yet, returning to Setup activity..." )
+			Log.d( Shared.logTag, "Not setup yet, returning to Setup activity..." )
 			startActivity( Intent( this, SetupActivity::class.java ) )
-			overridePendingTransition(R.anim.slide_in_from_left, R.anim.slide_out_to_right)
+			overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
 			return
 		}
 
@@ -156,22 +155,17 @@ class ServersActivity : AppCompatActivity() {
 		// Store this activity for later use in showing snackbar messages
 		val activity = this
 
-		// Create the intent to this activity for the always ongoing notification to use
-		notificationIntent = Intent( this, this::class.java ).apply {
-			flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-		}
-
 		// Event listeners for the automatic refresh countdown progress bar animation - https://medium.com/android-news/handsome-codes-with-kotlin-6e183db4c7e5
 		progressBarAnimation.setAnimationListener( object : Animation.AnimationListener {
 
 			// When the animation starts...
 			override fun onAnimationStart( animation: Animation? ) {
-				Log.d(Shared.logTag, "Automatic refresh countdown progress bar animation started" )
+				Log.d( Shared.logTag, "Automatic refresh countdown progress bar animation started" )
 			}
 
 			// When the animation finishes or is manually cleared...
 			override fun onAnimationEnd( animation: Animation? ) {
-				Log.d(Shared.logTag, "Automatic refresh countdown progress bar animation ended (${ animation?.hasEnded() }, ${ animation?.hasStarted() }, ${ refreshProgressBar.progress }, ${ refreshProgressBar.isAnimating })" )
+				Log.d( Shared.logTag, "Automatic refresh countdown progress bar animation ended (${ animation?.hasEnded() }, ${ animation?.hasStarted() }, ${ refreshProgressBar.progress }, ${ refreshProgressBar.isAnimating })" )
 
 				// Don't refresh if we've been manually cleared
 				if ( refreshProgressBar.progress == 0 ) return
@@ -371,71 +365,6 @@ class ServersActivity : AppCompatActivity() {
 			}
 		}
 
-		// https://developer.android.com/guide/background/persistent/getting-started/define-work
-		// https://developer.android.com/guide/background/persistent/how-to/manage-work
-		// https://developer.android.com/guide/background/persistent/how-to/long-running
-
-		// Data to give to the worker - https://developer.android.com/guide/background/persistent/getting-started/define-work#input_output
-		val workerInputData = Data.Builder()
-			.putString( UpdateWorker.BASE_URL, settings.instanceUrl!! )
-			.putString( UpdateWorker.CREDENTIALS_USERNAME, settings.credentialsUsername!! )
-			.putString( UpdateWorker.CREDENTIALS_PASSWORD, settings.credentialsPassword!! )
-			.build()
-
-		// Requirements for deferring the worker - https://developer.android.com/guide/background/persistent/getting-started/define-work#schedule_periodic_work
-		val workerConstraints = Constraints.Builder()
-			.setRequiredNetworkType( NetworkType.CONNECTED ) // Only run when connected to a network
-			.setRequiresBatteryNotLow( true ) // Do not run when battery is low
-			.setRequiresCharging( false ) // Doesn't matter if the device is charging
-			.setRequiresDeviceIdle( false ) // Doesn't matter if the device is idle
-			.setRequiresStorageNotLow( false ) // Doesn't matter if storage space is low
-			.build()
-
-		// Create the worker request - https://developer.android.com/guide/background/persistent/getting-started/define-work#schedule_one-time_work
-		val workerRequest = OneTimeWorkRequestBuilder<UpdateWorker>()
-			.setConstraints( workerConstraints )
-			.setInputData( workerInputData )
-			.setInitialDelay( 5L, TimeUnit.SECONDS ) // Wait 5 seconds before starting
-			.build()
-
-		// Register observable for the worker - https://developer.android.com/guide/background/persistent/how-to/observe
-		WorkManager.getInstance( applicationContext ).getWorkInfoByIdLiveData( workerRequest.id ).observe( this ) { workInfo: WorkInfo? ->
-
-			// Do not continue if information is not passed
-			if ( workInfo == null ) {
-				Log.wtf( Shared.logTag, "Update worker observed but WorkInfo is null?!" )
-				return@observe
-			}
-
-			// Attempt to get the value of the progress
-			val progressValue = workInfo.progress.getInt( UpdateWorker.Progress, -1 )
-
-			when ( workInfo.state ) {
-
-				// When the worker finishes successfully...
-				WorkInfo.State.SUCCEEDED -> {
-					val serverCount = workInfo.outputData.getInt( UpdateWorker.SUCCESS_SERVERS_COUNT, -1 )
-					Log.d( Shared.logTag, "Update worker finished successfully (Progress: $progressValue, Server Count: $serverCount)" )
-				}
-
-				// When the worker finishes erroneously...
-				WorkInfo.State.FAILED -> {
-					val failureReason = workInfo.outputData.getInt( UpdateWorker.FAILURE_REASON, -1 )
-					Log.e( Shared.logTag, "Update worker finished with failure '$failureReason' (Progress: $progressValue)" )
-				}
-
-				else -> {
-					Log.d( Shared.logTag, "Update worker changed to state ${ workInfo.state } (Progress: $progressValue)" )
-				}
-
-			}
-
-		}
-
-		// Queue up the worker
-		WorkManager.getInstance( applicationContext ).enqueue( workerRequest )
-		Log.d( Shared.logTag, "Update worker enqueued" )
-
 	}
 
 	// When the activity is closed...
@@ -489,11 +418,6 @@ class ServersActivity : AppCompatActivity() {
 			flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
 		}, Notify.Channel.TEST, R.string.notificationTestTitle, R.string.notificationTestText ) )
 		*/
-
-		// Create/update the always ongoing notification
-		if ( settings.notificationAlwaysOngoing ) {
-
-		}
 
 		val activity = this
 		CoroutineScope( Dispatchers.Main ).launch {
@@ -665,18 +589,6 @@ class ServersActivity : AppCompatActivity() {
 
 		// TODO: Check if there have been any issues with the servers
 		//servers.any { server -> server.areThereIssues() }...
-
-		// Create/update the always ongoing notification
-		// TODO: Move to long-running foreground worker
-		if ( settings.notificationAlwaysOngoing ) {
-			Notify.showNotification( this, Notify.createProgressNotification(
-				this, notificationIntent, Notify.CHANNEL_ALWAYS_ONGOING,
-				R.string.notificationOngoingTitle,
-				R.string.notificationOngoingTextGood,
-				getColor( R.color.statusGood )
-			), Notify.IDENTIFIER_ALWAYS_ONGOING )
-			Log.d( Shared.logTag, "Created/updated always ongoing notification (${ Notify.IDENTIFIER_ALWAYS_ONGOING })" )
-		}
 
 		// Set the overall status
 		statusTitleTextView.text = getString( R.string.serversTextViewStatusTitleGood )

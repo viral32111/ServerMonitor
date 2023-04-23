@@ -64,7 +64,7 @@ class Notify {
 
 		// Creates a simple notification using the builder that opens an activity when pressed
 		fun createTextNotification( context: Context, intent: Intent, channel: String, titleId: Int, textId: Int, color: Int, timestamp: Long = System.currentTimeMillis() ) = Notification.Builder( context, channel )
-			.setSmallIcon( R.drawable.bolt ) // TODO: Use a better icon
+			.setSmallIcon( R.drawable.monitor_heart )
 			.setContentTitle( context.getString( titleId ) )
 			.setContentText( context.getString( textId ) )
 			.setContentIntent( PendingIntent.getActivity( context, 0, intent, PendingIntent.FLAG_IMMUTABLE ) )
@@ -74,14 +74,15 @@ class Notify {
 			.setWhen( timestamp )
 			.build()
 
-		fun createProgressNotification( context: Context, intent: Intent, channel: String, titleId: Int, textId: Int, color: Int, timestamp: Long = System.currentTimeMillis() ) = Notification.Builder( context, channel )
-			.setSmallIcon( R.drawable.bolt ) // TODO: Use a better icon
+		fun createProgressNotification( context: Context, intent: Intent, channel: String, titleId: Int, textId: Int, color: Int, timestamp: Long = System.currentTimeMillis(), isOngoing: Boolean = true ) = Notification.Builder( context, channel )
+			.setSmallIcon( R.drawable.monitor_heart )
+			.setTicker( context.getString( titleId ) )
 			.setContentTitle( context.getString( titleId ) )
 			.setContentText( context.getString( textId ) )
 			.setContentIntent( PendingIntent.getActivity( context, 0, intent, PendingIntent.FLAG_IMMUTABLE ) )
 			.setAutoCancel( false ) // Do not remove when pressed
 			.setProgress( 100, 0, true ) // TODO: Dynamically update progress
-			.setOngoing( true )
+			.setOngoing( isOngoing )
 			.setColor( color )
 			.setShowWhen( true )
 			.setWhen( timestamp )

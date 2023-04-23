@@ -235,6 +235,8 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 
 	// Checks if there are any issues - processor usage/temp too high, memory/swap usage too high - and all data sub-classes
 	fun areThereIssues(): Boolean {
+		if ( !this.isOnline() ) return false
+
 		val memoryTotalBytes = this.getMemoryTotal()
 		val memoryFreeBytes = this.getMemoryFree()
 

@@ -25,9 +25,7 @@ class Settings( private val sharedPreferences: SharedPreferences ) {
 	}
 
 	// Checks if we are setup yet
-	fun isSetup(): Boolean {
-		return !instanceUrl.isNullOrBlank() && !credentialsUsername.isNullOrBlank() || !credentialsPassword.isNullOrBlank()
-	}
+	fun isSetup() = !instanceUrl.isNullOrBlank() && !credentialsUsername.isNullOrBlank() && !credentialsPassword.isNullOrBlank()
 
 	// Save the values to shared preferences - https://developer.android.com/training/data-storage/shared-preferences#WriteSharedPreference
 	fun save() {
