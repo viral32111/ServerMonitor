@@ -110,7 +110,7 @@ class SettingsActivity : AppCompatActivity() {
 		saveButton.setOnClickListener {
 			saveSettings( settings ) {
 				finish()
-				overridePendingTransition(R.anim.slide_in_from_left, R.anim.slide_out_to_right)
+				overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
 			}
 		}
 
@@ -120,10 +120,14 @@ class SettingsActivity : AppCompatActivity() {
 			automaticRefreshIntervalEditText.isEnabled = isChecked
 		}
 
+		// Disable notification when issue arises when always on-going notification is switched off
+		notificationsAlwaysOngoingSwitch.setOnCheckedChangeListener { _, isChecked ->
+			notificationsWhenIssueArisesSwitch.isEnabled = isChecked
+			if ( !isChecked ) notificationsWhenIssueArisesSwitch.isChecked = false
+		}
+
 		// Enable the back button on the toolbar
-		materialToolbar?.navigationIcon = AppCompatResources.getDrawable( this,
-			R.drawable.arrow_back
-		)
+		materialToolbar?.navigationIcon = AppCompatResources.getDrawable( this, R.drawable.arrow_back )
 		materialToolbar?.setNavigationOnClickListener {
 			Log.d( Shared.logTag, "Navigation back button pressed" )
 			confirmBack( settings )
@@ -135,10 +139,11 @@ class SettingsActivity : AppCompatActivity() {
 		// Show error when interval is not a number, or less than 1
 		automaticRefreshIntervalEditText.doOnTextChanged { text, _, _, _ ->
 			val value = text.toString().toIntOrNull()
+
 			if ( value == null ) {
-				automaticRefreshIntervalEditText.error = getString(R.string.settingsToastIntervalEmpty)
+				automaticRefreshIntervalEditText.error = getString( R.string.settingsToastIntervalEmpty )
 			} else if ( value < 1 ) {
-				automaticRefreshIntervalEditText.error = getString(R.string.settingsToastIntervalInvalid)
+				automaticRefreshIntervalEditText.error = getString( R.string.settingsToastIntervalInvalid )
 			} else {
 				automaticRefreshIntervalEditText.error = null
 			}
@@ -176,7 +181,7 @@ class SettingsActivity : AppCompatActivity() {
 	}
 
 	// Updates the UI with the settings from the persistent settings
-	private fun updateUIWithSettings( settings: Settings) {
+	private fun updateUIWithSettings( settings: Settings ) {
 		Log.d( Shared.logTag, "Populating UI with settings from shared preferences..." )
 
 		// Update the values
@@ -189,19 +194,19 @@ class SettingsActivity : AppCompatActivity() {
 		// Enable instance URL & credentials if setup is finished
 		if ( !settings.instanceUrl.isNullOrBlank() ) {
 			instanceUrlEditText.setText( settings.instanceUrl )
-			instanceUrlTextInputLayout.hint = getString(R.string.settingsTextInputLayoutInstanceUrlHint)
+			instanceUrlTextInputLayout.hint = getString( R.string.settingsTextInputLayoutInstanceUrlHint )
 			instanceUrlEditText.isEnabled = true
 			instanceUrlTextInputLayout.isEnabled = true
 		}
 		if ( !settings.credentialsUsername.isNullOrBlank() ) {
 			credentialsUsernameEditText.setText( settings.credentialsUsername )
-			credentialsUsernameInputTextLayout.hint = getString(R.string.settingsTextInputLayoutCredentialsUsernameHint)
+			credentialsUsernameInputTextLayout.hint = getString( R.string.settingsTextInputLayoutCredentialsUsernameHint )
 			credentialsUsernameEditText.isEnabled = true
 			credentialsUsernameInputTextLayout.isEnabled = true
 		}
 		if ( !settings.credentialsPassword.isNullOrBlank() ) {
 			credentialsPasswordEditText.setText( settings.credentialsPassword )
-			credentialsPasswordInputTextLayout.hint = getString(R.string.settingsTextInputLayoutCredentialsPasswordHint)
+			credentialsPasswordInputTextLayout.hint = getString( R.string.settingsTextInputLayoutCredentialsPasswordHint )
 			credentialsPasswordEditText.isEnabled = true
 			credentialsPasswordInputTextLayout.isEnabled = true
 		}
@@ -209,6 +214,10 @@ class SettingsActivity : AppCompatActivity() {
 		// Disable interval input if automatic refresh is switched off
 		automaticRefreshIntervalTextInputLayout.isEnabled = automaticRefreshSwitch.isChecked
 		automaticRefreshIntervalEditText.isEnabled = automaticRefreshSwitch.isChecked
+
+		// Disable notification when issue arises if always on-going notification is switched off
+		notificationsWhenIssueArisesSwitch.isEnabled = notificationsAlwaysOngoingSwitch.isChecked
+		if ( !notificationsAlwaysOngoingSwitch.isChecked ) notificationsWhenIssueArisesSwitch.isChecked = false
 
 	}
 
@@ -417,8 +426,11 @@ class SettingsActivity : AppCompatActivity() {
 		//themeTextInputLayout.isEnabled = false // TODO: Don't enable this until dark theme is implemented
 		//themeAutoCompleteTextView.isEnabled = false // TODO: Don't enable this until dark theme is implemented
 		notificationsAlwaysOngoingSwitch.isEnabled = shouldEnable
-		notificationsWhenIssueArisesSwitch.isEnabled = shouldEnable
+		notificationsWhenIssueArisesSwitch.isEnabled = shouldEnable && notificationsAlwaysOngoingSwitch.isChecked
 		saveButton.isEnabled = shouldEnable
+
+		// Disable notification when issue arises if always on-going notification is switched off
+		if ( !notificationsAlwaysOngoingSwitch.isChecked ) notificationsWhenIssueArisesSwitch.isChecked = false
 
 	}
 

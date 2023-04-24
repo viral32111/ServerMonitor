@@ -371,10 +371,14 @@ class SetupActivity : AppCompatActivity() {
 						progressDialog.dismiss()
 						enableInputs( true )
 
+						// Do not continue if no servers are being scraped
 						if ( servers.isEmpty() ) {
 							Log.w( Shared.logTag, "No servers available!" )
 							showBriefMessage( activity, R.string.setupToastServerCountEmpty )
 						}
+
+						// Setup the always on-going notification worker - https://developer.android.com/guide/background/persistent/getting-started/define-work
+						UpdateWorker.setup( applicationContext, activity, baseUrl, credentialsUsername, credentialsPassword, settings.automaticRefreshInterval, shouldEnqueue = settings.notificationAlwaysOngoing )
 
 						// Switch to the Servers activity if there's more than 1 server, otherwise switch to the Server activity
 						if ( servers.count() > 1 ) {
@@ -469,17 +473,6 @@ class SetupActivity : AppCompatActivity() {
 
 		// Show the progress dialog
 		progressDialog.show()
-
-		/******************************************************/
-
-		// Check if we're setup - settings.isSetup() doesn't work because the settings properties are non-constant variables and thus could change after this check
-		if ( baseUrl.isNullOrBlank() || credentialsUsername.isNullOrBlank() || credentialsPassword.isNullOrBlank() ) {
-			Log.e( Shared.logTag, "Cannot setup always on-going notification worker when not setup yet! ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
-			return
-		}
-
-		// Setup the always on-going notification worker - https://developer.android.com/guide/background/persistent/getting-started/define-work
-		UpdateWorker.setup( applicationContext, this, baseUrl, credentialsUsername, credentialsPassword, settings.automaticRefreshInterval, shouldEnqueue = settings.notificationAlwaysOngoing )
 
 	}
 
