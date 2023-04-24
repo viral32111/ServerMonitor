@@ -202,12 +202,17 @@ class UpdateWorker(
 						setForeground( createAlwaysOngoingNotification( R.string.notificationOngoingTextGood, R.color.statusGood, serversActivityIntent ) )
 					}
 
-					// TODO: Additional notification when an issue arises...
-					/*
-					Notify.sendNotification( this, Notify.createTextNotification( this, Intent( this, SetupActivity::class.java ).apply {
-						flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-					}, Notify.Channel.TEST, R.string.notificationTestTitle, R.string.notificationTestText ) )
-					*/
+					// Additional notification for this issue
+					if ( areThereIssues ) withContext( Dispatchers.Main ) {
+						Notify.createTextNotification(
+							applicationContext,
+							Intent( applicationContext, ServersActivity::class.java ),
+							Notify.CHANNEL_WHEN_ISSUE_ARISES,
+							R.string.notificationIssueTitle,
+							R.string.notificationIssueText,
+							applicationContext.getColor( R.color.statusBad )
+						)
+					}
 
 					// Update the worker's progress
 					setProgress( workDataOf( PROGRESS_ARE_THERE_ISSUES to areThereIssues ) )

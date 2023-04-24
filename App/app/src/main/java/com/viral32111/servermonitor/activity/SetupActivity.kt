@@ -277,7 +277,7 @@ class SetupActivity : AppCompatActivity() {
 
 	// Tests if a connector instance is running on a given URL
 	private fun testInstance( instanceUrl: String, credentialsUsername: String, credentialsPassword: String, successCallback: () -> Unit, errorCallback: () -> Unit ) {
-		API.getHello(instanceUrl, credentialsUsername, credentialsPassword, { helloData ->
+		API.getHello( instanceUrl, credentialsUsername, credentialsPassword, { helloData ->
 			val message = helloData?.get( "message" )?.asString
 			val user = helloData?.get( "user" )?.asString
 			val version = helloData?.get( "version" )?.asString
@@ -286,7 +286,7 @@ class SetupActivity : AppCompatActivity() {
 			val contactName = contact?.get( "name" )?.asString
 			val contactMethods = contact?.get( "methods" )?.asJsonArray
 
-			Log.d( Shared.logTag, "Instance '${instanceUrl}' is running! (Version: '${ version }', User: '${ user }', Message: '${ message }', Contact: '${ contactName }', '${ contactMethods }')" )
+			Log.d( Shared.logTag, "Instance '${ instanceUrl }' is running! (Version: '${ version }', User: '${ user }', Message: '${ message }', Contact: '${ contactName }', '${ contactMethods }')" )
 			successCallback.invoke() // Run the custom callback
 
 		}, { error, statusCode, errorCode ->
@@ -335,7 +335,7 @@ class SetupActivity : AppCompatActivity() {
 	}
 
 	// Switches to the next activity
-	private fun switchActivity( instanceUrl: String, credentialsUsername: String, credentialsPassword: String ) {
+	private fun switchActivity( baseUrl: String, credentialsUsername: String, credentialsPassword: String ) {
 
 		// Disable input
 		enableInputs( false )
@@ -354,7 +354,7 @@ class SetupActivity : AppCompatActivity() {
 
 				// Attempt to fetch the list of servers
 				try {
-					val servers = API.getServersImproved( instanceUrl, credentialsUsername, credentialsPassword )
+					val servers = API.getServersImproved( baseUrl, credentialsUsername, credentialsPassword )
 					Log.d( Shared.logTag, "Fetched '${ servers?.count() }' servers from API (${ servers?.joinToString( ", " ) { server -> server.identifier } }). Switching to next activity..." )
 
 					// Do not continue if we somehow got nothing from the API
@@ -470,19 +470,7 @@ class SetupActivity : AppCompatActivity() {
 		// Show the progress dialog
 		progressDialog.show()
 
-		// Setup the always on-going notification worker
-		setupAlwaysOngoingWorker( settings.notificationAlwaysOngoing )
-
-	}
-
-	// Sets up the coroutine worker for the always on-going notification - https://developer.android.com/guide/background/persistent/getting-started/define-work
-	private fun setupAlwaysOngoingWorker( shouldEnqueue: Boolean ) {
-
-		// Get values from settings
-		val baseUrl = settings.instanceUrl
-		val credentialsUsername = settings.credentialsUsername
-		val credentialsPassword = settings.credentialsPassword
-		val automaticRefreshInterval = settings.automaticRefreshInterval
+		/******************************************************/
 
 		// Check if we're setup - settings.isSetup() doesn't work because the settings properties are non-constant variables and thus could change after this check
 		if ( baseUrl.isNullOrBlank() || credentialsUsername.isNullOrBlank() || credentialsPassword.isNullOrBlank() ) {
@@ -490,88 +478,8 @@ class SetupActivity : AppCompatActivity() {
 			return
 		}
 
-		UpdateWorker.setup( applicationContext, this, baseUrl, credentialsUsername, credentialsPassword, automaticRefreshInterval, shouldEnqueue = shouldEnqueue )
-
-		/*
-		// Data to give to the worker - https://developer.android.com/guide/background/persistent/getting-started/define-work#input_output
-		val workerInputData = Data.Builder()
-			.putString( UpdateWorker.BASE_URL, baseUrl )
-			.putString( UpdateWorker.CREDENTIALS_USERNAME, credentialsUsername )
-			.putString( UpdateWorker.CREDENTIALS_PASSWORD, credentialsPassword )
-			.putInt( UpdateWorker.AUTOMATIC_REFRESH_INTERVAL, automaticRefreshInterval )
-			.build()
-
-		// Requirements for deferring the worker - https://developer.android.com/guide/background/persistent/getting-started/define-work#schedule_periodic_work
-		val workerConstraints = Constraints.Builder()
-			.setRequiredNetworkType( NetworkType.CONNECTED ) // Only run when connected to a network
-			.setRequiresBatteryNotLow( true ) // Do not run when battery is low
-			.setRequiresCharging( false ) // Doesn't matter if the device is charging
-			.setRequiresDeviceIdle( false ) // Doesn't matter if the device is idle
-			.setRequiresStorageNotLow( false ) // Doesn't matter if storage space is low
-			.build()
-
-		// Create the worker request - https://developer.android.com/guide/background/persistent/getting-started/define-work#schedule_one-time_work
-		val workerRequest = OneTimeWorkRequestBuilder<UpdateWorker>()
-			.setConstraints( workerConstraints )
-			.setInputData( workerInputData )
-			//.setInitialDelay( 5L, TimeUnit.SECONDS ) // Wait 5 seconds before starting
-			.setBackoffCriteria( BackoffPolicy.LINEAR, 5L, TimeUnit.SECONDS ) // Retry on failure after 5 seconds
-			.build()
-
-		// Get our worker manager
-		val workerManager = WorkManager.getInstance( applicationContext )
-
-		// Observe updates on the worker for the rest of time - https://developer.android.com/guide/background/persistent/how-to/observe
-		// TODO: Only observe while application is open (i.e., register observation in onCreate and remove in onStop)
-		workerManager.getWorkInfoByIdLiveData( workerRequest.id ).observeForever { workInfo: WorkInfo? ->
-
-			// Do not continue if update information is somehow not given
-			if ( workInfo == null ) {
-				Log.wtf( Shared.logTag, "Always on-going notification worker observed but WorkInfo is null?!" )
-				return@observeForever
-			}
-
-			// Get the progress value
-			val areThereIssues = workInfo.progress.getBoolean( UpdateWorker.PROGRESS_ARE_THERE_ISSUES, false )
-
-			when ( workInfo.state ) {
-
-				// When the worker finishes successfully...
-				WorkInfo.State.SUCCEEDED -> {
-					Log.d( Shared.logTag, "Always on-going notification worker finished with success (Issues: ${ areThereIssues })" )
-				}
-
-				// When the worker finishes erroneously...
-				WorkInfo.State.FAILED -> {
-					val failureReason = workInfo.outputData.getInt( UpdateWorker.FAILURE_REASON, -1 )
-					Log.e( Shared.logTag, "Always on-going notification worker finished with failure '${ failureReason }' (Issues: ${ areThereIssues })" )
-				}
-
-				// Some other state, or just a progress update
-				else -> {
-					Log.d( Shared.logTag, "Always on-going notification worker in state '${ workInfo.state }' (Issues: ${ areThereIssues })" )
-				}
-
-			}
-
-		}
-
-		// Observe all the always on-going notification workers for the rest of time
-		workerManager.getWorkInfosForUniqueWorkLiveData( UpdateWorker.NAME ).observeForever { workInfos: List<WorkInfo> ->
-			for ( workInfo in workInfos ) Log.wtf( Shared.logTag, "Worker '${ workInfo.id }' observed to be in state '${ workInfo.state }'" )
-		}
-
-		// Cancel all existing workers - This is needed as a worker is automatically created on launch due to the service in the manifest
-		workerManager.cancelAllWork()
-
-		// Queue up the worker - https://developer.android.com/guide/background/persistent/how-to/manage-work
-		if ( shouldEnqueue ) {
-			workerManager.enqueueUniqueWork( UpdateWorker.NAME, ExistingWorkPolicy.REPLACE, workerRequest )
-			Log.d( Shared.logTag, "Enqueued always on-going notification worker" )
-		} else {
-			Log.d( Shared.logTag, "Skipped enqueueing always on-going notification worker" )
-		}
-		*/
+		// Setup the always on-going notification worker - https://developer.android.com/guide/background/persistent/getting-started/define-work
+		UpdateWorker.setup( applicationContext, this, baseUrl, credentialsUsername, credentialsPassword, settings.automaticRefreshInterval, shouldEnqueue = settings.notificationAlwaysOngoing )
 
 	}
 

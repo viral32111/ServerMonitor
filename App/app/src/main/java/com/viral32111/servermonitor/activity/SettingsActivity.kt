@@ -213,8 +213,8 @@ class SettingsActivity : AppCompatActivity() {
 	}
 
 	// Saves the values to the persistent settings
-	private fun saveSettings(settings: Settings, successCallback: () -> Unit ) {
-		Log.d(Shared.logTag, "Saving settings to shared preferences..." )
+	private fun saveSettings( settings: Settings, successCallback: () -> Unit ) {
+		Log.d( Shared.logTag, "Saving settings to shared preferences..." )
 
 		// Disable input
 		enableInputs( false, settings.isSetup() )
@@ -304,12 +304,12 @@ class SettingsActivity : AppCompatActivity() {
 			}
 
 			// Test if a connector instance is running on this URL
-			API.getHello(instanceUrl, credentialsUsername, credentialsPassword, { helloData ->
-				Log.d( Shared.logTag, "Instance '${ instanceUrl }' is running! (Message: '${ helloData?.get("message")?.asString }')" )
+			API.getHello( instanceUrl, credentialsUsername, credentialsPassword, { helloData ->
+				Log.d( Shared.logTag, "Instance '${ instanceUrl }' is running! (Message: '${ helloData?.get( "message" )?.asString }')" )
 
 				// Hide progress dialog & enable input
 				progressDialog.dismiss()
-				enableInputs(true, settings.isSetup())
+				enableInputs( true, settings.isSetup() )
 
 				// Update settings with these values
 				settings.instanceUrl = instanceUrl
@@ -326,7 +326,7 @@ class SettingsActivity : AppCompatActivity() {
 				successCallback.invoke()
 
 			}, { error, statusCode, errorCode ->
-				Log.e( Shared.logTag, "Instance '${instanceUrl}' is NOT running! (Error: '${error}', Status Code: '${statusCode}', Error Code: '${errorCode}')" )
+				Log.e( Shared.logTag, "Instance '${instanceUrl}' is NOT running! (Error: '${ error }', Status Code: '${ statusCode }', Error Code: '${ errorCode }')" )
 
 				// Hide progress dialog & enable input
 				progressDialog.dismiss()
