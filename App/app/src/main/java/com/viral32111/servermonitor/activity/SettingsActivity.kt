@@ -145,8 +145,8 @@ class SettingsActivity : AppCompatActivity() {
 		}
 
 		// Register the observer for the always on-going notification worker
-		UpdateWorker.observe( this, this )
-		Log.d( Shared.logTag, "Registered observer for always on-going notification worker" )
+		//UpdateWorker.observe( this, this )
+		//Log.d( Shared.logTag, "Registered observer for always on-going notification worker" )
 
 	}
 
@@ -425,7 +425,7 @@ class SettingsActivity : AppCompatActivity() {
 	// Shows a confirmation dialog for leaving settings without saving changes, but only if the settings have been changed
 	private fun confirmBack( settings: Settings) {
 		if ( hasValuesChanged( settings ) ) {
-			Log.d(Shared.logTag, "Settings have changed, showing confirmation dialog..." )
+			Log.d( Shared.logTag, "Settings have changed, showing confirmation dialog..." )
 
 			showConfirmDialog( this, R.string.settingsDialogConfirmBackMessage, {
 				Log.d( Shared.logTag, "Back confirmed, returning to previous activity..." )
@@ -437,7 +437,7 @@ class SettingsActivity : AppCompatActivity() {
 			} )
 
 		} else {
-			Log.d(Shared.logTag, "Settings have not changed, not showing confirmation dialog" )
+			Log.d( Shared.logTag, "Settings have not changed, not showing confirmation dialog" )
 
 			finish()
 			overridePendingTransition(R.anim.slide_in_from_left, R.anim.slide_out_to_right)

@@ -463,18 +463,18 @@ class ServiceActivity : AppCompatActivity() {
 
 		// When the start/stop action button is pressed...
 		actionStartStopButton.setOnClickListener {
-			if ( actionStartStopButton.text == getString(R.string.serviceButtonStartAction) ) {
-				Log.d(Shared.logTag, "Start service button pressed!" )
+			if ( actionStartStopButton.text == getString( R.string.serviceButtonStartAction ) ) {
+				Log.d( Shared.logTag, "Start service button pressed!" )
 				executeServiceAction( activity, "start" )
-			} else if ( actionStartStopButton.text == getString(R.string.serviceButtonStopAction) ) {
-				Log.d(Shared.logTag, "Stop service button pressed!" )
+			} else if ( actionStartStopButton.text == getString( R.string.serviceButtonStopAction ) ) {
+				Log.d( Shared.logTag, "Stop service button pressed!" )
 				executeServiceAction( activity, "stop" )
 			}
 		}
 
 		// When the restart action button is pressed...
 		actionRestartButton.setOnClickListener {
-			Log.d(Shared.logTag, "Restart service button pressed!" )
+			Log.d( Shared.logTag, "Restart service button pressed!" )
 			executeServiceAction( activity, "restart" )
 		}
 
@@ -482,8 +482,8 @@ class ServiceActivity : AppCompatActivity() {
 		onBackPressedDispatcher.addCallback( this, onBackPressed )
 
 		// Register the observer for the always on-going notification worker
-		UpdateWorker.observe( this, this )
-		Log.d( Shared.logTag, "Registered observer for always on-going notification worker" )
+		//UpdateWorker.observe( this, this )
+		//Log.d( Shared.logTag, "Registered observer for always on-going notification worker" )
 
 	}
 
@@ -531,7 +531,15 @@ class ServiceActivity : AppCompatActivity() {
 		settings.read()
 		Log.d( Shared.logTag, "Reloaded settings (Automatic Refresh: '${ settings.automaticRefresh }', Automatic Refresh Interval: '${ settings.automaticRefreshInterval }')" )
 
-		// TODO: Re-setup worker as automatic refresh interval may have changed
+		// Re-setup the worker as the automatic refresh interval may have changed
+		val baseUrl = settings.instanceUrl
+		val credentialsUsername = settings.credentialsUsername
+		val credentialsPassword = settings.credentialsPassword
+		if ( !baseUrl.isNullOrBlank() && !credentialsUsername.isNullOrBlank() && !credentialsPassword.isNullOrBlank() ) {
+			UpdateWorker.setup( applicationContext, this, baseUrl, credentialsUsername, credentialsPassword, settings.automaticRefreshInterval, shouldEnqueue = settings.notificationAlwaysOngoing )
+		} else {
+			Log.wtf( Shared.logTag, "Base URL, username, or password (app is not setup) is null/blank after resuming?!" )
+		}
 
 		// Set the progress bar animation duration to the automatic refresh interval
 		progressBarAnimation.duration = settings.automaticRefreshInterval * 1000L // Convert seconds to milliseconds
