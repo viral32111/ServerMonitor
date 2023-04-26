@@ -30,10 +30,11 @@ class API {
 	companion object {
 
 		// HTTP request queue
-		private lateinit var requestQueue: RequestQueue
+		private var requestQueue: RequestQueue? = null
 
 		// Initialise the HTTP request queue - https://google.github.io/volley/simple.html#use-newrequestqueue
 		fun initializeQueue( context: Context ) {
+			if ( requestQueue != null ) return // Silently skip if the request queue already exists
 			requestQueue = Volley.newRequestQueue( context )
 			Log.d( Shared.logTag, "Initialised HTTP request queue" )
 		}
@@ -41,7 +42,7 @@ class API {
 		// Cancels all HTTP requests in the queue - https://google.github.io/volley/simple.html#cancel-a-request
 		fun cancelQueue() {
 			Log.d( Shared.logTag, "Cancelling all HTTP requests in the queue..." )
-			requestQueue.cancelAll( Shared.httpRequestQueueTag )
+			requestQueue?.cancelAll( Shared.httpRequestQueueTag )
 		}
 
 		// Encode credentials as Base64 for use in HTTP Basic Authorization - https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication, https://developer.android.com/reference/kotlin/java/util/Base64
@@ -107,7 +108,7 @@ class API {
 
 			// Send the request
 			httpRequest.tag = Shared.httpRequestQueueTag
-			requestQueue.add( httpRequest )
+			requestQueue?.add( httpRequest )
 			Log.d( Shared.logTag, "Sending HTTP request to URL '${ url }' (Method: '${ requestMethodToName( method ) }', Username: '${ username }', Password: '${ password }')..." )
 
 		}
@@ -182,7 +183,7 @@ class API {
 
 			// Send the request
 			httpRequest.tag = Shared.httpRequestQueueTag
-			requestQueue.add( httpRequest )
+			requestQueue?.add( httpRequest )
 			Log.d( Shared.logTag, "Sending HTTP request to URL '${ url }' (Method: '${ requestMethodToName( method ) }', Username: '${ username }', Password: '${ password }')..." )
 
 		}
@@ -216,7 +217,9 @@ class API {
 		suspend fun getServersImproved( baseUrl: String, username: String, password: String ): Array<Server>? = sendRequest( Request.Method.GET, "${ baseUrl }/servers", username, password )
 			?.get( "servers" )?.asJsonArray
 			?.filter { jsonElement -> jsonElement.isJsonObject }
-			?.map { jsonElement -> Server( jsonElement.asJsonObject ) } // .apply { if ( isOnline() ) updateFromAPI( baseUrl, username, password ) }
+			?.map { jsonElement -> Server( jsonElement.asJsonObject ).apply {
+				if ( isOnline() ) updateFromAPI( baseUrl, username, password )
+			} }
 			?.toTypedArray()
 
 		/**

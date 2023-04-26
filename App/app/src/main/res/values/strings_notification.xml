@@ -15,6 +15,7 @@
 	<string name="notificationOngoingTextBad">One or more servers are experiencing issues.</string>
 	<string name="notificationOngoingTextUnknown">Currently unknown. Fetching data…</string>
 	<string name="notificationOngoingTextError">Failed to fetch data. Trying again…</string>
+	<string name="notificationOngoingTextEmpty">No servers available to scrape.</string>
 
 	<!-- When an issue arises -->
 	<string name="notificationIssueName">When Issue Arises</string>

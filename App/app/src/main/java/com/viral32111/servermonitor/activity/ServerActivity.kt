@@ -210,6 +210,9 @@ class ServerActivity : AppCompatActivity() {
 		settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, MODE_PRIVATE ) )
 		Log.d( Shared.logTag, "Got settings ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
 
+		// Initialise our RESTful API class
+		API.initializeQueue( applicationContext )
+
 		// Switch to the servers activity if we aren't servers yet
 		if ( !settings.isSetup() ) {
 			Log.d( Shared.logTag, "Not setup yet, switching to servers activity..." )
@@ -222,7 +225,7 @@ class ServerActivity : AppCompatActivity() {
 			return
 		}
 
-		// Return to the previous activity if we were not given a server identifier
+		// Return to the Servers activity if we were not given a server identifier
 		val serverIdentifier = intent.extras?.getString( "serverIdentifier" )
 		Log.d( Shared.logTag, "Server identifier: '${ serverIdentifier }'" )
 		if ( serverIdentifier.isNullOrBlank() ) {
@@ -580,7 +583,7 @@ class ServerActivity : AppCompatActivity() {
 		val credentialsUsername = settings.credentialsUsername
 		val credentialsPassword = settings.credentialsPassword
 		if ( !baseUrl.isNullOrBlank() && !credentialsUsername.isNullOrBlank() && !credentialsPassword.isNullOrBlank() ) {
-			UpdateWorker.setup( applicationContext, this, baseUrl, credentialsUsername, credentialsPassword, settings.automaticRefreshInterval, shouldEnqueue = settings.notificationAlwaysOngoing )
+			UpdateWorker.setup( applicationContext, this, baseUrl, credentialsUsername, credentialsPassword, settings.automaticRefreshInterval, settings.notificationWhenIssueArises, shouldEnqueue = settings.notificationAlwaysOngoing )
 		} else {
 			Log.wtf( Shared.logTag, "Base URL, username, or password (app is not setup) is null/blank after resuming?!" )
 		}

@@ -33,6 +33,7 @@
 	<string name="serversTextViewStatusDescriptionGood">There have been no issues today.</string>
 	<string name="serversTextViewStatusDescriptionBad">There have been %d issues today.</string>
 	<string name="serversTextViewStatusDescriptionDead">Server information unavailable.</string>
+	<string name="serversTextViewStatusDescriptionEmpty">There are no servers available.</string>
 
 	<!-- Server in the servers list -->
 	<string name="serversTextViewServerTitle">%s</string>

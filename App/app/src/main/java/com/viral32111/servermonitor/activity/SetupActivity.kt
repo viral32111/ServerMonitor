@@ -370,27 +370,30 @@ class SetupActivity : AppCompatActivity() {
 						progressDialog.dismiss()
 						enableInputs( true )
 
-						// Do not continue if no servers are being scraped
-						if ( servers.isEmpty() ) {
+						// If servers have been scraped...
+						if ( servers.isNotEmpty() ) {
+
+							// Setup the always on-going notification worker - https://developer.android.com/guide/background/persistent/getting-started/define-work
+							//UpdateWorker.setup( applicationContext, activity, baseUrl, credentialsUsername, credentialsPassword, settings.automaticRefreshInterval, shouldEnqueue = settings.notificationAlwaysOngoing )
+
+							// Switch to the Servers activity if there's more than 1 server, otherwise switch to the Server activity
+							if ( servers.count() > 1 ) {
+								startActivity( Intent( activity, ServersActivity::class.java ) )
+							} else {
+								val intent = Intent( activity, ServerActivity::class.java )
+								intent.putExtra( "serverIdentifier", servers.first().identifier )
+								startActivity( intent )
+							}
+							overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
+
+							// Remove this activity from the back navigation history
+							finish()
+
+						// Fail if no servers have been scraped
+						} else {
 							Log.w( Shared.logTag, "No servers available!" )
 							showBriefMessage( activity, R.string.setupToastServerCountEmpty )
 						}
-
-						// Setup the always on-going notification worker - https://developer.android.com/guide/background/persistent/getting-started/define-work
-						UpdateWorker.setup( applicationContext, activity, baseUrl, credentialsUsername, credentialsPassword, settings.automaticRefreshInterval, shouldEnqueue = settings.notificationAlwaysOngoing )
-
-						// Switch to the Servers activity if there's more than 1 server, otherwise switch to the Server activity
-						if ( servers.count() > 1 ) {
-							startActivity( Intent( activity, ServersActivity::class.java ) )
-						} else {
-							val intent = Intent( activity, ServerActivity::class.java )
-							intent.putExtra( "serverIdentifier", servers.first().identifier )
-							startActivity( intent )
-						}
-						overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
-
-						// Remove this activity from the back navigation history
-						finish()
 
 					}
 

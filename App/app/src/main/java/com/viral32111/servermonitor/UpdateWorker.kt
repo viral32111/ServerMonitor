@@ -43,6 +43,7 @@ class UpdateWorker(
 		const val CREDENTIALS_USERNAME = "CREDENTIALS_USERNAME"
 		const val CREDENTIALS_PASSWORD = "CREDENTIALS_PASSWORD"
 		const val AUTOMATIC_REFRESH_INTERVAL = "AUTOMATIC_REFRESH_INTERVAL"
+		const val NOTIFICATION_WHEN_ISSUE_ARISES = "NOTIFICATION_WHEN_ISSUE_ARISES"
 
 		// Keys for success output data
 		//const val SUCCESS = "SUCCESS"
@@ -57,7 +58,7 @@ class UpdateWorker(
 		const val PROGRESS_ARE_THERE_ISSUES = "PROGRESS_ARE_THERE_ISSUES"
 
 		// Creates this worker - https://developer.android.com/guide/background/persistent/getting-started/define-work
-		fun setup( applicationContext: Context, lifecycleOwner: LifecycleOwner, baseUrl: String, credentialsUsername: String, credentialsPassword: String, automaticRefreshInterval: Int, shouldEnqueue: Boolean = true ) {
+		fun setup( applicationContext: Context, lifecycleOwner: LifecycleOwner, baseUrl: String, credentialsUsername: String, credentialsPassword: String, automaticRefreshInterval: Int, notificationWhenIssueArises: Boolean, shouldEnqueue: Boolean = true ) {
 
 			// Data to give to the worker - https://developer.android.com/guide/background/persistent/getting-started/define-work#input_output
 			val workerInputData = Data.Builder()
@@ -65,6 +66,7 @@ class UpdateWorker(
 				.putString( this.CREDENTIALS_USERNAME, credentialsUsername )
 				.putString( this.CREDENTIALS_PASSWORD, credentialsPassword )
 				.putInt( this.AUTOMATIC_REFRESH_INTERVAL, automaticRefreshInterval )
+				.putBoolean( this.NOTIFICATION_WHEN_ISSUE_ARISES, notificationWhenIssueArises )
 				.build()
 
 			// Requirements for deferring the worker - https://developer.android.com/guide/background/persistent/getting-started/define-work#schedule_periodic_work
@@ -158,6 +160,7 @@ class UpdateWorker(
 		val credentialsUsername = inputData.getString( CREDENTIALS_USERNAME )
 		val credentialsPassword = inputData.getString( CREDENTIALS_PASSWORD )
 		val automaticRefreshInterval = inputData.getInt( AUTOMATIC_REFRESH_INTERVAL, -1 )
+		val notificationWhenIssueArises = inputData.getBoolean( NOTIFICATION_WHEN_ISSUE_ARISES, true )
 
 		// Ensure the input data is valid
 		if (
@@ -193,30 +196,41 @@ class UpdateWorker(
 				try {
 					val servers = API.getServersImproved( baseUrl, credentialsUsername, credentialsPassword ) ?: return@withContext Result.failure( workDataOf( FAILURE_REASON to FAILURE_NULL_API_RESPONSE ) )
 
-					// Check if there are issues with any of the servers
-					val areThereIssues = servers.any { server -> server.areThereIssues() }
+					// If servers were returned...
+					if ( servers.isNotEmpty() ) {
 
-					// Update the always on-going notification to reflect if there are issues
-					if ( areThereIssues ) {
-						setForeground( createAlwaysOngoingNotification( R.string.notificationOngoingTextBad, R.color.statusBad, serversActivityIntent ) )
+						// Check if there are issues with any of the servers
+						val areThereIssues = servers.any { server -> server.areThereIssues() }
+
+						// Update the always on-going notification to reflect if there are issues
+						if ( areThereIssues ) {
+							setForeground( createAlwaysOngoingNotification( R.string.notificationOngoingTextBad, R.color.statusBad, serversActivityIntent ) )
+						} else {
+							setForeground( createAlwaysOngoingNotification( R.string.notificationOngoingTextGood, R.color.statusGood, serversActivityIntent ) )
+						}
+
+						// Additional notification for this issue
+						// TODO: This should only run when an issue is detected, then not again until no issues are detected, else it will spam every 15s!
+						if ( areThereIssues && notificationWhenIssueArises ) withContext( Dispatchers.Main ) {
+							val notification = Notify.createTextNotification(
+								applicationContext,
+								Intent( applicationContext, ServersActivity::class.java ),
+								Notify.CHANNEL_WHEN_ISSUE_ARISES,
+								R.string.notificationIssueTitle,
+								R.string.notificationIssueText,
+								applicationContext.getColor( R.color.statusBad )
+							)
+							Notify.showNotification( applicationContext, notification )
+							Log.d( Shared.logTag, "Showing notification as an issue has arisen..." )
+						}
+
+						// Update the worker's progress
+						setProgress( workDataOf( PROGRESS_ARE_THERE_ISSUES to areThereIssues ) )
+
+					// No servers were returned...
 					} else {
-						setForeground( createAlwaysOngoingNotification( R.string.notificationOngoingTextGood, R.color.statusGood, serversActivityIntent ) )
+						setForeground( createAlwaysOngoingNotification( R.string.notificationOngoingTextEmpty, R.color.statusDead, serversActivityIntent ) )
 					}
-
-					// Additional notification for this issue
-					if ( areThereIssues ) withContext( Dispatchers.Main ) {
-						Notify.createTextNotification(
-							applicationContext,
-							Intent( applicationContext, ServersActivity::class.java ),
-							Notify.CHANNEL_WHEN_ISSUE_ARISES,
-							R.string.notificationIssueTitle,
-							R.string.notificationIssueText,
-							applicationContext.getColor( R.color.statusBad )
-						)
-					}
-
-					// Update the worker's progress
-					setProgress( workDataOf( PROGRESS_ARE_THERE_ISSUES to areThereIssues ) )
 
 					// Pause for the automatic refresh interval
 					delay( automaticRefreshIntervalMillis )

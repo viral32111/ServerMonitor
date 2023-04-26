@@ -17,34 +17,31 @@
 		android:theme="@style/Theme.ServerMonitor"
 		android:enableOnBackInvokedCallback="true"
 		tools:targetApi="33">
+
 		<activity
 			android:name=".activity.ServiceActivity"
 			android:exported="false" />
+
 		<activity
 			android:name=".activity.ServerActivity"
 			android:exported="false" />
+
 		<activity
 			android:name=".activity.ServersActivity"
 			android:exported="false" />
+
 		<activity
 			android:name=".activity.SettingsActivity"
-			android:exported="false">
-			<meta-data
-				android:name="android.app.lib_name"
-				android:value="" />
-		</activity>
+			android:exported="false" />
+
 		<activity
 			android:name=".activity.SetupActivity"
 			android:exported="true">
+
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
-
 				<category android:name="android.intent.category.LAUNCHER" />
 			</intent-filter>
-
-			<meta-data
-				android:name="android.app.lib_name"
-				android:value="" />
 		</activity>
 
 		<!-- directBootAware prevents launching the worker before the user unlocks device after cold boot -->

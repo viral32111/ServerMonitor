@@ -101,6 +101,9 @@ class SettingsActivity : AppCompatActivity() {
 		val settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, MODE_PRIVATE ) )
 		Log.d( Shared.logTag, "Got settings ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
 
+		// Initialise our RESTful API class
+		API.initializeQueue( applicationContext )
+
 		// Update UI with values from settings
 		updateUIWithSettings( settings )
 

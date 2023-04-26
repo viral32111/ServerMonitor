@@ -166,6 +166,9 @@ class ServiceActivity : AppCompatActivity() {
 		settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, MODE_PRIVATE ) )
 		Log.d( Shared.logTag, "Got settings ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
 
+		// Initialise our RESTful API class
+		API.initializeQueue( applicationContext )
+
 		// Return to the setup activity if we aren't setup yet
 		if ( !settings.isSetup() ) {
 			Log.d( Shared.logTag, "Not setup yet, returning to Setup activity..." )
@@ -174,14 +177,18 @@ class ServiceActivity : AppCompatActivity() {
 			return
 		}
 
-		// Return to the previous activity if we were not given all the required data
+		// Return to the Servers activity if we were not given all the required data
 		val serverIdentifier = intent.extras?.getString( "serverIdentifier" )
 		val serviceName = intent.extras?.getString( "serviceName" )
 		Log.d( Shared.logTag, "Server Identifier: '${ serverIdentifier }', Service Name: '${ serviceName }'" )
 		if ( serverIdentifier.isNullOrBlank() || serviceName.isNullOrBlank() ) {
-			Log.w( Shared.logTag, "No server identifier and/or service name passed to activity?! Returning to previous activity..." )
+			Log.w( Shared.logTag, "No server identifier and/or service name passed to activity?! Returning to Servers activity..." )
+
+			startActivity( Intent( this, ServersActivity::class.java ) )
+			overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
+
 			finish()
-			overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
+
 			return
 		}
 		this.serverIdentifier = serverIdentifier
@@ -513,7 +520,7 @@ class ServiceActivity : AppCompatActivity() {
 		val credentialsUsername = settings.credentialsUsername
 		val credentialsPassword = settings.credentialsPassword
 		if ( !baseUrl.isNullOrBlank() && !credentialsUsername.isNullOrBlank() && !credentialsPassword.isNullOrBlank() ) {
-			UpdateWorker.setup( applicationContext, this, baseUrl, credentialsUsername, credentialsPassword, settings.automaticRefreshInterval, shouldEnqueue = settings.notificationAlwaysOngoing )
+			UpdateWorker.setup( applicationContext, this, baseUrl, credentialsUsername, credentialsPassword, settings.automaticRefreshInterval, settings.notificationWhenIssueArises, shouldEnqueue = settings.notificationAlwaysOngoing )
 		} else {
 			Log.wtf( Shared.logTag, "Base URL, username, or password (app is not setup) is null/blank after resuming?!" )
 		}

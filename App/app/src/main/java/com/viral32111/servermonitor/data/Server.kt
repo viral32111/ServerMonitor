@@ -90,7 +90,7 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 	/******************************************************/
 
 	// Gets the processor usage/frequency/temperature
-	fun getProcessorUsage() = this.processorUsage ?: -1.0f
+	fun getProcessorUsage() = this.processorUsage?.coerceIn( 0.0f, 100.0f ) ?: -1.0f // Clamp to be safe
 	fun getProcessorFrequency() = this.processorFrequency?.times( 1000.0f * 1000.0f )?.atLeastRoundInt( 0 ) ?: -1 // Convert to Hz from MHz returned by API
 	fun getProcessorTemperature() = this.processorTemperature ?: -1.0f
 

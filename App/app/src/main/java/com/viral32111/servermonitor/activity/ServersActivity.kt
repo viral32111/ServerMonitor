@@ -41,6 +41,7 @@ class ServersActivity : AppCompatActivity() {
 	// Misc
 	private lateinit var progressBarAnimation: ProgressBarAnimation
 	private lateinit var settings: Settings
+	private var hasAutomaticRefreshFailed = false
 
 	// Contact information
 	private var contactName: String? = null
@@ -76,6 +77,9 @@ class ServersActivity : AppCompatActivity() {
 		// Get the settings
 		settings = Settings( getSharedPreferences( Shared.sharedPreferencesName, MODE_PRIVATE ) )
 		Log.d( Shared.logTag, "Got settings ('${ settings.instanceUrl }', '${ settings.credentialsUsername }', '${ settings.credentialsPassword }')" )
+
+		// Initialise our RESTful API class
+		API.initializeQueue( applicationContext )
 
 		// When an item on the action bar menu is pressed...
 		materialToolbar?.setOnMenuItemClickListener { menuItem ->
@@ -177,6 +181,9 @@ class ServersActivity : AppCompatActivity() {
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
 								refreshProgressBar.progress = 0
+
+								hasAutomaticRefreshFailed = false
+
 								updateUI( servers )
 							}
 
@@ -186,6 +193,8 @@ class ServersActivity : AppCompatActivity() {
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
 								refreshProgressBar.progress = 0
+
+								hasAutomaticRefreshFailed = true
 
 								when ( exception.volleyError ) {
 
@@ -229,6 +238,9 @@ class ServersActivity : AppCompatActivity() {
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
 								refreshProgressBar.progress = 0
+
+								hasAutomaticRefreshFailed = true
+
 								showBriefMessage( activity, R.string.serversToastServersParseFailure )
 							}
 						} catch ( exception: JsonSyntaxException ) {
@@ -237,6 +249,9 @@ class ServersActivity : AppCompatActivity() {
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
 								refreshProgressBar.progress = 0
+
+								hasAutomaticRefreshFailed = true
+
 								showBriefMessage( activity, R.string.serversToastServersParseFailure )
 							}
 						} catch ( exception: NullPointerException ) {
@@ -245,6 +260,9 @@ class ServersActivity : AppCompatActivity() {
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
 								refreshProgressBar.progress = 0
+
+								hasAutomaticRefreshFailed = true
+
 								showBriefMessage( activity, R.string.serversToastServersNull )
 							}
 						}
@@ -265,10 +283,10 @@ class ServersActivity : AppCompatActivity() {
 			Log.d( Shared.logTag, "Swipe refreshed!" )
 
 			// Stop the automatic refresh countdown progress bar, thus calling the animation callback
-			if ( settings.automaticRefresh ) {
-				refreshProgressBar.clearAnimation() // TODO: What if the progress bar is already cleared, such as after a failed connection...
+			if ( settings.automaticRefresh && !hasAutomaticRefreshFailed ) {
+				refreshProgressBar.clearAnimation()
 
-			// If automatic refresh is disabled, then do the refresh manually...
+			// If automatic refresh is disabled or failed, then do the refresh manually...
 			} else {
 				CoroutineScope( Dispatchers.Main ).launch {
 					withContext( Dispatchers.IO ) {
@@ -406,7 +424,7 @@ class ServersActivity : AppCompatActivity() {
 		val credentialsUsername = settings.credentialsUsername
 		val credentialsPassword = settings.credentialsPassword
 		if ( !baseUrl.isNullOrBlank() && !credentialsUsername.isNullOrBlank() && !credentialsPassword.isNullOrBlank() ) {
-			UpdateWorker.setup( applicationContext, this, baseUrl, credentialsUsername, credentialsPassword, settings.automaticRefreshInterval, shouldEnqueue = settings.notificationAlwaysOngoing )
+			UpdateWorker.setup( applicationContext, this, baseUrl, credentialsUsername, credentialsPassword, settings.automaticRefreshInterval, settings.notificationWhenIssueArises, shouldEnqueue = settings.notificationAlwaysOngoing )
 		} else {
 			Log.wtf( Shared.logTag, "Base URL, username, or password (app is not setup) is null/blank after resuming?!" )
 		}
@@ -589,15 +607,21 @@ class ServersActivity : AppCompatActivity() {
 	// Update the UI with the given servers
 	private fun updateUI( servers: Array<Server> ) {
 
-		// Set the overall status based on if there are there issues with any of the servers
-		if ( servers.any { server -> server.areThereIssues() } ) {
-			statusTitleTextView.text = getString( R.string.serversTextViewStatusTitleBad )
-			statusTitleTextView.setTextColor( getColor( R.color.statusBad ) )
-			statusDescriptionTextView.text = getString( R.string.serversTextViewStatusDescriptionBad ).format( 1 ) // TODO: Count of issues on this day
+		// Set the overall status based on if there are there issues with any of the servers, if there are servers available to scrape...
+		if ( servers.isNotEmpty() ) {
+			if ( servers.any { server -> server.areThereIssues() } ) {
+				statusTitleTextView.text = getString( R.string.serversTextViewStatusTitleBad )
+				statusTitleTextView.setTextColor( getColor( R.color.statusBad ) )
+				statusDescriptionTextView.text = getString( R.string.serversTextViewStatusDescriptionBad ).format( 1 ) // TODO: Count of issues on this day
+			} else {
+				statusTitleTextView.text = getString( R.string.serversTextViewStatusTitleGood )
+				statusTitleTextView.setTextColor( getColor( R.color.statusGood ) )
+				statusDescriptionTextView.text = getString( R.string.serversTextViewStatusDescriptionGood )
+			}
 		} else {
-			statusTitleTextView.text = getString( R.string.serversTextViewStatusTitleGood )
-			statusTitleTextView.setTextColor( getColor( R.color.statusGood ) )
-			statusDescriptionTextView.text = getString( R.string.serversTextViewStatusDescriptionGood )
+			statusTitleTextView.text = getString( R.string.serversTextViewStatusTitleDead )
+			statusTitleTextView.setTextColor( getColor( R.color.statusDead ) )
+			statusDescriptionTextView.text = getString( R.string.serversTextViewStatusDescriptionEmpty )
 		}
 
 		// Create the adapter for the recycler view - https://www.geeksforgeeks.org/android-pull-to-refresh-with-recyclerview-in-kotlin/
