@@ -9,6 +9,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Update
+import androidx.work.impl.model.systemIdInfo
 
 // https://developer.android.com/training/data-storage/room
 
@@ -24,33 +25,40 @@ data class Issue(
 // https://developer.android.com/training/data-storage/room/accessing-data
 @Dao
 interface IssueDAO {
+
+	// Fetches all issues
 	@Query( "SELECT * from issueHistory" )
 	suspend fun fetchAll(): List<Issue>
 
+	// Fetches a specific issue, if it exists
 	@Query( "SELECT * FROM issueHistory WHERE identifier = :identifier" )
-	suspend fun fetchByIdentifier( identifier: Long ): Issue
+	suspend fun fetchByIdentifier( identifier: Long ): Issue?
 
+	// Fetches the latest issue, if any
 	@Query( "SELECT * FROM issueHistory ORDER BY startedAt DESC LIMIT 1" )
-	suspend fun fetchLatest(): Issue
+	suspend fun fetchLatest(): Issue?
 
+	// Fetches the current on-going issue, if any
 	@Query( "SELECT * FROM issueHistory WHERE finishedAt IS NULL ORDER BY startedAt DESC LIMIT 1" )
 	suspend fun fetchOngoing(): Issue?
 
 	@Insert( onConflict = OnConflictStrategy.REPLACE )
 	suspend fun create( issue: Issue = Issue() ): Long
 
+	// Finishes any on-going issues
+	@Query( "UPDATE issueHistory SET finishedAt = :finishedAt WHERE finishedAt = NULL" )
+	suspend fun updateFinishedAt( finishedAt: Long = System.currentTimeMillis() )
+
+	// Finishes an on-going issue
 	@Query( "UPDATE issueHistory SET finishedAt = :finishedAt WHERE identifier = :identifier" )
 	suspend fun updateFinishedAtByIdentifier( identifier: Long, finishedAt: Long? = System.currentTimeMillis() )
 
+	// Increments the counter on an issue
 	@Query( "UPDATE issueHistory SET totalCount = totalCount + :incrementBy WHERE identifier = :identifier" )
 	suspend fun incrementTotalCountByIdentifier( identifier: Long, incrementBy: Long = 1 )
 
-	@Update
-	suspend fun update( issue: Issue )
-
-	@Delete
-	suspend fun remove( issue: Issue )
-
+	// Removes all issues
 	@Query( "DELETE FROM issueHistory" )
 	suspend fun removeAll()
+
 }

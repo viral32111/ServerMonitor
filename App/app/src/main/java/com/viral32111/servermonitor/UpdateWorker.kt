@@ -220,12 +220,12 @@ class UpdateWorker(
 							// If there is an on-going issue then increment the total number of issue detections
 							if ( ongoingIssue != null ) {
 								issueHistory.incrementTotalCountByIdentifier( ongoingIssue.identifier )
-								Log.wtf( Shared.logTag, "Incremented on-going issue ${ ongoingIssue.identifier } (was ${ ongoingIssue.totalCount }, now ${ ongoingIssue.totalCount + 1 })" )
+								Log.d( Shared.logTag, "Incremented on-going issue ${ ongoingIssue.identifier } (was ${ ongoingIssue.totalCount }, now ${ ongoingIssue.totalCount + 1 })" )
 
 							// Begin a new on-going issue if there isn't one already
 							} else {
 								val newIssueIdentifier = issueHistory.create()
-								Log.wtf( Shared.logTag, "Began new on-going issue (ID: $newIssueIdentifier)" )
+								Log.d( Shared.logTag, "Began new on-going issue (ID: $newIssueIdentifier)" )
 
 								// Show an additional notification for this issue detection
 								if ( notificationWhenIssueArises ) withContext( Dispatchers.Main ) {
@@ -252,7 +252,7 @@ class UpdateWorker(
 							// If there is an on-going issue then finish it
 							if ( ongoingIssue != null ) {
 								issueHistory.updateFinishedAtByIdentifier( ongoingIssue.identifier )
-								Log.wtf( Shared.logTag, "Finished on-going issue ${ ongoingIssue.identifier } at count ${ ongoingIssue.totalCount }" )
+								Log.d( Shared.logTag, "Finished on-going issue ${ ongoingIssue.identifier } at count ${ ongoingIssue.totalCount }" )
 							}
 
 							// Update the always on-going notification to reflect everything is good

@@ -20,6 +20,7 @@ import com.google.gson.JsonSyntaxException
 import com.viral32111.servermonitor.ErrorCode
 import com.viral32111.servermonitor.R
 import com.viral32111.servermonitor.Shared
+import com.viral32111.servermonitor.database.initialiseDatabase
 import com.viral32111.servermonitor.helper.API
 import com.viral32111.servermonitor.helper.APIException
 import com.viral32111.servermonitor.helper.Notify
@@ -246,6 +247,13 @@ class SetupActivity : AppCompatActivity() {
 		}
 		credentialsPasswordEditText.setOnFocusChangeListener { _, hasFocus ->
 			if ( !hasFocus ) credentialsPasswordEditText.error = if ( !validateCredentialsPassword( credentialsPasswordEditText.text.toString() ) ) getString( R.string.setupToastCredentialsPasswordInvalid ) else null
+		}
+
+		// Finish off any still on-going issues in the history
+		CoroutineScope( Dispatchers.IO ).launch {
+			val database = initialiseDatabase( applicationContext )
+			database.issueHistory().updateFinishedAt()
+			Log.d( Shared.logTag, "Finished any still on-going issues" )
 		}
 
 	}
