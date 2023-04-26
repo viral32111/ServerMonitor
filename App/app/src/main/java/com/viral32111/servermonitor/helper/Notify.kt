@@ -63,16 +63,20 @@ class Notify {
 		}
 
 		// Creates a simple notification using the builder that opens an activity when pressed
-		fun createTextNotification( context: Context, intent: Intent, channel: String, titleId: Int, textId: Int, color: Int, timestamp: Long = System.currentTimeMillis() ) = Notification.Builder( context, channel )
+		fun createTextNotification( context: Context, intent: Intent, channel: String, titleId: Int, text: String, color: Int, timestamp: Long = System.currentTimeMillis() ) = Notification.Builder( context, channel )
 			.setSmallIcon( R.drawable.monitor_heart )
 			.setContentTitle( context.getString( titleId ) )
-			.setContentText( context.getString( textId ) )
+			.setContentText( text )
 			.setContentIntent( PendingIntent.getActivity( context, 0, intent, PendingIntent.FLAG_IMMUTABLE ) )
 			.setAutoCancel( true )
 			.setColor( color )
 			.setShowWhen( true )
 			.setWhen( timestamp )
 			.build()
+
+		// Alternative for above but for providing a string resource as the text
+		fun createTextNotification( context: Context, intent: Intent, channel: String, titleId: Int, textId: Int, color: Int, timestamp: Long = System.currentTimeMillis() ) =
+			Companion.createTextNotification( context, intent, channel, titleId, context.getString( textId ), color, timestamp )
 
 		fun createProgressNotification( context: Context, intent: Intent, channel: String, titleId: Int, textId: Int, color: Int, timestamp: Long = System.currentTimeMillis(), isOngoing: Boolean = true ) = Notification.Builder( context, channel )
 			.setSmallIcon( R.drawable.monitor_heart )

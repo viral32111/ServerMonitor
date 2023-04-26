@@ -8,5 +8,7 @@ class Shared {
 
 		const val percentSymbol = "&#x0025;" // Unicode for percent symbol, required for literal use inside string formatting - https://stackoverflow.com/a/16273262
 		const val degreesCelsiusSymbol = "℃"
+
+		const val roomDatabaseName = "serverMonitor"
 	}
 }

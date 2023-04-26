@@ -20,7 +20,6 @@ import com.google.gson.JsonSyntaxException
 import com.viral32111.servermonitor.ErrorCode
 import com.viral32111.servermonitor.R
 import com.viral32111.servermonitor.Shared
-import com.viral32111.servermonitor.UpdateWorker
 import com.viral32111.servermonitor.helper.API
 import com.viral32111.servermonitor.helper.APIException
 import com.viral32111.servermonitor.helper.Notify
@@ -240,19 +239,13 @@ class SetupActivity : AppCompatActivity() {
 
 		// Event handlers to show input validation errors on the inputs
 		instanceUrlEditText.setOnFocusChangeListener { _, hasFocus ->
-			if ( !hasFocus ) instanceUrlEditText.error = if ( !validateInstanceUrl( instanceUrlEditText.text.toString() ) ) getString(
-				R.string.setupToastInstanceUrlInvalid
-			) else null
+			if ( !hasFocus ) instanceUrlEditText.error = if ( !validateInstanceUrl( instanceUrlEditText.text.toString() ) ) getString( R.string.setupToastInstanceUrlInvalid ) else null
 		}
 		credentialsUsernameEditText.setOnFocusChangeListener { _, hasFocus ->
-			if ( !hasFocus ) credentialsUsernameEditText.error = if ( !validateCredentialsUsername( credentialsUsernameEditText.text.toString() ) ) getString(
-				R.string.setupToastCredentialsUsernameInvalid
-			) else null
+			if ( !hasFocus ) credentialsUsernameEditText.error = if ( !validateCredentialsUsername( credentialsUsernameEditText.text.toString() ) ) getString( R.string.setupToastCredentialsUsernameInvalid ) else null
 		}
 		credentialsPasswordEditText.setOnFocusChangeListener { _, hasFocus ->
-			if ( !hasFocus ) credentialsPasswordEditText.error = if ( !validateCredentialsPassword( credentialsPasswordEditText.text.toString() ) ) getString(
-				R.string.setupToastCredentialsPasswordInvalid
-			) else null
+			if ( !hasFocus ) credentialsPasswordEditText.error = if ( !validateCredentialsPassword( credentialsPasswordEditText.text.toString() ) ) getString( R.string.setupToastCredentialsPasswordInvalid ) else null
 		}
 
 	}

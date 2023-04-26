@@ -6,6 +6,7 @@ import android.content.pm.ServiceInfo
 import android.os.Build
 import android.util.Log
 import androidx.lifecycle.LifecycleOwner
+import androidx.room.Room
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
@@ -19,10 +20,14 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.viral32111.servermonitor.activity.ServersActivity
+import com.viral32111.servermonitor.database.MyDatabase
+import com.viral32111.servermonitor.database.initialiseDatabase
 import com.viral32111.servermonitor.helper.API
 import com.viral32111.servermonitor.helper.Notify
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 
@@ -199,29 +204,60 @@ class UpdateWorker(
 					// If servers were returned...
 					if ( servers.isNotEmpty() ) {
 
+						// Get the database & table
+						val database = initialiseDatabase( applicationContext )
+						val issueHistory = database.issueHistory()
+
+						// Fetch the latest on-going issue from the database
+						val ongoingIssue = issueHistory.fetchOngoing()
+
 						// Check if there are issues with any of the servers
 						val areThereIssues = servers.any { server -> server.areThereIssues() }
 
-						// Update the always on-going notification to reflect if there are issues
+						// If an issue has been detected...
 						if ( areThereIssues ) {
-							setForeground( createAlwaysOngoingNotification( R.string.notificationOngoingTextBad, R.color.statusBad, serversActivityIntent ) )
-						} else {
-							setForeground( createAlwaysOngoingNotification( R.string.notificationOngoingTextGood, R.color.statusGood, serversActivityIntent ) )
-						}
 
-						// Additional notification for this issue
-						// TODO: This should only run when an issue is detected, then not again until no issues are detected, else it will spam every 15s!
-						if ( areThereIssues && notificationWhenIssueArises ) withContext( Dispatchers.Main ) {
-							val notification = Notify.createTextNotification(
-								applicationContext,
-								Intent( applicationContext, ServersActivity::class.java ),
-								Notify.CHANNEL_WHEN_ISSUE_ARISES,
-								R.string.notificationIssueTitle,
-								R.string.notificationIssueText,
-								applicationContext.getColor( R.color.statusBad )
-							)
-							Notify.showNotification( applicationContext, notification )
-							Log.d( Shared.logTag, "Showing notification as an issue has arisen..." )
+							// If there is an on-going issue then increment the total number of issue detections
+							if ( ongoingIssue != null ) {
+								issueHistory.incrementTotalCountByIdentifier( ongoingIssue.identifier )
+								Log.wtf( Shared.logTag, "Incremented on-going issue ${ ongoingIssue.identifier } (was ${ ongoingIssue.totalCount }, now ${ ongoingIssue.totalCount + 1 })" )
+
+							// Begin a new on-going issue if there isn't one already
+							} else {
+								val newIssueIdentifier = issueHistory.create()
+								Log.wtf( Shared.logTag, "Began new on-going issue (ID: $newIssueIdentifier)" )
+
+								// Show an additional notification for this issue detection
+								if ( notificationWhenIssueArises ) withContext( Dispatchers.Main ) {
+									val notification = Notify.createTextNotification(
+										applicationContext,
+										Intent( applicationContext, ServersActivity::class.java ),
+										Notify.CHANNEL_WHEN_ISSUE_ARISES,
+										R.string.notificationIssueTitle,
+										applicationContext.getString( R.string.notificationIssueText ).format( "SERVER NAME HERE" ),
+										applicationContext.getColor( R.color.statusBad )
+									)
+
+									Notify.showNotification( applicationContext, notification )
+									Log.d( Shared.logTag, "Showing notification as an issue has arisen..." )
+								}
+							}
+
+							// Update the always on-going notification to reflect there are issues
+							setForeground( createAlwaysOngoingNotification( R.string.notificationOngoingTextBad, R.color.statusBad, serversActivityIntent ) )
+
+						// No issues detected...
+						} else {
+
+							// If there is an on-going issue then finish it
+							if ( ongoingIssue != null ) {
+								issueHistory.updateFinishedAtByIdentifier( ongoingIssue.identifier )
+								Log.wtf( Shared.logTag, "Finished on-going issue ${ ongoingIssue.identifier } at count ${ ongoingIssue.totalCount }" )
+							}
+
+							// Update the always on-going notification to reflect everything is good
+							setForeground( createAlwaysOngoingNotification( R.string.notificationOngoingTextGood, R.color.statusGood, serversActivityIntent ) )
+
 						}
 
 						// Update the worker's progress
@@ -244,7 +280,6 @@ class UpdateWorker(
 
 					// We failed, try again...
 					return@withContext Result.retry()
-
 					//return@withContext Result.failure( workDataOf( FAILURE_REASON to FAILURE_API_REQUEST_EXCEPTION ) )
 				}
 			}
@@ -268,11 +303,6 @@ class UpdateWorker(
 			applicationContext.getColor( colorId ),
 			isOngoing = isOngoing
 		)
-
-		/*
-		Notify.showNotification( applicationContext, alwaysOngoingNotification, Notify.IDENTIFIER_ALWAYS_ONGOING )
-		Log.d( Shared.logTag, "Created always ongoing notification (${ Notify.IDENTIFIER_ALWAYS_ONGOING })" )
-		*/
 
 		// Return foreground information, with service type if Android 10 (API 29+)
 		return if ( Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ) {
