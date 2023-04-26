@@ -374,7 +374,7 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 
 		// Fetch the server, will throw a null pointer exception if null
 		val data = API.getServer( instanceUrl, credentialsUsername, credentialsPassword, identifier )!!
-		Log.d(Shared.logTag, "Fetched server '${ hostName }' ('${ identifier }', '${ jobName }', '${ instanceAddress }') from API" )
+		Log.d( Shared.logTag, "Fetched server '${ hostName }' ('${ identifier }', '${ jobName }', '${ instanceAddress }') from API" )
 
 		// Set the properties
 		updateUsingAPIData( data )

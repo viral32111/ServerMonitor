@@ -28,43 +28,43 @@ class DrivePartitionAdapter(
 		val textView: TextView
 
 		init {
-			Log.d(Shared.logTag, "Initialising new drive partition view holder..." )
+			Log.d( Shared.logTag, "Initialising new drive partition view holder..." )
 
 			// Get relevant UI
-			textView = view.findViewById(R.id.drivePartitionTextView)
+			textView = view.findViewById( R.id.drivePartitionTextView )
 		}
 	}
 
 	// Creates new views - called by the layout manager
 	override fun onCreateViewHolder( viewGroup: ViewGroup, viewType: Int ): ViewHolder {
-		Log.d(Shared.logTag, "Creating new drive partition view..." )
+		Log.d( Shared.logTag, "Creating new drive partition view..." )
 		return ViewHolder( LayoutInflater.from( viewGroup.context ).inflate( R.layout.fragment_drive_partition, viewGroup, false ) )
 	}
 
 	// Replaces the contents of a view - called by the layout manager
-	override fun onBindViewHolder(viewHolder: ViewHolder, index: Int ) {
+	override fun onBindViewHolder( viewHolder: ViewHolder, index: Int ) {
 		val partition = partitions[ index ]
-		Log.d(Shared.logTag, "Replacing view for drive partition '${ partition.name }' ('${ partition.mountpoint }')..." )
+		Log.d( Shared.logTag, "Replacing view for drive partition '${ partition.name }' ('${ partition.mountpoint }')..." )
 
 		// Calculate the used bytes on this partition
 		val usedBytes = partition.totalBytes - partition.freeBytes
-		Log.d(Shared.logTag, "Drive Partition Used: '${ usedBytes }' bytes" )
+		Log.d( Shared.logTag, "Drive Partition Used: '${ usedBytes }' bytes" )
 
 		// Convert the total & used bytes on this partition to their appropriate notation
 		val total = Size( partition.totalBytes )
 		val used = Size( usedBytes )
-		Log.d(Shared.logTag, "Drive Partition Total: '${ total.amount }' '${ total.suffix }', Drive Partition Used: '${ used.amount }' '${ used.suffix }'" )
+		Log.d( Shared.logTag, "Drive Partition Total: '${ total.amount }' '${ total.suffix }', Drive Partition Used: '${ used.amount }' '${ used.suffix }'" )
 
 		// Calculate the percentage of bytes used for this partition
 		val usage = ( usedBytes.toDouble() / partition.totalBytes.toDouble() ) * 100.0
-		Log.d(Shared.logTag, "Drive Partition Usage: '${ usage }'" )
+		Log.d( Shared.logTag, "Drive Partition Usage: '${ usage }'" )
 
 		// Update the text
-		viewHolder.textView.setTextFromHTML( context.getString(R.string.serverTextViewDrivesPartition).format(
+		viewHolder.textView.setTextFromHTML( context.getString( R.string.serverTextViewDrivesPartition ).format(
 			partition.name,
 			context.createHTMLColoredText( used.amount.atLeastRoundAsString( 0.0, 1 ).suffixWith( used.suffix ), usedBytes.getAppropriateColor( DrivePartition.usedBytesWarningThreshold( partition.totalBytes ), DrivePartition.usedBytesDangerThreshold( partition.totalBytes ) ) ),
 			context.createHTMLColoredText( total.amount.atLeastRoundAsString( 0.0, 1 ).suffixWith( total.suffix ), partition.totalBytes.getAppropriateColor() ),
-			context.createHTMLColoredText( usage.roundAsString( 1 ).suffixWith(Shared.percentSymbol), usage.getAppropriateColor( DrivePartition.usageWarningThreshold, DrivePartition.usageDangerThreshold ) ),
+			context.createHTMLColoredText( usage.roundAsString( 1 ).suffixWith( Shared.percentSymbol ), usage.getAppropriateColor( DrivePartition.usageWarningThreshold, DrivePartition.usageDangerThreshold ) ),
 			partition.mountpoint
 		) )
 

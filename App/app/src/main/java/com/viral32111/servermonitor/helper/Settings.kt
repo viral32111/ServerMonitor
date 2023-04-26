@@ -41,7 +41,7 @@ class Settings( private val sharedPreferences: SharedPreferences ) {
 			apply()
 		}
 
-		Log.d(Shared.logTag, "Saved settings to shared preferences (URL: '${ instanceUrl }', Username: '${ credentialsUsername }', Password: '${ credentialsPassword }')" )
+		Log.d( Shared.logTag, "Saved settings to shared preferences (URL: '${ instanceUrl }', Username: '${ credentialsUsername }', Password: '${ credentialsPassword }')" )
 	}
 
 	// Read the values from shared preferences, fallback to defaults - https://developer.android.com/training/data-storage/shared-preferences#ReadSharedPreference

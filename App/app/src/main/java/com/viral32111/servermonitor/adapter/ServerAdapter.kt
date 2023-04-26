@@ -23,7 +23,7 @@ import com.viral32111.servermonitor.helper.getAppropriateColor
 class ServerAdapter(
 	private val servers: Array<Server>,
 	private val context: Context,
-	private val onServerClickListener: ( server: Server) -> Unit
+	private val onServerClickListener: ( server: Server ) -> Unit
 ): RecyclerView.Adapter<ServerAdapter.ViewHolder>() {
 
 	// Holds all the UI
@@ -129,11 +129,11 @@ class ServerAdapter(
 		} else {
 
 			// Status
-			viewHolder.statusTextView.text = context.getString(R.string.serversTextViewServerStatusOffline)
+			viewHolder.statusTextView.text = context.getString( R.string.serversTextViewServerStatusOffline )
 			viewHolder.statusTextView.setTextColor( context.getColor( R.color.statusDead ) )
 
 			// Processor Usage
-			viewHolder.processorTextView.text = context.getString( R.string.serversTextViewServerProcessorUsage).format( 0 )
+			viewHolder.processorTextView.text = context.getString( R.string.serversTextViewServerProcessorUsage ).format( 0 )
 			viewHolder.processorTextView.setTextColor( context.getColor( R.color.statusDead ) )
 
 			// Memory Used
@@ -141,7 +141,7 @@ class ServerAdapter(
 			viewHolder.memoryTextView.setTextColor( context.getColor( R.color.statusDead ) )
 
 			// Processor Temperature
-			viewHolder.temperatureTextView.text = context.getString( R.string.serversTextViewServerTemperatureValue).format( 0 )
+			viewHolder.temperatureTextView.text = context.getString( R.string.serversTextViewServerTemperatureValue ).format( 0 )
 			viewHolder.temperatureTextView.setTextColor( context.getColor( R.color.statusDead ) )
 
 			// Running Services Count

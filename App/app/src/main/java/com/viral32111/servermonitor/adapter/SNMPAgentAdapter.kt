@@ -31,7 +31,7 @@ class SNMPAgentAdapter(
 		val trapsTextView: TextView
 
 		init {
-			Log.d(Shared.logTag, "Initialising new SNMP agent view holder..." )
+			Log.d( Shared.logTag, "Initialising new SNMP agent view holder..." )
 
 			// Get relevant UI
 			nameTextView = view.findViewById( R.id.snmpAgentNameTextView )
@@ -51,7 +51,7 @@ class SNMPAgentAdapter(
 	}
 
 	// Replaces the contents of a view - called by the layout manager
-	override fun onBindViewHolder(viewHolder: ViewHolder, index: Int ) {
+	override fun onBindViewHolder( viewHolder: ViewHolder, index: Int ) {
 		val agent = agents[ index ]
 		Log.d( Shared.logTag, "Replacing view for SNMP agent '${ agent.name }' ('${ agent.address }', '${ agent.port }')..." )
 
