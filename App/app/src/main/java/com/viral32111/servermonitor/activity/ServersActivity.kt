@@ -28,7 +28,6 @@ import com.viral32111.servermonitor.data.Server
 import com.viral32111.servermonitor.helper.*
 import kotlinx.coroutines.*
 import java.util.*
-import java.util.concurrent.TimeUnit
 
 class ServersActivity : AppCompatActivity() {
 

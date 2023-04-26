@@ -9,7 +9,6 @@ import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.widget.doOnTextChanged
-import androidx.work.WorkManager
 import com.android.volley.AuthFailureError
 import com.android.volley.ClientError
 import com.android.volley.NetworkError
@@ -24,7 +23,6 @@ import com.google.android.material.textfield.TextInputLayout
 import com.viral32111.servermonitor.ErrorCode
 import com.viral32111.servermonitor.R
 import com.viral32111.servermonitor.Shared
-import com.viral32111.servermonitor.UpdateWorker
 import com.viral32111.servermonitor.helper.API
 import com.viral32111.servermonitor.helper.Settings
 import com.viral32111.servermonitor.helper.createProgressDialog

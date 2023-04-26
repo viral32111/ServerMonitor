@@ -36,7 +36,7 @@ class UpdateWorker(
 	companion object {
 
 		// Unique name for this worker
-		const val NAME = "ALWAYS_ONGOING_NOTIFICATION_WORKER"
+		private const val NAME = "ALWAYS_ONGOING_NOTIFICATION_WORKER"
 
 		// Keys for input data
 		const val BASE_URL = "BASE_URL"
@@ -45,13 +45,13 @@ class UpdateWorker(
 		const val AUTOMATIC_REFRESH_INTERVAL = "AUTOMATIC_REFRESH_INTERVAL"
 
 		// Keys for success output data
-		const val SUCCESS = "SUCCESS"
+		//const val SUCCESS = "SUCCESS"
 
 		// Keys for failure output data
 		const val FAILURE_REASON = "FAILURE_REASON"
 		const val FAILURE_NULL_INPUT_DATA = 1
 		const val FAILURE_NULL_API_RESPONSE = 2
-		const val FAILURE_API_REQUEST_EXCEPTION = 3
+		//const val FAILURE_API_REQUEST_EXCEPTION = 3
 
 		// Keys for progress output data
 		const val PROGRESS_ARE_THERE_ISSUES = "PROGRESS_ARE_THERE_ISSUES"
@@ -92,6 +92,7 @@ class UpdateWorker(
 
 			// Cancel all existing workers - This is needed as a worker is automatically created on launch due to the service in the manifest
 			workerManager.cancelAllWork()
+			Log.d( Shared.logTag, "Cancelled all existing workers" )
 
 			// Queue up the worker - https://developer.android.com/guide/background/persistent/how-to/manage-work
 			if ( shouldEnqueue ) {
@@ -103,11 +104,11 @@ class UpdateWorker(
 		}
 
 		// Observe all the always on-going notification workers (ideally only 1) for the rest of time - https://developer.android.com/guide/background/persistent/how-to/observe
-		fun observe( workerManager: WorkManager, lifecycleOwner: LifecycleOwner ) {
+		private fun observe( workerManager: WorkManager, lifecycleOwner: LifecycleOwner ) {
 
 			// Remove existing observers
 			workerManager.getWorkInfosForUniqueWorkLiveData( this.NAME ).removeObservers( lifecycleOwner )
-			Log.d( Shared.logTag, "Removed all observers for the always on-going notification worker in favour of new observer..." )
+			Log.d( Shared.logTag, "Removed all observers for the always on-going notification worker, in favour of a new observer..." )
 
 			// Register new observer
 			workerManager.getWorkInfosForUniqueWorkLiveData( this.NAME ).observe( lifecycleOwner ) { workInfos: List<WorkInfo> ->
@@ -146,7 +147,7 @@ class UpdateWorker(
 		}
 
 		// Helper for calling the observation function with context instead of an existing work manager
-		fun observe( applicationContext: Context, lifecycleOwner: LifecycleOwner ) = this.observe( WorkManager.getInstance( applicationContext ), lifecycleOwner )
+		//fun observe( applicationContext: Context, lifecycleOwner: LifecycleOwner ) = this.observe( WorkManager.getInstance( applicationContext ), lifecycleOwner )
 
 	}
 
