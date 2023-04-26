@@ -61,7 +61,7 @@ class SetupActivity : AppCompatActivity() {
 		Log.d( Shared.logTag, "Switched to Material Toolbar" )
 
 		// Set the title on the toolbar
-		val materialToolbar = supportActionBar?.customView?.findViewById<MaterialToolbar>(R.id.actionBarMaterialToolbar)
+		val materialToolbar = supportActionBar?.customView?.findViewById<MaterialToolbar>( R.id.actionBarMaterialToolbar )
 		materialToolbar?.title = getString( R.string.setupActionBarTitle )
 		materialToolbar?.isTitleCentered = true
 		Log.d( Shared.logTag, "Set Material Toolbar title to '${ materialToolbar?.title }' (${ materialToolbar?.isTitleCentered })" )
@@ -73,7 +73,7 @@ class SetupActivity : AppCompatActivity() {
 		instanceUrlEditText = findViewById( R.id.setupInstanceUrlTextInputEditText )
 		credentialsUsernameEditText = findViewById( R.id.setupCredentialsUsernameTextInputEditText )
 		credentialsPasswordEditText = findViewById( R.id.setupCredentialsPasswordTextInputEditText )
-		continueButton = findViewById( R.id.settingsSaveButton)
+		continueButton = findViewById( R.id.settingsSaveButton )
 		Log.d( Shared.logTag, "Got UI controls" )
 
 		// Get the settings - https://developer.android.com/training/data-storage/shared-preferences
@@ -90,17 +90,17 @@ class SetupActivity : AppCompatActivity() {
 		materialToolbar?.setOnMenuItemClickListener { menuItem ->
 
 			// Settings
-			if ( menuItem.title?.equals( getString(R.string.actionBarMenuSettings) ) == true ) {
+			if ( menuItem.title?.equals( getString( R.string.actionBarMenuSettings ) ) == true ) {
 				Log.d( Shared.logTag, "Opening Settings activity..." )
 				startActivity( Intent( this, SettingsActivity::class.java ) )
-				overridePendingTransition(R.anim.slide_in_from_right, R.anim.slide_out_to_left)
+				overridePendingTransition( R.anim.slide_in_from_right, R.anim.slide_out_to_left )
 
 			// Logout
-			} else if ( menuItem.title?.equals( getString(R.string.actionBarMenuLogout) ) == true ) {
+			} else if ( menuItem.title?.equals( getString( R.string.actionBarMenuLogout ) ) == true ) {
 				Log.w( Shared.logTag, "Logout from the setup activity?!" )
 
 			// About
-			} else if ( menuItem.title?.equals( getString(R.string.actionBarMenuAbout) ) == true ) {
+			} else if ( menuItem.title?.equals( getString( R.string.actionBarMenuAbout ) ) == true ) {
 				Log.d( Shared.logTag, "Showing information about app dialog..." )
 				showInformationDialog( this, R.string.dialogInformationAboutTitle, R.string.dialogInformationAboutMessage )
 			}
@@ -295,7 +295,7 @@ class SetupActivity : AppCompatActivity() {
 			when ( error ) {
 
 				// Bad authentication
-				is AuthFailureError -> when (errorCode) {
+				is AuthFailureError -> when ( errorCode ) {
 					ErrorCode.UnknownUser.code -> showBriefMessage( this, R.string.toastInstanceTestAuthenticationUnknownUser )
 					ErrorCode.IncorrectPassword.code -> showBriefMessage( this, R.string.toastInstanceTestAuthenticationIncorrectPassword )
 					else -> showBriefMessage( this, R.string.toastInstanceTestAuthenticationFailure )

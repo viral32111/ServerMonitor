@@ -60,7 +60,7 @@ class SettingsActivity : AppCompatActivity() {
 
 		// Switch to the custom Material Toolbar
 		supportActionBar?.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
-		supportActionBar?.setCustomView(R.layout.action_bar)
+		supportActionBar?.setCustomView( R.layout.action_bar )
 		Log.d( Shared.logTag, "Switched to Material Toolbar" )
 
 		// Set the title on the toolbar
@@ -433,7 +433,7 @@ class SettingsActivity : AppCompatActivity() {
 	}
 
 	// Shows a confirmation dialog for leaving settings without saving changes, but only if the settings have been changed
-	private fun confirmBack( settings: Settings) {
+	private fun confirmBack( settings: Settings ) {
 		if ( hasValuesChanged( settings ) ) {
 			Log.d( Shared.logTag, "Settings have changed, showing confirmation dialog..." )
 
@@ -450,12 +450,12 @@ class SettingsActivity : AppCompatActivity() {
 			Log.d( Shared.logTag, "Settings have not changed, not showing confirmation dialog" )
 
 			finish()
-			overridePendingTransition(R.anim.slide_in_from_left, R.anim.slide_out_to_right)
+			overridePendingTransition( R.anim.slide_in_from_left, R.anim.slide_out_to_right )
 		}
 	}
 
 	// Checks if the settings have changed
-	private fun hasValuesChanged( settings: Settings): Boolean {
+	private fun hasValuesChanged( settings: Settings ): Boolean {
 
 		// Get the values from all the inputs
 		val instanceUrl = instanceUrlEditText.text.toString()

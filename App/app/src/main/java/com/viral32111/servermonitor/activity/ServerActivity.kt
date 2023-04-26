@@ -129,7 +129,7 @@ class ServerActivity : AppCompatActivity() {
 		materialToolbar?.setOnMenuItemClickListener { menuItem ->
 
 			// Settings
-			if ( menuItem.title?.equals( getString(R.string.actionBarMenuSettings) ) == true ) {
+			if ( menuItem.title?.equals( getString( R.string.actionBarMenuSettings ) ) == true ) {
 				Log.d( Shared.logTag, "Opening Settings activity..." )
 
 				startActivity( Intent( this, SettingsActivity::class.java ) )
@@ -159,7 +159,7 @@ class ServerActivity : AppCompatActivity() {
 				} )
 
 			// About
-			} else if ( menuItem.title?.equals( getString(R.string.actionBarMenuAbout) ) == true ) {
+			} else if ( menuItem.title?.equals( getString( R.string.actionBarMenuAbout ) ) == true ) {
 				Log.d( Shared.logTag, "Showing information about app dialog..." )
 
 				// Get the contact information, if it exists
@@ -327,7 +327,7 @@ class ServerActivity : AppCompatActivity() {
 								if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
 							}
 
-						} catch ( exception: APIException) {
+						} catch ( exception: APIException ) {
 							Log.e( Shared.logTag, "Failed to fetch servers from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
 
 							withContext( Dispatchers.Main ) {
@@ -371,7 +371,7 @@ class ServerActivity : AppCompatActivity() {
 								}
 							}
 						} catch ( exception: JsonParseException ) {
-							Log.e(Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
+							Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
 
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
@@ -379,7 +379,7 @@ class ServerActivity : AppCompatActivity() {
 								showBriefMessage( activity, R.string.serverToastServerParseFailure )
 							}
 						} catch ( exception: JsonSyntaxException ) {
-							Log.e(Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
+							Log.e( Shared.logTag, "Failed to parse fetch servers API response as JSON due to '${ exception.message }'" )
 
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
@@ -387,7 +387,7 @@ class ServerActivity : AppCompatActivity() {
 								showBriefMessage( activity, R.string.serverToastServerParseFailure )
 							}
 						} catch ( exception: NullPointerException ) {
-							Log.e(Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
+							Log.e( Shared.logTag, "Encountered null property value in fetch servers API response ('${ exception.message }')" )
 
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
@@ -402,14 +402,14 @@ class ServerActivity : AppCompatActivity() {
 
 			// When the animation repeats...
 			override fun onAnimationRepeat( animation: Animation? ) {
-				Log.d(Shared.logTag, "Automatic refresh countdown progress bar animation repeated" )
+				Log.d( Shared.logTag, "Automatic refresh countdown progress bar animation repeated" )
 			}
 
 		} )
 
 		// When we're swiped down to refresh...
 		swipeRefreshLayout.setOnRefreshListener {
-			Log.d(Shared.logTag, "Swipe refreshed!" )
+			Log.d( Shared.logTag, "Swipe refreshed!" )
 
 			// Stop the automatic refresh countdown progress bar, thus calling the animation callback
 			if ( settings.automaticRefresh ) {
@@ -614,7 +614,7 @@ class ServerActivity : AppCompatActivity() {
 
 					// We don't enable user input & stop refreshing spinner here, as there's still another request to come
 
-				} catch ( exception: APIException) {
+				} catch ( exception: APIException ) {
 					Log.e( Shared.logTag, "Failed to fetch contact information from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
 
 					withContext( Dispatchers.Main ) {
@@ -697,7 +697,7 @@ class ServerActivity : AppCompatActivity() {
 						if ( settings.automaticRefresh ) refreshProgressBar.startAnimation( progressBarAnimation )
 					}
 
-				} catch ( exception: APIException) {
+				} catch ( exception: APIException ) {
 					Log.e( Shared.logTag, "Failed to fetch server '${ serverIdentifier }' from API due to '${ exception.message }' (Volley Error: '${ exception.volleyError }', HTTP Status Code: '${ exception.httpStatusCode }', API Error Code: '${ exception.apiErrorCode }')" )
 
 					withContext( Dispatchers.Main ) {
@@ -740,7 +740,7 @@ class ServerActivity : AppCompatActivity() {
 
 						}
 					}
-				} catch ( exception: JsonParseException) {
+				} catch ( exception: JsonParseException ) {
 					Log.e( Shared.logTag, "Failed to parse fetch server API response as JSON due to '${ exception.message }'" )
 
 					withContext( Dispatchers.Main ) {
@@ -748,7 +748,7 @@ class ServerActivity : AppCompatActivity() {
 						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
 						showBriefMessage( activity, R.string.serverToastServerParseFailure )
 					}
-				} catch ( exception: JsonSyntaxException) {
+				} catch ( exception: JsonSyntaxException ) {
 					Log.e( Shared.logTag, "Failed to parse fetch server API response as JSON due to '${ exception.message }'" )
 
 					withContext( Dispatchers.Main ) {
@@ -928,7 +928,7 @@ class ServerActivity : AppCompatActivity() {
 			if ( snmpCommunityName != null ) {
 				snmpTitleTextView.setTextFromHTML( getString( R.string.serverTextViewSNMPTitleCommunity ).format( snmpCommunityName.asHTMLItalic() ) )
 			} else {
-				snmpTitleTextView.text = getString(R.string.serverTextViewSNMPTitle)
+				snmpTitleTextView.text = getString( R.string.serverTextViewSNMPTitle )
 			}
 
 			// SNMP Agents
@@ -955,8 +955,8 @@ class ServerActivity : AppCompatActivity() {
 			// Overall status
 			statusTextView.setTextColor( getColor( R.color.statusDead ) )
 			statusTextView.setTextFromHTML( getString( R.string.serverTextViewStatus ).format(
-				applicationContext.createHTMLColoredText( getString(R.string.serverTextViewStatusOffline), getColor( R.color.statusDead ) ).asHTMLBold(),
-				getString(R.string.serverTextViewStatusOfflineUptime)
+				applicationContext.createHTMLColoredText( getString( R.string.serverTextViewStatusOffline ), getColor( R.color.statusDead ) ).asHTMLBold(),
+				getString( R.string.serverTextViewStatusOfflineUptime )
 			) )
 
 			// Resources -> Processor
@@ -984,7 +984,7 @@ class ServerActivity : AppCompatActivity() {
 
 			// Network Interfaces
 			networkRecyclerView.visibility = View.GONE
-			networkStatusTextView.setTextIconColor( getColor(R.color.statusDead) )
+			networkStatusTextView.setTextIconColor( getColor( R.color.statusDead ) )
 			networkStatusTextView.text = getString( R.string.serverTextViewNetworkUnknown )
 			networkStatusTextView.visibility = View.VISIBLE
 
@@ -1020,8 +1020,8 @@ class ServerActivity : AppCompatActivity() {
 	}
 
 	// Runs when a service's manage button is pressed...
-	private fun onServiceManagePressed( service: Service) {
-		Log.d(Shared.logTag, "Switching to Service activity..." )
+	private fun onServiceManagePressed( service: Service ) {
+		Log.d( Shared.logTag, "Switching to Service activity..." )
 
 		val intent = Intent( this, ServiceActivity::class.java )
 		intent.putExtra( "serverIdentifier", serverIdentifier )
