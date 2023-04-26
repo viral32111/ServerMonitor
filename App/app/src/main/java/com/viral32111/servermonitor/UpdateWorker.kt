@@ -208,10 +208,10 @@ class UpdateWorker(
 						val ongoingIssue = issueHistory.fetchOngoing()
 
 						// Check if there are issues with any of the servers
-						val areThereIssues = servers.any { server -> server.areThereIssues() }
+						val serversWithIssues = servers.filter { server -> server.areThereIssues() }
 
 						// If an issue has been detected...
-						if ( areThereIssues ) {
+						if ( serversWithIssues.isNotEmpty() ) {
 
 							// If there is an on-going issue then increment the total number of issue detections
 							if ( ongoingIssue != null ) {
@@ -230,7 +230,7 @@ class UpdateWorker(
 										Intent( applicationContext, ServersActivity::class.java ),
 										Notify.CHANNEL_WHEN_ISSUE_ARISES,
 										R.string.notificationIssueTitle,
-										applicationContext.getString( R.string.notificationIssueText ).format( "SERVER NAME HERE" ),
+										applicationContext.getString( R.string.notificationIssueText ).format( serversWithIssues.joinToString( ", " ) { server -> server.hostName.uppercase() } ),
 										applicationContext.getColor( R.color.statusBad )
 									)
 
@@ -257,7 +257,7 @@ class UpdateWorker(
 						}
 
 						// Update the worker's progress
-						setProgress( workDataOf( PROGRESS_ARE_THERE_ISSUES to areThereIssues ) )
+						setProgress( workDataOf( PROGRESS_ARE_THERE_ISSUES to serversWithIssues.isNotEmpty() ) )
 
 					// No servers were returned...
 					} else {
