@@ -25,6 +25,7 @@ import com.viral32111.servermonitor.*
 import com.viral32111.servermonitor.R
 import com.viral32111.servermonitor.adapter.ServerAdapter
 import com.viral32111.servermonitor.data.Server
+import com.viral32111.servermonitor.database.initialiseDatabase
 import com.viral32111.servermonitor.helper.*
 import kotlinx.coroutines.*
 import java.util.*
@@ -177,6 +178,11 @@ class ServersActivity : AppCompatActivity() {
 						try {
 							val servers = fetchServers( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!! )
 
+							// Fetch the number of issues today
+							val database = initialiseDatabase( applicationContext )
+							val issuesTodayCount = database.issueHistory().fetchAfterStartedAtDate()?.count()
+							Log.d( Shared.logTag, "There have been $issuesTodayCount issue(s) today" )
+
 							// Update the UI
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
@@ -184,7 +190,7 @@ class ServersActivity : AppCompatActivity() {
 
 								hasAutomaticRefreshFailed = false
 
-								updateUI( servers )
+								updateUI( servers, issuesTodayCount )
 							}
 
 						} catch ( exception: APIException ) {
@@ -295,11 +301,16 @@ class ServersActivity : AppCompatActivity() {
 						try {
 							val servers = fetchServers( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!! )
 
+							// Fetch the number of issues today
+							val database = initialiseDatabase( applicationContext )
+							val issuesTodayCount = database.issueHistory().fetchAfterStartedAtDate()?.count()
+							Log.d( Shared.logTag, "There have been $issuesTodayCount issue(s) today" )
+
 							// Update the UI
 							withContext( Dispatchers.Main ) {
 								swipeRefreshLayout.isRefreshing = false
 								refreshProgressBar.progress = 0
-								updateUI( servers )
+								updateUI( servers, issuesTodayCount )
 							}
 
 						} catch ( exception: APIException ) {
@@ -522,12 +533,17 @@ class ServersActivity : AppCompatActivity() {
 				try {
 					val servers = fetchServers( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!! )
 
+					// Fetch the number of issues today
+					val database = initialiseDatabase( applicationContext )
+					val issuesTodayCount = database.issueHistory().fetchAfterStartedAtDate()?.count()
+					Log.d( Shared.logTag, "There have been $issuesTodayCount issue(s) today" )
+
 					// Update the UI
 					withContext( Dispatchers.Main ) {
 						swipeRefreshLayout.isRefreshing = false
 						if ( settings.automaticRefresh ) refreshProgressBar.progress = 0
 
-						updateUI( servers )
+						updateUI( servers, issuesTodayCount )
 					}
 
 				} catch ( exception: APIException ) {
@@ -605,14 +621,14 @@ class ServersActivity : AppCompatActivity() {
 	}
 
 	// Update the UI with the given servers
-	private fun updateUI( servers: Array<Server> ) {
+	private fun updateUI( servers: Array<Server>, issuesToday: Int? ) {
 
 		// Set the overall status based on if there are there issues with any of the servers, if there are servers available to scrape...
 		if ( servers.isNotEmpty() ) {
 			if ( servers.any { server -> server.areThereIssues() } ) {
 				statusTitleTextView.text = getString( R.string.serversTextViewStatusTitleBad )
 				statusTitleTextView.setTextColor( getColor( R.color.statusBad ) )
-				statusDescriptionTextView.text = getString( R.string.serversTextViewStatusDescriptionBad ).format( 1 ) // TODO: Count of issues on this day
+				statusDescriptionTextView.text = getString( R.string.serversTextViewStatusDescriptionBad ).format( issuesToday ?: 1 )
 			} else {
 				statusTitleTextView.text = getString( R.string.serversTextViewStatusTitleGood )
 				statusTitleTextView.setTextColor( getColor( R.color.statusGood ) )

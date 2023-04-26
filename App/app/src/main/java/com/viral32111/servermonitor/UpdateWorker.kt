@@ -6,7 +6,6 @@ import android.content.pm.ServiceInfo
 import android.os.Build
 import android.util.Log
 import androidx.lifecycle.LifecycleOwner
-import androidx.room.Room
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
@@ -20,14 +19,11 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.viral32111.servermonitor.activity.ServersActivity
-import com.viral32111.servermonitor.database.MyDatabase
 import com.viral32111.servermonitor.database.initialiseDatabase
 import com.viral32111.servermonitor.helper.API
 import com.viral32111.servermonitor.helper.Notify
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 
@@ -225,7 +221,7 @@ class UpdateWorker(
 							// Begin a new on-going issue if there isn't one already
 							} else {
 								val newIssueIdentifier = issueHistory.create()
-								Log.d( Shared.logTag, "Began new on-going issue (ID: $newIssueIdentifier)" )
+								Log.d( Shared.logTag, "Began new on-going issue $newIssueIdentifier" )
 
 								// Show an additional notification for this issue detection
 								if ( notificationWhenIssueArises ) withContext( Dispatchers.Main ) {
