@@ -12,6 +12,16 @@ A mobile app for monitoring server metrics & status information in real-time.
 
 The [front-end client](/App/) is a modern [Material 3](https://m3.material.io/) Android application written in Kotlin for displaying, and the [back-end server service](/Service/) is a [.NET Core 7.0](https://dotnet.microsoft.com/) console application written in C# that acts as either a RESTful API or a Prometheus metrics exporter.
 
+## 🖼️ Screenshots
+
+<p float="left">
+<img src="Screenshots/Setup-Activity.jpg" width="150" />
+<img src="Screenshots/Settings-Activity.jpg" width="150" />
+<img src="Screenshots/Servers-Activity.jpg" width="150" />
+<img src="Screenshots/Server-Activity.jpg" width="150" />
+<img src="Screenshots/Service-Activity.jpg" width="150" />
+</p>
+
 ## 📥 Usage
 
 A [Prometheus time-series database](https://prometheus.io/) is required for storing the metrics data. Additionally, a [Cloudflare Tunnel](https://www.cloudflare.com/en-gb/products/tunnel/) (or other secure HTTP tunnel) is highly recommended to expose the RESTful API service to the Internet, allowing secure access to it from the Android application.
