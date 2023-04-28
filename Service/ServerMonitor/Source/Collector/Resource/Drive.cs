@@ -82,7 +82,7 @@ namespace ServerMonitor.Collector.Resource {
 
 				try {
 					long[] stats = GetDriveStatisticsForWindows( driveMountPath );
-					
+
 					ReadBytes.WithLabels( driveName ).IncTo( stats[ 0 ] );
 					WriteBytes.WithLabels( driveName ).IncTo( stats[ 1 ] );
 				} catch ( Win32Exception exception ) {

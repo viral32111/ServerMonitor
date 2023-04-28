@@ -61,8 +61,10 @@
 
 	<!-- Dialog for executed action -->
 	<string name="serviceDialogActionExecuteTitle">Action Execution</string>
-	<string name="serviceDialogActionExecuteMessageSuccess">The action has been executed on the service, it may take some time to fulfill.\n\nThe action server responded with: %s (%s).</string>-->
-	<string name="serviceDialogActionExecuteMessageFailure">The action failed to execute on the service (code %d).\n\nThe action server responded with: %s (%s).</string>-->
+	<string name="serviceDialogActionExecuteMessageSuccess">The action has been executed on the service, it may take some time to fulfill.</string>
+	<string name="serviceDialogActionExecuteMessageSuccessData">The action has been executed on the service, it may take some time to fulfill.\n\nThe action server responded with: %s (%s).</string>
+	<string name="serviceDialogActionExecuteMessageFailure">The action failed to execute on the service (code %d).</string>
+	<string name="serviceDialogActionExecuteMessageFailureData">The action failed to execute on the service (code %d).\n\nThe action server responded with: %s (%s).</string>
 
 	<!-- Dialog for progress -->
 	<string name="serviceDialogProgressActionExecuteTitle">Action Execution</string>

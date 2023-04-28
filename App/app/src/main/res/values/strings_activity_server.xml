@@ -115,8 +115,10 @@
 
 	<!-- Dialog for executed action -->
 	<string name="serverDialogActionExecuteTitle">Action Execution</string>
-	<string name="serverDialogActionExecuteMessageSuccess">The action has been executed on the server, it may take some time to fulfill.\n\nThe action server responded with: %s (%s).</string>-->
-	<string name="serverDialogActionExecuteMessageFailure">The action failed to execute on the server (code %d).\n\nThe action server responded with: %s (%s).</string>-->
+	<string name="serverDialogActionExecuteMessageSuccess">The action has been executed on the server, it may take some time to fulfill.</string>
+	<string name="serverDialogActionExecuteMessageSuccessData">The action has been executed on the server, it may take some time to fulfill.\n\nThe action server responded with: %s (%s).</string>
+	<string name="serverDialogActionExecuteMessageFailure">The action failed to execute on the server (code %d).</string>
+	<string name="serverDialogActionExecuteMessageFailureData">The action failed to execute on the server (code %d).\n\nThe action server responded with: %s (%s).</string>
 
 	<!-- Dialog for progress -->
 	<string name="serverDialogProgressActionExecuteTitle">Action Execution</string>

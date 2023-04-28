@@ -84,7 +84,7 @@ class DockerContainer( data: JsonObject ) {
 	fun areThereIssues(): Boolean {
 		if ( this.statusCode != 0 && this.statusCode != 1 ) return this.exitCode != 0
 		if ( this.healthStatusCode != -1 ) return this.healthStatusCode == 0
-		return this.statusCode == 2 || this.statusCode == 3 || this.statusCode == 4
+		return this.statusCode == 2 || this.statusCode == 3
 	}
 
 }

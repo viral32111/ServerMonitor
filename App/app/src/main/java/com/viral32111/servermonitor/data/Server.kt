@@ -253,7 +253,11 @@ class Server( data: JsonObject, extended: Boolean = false ) {
 	}
 	fun areThereIssuesWithNetworkInterfaces(): Boolean = this.getNetworkInterfaces().any { networkInterface -> networkInterface.areThereIssues() }
 	fun areThereIssuesWithDrives(): Boolean = this.getDrives().any { drive -> drive.areThereIssues() }
-	fun areThereIssuesWithServices(): Boolean = this.getServices().any { service -> service.areThereIssues() }
+	fun areThereIssuesWithServices(): Boolean {
+		val servicesWithIssues = this.getServices().filter { service -> service.areThereIssues() }
+		Log.w( Shared.logTag, "Issues with services: '${ servicesWithIssues.joinToString( ", " ) { service -> "${ service.serviceName } (${ service.displayName })" } }'" )
+		return servicesWithIssues.isNotEmpty()
+	}
 	private fun areThereIssuesWithDockerContainers(): Boolean = this.getDockerContainers().any { dockerContainer -> dockerContainer.areThereIssues() }
 	private fun areThereIssuesWithSNMPAgents(): Boolean = this.getSNMPAgents().any { snmpAgent -> snmpAgent.areThereIssues() }
 

@@ -88,6 +88,7 @@ class Service( data: JsonObject ) {
 
 	// Checks if there are any issues - exited/failed, error exit code
 	fun areThereIssues(): Boolean {
+		if ( this.getStatusText() == "Unknown" ) return false // We have no idea
 		if ( this.statusCode != 0 && this.statusCode != 1 ) return this.exitCode != 0
 		return this.statusCode == 4 || this.statusCode == 5
 	}

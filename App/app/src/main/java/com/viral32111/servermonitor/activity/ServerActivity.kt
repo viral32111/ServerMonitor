@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import androidx.work.WorkManager
 import com.android.volley.AuthFailureError
 import com.android.volley.ClientError
 import com.android.volley.NetworkError
@@ -148,6 +149,10 @@ class ServerActivity : AppCompatActivity() {
 					settings.credentialsPassword = null
 					settings.save()
 					Log.d( Shared.logTag, "Erased stored credentials" )
+
+					// Stop all workers
+					WorkManager.getInstance( applicationContext ).cancelAllWork()
+					Log.d( Shared.logTag, "Cancelled all existing workers" )
 
 					// Return to the setup activity
 					Log.d( Shared.logTag, "Opening Setup activity..." )
@@ -1050,19 +1055,21 @@ class ServerActivity : AppCompatActivity() {
 				try {
 					val action = API.postServer( settings.instanceUrl!!, settings.credentialsUsername!!, settings.credentialsPassword!!, serverIdentifier, actionName )
 					val exitCode = action?.get( "exitCode" )?.asInt
-					var outputText = action?.get( "outputText" )?.asString?.trim()
-					var errorText = action?.get( "errorText" )?.asString?.trim()
-
-					if ( outputText.isNullOrBlank() ) outputText = "N/A"
-					if ( errorText.isNullOrBlank() ) errorText = "N/A"
+					val outputText = action?.get( "outputText" )?.asString?.trim()
+					val errorText = action?.get( "errorText" )?.asString?.trim()
 
 					Log.d( Shared.logTag, "Executed action '${ actionName }' on server '${ serverIdentifier }': '${ outputText }', '${ errorText }' (Exit Code: '${ exitCode }')" )
 
 					withContext( Dispatchers.Main ) {
 						progressDialog.dismiss()
 
-						if ( exitCode == 0 ) showInformationDialog( activity, R.string.serverDialogActionExecuteTitle, getString( R.string.serverDialogActionExecuteMessageSuccess ).format( outputText, errorText ) )
-						else showInformationDialog( activity, R.string.serverDialogActionExecuteTitle, getString( R.string.serverDialogActionExecuteMessageFailure ).format( exitCode, errorText, outputText ) )
+						if ( outputText.isNullOrBlank() && errorText.isNullOrBlank() ) {
+							if ( exitCode == 0 ) showInformationDialog( activity, R.string.serverDialogActionExecuteTitle, R.string.serverDialogActionExecuteMessageSuccess )
+							else showInformationDialog( activity, R.string.serverDialogActionExecuteTitle, R.string.serverDialogActionExecuteMessageFailure )
+						} else {
+							if ( exitCode == 0 ) showInformationDialog( activity, R.string.serverDialogActionExecuteTitle, getString( R.string.serverDialogActionExecuteMessageSuccessData ).format( outputText?.ifBlank { "N/A" } ?: "N/A", errorText?.ifBlank { "N/A" } ?: "N/A" ) )
+							else showInformationDialog( activity, R.string.serverDialogActionExecuteTitle, getString( R.string.serverDialogActionExecuteMessageFailureData ).format( exitCode ?: "N/A", errorText?.ifBlank { "N/A" } ?: "N/A", outputText?.ifBlank { "N/A" } ?: "N/A" ) )
+						}
 					}
 
 				} catch ( exception: APIException ) {

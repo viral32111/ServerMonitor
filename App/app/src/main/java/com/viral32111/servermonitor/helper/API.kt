@@ -29,6 +29,9 @@ class API {
 	// Define static properties & methods - https://medium.com/swlh/kotlin-basics-of-companion-objects-a8422c96779b
 	companion object {
 
+		// Timeout, in milliseconds
+		private const val REQUEST_TIMEOUT = 60 * 1000 // DefaultRetryPolicy.DEFAULT_TIMEOUT_MS
+
 		// HTTP request queue
 		private var requestQueue: RequestQueue? = null
 
@@ -104,7 +107,7 @@ class API {
 			}
 
 			// Disable automatic retrying on failure
-			httpRequest.retryPolicy = DefaultRetryPolicy( DefaultRetryPolicy.DEFAULT_TIMEOUT_MS, 0, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT )
+			httpRequest.retryPolicy = DefaultRetryPolicy( REQUEST_TIMEOUT, 0, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT )
 
 			// Send the request
 			httpRequest.tag = Shared.httpRequestQueueTag
@@ -179,7 +182,7 @@ class API {
 			}
 
 			// Disable automatic retrying on failure
-			httpRequest.retryPolicy = DefaultRetryPolicy( DefaultRetryPolicy.DEFAULT_TIMEOUT_MS, 0, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT )
+			httpRequest.retryPolicy = DefaultRetryPolicy( REQUEST_TIMEOUT, 0, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT )
 
 			// Send the request
 			httpRequest.tag = Shared.httpRequestQueueTag

@@ -106,6 +106,10 @@ class ServersActivity : AppCompatActivity() {
 					settings.save()
 					Log.d( Shared.logTag, "Erased stored credentials" )
 
+					// Stop all workers
+					WorkManager.getInstance( applicationContext ).cancelAllWork()
+					Log.d( Shared.logTag, "Cancelled all existing workers" )
+
 					// Return to the setup activity
 					Log.d( Shared.logTag, "Opening Setup activity..." )
 					startActivity( Intent( this, SetupActivity::class.java ) )
@@ -628,7 +632,7 @@ class ServersActivity : AppCompatActivity() {
 			if ( servers.any { server -> server.areThereIssues() } ) {
 				statusTitleTextView.text = getString( R.string.serversTextViewStatusTitleBad )
 				statusTitleTextView.setTextColor( getColor( R.color.statusBad ) )
-				statusDescriptionTextView.text = getString( R.string.serversTextViewStatusDescriptionBad ).format( issuesToday ?: 1 )
+				statusDescriptionTextView.text = getString( R.string.serversTextViewStatusDescriptionBad ).format( issuesToday?.coerceAtLeast( 1 ) ?: 1 )
 			} else {
 				statusTitleTextView.text = getString( R.string.serversTextViewStatusTitleGood )
 				statusTitleTextView.setTextColor( getColor( R.color.statusGood ) )
