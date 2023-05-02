@@ -26,7 +26,7 @@ The [front-end client](/App/) is a modern [Material 3](https://m3.material.io/) 
 
 A [Prometheus time-series database](https://prometheus.io/) is required for storing the metrics data. Additionally, a [Cloudflare Tunnel](https://www.cloudflare.com/en-gb/products/tunnel/) (or other secure HTTP tunnel) is highly recommended to expose the RESTful API service to the Internet, allowing secure access to it from the Android application.
 
-1. Download the [latest release](https://github.com/viral32111/ServerMonitor/releases/latest) of the Android application (`Server-Monitor-App.apk`) & server service (`Server-Monitor-Service.zip`).
+1. Download the [latest release](https://github.com/viral32111/ServerMonitor/releases/latest) of the Android application (`ServerMonitor-App.zip`) & server service (`ServerMonitor-Service.zip`).
 2. Install the server service on all the servers you wish to manage (the [.NET Core 7.0 Runtime](https://dotnet.microsoft.com/download/dotnet/7.0) is required).
 	* One server must be designated as the *"connector"* (RESTful API) for the Android application to fetch metrics data from. See [Connector](#connector).
 	* All other servers must run in the *"collection"* mode for gathering & exporting metrics data for Prometheus to scrape. See [Collector](#collector).
