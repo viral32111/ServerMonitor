@@ -9,7 +9,7 @@ namespace ServerMonitor.Connector.Helper {
 	public static class Base64 {
 
 		// Create the logger for this file
-		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Helper/Base64" );
+		private static readonly ILogger logger = Logging.CreateLogger( "Connector/Helper/Base64" );
 
 		// Converts an array of JSON objects to a JSON array - https://9to5answer.com/how-to-achieve-base64-url-safe-encoding-in-c
 		public static string EncodeURLSafe( string text ) => Convert.ToBase64String( Encoding.UTF8.GetBytes( text ) ).TrimEnd( '=' ).Replace( "+", "-" ).Replace( "/", "_" );

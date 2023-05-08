@@ -17,7 +17,7 @@ namespace ServerMonitor.Connector.Route {
 	public static class Server {
 
 		// Create the logger for this file
-		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Routes/Server" );
+		private static readonly ILogger logger = Logging.CreateLogger( "Connector/Routes/Server" );
 
 		// Returns all metrics data for a specific server
 		[ Route( "GET", "/server" ) ]

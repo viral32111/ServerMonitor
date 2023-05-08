@@ -17,7 +17,7 @@ namespace ServerMonitor.Connector.Route {
 	public static class Service {
 
 		// Create the logger for this file
-		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Routes/Service" );
+		private static readonly ILogger logger = Logging.CreateLogger( "Connector/Routes/Service" );
 
 		// Executes an action on a service
 		[ Route( "POST", "/service" ) ]

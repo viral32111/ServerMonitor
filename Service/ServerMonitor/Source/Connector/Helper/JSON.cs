@@ -8,7 +8,7 @@ namespace ServerMonitor.Connector.Helper {
 	public static class JSON {
 
 		// Create the logger for this file
-		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Helper/JSON" );
+		private static readonly ILogger logger = Logging.CreateLogger( "Connector/Helper/JSON" );
 
 		// Converts an array of JSON objects to a JSON array
 		public static JsonArray CreateJsonArray( JsonObject[] jsonObjectArray ) => jsonObjectArray.Aggregate( new JsonArray(), ( array, jsonObject ) => {

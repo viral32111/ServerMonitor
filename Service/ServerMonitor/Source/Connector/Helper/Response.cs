@@ -7,7 +7,7 @@ namespace ServerMonitor.Connector.Helper {
 	
 	public static class Response {
 
-		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Helper/Response" );
+		private static readonly ILogger logger = Logging.CreateLogger( "Connector/Helper/Response" );
 
 		public static void SendText( HttpListenerResponse response, HttpStatusCode statusCode, string body ) {
 			response.StatusCode = ( int ) statusCode;

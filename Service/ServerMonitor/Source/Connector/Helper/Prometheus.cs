@@ -21,7 +21,7 @@ namespace ServerMonitor.Connector.Helper {
 	public static class Prometheus {
 
 		// Create the logger for this file
-		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Helper/Prometheus" );
+		private static readonly ILogger logger = Logging.CreateLogger( "Connector/Helper/Prometheus" );
 
 		// Creates query string from a dictionary of parameters
 		private static string CreateQueryString( Dictionary<string, string?> parameters ) => string.Join( "&", parameters.Select( pair => $"{ pair.Key }={ Uri.EscapeDataString( pair.Value ?? "" ) }" ) );

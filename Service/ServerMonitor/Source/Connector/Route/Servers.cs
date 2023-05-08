@@ -9,7 +9,7 @@ namespace ServerMonitor.Connector.Route {
 	public static class Servers {
 
 		// Create the logger for this file
-		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Routes/Servers" );
+		private static readonly ILogger logger = Logging.CreateLogger( "Connector/Routes/Servers" );
 
 		// Returns a list of all servers
 		[ Route( "GET", "/servers" ) ]

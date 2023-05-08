@@ -8,7 +8,7 @@ namespace ServerMonitor.Connector.Route {
 
 	public static class Hello {
 
-		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Routes/Hello" );
+		private static readonly ILogger logger = Logging.CreateLogger( "Connector/Routes/Hello" );
 
 		#pragma warning disable CS1998 // Async method lacks await operators and will run synchronously
 

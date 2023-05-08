@@ -8,7 +8,7 @@ namespace ServerMonitor.Connector.Helper {
 	public static class Hash {
 
 		// Create the logger for this file
-		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Helper/Hash" );
+		private static readonly ILogger logger = Logging.CreateLogger( "Connector/Helper/Hash" );
 
 		// Secure random number generator for generating hash salts
 		private static readonly RandomNumberGenerator randomNumberGenerator = RandomNumberGenerator.Create();

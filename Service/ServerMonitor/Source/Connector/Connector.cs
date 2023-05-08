@@ -16,7 +16,7 @@ namespace ServerMonitor.Connector {
 	public class Connector {
 
 		// Create the logger for this file
-		private static readonly ILogger logger = Logging.CreateLogger( "Collector/Collector" );
+		private static readonly ILogger logger = Logging.CreateLogger( "Connector/Connector" );
 
 		// Regular expression for the format to store hashed password data
 		private static readonly Regex hashedPasswordRegex = new( @"PBKDF2-(\d+)-(.+)-(.+)" );
