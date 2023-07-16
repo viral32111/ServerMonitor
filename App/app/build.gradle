@@ -76,7 +76,7 @@ dependencies {
 	implementation "androidx.recyclerview:recyclerview:1.3.0"
 
 	// Kotlin async/await - https://kotlinlang.org/docs/async-programming.html#futures-promises-and-others
-	implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4"
+	implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.2"
 	implementation "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.2"
 
 	// Kotlin Worker Coroutines
