@@ -309,116 +309,116 @@ jobs:
           account-type: personal
           token: ${{ secrets.GH_PACKAGES_TOKEN }}
 
-  deploy:
-    name: Deploy
-    runs-on: ubuntu-22.04
-    needs: cleanup
-    if: ${{ github.event_name == 'push' && github.event.pull_request == null && !startsWith( github.ref, 'refs/heads/dependabot/' ) }}
-    strategy:
-      fail-fast: false
-      matrix:
-        name: [ Ubuntu, Windows ]
-        include:
-          - name: Ubuntu
-            ssh: ssh-ubuntu-server
-            suffix: ubuntu
-          - name: Windows
-            ssh: ssh-windows-server
-            suffix: windows
-    concurrency:
-      group: service-deploy-${{ matrix.ssh }}
-      cancel-in-progress: true
-    permissions:
-      contents: read
-    steps:
-      - name: Clone repository
-        uses: actions/checkout@v3
+  # deploy:
+  #   name: Deploy
+  #   runs-on: ubuntu-22.04
+  #   needs: cleanup
+  #   if: ${{ github.event_name == 'push' && github.event.pull_request == null && !startsWith( github.ref, 'refs/heads/dependabot/' ) }}
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       name: [ Ubuntu, Windows ]
+  #       include:
+  #         - name: Ubuntu
+  #           ssh: ssh-ubuntu-server
+  #           suffix: ubuntu
+  #         - name: Windows
+  #           ssh: ssh-windows-server
+  #           suffix: windows
+  #   concurrency:
+  #     group: service-deploy-${{ matrix.ssh }}
+  #     cancel-in-progress: true
+  #   permissions:
+  #     contents: read
+  #   steps:
+  #     - name: Clone repository
+  #       uses: actions/checkout@v3
 
-      - name: Download build artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: ${{ env.ARTIFACT_NAME }}
-          path: ~/artifact
+  #     - name: Download build artifact
+  #       uses: actions/download-artifact@v3
+  #       with:
+  #         name: ${{ env.ARTIFACT_NAME }}
+  #         path: ~/artifact
 
-      - name: Install Cloudflare Tunnel
-        run: |
-          sudo mkdir --parents --mode 0755 /usr/share/keyrings
-          curl --fail --show-error --silent --location https://pkg.cloudflare.com/cloudflare-main.gpg | sudo tee /usr/share/keyrings/cloudflare-main.gpg > /dev/null
-          echo 'deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared jammy main' | sudo tee /etc/apt/sources.list.d/cloudflared.list
-          sudo apt-get update
-          sudo apt-get install --no-install-recommends --yes cloudflared
+  #     - name: Install Cloudflare Tunnel
+  #       run: |
+  #         sudo mkdir --parents --mode 0755 /usr/share/keyrings
+  #         curl --fail --show-error --silent --location https://pkg.cloudflare.com/cloudflare-main.gpg | sudo tee /usr/share/keyrings/cloudflare-main.gpg > /dev/null
+  #         echo 'deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared jammy main' | sudo tee /etc/apt/sources.list.d/cloudflared.list
+  #         sudo apt-get update
+  #         sudo apt-get install --no-install-recommends --yes cloudflared
 
-      - name: Save SSH private key
-        run: |
-          umask 077
-          mkdir --verbose --parents ~/.ssh
-          echo ${{ secrets.SSH_PRIVATE_KEY }} | base64 --decode > ~/.ssh/github-actions
+  #     - name: Save SSH private key
+  #       run: |
+  #         umask 077
+  #         mkdir --verbose --parents ~/.ssh
+  #         echo ${{ secrets.SSH_PRIVATE_KEY }} | base64 --decode > ~/.ssh/github-actions
 
-      - name: Update Docker image
-        continue-on-error: true
-        run: |
-          ssh \
-            -o 'BatchMode Yes' \
-            -o 'ConnectTimeout 30' \
-            -o 'UpdateHostKeys No' \
-            -o 'StrictHostKeyChecking No' \
-            -o 'IdentityFile ~/.ssh/github-actions' \
-            -o 'IdentitiesOnly Yes' \
-            -o 'ProxyCommand cloudflared access ssh --hostname %h --service-token-id ${{ secrets.CLOUDFLARE_ACCESS_ID }} --service-token-secret ${{ secrets.CLOUDFLARE_ACCESS_SECRET }}' \
-            ${{ secrets.SSH_USER_NAME }}@${{ matrix.ssh }}.${{ secrets.SSH_DOMAIN_NAME }} \
-            'docker image pull ${{ env.DOCKER_REGISTRY_DOMAIN }}/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}:main-${{ matrix.suffix }}; docker image prune --force'
+  #     - name: Update Docker image
+  #       continue-on-error: true
+  #       run: |
+  #         ssh \
+  #           -o 'BatchMode Yes' \
+  #           -o 'ConnectTimeout 30' \
+  #           -o 'UpdateHostKeys No' \
+  #           -o 'StrictHostKeyChecking No' \
+  #           -o 'IdentityFile ~/.ssh/github-actions' \
+  #           -o 'IdentitiesOnly Yes' \
+  #           -o 'ProxyCommand cloudflared access ssh --hostname %h --service-token-id ${{ secrets.CLOUDFLARE_ACCESS_ID }} --service-token-secret ${{ secrets.CLOUDFLARE_ACCESS_SECRET }}' \
+  #           ${{ secrets.SSH_USER_NAME }}@${{ matrix.ssh }}.${{ secrets.SSH_DOMAIN_NAME }} \
+  #           'docker image pull ${{ env.DOCKER_REGISTRY_DOMAIN }}/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}:main-${{ matrix.suffix }}; docker image prune --force'
 
-      - name: Transfer build artifact (Ubuntu)
-        if: ${{ matrix.name == 'Ubuntu' }}
-        continue-on-error: true
-        run: |
-          ssh \
-            -o 'BatchMode Yes' \
-            -o 'ConnectTimeout 30' \
-            -o 'UpdateHostKeys No' \
-            -o 'StrictHostKeyChecking No' \
-            -o 'IdentityFile ~/.ssh/github-actions' \
-            -o 'IdentitiesOnly Yes' \
-            -o 'ProxyCommand cloudflared access ssh --hostname %h --service-token-id ${{ secrets.CLOUDFLARE_ACCESS_ID }} --service-token-secret ${{ secrets.CLOUDFLARE_ACCESS_SECRET }}' \
-            ${{ secrets.SSH_USER_NAME }}@${{ matrix.ssh }}.${{ secrets.SSH_DOMAIN_NAME }} \
-            'rm --verbose --recursive --force ~/server-monitor/artifact/'
+  #     - name: Transfer build artifact (Ubuntu)
+  #       if: ${{ matrix.name == 'Ubuntu' }}
+  #       continue-on-error: true
+  #       run: |
+  #         ssh \
+  #           -o 'BatchMode Yes' \
+  #           -o 'ConnectTimeout 30' \
+  #           -o 'UpdateHostKeys No' \
+  #           -o 'StrictHostKeyChecking No' \
+  #           -o 'IdentityFile ~/.ssh/github-actions' \
+  #           -o 'IdentitiesOnly Yes' \
+  #           -o 'ProxyCommand cloudflared access ssh --hostname %h --service-token-id ${{ secrets.CLOUDFLARE_ACCESS_ID }} --service-token-secret ${{ secrets.CLOUDFLARE_ACCESS_SECRET }}' \
+  #           ${{ secrets.SSH_USER_NAME }}@${{ matrix.ssh }}.${{ secrets.SSH_DOMAIN_NAME }} \
+  #           'rm --verbose --recursive --force ~/server-monitor/artifact/'
 
-          scp \
-            -o 'BatchMode Yes' \
-            -o 'ConnectTimeout 30' \
-            -o 'UpdateHostKeys No' \
-            -o 'StrictHostKeyChecking No' \
-            -o 'IdentityFile ~/.ssh/github-actions' \
-            -o 'IdentitiesOnly Yes' \
-            -o 'ProxyCommand cloudflared access ssh --hostname %h --service-token-id ${{ secrets.CLOUDFLARE_ACCESS_ID }} --service-token-secret ${{ secrets.CLOUDFLARE_ACCESS_SECRET }}' \
-            -r ~/artifact/ \
-            ${{ secrets.SSH_USER_NAME }}@${{ matrix.ssh }}.${{ secrets.SSH_DOMAIN_NAME }}:~/server-monitor/artifact/
+  #         scp \
+  #           -o 'BatchMode Yes' \
+  #           -o 'ConnectTimeout 30' \
+  #           -o 'UpdateHostKeys No' \
+  #           -o 'StrictHostKeyChecking No' \
+  #           -o 'IdentityFile ~/.ssh/github-actions' \
+  #           -o 'IdentitiesOnly Yes' \
+  #           -o 'ProxyCommand cloudflared access ssh --hostname %h --service-token-id ${{ secrets.CLOUDFLARE_ACCESS_ID }} --service-token-secret ${{ secrets.CLOUDFLARE_ACCESS_SECRET }}' \
+  #           -r ~/artifact/ \
+  #           ${{ secrets.SSH_USER_NAME }}@${{ matrix.ssh }}.${{ secrets.SSH_DOMAIN_NAME }}:~/server-monitor/artifact/
 
-      - name: Transfer build artifact (Windows)
-        if: ${{ matrix.name == 'Windows' }}
-        continue-on-error: true
-        run: |
-          ssh \
-            -o 'BatchMode Yes' \
-            -o 'ConnectTimeout 30' \
-            -o 'UpdateHostKeys No' \
-            -o 'StrictHostKeyChecking No' \
-            -o 'IdentityFile ~/.ssh/github-actions' \
-            -o 'IdentitiesOnly Yes' \
-            -o 'ProxyCommand cloudflared access ssh --hostname %h --service-token-id ${{ secrets.CLOUDFLARE_ACCESS_ID }} --service-token-secret ${{ secrets.CLOUDFLARE_ACCESS_SECRET }}' \
-            ${{ secrets.SSH_USER_NAME }}@${{ matrix.ssh }}.${{ secrets.SSH_DOMAIN_NAME }} \
-            'Remove-Item -Path "$HOME/Server Monitor/Artifact" -Recurse -Force'
+  #     - name: Transfer build artifact (Windows)
+  #       if: ${{ matrix.name == 'Windows' }}
+  #       continue-on-error: true
+  #       run: |
+  #         ssh \
+  #           -o 'BatchMode Yes' \
+  #           -o 'ConnectTimeout 30' \
+  #           -o 'UpdateHostKeys No' \
+  #           -o 'StrictHostKeyChecking No' \
+  #           -o 'IdentityFile ~/.ssh/github-actions' \
+  #           -o 'IdentitiesOnly Yes' \
+  #           -o 'ProxyCommand cloudflared access ssh --hostname %h --service-token-id ${{ secrets.CLOUDFLARE_ACCESS_ID }} --service-token-secret ${{ secrets.CLOUDFLARE_ACCESS_SECRET }}' \
+  #           ${{ secrets.SSH_USER_NAME }}@${{ matrix.ssh }}.${{ secrets.SSH_DOMAIN_NAME }} \
+  #           'Remove-Item -Path "$HOME/Server Monitor/Artifact" -Recurse -Force'
 
-          scp \
-            -o 'BatchMode Yes' \
-            -o 'ConnectTimeout 30' \
-            -o 'UpdateHostKeys No' \
-            -o 'StrictHostKeyChecking No' \
-            -o 'IdentityFile ~/.ssh/github-actions' \
-            -o 'IdentitiesOnly Yes' \
-            -o 'ProxyCommand cloudflared access ssh --hostname %h --service-token-id ${{ secrets.CLOUDFLARE_ACCESS_ID }} --service-token-secret ${{ secrets.CLOUDFLARE_ACCESS_SECRET }}' \
-            -r ~/artifact/ \
-            ${{ secrets.SSH_USER_NAME }}@${{ matrix.ssh }}.${{ secrets.SSH_DOMAIN_NAME }}:"'Server Monitor/Artifact'"
+  #         scp \
+  #           -o 'BatchMode Yes' \
+  #           -o 'ConnectTimeout 30' \
+  #           -o 'UpdateHostKeys No' \
+  #           -o 'StrictHostKeyChecking No' \
+  #           -o 'IdentityFile ~/.ssh/github-actions' \
+  #           -o 'IdentitiesOnly Yes' \
+  #           -o 'ProxyCommand cloudflared access ssh --hostname %h --service-token-id ${{ secrets.CLOUDFLARE_ACCESS_ID }} --service-token-secret ${{ secrets.CLOUDFLARE_ACCESS_SECRET }}' \
+  #           -r ~/artifact/ \
+  #           ${{ secrets.SSH_USER_NAME }}@${{ matrix.ssh }}.${{ secrets.SSH_DOMAIN_NAME }}:"'Server Monitor/Artifact'"
 
   release:
     name: Release
