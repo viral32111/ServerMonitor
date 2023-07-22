@@ -3,10 +3,10 @@
 [![App](https://github.com/viral32111/ServerMonitor/actions/workflows/app.yml/badge.svg)](https://github.com/viral32111/ServerMonitor/actions/workflows/app.yml)
 [![Service](https://github.com/viral32111/ServerMonitor/actions/workflows/service.yml/badge.svg)](https://github.com/viral32111/ServerMonitor/actions/workflows/service.yml)
 [![CodeQL](https://github.com/viral32111/ServerMonitor/actions/workflows/codeql.yml/badge.svg)](https://github.com/viral32111/ServerMonitor/actions/workflows/codeql.yml)
-[![MVP](https://img.shields.io/github/v/release/viral32111/ServerMonitor?include_prereleases&label=Latest%20MVP)](https://github.com/viral32111/ServerMonitor/releases/latest)
-[![Issues](https://img.shields.io/github/issues-raw/viral32111/ServerMonitor?label=Issues)](https://github.com/viral32111/ServerMonitor/issues)
-[![Size](https://img.shields.io/github/repo-size/viral32111/ServerMonitor?label=Size)](https://github.com/viral32111/ServerMonitor)
-[![Commits](https://img.shields.io/github/commit-activity/w/viral32111/ServerMonitor?label=Commits)](https://github.com/viral32111/ServerMonitor/commits/main)
+![GitHub tag (with filter)](https://img.shields.io/github/v/tag/viral32111/ServerMonitor?label=Latest)
+![GitHub repository size](https://img.shields.io/github/repo-size/viral32111/ServerMonitor?label=Size)
+![GitHub release downloads](https://img.shields.io/github/downloads/viral32111/ServerMonitor/total?label=Downloads)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/m/viral32111/ServerMonitor?label=Commits)
 
 A mobile app for monitoring server metrics & status information in real-time.
 
@@ -204,4 +204,4 @@ See the [releases page](https://github.com/viral32111/ServerMonitor/releases) fo
 
 ## ⚖️ License
 
-This project is licensed under the Creative Commons Attribution-ShareAlike 4.0 International license, see the [license file](/LICENSE.md) for more information.
+This project is licensed under [the Creative Commons Attribution-ShareAlike 4.0 International license](https://creativecommons.org/licenses/by-sa/4.0/), see the [license file](/LICENSE.md) for more information.
