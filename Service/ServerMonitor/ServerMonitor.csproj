@@ -5,14 +5,14 @@
 		<ImplicitUsings>disable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 
-		<Title>ServerMonitor</Title>
+		<Title>Server Monitor</Title>
 		<Authors>viral32111</Authors>
 		<Description>A mobile app for monitoring servers in real-time.</Description>
-		<Copyright>Copyright (C) 2022 viral32111</Copyright>
+		<Copyright>Copyright (C) 2022-2023 viral32111</Copyright>
 		<RepositoryUrl>https://github.com/viral32111/ServerMonitor</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<AssemblyVersion>$(FileVersion)</AssemblyVersion>
-		<FileVersion>1.1.0</FileVersion>
+		<FileVersion>1.1.1</FileVersion>
 		<NeutralLanguage>en-GB</NeutralLanguage>
 		<Version>$(FileVersion)</Version>
 		<RootNamespace>ServerMonitor</RootNamespace>
@@ -49,6 +49,6 @@
 		<PackageReference Include="System.Diagnostics.PerformanceCounter" Version="7.0.0" />
 		<PackageReference Include="System.Management" Version="7.0.2" />
 		<PackageReference Include="System.ServiceProcess.ServiceController" Version="7.0.1" />
-		<PackageReference Include="viral32111.JsonExtensions" Version="0.2.0" />
+		<PackageReference Include="viral32111.JsonExtensions" Version="1.0.0" />
 	</ItemGroup>
 </Project>
