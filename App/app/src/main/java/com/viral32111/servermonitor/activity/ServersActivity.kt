@@ -28,6 +28,8 @@ import com.viral32111.servermonitor.data.Server
 import com.viral32111.servermonitor.database.initialiseDatabase
 import com.viral32111.servermonitor.helper.*
 import kotlinx.coroutines.*
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 import java.util.*
 
 class ServersActivity : AppCompatActivity() {
@@ -184,7 +186,7 @@ class ServersActivity : AppCompatActivity() {
 
 							// Fetch the number of issues today
 							val database = initialiseDatabase( applicationContext )
-							val issuesTodayCount = database.issueHistory().fetchAfterStartedAtDate()?.count()
+							val issuesTodayCount = database.issueHistory().fetchAfterStartedAtDate( ZonedDateTime.now( ZoneOffset.UTC ).toLocalDate().atStartOfDay().toInstant( ZoneOffset.UTC ).toEpochMilli() )?.count()
 							Log.d( Shared.logTag, "There have been $issuesTodayCount issue(s) today" )
 
 							// Update the UI
@@ -307,7 +309,7 @@ class ServersActivity : AppCompatActivity() {
 
 							// Fetch the number of issues today
 							val database = initialiseDatabase( applicationContext )
-							val issuesTodayCount = database.issueHistory().fetchAfterStartedAtDate()?.count()
+							val issuesTodayCount = database.issueHistory().fetchAfterStartedAtDate( ZonedDateTime.now( ZoneOffset.UTC ).toLocalDate().atStartOfDay().toInstant( ZoneOffset.UTC ).toEpochMilli() )?.count()
 							Log.d( Shared.logTag, "There have been $issuesTodayCount issue(s) today" )
 
 							// Update the UI
@@ -539,7 +541,7 @@ class ServersActivity : AppCompatActivity() {
 
 					// Fetch the number of issues today
 					val database = initialiseDatabase( applicationContext )
-					val issuesTodayCount = database.issueHistory().fetchAfterStartedAtDate()?.count()
+					val issuesTodayCount = database.issueHistory().fetchAfterStartedAtDate( ZonedDateTime.now( ZoneOffset.UTC ).toLocalDate().atStartOfDay().toInstant( ZoneOffset.UTC ).toEpochMilli() )?.count()
 					Log.d( Shared.logTag, "There have been $issuesTodayCount issue(s) today" )
 
 					// Update the UI

@@ -252,7 +252,7 @@ class SetupActivity : AppCompatActivity() {
 		// Finish off any still on-going issues in the history
 		CoroutineScope( Dispatchers.IO ).launch {
 			val database = initialiseDatabase( applicationContext )
-			database.issueHistory().updateFinishedAt()
+			database.issueHistory().updateFinishedAt( System.currentTimeMillis() )
 			Log.d( Shared.logTag, "Finished any still on-going issues" )
 		}
 

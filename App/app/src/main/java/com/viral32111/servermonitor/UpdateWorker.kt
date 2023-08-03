@@ -19,6 +19,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.viral32111.servermonitor.activity.ServersActivity
+import com.viral32111.servermonitor.database.Issue
 import com.viral32111.servermonitor.database.initialiseDatabase
 import com.viral32111.servermonitor.helper.API
 import com.viral32111.servermonitor.helper.Notify
@@ -215,12 +216,12 @@ class UpdateWorker(
 
 							// If there is an on-going issue then increment the total number of issue detections
 							if ( ongoingIssue != null ) {
-								issueHistory.incrementTotalCountByIdentifier( ongoingIssue.identifier )
+								issueHistory.incrementTotalCountByIdentifier( ongoingIssue.identifier, 1 )
 								Log.d( Shared.logTag, "Incremented on-going issue ${ ongoingIssue.identifier } (was ${ ongoingIssue.totalCount }, now ${ ongoingIssue.totalCount + 1 })" )
 
 							// Begin a new on-going issue if there isn't one already
 							} else {
-								val newIssueIdentifier = issueHistory.create()
+								val newIssueIdentifier = issueHistory.create( Issue() )
 								Log.d( Shared.logTag, "Began new on-going issue $newIssueIdentifier" )
 
 								// Show an additional notification for this issue detection
@@ -247,7 +248,7 @@ class UpdateWorker(
 
 							// If there is an on-going issue then finish it
 							if ( ongoingIssue != null ) {
-								issueHistory.updateFinishedAtByIdentifier( ongoingIssue.identifier )
+								issueHistory.updateFinishedAtByIdentifier( ongoingIssue.identifier, System.currentTimeMillis() )
 								Log.d( Shared.logTag, "Finished on-going issue ${ ongoingIssue.identifier } at count ${ ongoingIssue.totalCount }" )
 							}
 
