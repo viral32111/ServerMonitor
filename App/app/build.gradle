@@ -1,7 +1,6 @@
 plugins {
 	id "com.android.application"
 	id "org.jetbrains.kotlin.android"
-	id "kotlin-kapt"
 	id 'com.google.devtools.ksp'
 }
 
@@ -51,8 +50,6 @@ android {
 	kotlinOptions {
 		jvmTarget = "17"
 	}
-
-    buildToolsVersion "34.0.0"
 }
 
 dependencies {
