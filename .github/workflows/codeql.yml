@@ -12,7 +12,7 @@ on:
 jobs:
   app:
     name: App
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./App/
@@ -64,7 +64,7 @@ jobs:
 
   service:
     name: Service
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./Service/
