@@ -299,13 +299,14 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Delete untagged Docker images
+      - name: Delete old Docker images
         uses: snok/container-retention-policy@v2
         with:
           image-names: ${{ env.DOCKER_IMAGE_NAME }}
-          cut-off: 0 seconds ago UTC
-          keep-at-least: 0
+          cut-off: 24 hours ago UTC
+          keep-at-least: 1
           untagged-only: true
+          skip-tags: latest
           account-type: personal
           token: ${{ secrets.PACKAGES_PERSONAL_ACCESS_TOKEN }}
 
