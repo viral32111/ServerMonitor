@@ -72,11 +72,6 @@ jobs:
     permissions:
       contents: read
       packages: read
-    services:
-      prometheus:
-        image: prom/prometheus:latest
-        ports:
-          - 9090:9090
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
