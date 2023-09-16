@@ -49,8 +49,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: ${{ env.ARTIFACT_NAME }}
-          path: |
-            ./Service/ServerMonitor/bin/Release/net7.0/*
+          path: ./Service/ServerMonitor/bin/Release/net7.0/*
 
   test:
     name: Test
@@ -73,6 +72,11 @@ jobs:
     permissions:
       contents: read
       packages: read
+    services:
+      prometheus:
+        image: prom/prometheus:latest
+        ports:
+          - 9090:9090
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
