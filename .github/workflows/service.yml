@@ -268,8 +268,8 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           push: ${{ github.event_name != 'pull_request' && !startsWith( github.ref_name, 'dependabot/' ) }}
-          file: service/${{ matrix.dockerfile }}
-          context: service/artifact
+          file: Service/${{ matrix.dockerfile }}
+          context: Service/artifact
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
           platforms: linux/amd64
