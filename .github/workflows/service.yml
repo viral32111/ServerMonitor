@@ -297,7 +297,7 @@ jobs:
         run: docker image push --all-tags ${{ env.DOCKER_REGISTRY_DOMAIN }}/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}
 
   cleanup:
-    name: Delete old Docker images
+    name: Cleanup
     runs-on: ubuntu-22.04
     needs: docker
     if: ${{ github.event_name != 'pull_request' && !startsWith( github.ref_name, 'dependabot/' ) }}
