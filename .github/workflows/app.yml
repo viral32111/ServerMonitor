@@ -15,17 +15,48 @@ env:
   ARTIFACT_NAME: ServerMonitor-App
 
 jobs:
-  build-test:
-    name: Build & Test
+  build-test-debug:
+    name: Build & Test (Debug)
     runs-on: ubuntu-22.04
-    strategy:
-      matrix:
-        variant: [ 'Debug', 'Release' ]
-        isPullRequest:
-          - ${{ github.event_name == 'pull_request' || startsWith( github.ref_name, 'dependabot/' ) }}
-        exclude:
-          - isPullRequest: true
-            variant: Release
+    permissions:
+      contents: read
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - name: Set Gradle permissions
+        run: chmod +x App/gradlew
+
+      - name: Build project
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: assembleDebug --scan
+          build-root-directory: App
+          cache-disabled: true
+
+      - name: Run instrumented tests
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: test --scan
+          build-root-directory: App
+          cache-disabled: true
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.ARTIFACT_NAME }}-debug
+          path: App/app/build/outputs/apk/*/*
+
+  build-test-release:
+    name: Build & Test (release)
+    runs-on: ubuntu-22.04
+    if: ${{ github.event_name == 'pull_request' || startsWith( github.ref_name, 'dependabot/' ) }}
     permissions:
       contents: read
     steps:
@@ -43,7 +74,6 @@ jobs:
 
       - name: Create key store
         id: keystore
-        if: ${{ github.event_name != 'pull_request' && !startsWith( github.ref_name, 'dependabot/' ) }}
         run: |
           echo "${{ secrets.ANDROID_KEY_STORE }}" | base64 -d > $HOME/android-key-store.apk
           echo "path=$HOME/android-key-store.apk" >> "$GITHUB_OUTPUT"
@@ -56,7 +86,7 @@ jobs:
           ANDROID_KEY_STORE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_STORE_KEY_PASSWORD }}
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: assemble${{ matrix.variant }} --scan
+          arguments: assembleRelease --scan
           build-root-directory: App
           cache-disabled: true
 
@@ -75,5 +105,5 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ env.ARTIFACT_NAME }}-${{ matrix.variant }}
+          name: ${{ env.ARTIFACT_NAME }}-release
           path: App/app/build/outputs/apk/*/*
