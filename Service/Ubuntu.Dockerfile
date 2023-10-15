@@ -1,5 +1,5 @@
 # Start from my .NET Core Runtime
-FROM ghcr.io/viral32111/dotnet:7-ubuntu
+FROM ghcr.io/viral32111/dotnet:7.0-ubuntu
 
 # Configure directories & files
 ARG SERVERMONITOR_DIRECTORY=/usr/local/server-monitor \
