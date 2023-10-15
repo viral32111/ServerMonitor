@@ -54,9 +54,9 @@ jobs:
           path: App/app/build/outputs/apk/*/*
 
   build-test-release:
-    name: Build & Test (release)
+    name: Build & Test (Release)
     runs-on: ubuntu-22.04
-    if: ${{ github.event_name == 'pull_request' || startsWith( github.ref_name, 'dependabot/' ) }}
+    if: ${{ github.event_name != 'pull_request' || !startsWith( github.ref_name, 'dependabot/' ) }}
     permissions:
       contents: read
     steps:
