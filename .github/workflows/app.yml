@@ -21,7 +21,8 @@ jobs:
     strategy:
       matrix:
         variant: [ 'Debug', 'Release' ]
-        isPullRequest: ${{ github.event_name == 'pull_request' || startsWith( github.ref_name, 'dependabot/' ) }}
+        isPullRequest:
+          - ${{ github.event_name == 'pull_request' || startsWith( github.ref_name, 'dependabot/' ) }}
         exclude:
           - isPullRequest: true
             variant: Release
