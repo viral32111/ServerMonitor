@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - 'App/**'
-      - '.github/workflows/app.yml'
+      - '.github/workflows/*.yml'
     branches:
       - '**'
     tags:
@@ -21,6 +21,9 @@ jobs:
     strategy:
       matrix:
         variant: [ 'Debug', 'Release' ]
+        exclude:
+          - variant: Release
+            if: ${{ github.event_name == 'pull_request' && !startsWith( github.ref_name, 'dependabot/' ) }}
     permissions:
       contents: read
     steps:
@@ -34,10 +37,11 @@ jobs:
           distribution: temurin
 
       - name: Set Gradle permissions
-        run: chmod +x ./App/gradlew
+        run: chmod +x App/gradlew
 
       - name: Create key store
         id: keystore
+        if: ${{ github.event_name != 'pull_request' && !startsWith( github.ref_name, 'dependabot/' ) }}
         run: |
           echo "${{ secrets.ANDROID_KEY_STORE }}" | base64 -d > $HOME/android-key-store.apk
           echo "path=$HOME/android-key-store.apk" >> "$GITHUB_OUTPUT"
@@ -51,7 +55,7 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           arguments: assemble${{ matrix.variant }} --scan
-          build-root-directory: ./App/
+          build-root-directory: App
           cache-disabled: true
 
       - name: Run instrumented tests
@@ -63,12 +67,11 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           arguments: test --scan
-          build-root-directory: ./App/
+          build-root-directory: App
           cache-disabled: true
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v3
         with:
           name: ${{ env.ARTIFACT_NAME }}-${{ matrix.variant }}
-          path: |
-            ./App/app/build/outputs/apk/*/*
+          path: App/app/build/outputs/apk/*/*

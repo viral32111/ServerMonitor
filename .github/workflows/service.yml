@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - 'Service/**'
-      - '.github/workflows/service.yml'
+      - '.github/workflows/*.yml'
     branches:
       - '**'
     tags:
@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-22.04
     defaults:
       run:
-        working-directory: ./Service/
+        working-directory: Service
     permissions:
       contents: read
       packages: read
@@ -37,19 +37,19 @@ jobs:
 
       - name: Add GitHub Packages source
         if: ${{ github.event_name != 'pull_request' && !startsWith( github.ref_name, 'dependabot/' ) }}
-        run: dotnet nuget add source --name github --username ${{ github.repository_owner }} --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+        run: dotnet nuget add source --name github --username ${{ github.repository_owner }} --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
 
       - name: Restore dependencies
-        run: dotnet restore ./ServerMonitor/ServerMonitor.csproj
+        run: dotnet restore ServerMonitor/ServerMonitor.csproj
 
       - name: Build project
-        run: dotnet build --nologo --configuration Release --no-restore --no-self-contained ./ServerMonitor/ServerMonitor.csproj
+        run: dotnet build --nologo --configuration Release --no-restore --no-self-contained ServerMonitor/ServerMonitor.csproj
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v3
         with:
           name: ${{ env.ARTIFACT_NAME }}
-          path: ./Service/ServerMonitor/bin/Release/net7.0/*
+          path: Service/ServerMonitor/bin/Release/net7.0/*
 
   test:
     name: Test
@@ -57,7 +57,7 @@ jobs:
     needs: build
     defaults:
       run:
-        working-directory: ./Service/
+        working-directory: Service
     strategy:
       fail-fast: false
       matrix:
@@ -83,15 +83,17 @@ jobs:
 
       - name: Add GitHub Packages source
         if: ${{ github.event_name != 'pull_request' && !startsWith( github.ref_name, 'dependabot/' ) }}
-        run: dotnet nuget add source --name github --username ${{ github.repository_owner }} --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+        run: dotnet nuget add source --name github --username ${{ github.repository_owner }} --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
 
       - name: Restore dependencies
-        run: dotnet restore ./ServerMonitor.Tests/ServerMonitor.Tests.csproj
+        run: dotnet restore ServerMonitor.Tests/ServerMonitor.Tests.csproj
 
       - name: Build project
-        run: dotnet build --nologo --configuration Release --no-restore --no-self-contained ./ServerMonitor.Tests/ServerMonitor.Tests.csproj
+        run: dotnet build --nologo --configuration Release --no-restore --no-self-contained ServerMonitor.Tests/ServerMonitor.Tests.csproj
 
+      # Can't connect to Prometheus in PR because of secrets
       - name: Run unit & integration tests
+        if: ${{ github.event_name != 'pull_request' && !startsWith( github.ref_name, 'dependabot/' ) }}
         env:
           SERVER_MONITOR_PROMETHEUSMETRICSPREFIX: github
           SERVER_MONITOR_PROMETHEUSAPIADDRESS: ${{ secrets.PROMETHEUS_DOMAIN_NAME }}
@@ -101,11 +103,11 @@ jobs:
           SERVER_MONITOR_SNMPMANAGERLISTENPORT: 1620
           SERVER_MONITOR_CONNECTORLISTENADDRESS: 127.0.0.1
           SERVER_MONITOR_CONNECTORAUTHENTICATIONCREDENTIALS__0__USERNAME: GitHub
-          SERVER_MONITOR_CONNECTORAUTHENTICATIONCREDENTIALS__0__PASSWORD: GitHub
-          SERVER_MONITOR_CONNECTORAUTHENTICATIONREALM: GitHub
+          SERVER_MONITOR_CONNECTORAUTHENTICATIONCREDENTIALS__0__PASSWORD: P4ssw0rd
+          SERVER_MONITOR_CONNECTORAUTHENTICATIONREALM: Workflow
           SERVER_MONITOR_CLOUDFLAREACCESSSERVICETOKENID: ${{ secrets.CLOUDFLARE_ACCESS_ID }}
           SERVER_MONITOR_CLOUDFLAREACCESSSERVICETOKENSECRET: ${{ secrets.CLOUDFLARE_ACCESS_SECRET }}
-        run: dotnet test --nologo --configuration Release --no-build ./ServerMonitor.Tests/ServerMonitor.Tests.csproj
+        run: dotnet test --nologo --configuration Release --no-build ServerMonitor.Tests/ServerMonitor.Tests.csproj
 
   launch:
     name: Launch
@@ -113,7 +115,7 @@ jobs:
     needs: test
     defaults:
       run:
-        working-directory: ./Service/
+        working-directory: Service
     strategy:
       fail-fast: false
       matrix:
@@ -140,7 +142,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: ${{ env.ARTIFACT_NAME }}
-          path: ./Service/Artifact/
+          path: Service/artifact
 
       - name: Launch as Collector (Ubuntu)
         if: ${{ matrix.name == 'Ubuntu' }}
@@ -158,7 +160,7 @@ jobs:
           SERVER_MONITOR_COLLECTSNMPMETRICS: true
           SERVER_MONITOR_SNMPMANAGERLISTENADDRESS: 127.0.0.1
           SERVER_MONITOR_SNMPMANAGERLISTENPORT: 1620
-        run: sudo dotnet ./Artifact/ServerMonitor.dll --once collector
+        run: sudo dotnet artifact/ServerMonitor.dll --once collector
 
       - name: Launch as Collector (Windows)
         if: ${{ matrix.name == 'Windows' }}
@@ -176,7 +178,7 @@ jobs:
           SERVER_MONITOR_COLLECTSNMPMETRICS: true
           SERVER_MONITOR_SNMPMANAGERLISTENADDRESS: 127.0.0.1
           SERVER_MONITOR_SNMPMANAGERLISTENPORT: 1620
-        run: dotnet ./Artifact/ServerMonitor.dll --once collector
+        run: dotnet artifact/ServerMonitor.dll --once collector
 
       - name: Launch as Connector
         env:
@@ -185,7 +187,7 @@ jobs:
           SERVER_MONITOR_CONNECTORAUTHENTICATIONCREDENTIALS__0__USERNAME: GitHub
           SERVER_MONITOR_CONNECTORAUTHENTICATIONCREDENTIALS__0__PASSWORD: GitHub
           SERVER_MONITOR_CONNECTORAUTHENTICATIONREALM: GitHub
-        run: dotnet ./Artifact/ServerMonitor.dll --once connector --no-listen
+        run: dotnet artifact/ServerMonitor.dll --once connector --no-listen
 
   docker:
     name: Docker
@@ -193,9 +195,9 @@ jobs:
     needs: launch
     defaults:
       run:
-        working-directory: ./Service/
+        working-directory: Service
     strategy:
-      fail-fast: false
+      fail-fast: false # Sometimes Windows & Ubuntu can fail for different reasons
       matrix:
         name: [ Ubuntu, Windows ]
         include:
@@ -208,8 +210,8 @@ jobs:
             dockerfile: Windows.Dockerfile
             suffix: windows
     concurrency:
-      group: service-docker-${{ matrix.suffix }}
-      cancel-in-progress: true
+      group: ${{ github.workflow }}-${{ github.job }}-${{ github.ref }}-${{ matrix.suffix }}
+      cancel-in-progress: false
     permissions:
       contents: read
       packages: write
@@ -217,12 +219,15 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v3
 
+      - name: Setup QEMU (Ubuntu)
+        if: ${{ matrix.name == 'Ubuntu' }}
+        uses: docker/setup-qemu-action@v3
+
       - name: Setup Docker (Ubuntu)
         if: ${{ matrix.name == 'Ubuntu' }}
         uses: docker/setup-buildx-action@v2
         with:
           platforms: linux/amd64
-          driver-opts: image=moby/buildkit:v0.10.6
 
       - name: Login to GitHub Container Registry
         if: ${{ github.event_name != 'pull_request' && !startsWith( github.ref_name, 'dependabot/' ) }}
@@ -236,7 +241,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: ${{ env.ARTIFACT_NAME }}
-          path: ./Service/Artifact/
+          path: Service/artifact
 
       - name: Create metadata for Docker image
         id: metadata
@@ -263,10 +268,12 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           push: ${{ github.event_name != 'pull_request' && !startsWith( github.ref_name, 'dependabot/' ) }}
-          file: ./Service/${{ matrix.dockerfile }}
-          context: ./Service/Artifact/
+          file: service/${{ matrix.dockerfile }}
+          context: service/artifact
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
+          platforms: linux/amd64
+          provenance: false
           no-cache: true
           pull: true
 
@@ -278,25 +285,23 @@ jobs:
           script: |
             const { DOCKER_METADATA_OUTPUT_JSON } = process.env;
             const { tags, labels } = JSON.parse( DOCKER_METADATA_OUTPUT_JSON );
-            core.setOutput( "tags", "--tag " + tags.join( " --tag " ) )
-            core.setOutput( "labels", "--label " + Object.entries( labels ).map( label => label[ 0 ] + "='" + label[ 1 ] + "'" ).join( " --label " ) )
+            core.setOutput( "tags", tags.join( " --tag " ) );
+            core.setOutput( "labels", Object.entries( labels ).map( label => `${label[ 0 ]}='${ label[ 1 ] }'` ).join( " --label " ) );
 
       - name: Build Docker image (Windows)
         if: ${{ matrix.name == 'Windows' }}
-        run: docker image build --no-cache --pull --file ./${{ matrix.dockerfile }} ${{ steps.format.outputs.tags }} ${{ steps.format.outputs.labels }} ./Artifact/
+        run: docker image build --no-cache --pull --file ${{ matrix.dockerfile }} --tag ${{ steps.format.outputs.tags }} --label ${{ steps.format.outputs.labels }} artifact
 
       - name: Push Docker image (Windows)
         if: ${{ matrix.name == 'Windows' && github.event_name != 'pull_request' && !startsWith( github.ref_name, 'dependabot/' ) }}
         run: docker image push --all-tags ${{ env.DOCKER_REGISTRY_DOMAIN }}/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}
 
   cleanup:
-    name: Cleanup
+    name: Delete old Docker images
     runs-on: ubuntu-22.04
     needs: docker
     if: ${{ github.event_name != 'pull_request' && !startsWith( github.ref_name, 'dependabot/' ) }}
     continue-on-error: true
-    permissions:
-      contents: read
     steps:
       - name: Delete old Docker images
         uses: snok/container-retention-policy@v2
@@ -426,7 +431,7 @@ jobs:
     needs: launch
     defaults:
       run:
-        working-directory: ./Service/
+        working-directory: Service
     if: ${{ github.event_name == 'push' && github.ref_type == 'tag' }}
     permissions:
       contents: write
@@ -438,18 +443,15 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: ${{ env.ARTIFACT_NAME }}
-          path: ./Service/Artifact/
+          path: Service/artifact
 
       - name: Bundle build artifacts
-        run: |
-          cd ./Artifact/
-          zip -r ../${{ env.ARTIFACT_NAME }}.zip $(find ./)
+        run: zip -r ${{ env.ARTIFACT_NAME }}.zip artifact
 
       - name: Create draft release
         uses: softprops/action-gh-release@v1
         with:
           draft: true
           tag_name: ${{ github.ref_name }}
-          body: ${{ github.ref_name }}
-          files: ./Service/${{ env.ARTIFACT_NAME }}.zip
+          files: Service/${{ env.ARTIFACT_NAME }}.zip
           token: ${{ secrets.GITHUB_TOKEN }}

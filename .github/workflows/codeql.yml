@@ -3,9 +3,9 @@ name: CodeQL
 on:
   push:
     paths:
-     - '**'
+      - '**'
     branches:
-     - '**'
+      - '**'
   schedule:
     - cron: '0 0 * * 0'
 
@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./App/
+        working-directory: App
     permissions:
       actions: read
       contents: read
@@ -32,31 +32,20 @@ jobs:
           distribution: temurin
 
       - name: Set Gradle permissions
-        run: chmod +x ./gradlew
-
-      - name: Create key store
-        id: keystore
-        run: |
-          echo "${{ secrets.ANDROID_KEY_STORE }}" | base64 -d > $HOME/android-key-store.apk
-          echo "path=$HOME/android-key-store.apk" >> "$GITHUB_OUTPUT"
+        run: chmod +x gradlew
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
         with:
           languages: java
-          source-root: ./App/
+          source-root: App
           tools: latest
 
       - name: Build project
-        env:
-          ANDROID_KEY_STORE_PATH: ${{ steps.keystore.outputs.path }}
-          ANDROID_KEY_STORE_PASSWORD: ${{ secrets.ANDROID_KEY_STORE_PASSWORD }}
-          ANDROID_KEY_STORE_KEY_ALIAS: ${{ secrets.ANDROID_KEY_STORE_KEY_ALIAS }}
-          ANDROID_KEY_STORE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_STORE_KEY_PASSWORD }}
         uses: gradle/gradle-build-action@v2
         with:
           arguments: assembleDebug --scan
-          build-root-directory: ./App/
+          build-root-directory: App
           cache-disabled: true
 
       - name: Perform CodeQL analysis
@@ -67,7 +56,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./Service/
+        working-directory: Service
     permissions:
       actions: read
       contents: read
@@ -81,15 +70,15 @@ jobs:
         uses: github/codeql-action/init@v2
         with:
           languages: csharp
-          source-root: ./Service/
+          source-root: Service
 
       - name: Add GitHub Packages source
-        run: dotnet nuget add source --name github --username ${{ github.repository_owner }} --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+        run: dotnet nuget add source --name github --username ${{ github.repository_owner }} --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
 
       - name: Auto-build
         uses: github/codeql-action/autobuild@v2
         with:
-          working-directory: ./Service/
+          working-directory: Service
 
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@v2

@@ -1,5 +1,5 @@
 # Start from my .NET Core Runtime
-FROM ghcr.io/viral32111/dotnet:7.0-ubuntu
+FROM ghcr.io/viral32111/dotnet:7-ubuntu
 
 # Configure directories & files
 ARG SERVERMONITOR_DIRECTORY=/usr/local/server-monitor \
@@ -12,7 +12,7 @@ RUN apt-get update && \
 	rm --verbose --recursive /var/lib/apt/lists/*
 
 # Add artifacts from build
-COPY --chown=${USER_ID}:${USER_ID} ./ ${SERVERMONITOR_DIRECTORY}
+COPY --chown=${USER_ID}:${USER_ID} . ${SERVERMONITOR_DIRECTORY}
 
 # Move the configuration file to the system-wide configuration directory
 RUN mkdir --verbose --parents ${SERVERMONITOR_CONFIG_DIRECTORY} && \
