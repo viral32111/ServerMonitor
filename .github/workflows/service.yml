@@ -281,7 +281,7 @@ jobs:
       - name: Format metadata for Docker image (Windows)
         id: format
         if: ${{ matrix.name == 'Windows' }}
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
             const { DOCKER_METADATA_OUTPUT_JSON } = process.env;
