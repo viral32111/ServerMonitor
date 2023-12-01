@@ -47,7 +47,7 @@
 		</PackageReference>
 		<PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
 		<PackageReference Include="System.Diagnostics.PerformanceCounter" Version="7.0.0" />
-		<PackageReference Include="System.Management" Version="7.0.2" />
+		<PackageReference Include="System.Management" Version="8.0.0" />
 		<PackageReference Include="System.ServiceProcess.ServiceController" Version="7.0.1" />
 		<PackageReference Include="viral32111.JsonExtensions" Version="1.0.0" />
 	</ItemGroup>
