@@ -82,7 +82,7 @@ dependencies {
 
 	// Kotlin async/await - https://kotlinlang.org/docs/async-programming.html#futures-promises-and-others
 	implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3"
-	implementation "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3"
+	implementation "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1"
 
 	// Kotlin Worker Coroutines
 	implementation "androidx.work:work-runtime-ktx:2.8.1"
