@@ -39,7 +39,7 @@
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="7.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.0" />
 		<PackageReference Include="Mono.Posix" Version="7.1.0-final.1.21458.1" />
 		<PackageReference Include="prometheus-net" Version="8.2.1" />
 		<PackageReference Include="SnmpSharpNet" Version="0.9.6">
