@@ -35,14 +35,14 @@ jobs:
         run: chmod +x App/gradlew
 
       - name: Build project
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
         with:
           arguments: assembleDebug --scan
           build-root-directory: App
           cache-disabled: true
 
       - name: Run instrumented tests
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
         with:
           arguments: test --scan
           build-root-directory: App
@@ -85,7 +85,7 @@ jobs:
           ANDROID_KEY_STORE_PASSWORD: ${{ secrets.ANDROID_KEY_STORE_PASSWORD }}
           ANDROID_KEY_STORE_KEY_ALIAS: ${{ secrets.ANDROID_KEY_STORE_KEY_ALIAS }}
           ANDROID_KEY_STORE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_STORE_KEY_PASSWORD }}
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
         with:
           arguments: assembleRelease --scan
           build-root-directory: App
@@ -97,7 +97,7 @@ jobs:
           ANDROID_KEY_STORE_PASSWORD: ${{ secrets.ANDROID_KEY_STORE_PASSWORD }}
           ANDROID_KEY_STORE_KEY_ALIAS: ${{ secrets.ANDROID_KEY_STORE_KEY_ALIAS }}
           ANDROID_KEY_STORE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_STORE_KEY_PASSWORD }}
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
         with:
           arguments: test --scan
           build-root-directory: App
